@@ -244,7 +244,7 @@ bool MavlinkClient::uploadWaypointsUntilSuccess(std::shared_ptr<MissionState> st
 
         while (!result.has_value()) {}
 
-        if (result == mavsdk::MissionRaw::Result::Success) {
+        if (result.value() == mavsdk::MissionRaw::Result::Success) {
             LOG_F(INFO, "Successfully uploaded mission");
             break;
         } else {

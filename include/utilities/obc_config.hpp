@@ -29,8 +29,6 @@ struct OBCConfig {
     OBCConfig(int argc, char* argv[]);
 
  private:
-    const std::string configsPath = "/workspaces/obcpp/configs/";
-
     void makeDefault();
 };
 
