@@ -1,7 +1,4 @@
-CMakeFiles/
-CMakeCache.txt
-Makefile
-cmake_install.cmake
 .vscode
 
 bin/
+build/
