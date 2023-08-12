@@ -7,4 +7,6 @@ cmake_minimum_required(VERSION 3.10)
 
 project(obcpp VERSION 1.0)
 
-add_executable(main main.cpp)
+include_directories(obcpp)
+
+add_executable(main main.cpp "bruh (test)/L_+_ratio.cpp")

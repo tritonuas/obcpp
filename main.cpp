@@ -1,5 +1,5 @@
 #include <iostream>
-#include "bruh (test)/L_+_ratio.cpp"
+#include "bruh (test)/L_+_ratio.hpp"
 
 int main() {
     std::cout << "hello" << std::endl;
