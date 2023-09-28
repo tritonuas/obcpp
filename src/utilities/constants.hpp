@@ -1,0 +1,1 @@
+const int NUM_AIRDROP_BOTTLES = 5;
