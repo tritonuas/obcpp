@@ -36,7 +36,7 @@ enum class ODLCShape {
 
 enum class ODLCColor {
     White,
-    black, 
+    Black, 
     Red, 
     Blue, 
     Green, 
