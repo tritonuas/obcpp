@@ -23,6 +23,7 @@ struct XYZCoord {
 typedef std::vector<XYZCoord> Polygon;
 typedef std::vector<XYZCoord> Polyline;
 
+// TODO: these will eventually be redefined in a protobuf, so once the generated protobuf code exists we remove these
 enum class ODLCShape {
     Circle, 
     Semicircle, 
