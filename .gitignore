@@ -1,7 +1,14 @@
-.vscode
-CMakeFiles/
+*.so
+lib/
 bin/
+
+Makefile
+*.cmake
+CMakeFiles/
 build/
 CMakeCache.txt
 cmake_install.cmake
-*.so
+
+Testing/
+
+.vscode
