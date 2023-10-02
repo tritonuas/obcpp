@@ -1,12 +1,11 @@
 #ifndef CORE_STATES_HPP_
 #define CORE_STATES_HPP_
 
-#include <optional>
 #include <string>
 #include <array>
 
-#include "datatypes.hpp"
-#include "../utilities/constants.hpp"
+#include "utilities/datatypes.hpp"
+#include "utilities/constants.hpp"
 
 /*
     Interface for an arbitrary mission state.

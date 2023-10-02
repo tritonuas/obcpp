@@ -117,6 +117,19 @@ depend:
 .PHONY : depend
 
 #=============================================================================
+# Target rules for targets named core_library
+
+# Build rule for target.
+core_library: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 core_library
+.PHONY : core_library
+
+# fast build rule for target.
+core_library/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/core_library.dir/build.make CMakeFiles/core_library.dir/build
+.PHONY : core_library/fast
+
+#=============================================================================
 # Target rules for targets named obcpp
 
 # Build rule for target.
@@ -128,6 +141,30 @@ obcpp: cmake_check_build_system
 obcpp/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/obcpp.dir/build.make CMakeFiles/obcpp.dir/build
 .PHONY : obcpp/fast
+
+src/core/states.o: src/core/states.cpp.o
+.PHONY : src/core/states.o
+
+# target to build an object file
+src/core/states.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/core_library.dir/build.make CMakeFiles/core_library.dir/src/core/states.cpp.o
+.PHONY : src/core/states.cpp.o
+
+src/core/states.i: src/core/states.cpp.i
+.PHONY : src/core/states.i
+
+# target to preprocess a source file
+src/core/states.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/core_library.dir/build.make CMakeFiles/core_library.dir/src/core/states.cpp.i
+.PHONY : src/core/states.cpp.i
+
+src/core/states.s: src/core/states.cpp.s
+.PHONY : src/core/states.s
+
+# target to generate assembly for a file
+src/core/states.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/core_library.dir/build.make CMakeFiles/core_library.dir/src/core/states.cpp.s
+.PHONY : src/core/states.cpp.s
 
 src/main.o: src/main.cpp.o
 .PHONY : src/main.o
@@ -161,7 +198,11 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
+	@echo "... core_library"
 	@echo "... obcpp"
+	@echo "... src/core/states.o"
+	@echo "... src/core/states.i"
+	@echo "... src/core/states.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"

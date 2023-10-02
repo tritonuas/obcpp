@@ -1,4 +1,5 @@
 #ifndef PATHING_STATIC_HPP_
 #define PATHING_STATIC_HPP_
 
+
 #endif // PATHING_STATIC_HPP_

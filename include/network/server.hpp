@@ -1,0 +1,4 @@
+#ifndef NETWORK_SERVER_HPP_
+#define NETWORK_SERVER_HPP_
+
+#endif // NETWORK_SERVER_HPP_

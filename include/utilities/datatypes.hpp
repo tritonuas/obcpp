@@ -1,5 +1,5 @@
-#ifndef CORE_DATATYPES_HPP_
-#define CORE_DATATYPES_HPP_
+#ifndef UTILITIES_DATATYPES_HPP_
+#define UTILITIES_DATATYPES_HPP_
 
 #include <vector>
 
@@ -56,4 +56,4 @@ struct CompetitionBottle {
     char alphanumeric;
 };
 
-#endif // CORE_DATATYPES_HPP_
+#endif // UTILITIES_DATATYPES_HPP_

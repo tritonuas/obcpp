@@ -1,6 +1,12 @@
-#include "states.hpp"
+#include <iostream>
 
-std::optional<MissionState> PreparationState::tick() {
+#include "core/states.hpp"
+
+MissionState* PreparationState::tick() {
     // TODO: logic to check for takeoff signal, and double check to make sure that
     // all the mission parameters are valid
+
+    std::cout << "tick\n";
+
+    return nullptr;
 }
