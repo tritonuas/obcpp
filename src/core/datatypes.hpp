@@ -1,3 +1,6 @@
+#ifndef CORE_DATATYPES_HPP_
+#define CORE_DATATYPES_HPP_
+
 #include <vector>
 
 struct GPSCoord {
@@ -52,3 +55,5 @@ struct CompetitionBottle {
     ODLCColor alphaColor;
     char alphanumeric;
 };
+
+#endif // CORE_DATATYPES_HPP_

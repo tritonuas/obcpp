@@ -1,0 +1,4 @@
+#ifndef PATHING_DYNAMIC_HPP_
+#define PATHING_DYNAMIC_HPP_
+
+#endif // PATHING_DYNAMIC_HPP_

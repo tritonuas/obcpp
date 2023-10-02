@@ -1,3 +1,6 @@
+#ifndef UTILITIES_CARTESIAN_HPP_
+#define UTILITIES_CARTESIAN_HPP_
+
 class CartesianConverter {
     /*
         TODO:
@@ -7,3 +10,5 @@ class CartesianConverter {
         Function that takes GPSCoord and returns XYZCoord 
     */
 };
+
+#endif // UTILITIES_CARTESIAN_HPP_

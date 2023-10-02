@@ -1,3 +1,6 @@
+#ifndef CORE_STATES_HPP_
+#define CORE_STATES_HPP_
+
 #include <optional>
 #include <string>
 #include <array>
@@ -17,7 +20,7 @@ class MissionState {
             Returns the new MissionState if a state change needs to occur. If the optional
             type does not have a value, then no state change needs to occur. 
         */
-        virtual std::optional<MissionState> tick() = 0;
+        virtual MissionState* tick() = 0;
 
         /*
             Plain text name of the current state for display purposes 
@@ -31,7 +34,7 @@ class MissionState {
 */
 class PreparationState: public MissionState {
     public:
-        std::optional<MissionState> tick() override;
+        MissionState* tick() override;
 
         std::string getName() override {
             return "Mission Preparation";
@@ -43,3 +46,5 @@ class PreparationState: public MissionState {
         Polyline waypoints;
         std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES> bottles;
 };
+
+#endif // CORE_STATES_HPP_

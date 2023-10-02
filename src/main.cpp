@@ -1,16 +1,13 @@
 #include <iostream>
 
-#include <unordered_set>
+#include "core/states.hpp"
 
 int main() {
     std::cout << "hello" << std::endl;
 
-    std::unordered_set<int> test;
-    test.insert(5);
+    PreparationState state;
 
-    if (test.contains(5)) {
-        std::cout << "C++20" << std::endl;
-    }
+    state.tick();
 
     return 0;
 }
