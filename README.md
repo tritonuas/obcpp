@@ -34,71 +34,17 @@ This module implements the RRT* algorithm to plan out smart paths in order to na
 
 This module provides various helper types and classes used throughout the OBC, as well as some mission-related constants.
 
-## Build Requirements
+## Docker
 
-You will need:
+Everyone that works on this project is strongly recommended to work inside of a Docker container. This will allow us to all work on the same underlying hardware, and even let people develop straight from Windows.
 
-1. `gcc/g++` (a version capable of compiling C++20 code)
-2. `cmake` (minimum version 3.10)
-
-First, check if you alread have these installed.
-
-```title="g++"
-<tyler obcpp> $ g++ --version
-g++ (GCC) 12.2.1 20221121 (Red Hat 12.2.1-4)
-Copyright (C) 2022 Free Software Foundation, Inc.
-This is free software; see the source for copying conditions.  There is NO
-warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-```
-
-```title="cmake"
-<tyler obcpp> $ cmake --version
-cmake version 3.26.3
-
-CMake suite maintained and supported by Kitware (kitware.com/cmake).
-```
-
-If you receive output like this, then that program is already installed. If it says something along the lines of "command not found" then you will need to install it.
-
-### Ubuntu
-
-To install `gcc`/`g++` on Ubuntu, run the following command:
-
-```sh
-sudo apt install build-essential
-```
-
-To install `cmake` on Ubuntu, run the following command:
-
-```sh
-sudo apt install cmake
-```
-
-### MacOS
-
-First, you will need `homebrew` installed. You can verify this by typing `brew` into your terminal and reading the output. If it is not installed, you can install it by following [these](https://mac.install.guide/homebrew/3.html) instructions.
-
-To install `gcc`/`g++` on MacOS, run the following command:
-
-```sh
-xcode-select --install
-```
-
-To install `cmake` on MacOS, run the following command:
-
-```sh
-brew install cmake
-```
-
-### Other Operating Systems
-
-For other operating systems, you should be able to find instructions online. Make sure to verify the versions are new enough.
+To start, you will need to install Docker. You can follow the instructions [here](https://docs.docker.com/get-docker/)
 
 ## Setup
 
-Now that everything is installed, here is the process to build and run the application
+Now that everything is installed, here is the process to build and run the application. These instructions are for VSCode because it provides very nice integration with Docker containers. If you absolultely do not want to use VSCode, then you will have to find an equivalent way to do this with the IDE you want to use.
 
-1. Clone the repo
+1. Clone the repo. If you are using git from the command line, this is the command you will use.
     ```sh
     git clone git@github.com:tritonuas/obcpp.git
     ```
@@ -108,28 +54,69 @@ Now that everything is installed, here is the process to build and run the appli
     cd obcpp
     ```
 
-3. Run cmake (verify you are at the root level of the repo)
+3. Verify Docker is installed correctly by entering the following command into your terminal:
+    ```sh
+    docker run hello-world
+    ```
+    If everything works correctly, you should receive a message saying that everything worked correctly. If instead you get
+    a message saying that Docker was not recognized, then something went wrong in your installation. If restarting your 
+    computer does not fix it, then you should try and refollow the installation instructions again, verifying that you
+    didn't make any mistakes.
+
+4. Open the project's directory in VSCode (Make sure you are still in the `obcpp` directory, otherwise you will open
+   your current directory in vscode, whatever that may be.)
+    ```sh
+    code .
+    ```
+
+5. Download the following extensions:
+    1. [Remote-SSH](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-ssh)
+    2. [Remote Explorer](https://marketplace.visualstudio.com/items?itemName=ms-vscode.remote-explorer)
+    3. [Docker](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-docker)
+    4. [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+    5. [C/C++](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools)
+
+6. Build the Docker Container:
+    1. In the bottom left of the screen, click on the remote window icon. It should look like two angle brackets next to each other.
+    2. Select reopen in container.
+    3. Select "From Dockerfile"
+    4. Select Skip Features
+    5. Wait for several minutes while the container builds. You will only need to do this once.
+
+    _Note: you will probably want to enable some of your extensions, especially the C/C++ one, to be available inside of the container.
+    To do this, just navigate back to the extensions page, search for whichever extension you want to use inside of the container,
+    and click the button that says "Install in dev container"._
+
+7. If the container was successfully loaded, then in the terminal you should see something along the lines of 
+    ```sh
+    root@d26aba74c8cd:/workspaces/obcpp# 
+    ```
+
+8. Build CMake files with the following command:
     ```sh
     cmake .
     ```
 
-4. Run make (do this whenever you change code)
+9. Build executable with the following command. (You will need to do this anytime you edit code.)
     ```sh
     make
     ```
 
-5. Run the generated executable
+10. Run the generated executable to verify it was created correctly.
     ```sh
     bin/obcpp
     ```
 
-## Tests
+11. Verify that the testing framework is set up correctly
+    ```sh
+    ctest .
+    ```
 
-To run tests, run the following command:
+    If you receive output about certain tests passing/failing, then you are good. Ideally the main branch (which should be what
+    you cloned) won't have any failing tests, but if there are failing tests then it isn't your fault, nor does it mean your
+    installation is messed up.
 
-```
-ctest .
-```
+With that, everything should be set up correctly, and you should be good to go.
 
 ## Modifying `CMakeLists.txt`
 
