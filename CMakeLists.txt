@@ -46,6 +46,7 @@ enable_testing()
 # Add a testing executable
 add_executable(hello_test tests/hello_test.cpp)
 add_executable(hello_test2 tests/hello_test2.cpp)
+add_executable(cartesian_test tests/cartesian_test.cpp)
 
 target_link_libraries(
     hello_test
@@ -58,7 +59,13 @@ target_link_libraries(
     GTest::GTest 
     GTest::Main
 )
+target_link_libraries(
+    cartesian_test
+    GTest::GTest 
+    GTest::Main
+)
 
 add_test(test_all ./bin/hello_test)
 add_test(test_all ./bin/hello_test2)
+add_test(test_all ./bin/cartesian_test)
 # =============================
