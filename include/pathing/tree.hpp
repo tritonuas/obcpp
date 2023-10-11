@@ -20,9 +20,12 @@ class RRTNode {
     public:
         RRTNode(RRTPoint point);
         RRTNode(RRTPoint point, RRTNodeList reachable);
+        
         RRTPoint getPoint();
         void setReachable(RRTNodeList reachable);
         RRTNodeList getReachable();
+        double getCost();
+
     private:
         RRTPoint point;
         RRTNodeList reachable;

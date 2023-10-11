@@ -11,5 +11,17 @@ RRTNode::RRTNode(RRTPoint point, RRTNodeList reachable)
     : point{point}, reachable{reachable} {}
 
 RRTPoint RRTNode::getPoint() {
-    return point;
+    return this->point;
+}
+
+void RRTNode::setReachable(RRTNodeList reachable) {
+    this->reachable = reachable;
+}
+
+RRTNodeList RRTNode::getReachable() {
+    return this->reachable;
+}
+
+double RRTNode::getCost() {
+    return this->cost;
 }
