@@ -1,19 +1,41 @@
 #ifndef PATHING_TREE_HPP_
 #define PATHING_TREE_HPP_
 
-class RRTPoint {
-    // TODO: Declare methods/fields
-}
+#include <vector>
+class RRTNode;
+typedef std::vector<RRTNode*>  RRTNodeList;
+
+struct RRTPoint {
+    RRTPoint(double x, double y, double z, double psi);
+
+    double x;
+    double y;
+    double z;
+    double psi;
+
+};
 
 class RRTNode {
-    // TODO: Declare methods/fields
-}
+
+    public:
+        RRTNode(RRTPoint point);
+        RRTNode(RRTPoint point, RRTNodeList reachable);
+        RRTPoint getPoint();
+        void setReachable(RRTNodeList reachable);
+        RRTNodeList getReachable();
+    private:
+        RRTPoint point;
+        RRTNodeList reachable;
+        double cost;
+        RRTNode* parent;
+};
 
 class RRTEdge {
     // TODO: Declare methods/fields
-}
+};
 
 class RRTTree {
     // TODO: Declare methods/fields
-}
+};
+
 #endif // PATHING_TREE_HPP_
