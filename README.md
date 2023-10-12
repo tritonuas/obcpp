@@ -109,7 +109,7 @@ Now that everything is installed, here is the process to build and run the appli
 
 11. Verify that the testing framework is set up correctly
     ```sh
-    ctest .
+    make test
     ```
 
     If you receive output about certain tests passing/failing, then you are good. Ideally the main branch (which should be what
