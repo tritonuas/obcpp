@@ -44,26 +44,5 @@ target_link_libraries(obcpp
 add_subdirectory(tests)
 add_subdirectory(deps/google-test)
 
-# enable CTest testing
-enable_testing()
-
-# Add a testing executable
-add_executable(hello_test tests/hello_test.cpp)
-add_executable(hello_test2 tests/hello_test2.cpp)
-
-target_link_libraries(
-    hello_test
-    GTest::GTest 
-    GTest::Main
-)
-
-target_link_libraries(
-    hello_test2
-    GTest::GTest 
-    GTest::Main
-)
-
-add_test(test_all ./bin/hello_test)
-add_test(test_all ./bin/hello_test2)
 # =============================
 # Json Library
