@@ -30,6 +30,7 @@ add_executable(obcpp
 target_link_libraries(obcpp
     PRIVATE
         core::library
+        nlohmann_json::nlohmann_json
 )
 
 # =============================
