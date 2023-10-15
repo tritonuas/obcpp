@@ -18,6 +18,8 @@ target_include_directories(core_library
     PUBLIC
         ${PROJECT_SOURCE_DIR}/include
 )
+
+add_subdirectory(deps/json)
 # =============================
 
 # =============================
@@ -30,6 +32,7 @@ add_executable(obcpp
 target_link_libraries(obcpp
     PRIVATE
         core::library
+        nlohmann_json::nlohmann_json
 )
 
 # =============================
@@ -40,4 +43,6 @@ target_link_libraries(obcpp
 
 add_subdirectory(tests)
 add_subdirectory(deps/google-test)
+
 # =============================
+# Json Library
