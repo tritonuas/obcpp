@@ -16,3 +16,4 @@ Testing/
 .devcontainer
 
 libcore_library.dylib
+.DS_Store
