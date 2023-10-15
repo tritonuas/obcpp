@@ -9,9 +9,6 @@ class CartesianConverter {
         DONE:
         Function that takes GPSCoord and returns XYZCoord
         Function that takes XYZCoord and returns GPSCoord
-
-        TODO:
-        Getter, setter methods 
     */
 
     private:
@@ -45,15 +42,6 @@ class CartesianConverter {
         double toDegrees(double x){
             return x * (180 / M_PI);
         }
-
-
-        /* DEPRECATED: Raw algorithm for Haversine's formula.
-        std::tuple<double,double> latlng_to_xy_raw(double dest_latitude, double dest_longitude){
-            double x = 2*asin(sqrt(sin(((center.first*M_PI/180)-(center.second*M_PI/180))*0.5)*sin(((center.first*M_PI/180)-(center.second*M_PI/180))*0.5)+sin(((dest_latitude*M_PI/180)-(center.second*M_PI/180))*0.5)*sin(((dest_latitude*M_PI/180)-(center.second*M_PI/180))*0.5)*cos(center.first*M_PI/180)*cos((center.second*M_PI/180))))*6371008.7714;
-            double y = 2*asin(sqrt(sin(((center.first*M_PI/180)-(center.second*M_PI/180))*0.5)*sin(((center.first*M_PI/180)-(center.second*M_PI/180))*0.5)+sin(((center.first*M_PI/180)-(dest_longitude*M_PI/180))*0.5)*sin(((center.first*M_PI/180)-(dest_longitude*M_PI/180))*0.5)*cos(center.first*M_PI/180)*cos((center.second*M_PI/180))))*6371008.7714;
-            return std::make_tuple(x, y);
-        }
-        */
 
         /*
         * tuple(lat: double, lng: double) -> tuple(x: double, y: double)
@@ -113,7 +101,7 @@ class CartesianConverter {
         double havDistance(double lat1, double lat2, double dLng) {
             return hav(lat1 - lat2) + hav(dLng) * cos(lat1) * cos(lat2);
         }
-        
+
 };
 
 #endif // UTILITIES_CARTESIAN_HPP_
