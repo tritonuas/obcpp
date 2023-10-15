@@ -18,14 +18,3 @@ ExternalProject_Add(googletest
   TEST_COMMAND      ""
 )
 
-
-# Boris: I have no idea what I'm doing, pls help
-ExternalProject_Add(json
-  URL               https://github.com/nlohmann/json/releases/tag/v3.11.2 
-  SOURCE_DIR        "${CMAKE_CURRENT_BINARY_DIR}/json-src"
-  BINARY_DIR        "${CMAKE_CURRENT_BINARY_DIR}/json-build"
-  CONFIGURE_COMMAND ""
-  BUILD_COMMAND     ""
-  INSTALL_COMMAND   ""
-  TEST_COMMAND      ""
-)

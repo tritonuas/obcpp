@@ -30,7 +30,6 @@ add_executable(obcpp
 target_link_libraries(obcpp
     PRIVATE
         core::library
-        nlohmann_json::nlohmann_json
 )
 
 # =============================
@@ -41,7 +40,6 @@ target_link_libraries(obcpp
 
 add_subdirectory(tests)
 add_subdirectory(deps/google-test)
-add_subdirectory(deps/json)
 
 # enable CTest testing
 enable_testing()
