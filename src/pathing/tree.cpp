@@ -25,3 +25,29 @@ RRTNodeList RRTNode::getReachable() {
 double RRTNode::getCost() {
     return this->cost;
 }
+
+void RRTNode::setCost(double newCost) {
+    this->cost = newCost;
+}
+
+RRTEdge::RRTEdge(RRTNode* from, RRTNode* to) 
+    : from{from}, to{to} {}
+
+RRTEdge::RRTEdge(RRTNode* from, RRTNode* to, std::vector<RRTPoint> path)
+    : from{from}, to{to} {}
+
+void RRTEdge::setCost(double newCost) {
+    this->cost = newCost;
+}
+
+double RRTEdge::getCost() {
+    return this->cost;
+}
+
+std::vector<RRTPoint> RRTEdge::getPath() {
+    return this->path;
+}
+
+void RRTEdge::setPath(std::vector<RRTPoint> path) {
+    this->path = path;
+}

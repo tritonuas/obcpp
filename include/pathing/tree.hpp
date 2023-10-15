@@ -25,6 +25,7 @@ class RRTNode {
         void setReachable(RRTNodeList reachable);
         RRTNodeList getReachable();
         double getCost();
+        void setCost(double newCost);
 
     private:
         RRTPoint point;
@@ -34,7 +35,19 @@ class RRTNode {
 };
 
 class RRTEdge {
-    // TODO: Declare methods/fields
+    public:
+        RRTEdge(RRTNode* from, RRTNode* to);
+        RRTEdge(RRTNode* from, RRTNode* to, std::vector<RRTPoint> path);
+        void setCost(double newCost);
+        double getCost();
+        std::vector<RRTPoint> getPath();
+        void setPath(std::vector<RRTPoint> path);
+
+    private:
+        RRTNode* from;
+        RRTNode* to;
+        double cost;
+        std::vector<RRTPoint> path;
 };
 
 class RRTTree {
