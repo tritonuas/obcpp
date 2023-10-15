@@ -15,11 +15,12 @@
 class ImageData
 {
 private:
-    String name final;
-    String path final;
-    Mat data final;
+    const String NAME;
+    const String PATHS;
+    const Mat DATA;
 
 public:
+    ImageData(String NAME, String PATH, Mat DATA);
     String getName();
     String getPath();
     Mat getData();
