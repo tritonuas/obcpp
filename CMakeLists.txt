@@ -30,6 +30,7 @@ add_executable(obcpp
 target_link_libraries(obcpp
     PRIVATE
         core::library
+        nlohmann_json::nlohmann_json
 )
 
 # =============================
@@ -40,4 +41,28 @@ target_link_libraries(obcpp
 
 add_subdirectory(tests)
 add_subdirectory(deps/google-test)
+add_subdirectory(deps/json)
+
+# enable CTest testing
+enable_testing()
+
+# Add a testing executable
+add_executable(hello_test tests/hello_test.cpp)
+add_executable(hello_test2 tests/hello_test2.cpp)
+
+target_link_libraries(
+    hello_test
+    GTest::GTest 
+    GTest::Main
+)
+
+target_link_libraries(
+    hello_test2
+    GTest::GTest 
+    GTest::Main
+)
+
+add_test(test_all ./bin/hello_test)
+add_test(test_all ./bin/hello_test2)
 # =============================
+# Json Library
