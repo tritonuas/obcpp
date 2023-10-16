@@ -2,12 +2,16 @@
 
 #include "core/states.hpp"
 
+#include <httplib.h>
+
 int main() {
-    std::cout << "hello" << std::endl;
+    httplib::Server svr;
 
-    PreparationState state;
+    svr.Get("/hi", [](const httplib::Request &, httplib::Response &res) {
+    res.set_content("Hello World!", "text/plain");
+    });
 
-    state.tick();
+    svr.listen("0.0.0.0", 8080);
 
     return 0;
 }

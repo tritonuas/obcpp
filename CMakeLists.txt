@@ -20,6 +20,7 @@ target_include_directories(core_library
 )
 
 add_subdirectory(deps/json)
+add_subdirectory(deps/cpp-httplib)
 # =============================
 
 # =============================
@@ -33,6 +34,7 @@ target_link_libraries(obcpp
     PRIVATE
         core::library
         nlohmann_json::nlohmann_json
+        httplib
 )
 
 # =============================
