@@ -92,9 +92,15 @@ Now that everything is installed, here is the process to build and run the appli
     root@d26aba74c8cd:/workspaces/obcpp# 
     ```
 
+8. Create a build directory and enter it (All the following commands should be run from inside the build directory)
+    ```sh
+    mkdir build
+    cd build
+    ```
+
 8. Build CMake files with the following command:
     ```sh
-    cmake .
+    cmake ..
     ```
 
 9. Build executable with the following command. (You will need to do this anytime you edit code.)
