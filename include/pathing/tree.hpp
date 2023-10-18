@@ -19,7 +19,7 @@ struct RRTPoint {
 class RRTNode {
 
     public:
-        RRTNode(RRTPoint point);
+        RRTNode(RRTPoint point, double cost);
         RRTNode(RRTPoint point, RRTNodeList reachable);
         
         RRTPoint getPoint();
@@ -37,8 +37,7 @@ class RRTNode {
 
 class RRTEdge {
     public:
-        RRTEdge(RRTNode* from, RRTNode* to);
-        RRTEdge(RRTNode* from, RRTNode* to, std::vector<RRTPoint> path);
+        RRTEdge(RRTNode* from, RRTNode* to, std::vector<RRTPoint> path, double cost);
         void setCost(double newCost);
         double getCost();
         std::vector<RRTPoint> getPath();
@@ -53,13 +52,13 @@ class RRTEdge {
 
 class RRTTree {
     public:
-        void addNode(RRTNode* connectTo, RRTNode* newNode);
-        void rewireEdge(RRTNode* from, RRTNode* toPrev, RRTNode* toNew);
+        void addNode(RRTNode* connectTo, RRTNode* newNode, std::vector<RRTPoint> path, double cost);
+        void rewireEdge(RRTNode* from, RRTNode* toPrev, RRTNode* toNew, std::vector<RRTPoint> path, double cost);
         RRTNode* getNode(RRTPoint point);
         RRTEdge* getEdge(RRTPoint from, RRTPoint to);
 
     private:
-        std::unordered_map<RRTPoint, RRTNode*> nodeMap;
+        std::unordered_map<RRTPoint, RRTNode> nodeMap;
         std::unordered_map<std::pair<RRTNode*, RRTNode*>, RRTEdge> edgeMap;
 };
 

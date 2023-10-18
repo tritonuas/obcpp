@@ -4,8 +4,8 @@ RRTPoint::RRTPoint(double x, double y, double z, double psi)
     : x{x}, y{y}, z{z}, psi{psi} {}
 
 
-RRTNode::RRTNode(RRTPoint point)
-    : point{point} {}
+RRTNode::RRTNode(RRTPoint point, double cost)
+    : point{point}, cost{cost} {}
 
 RRTNode::RRTNode(RRTPoint point, RRTNodeList reachable)
     : point{point}, reachable{reachable} {}
@@ -30,11 +30,8 @@ void RRTNode::setCost(double newCost) {
     this->cost = newCost;
 }
 
-RRTEdge::RRTEdge(RRTNode* from, RRTNode* to) 
-    : from{from}, to{to} {}
-
-RRTEdge::RRTEdge(RRTNode* from, RRTNode* to, std::vector<RRTPoint> path)
-    : from{from}, to{to} {}
+RRTEdge::RRTEdge(RRTNode* from, RRTNode* to, std::vector<RRTPoint> path, double cost)
+    : from{from}, to{to}, path{path}, cost{cost} {}
 
 void RRTEdge::setCost(double newCost) {
     this->cost = newCost;
@@ -52,17 +49,29 @@ void RRTEdge::setPath(std::vector<RRTPoint> path) {
     this->path = path;
 }
 
-void RRTTree::addNode(RRTNode* connectTo, RRTNode* newNode) {
+void RRTTree::addNode(RRTNode* connectTo, RRTNode* newNode, std::vector<RRTPoint> path, double cost) {
+    std::pair<RRTNode*, RRTNode*> edgePair(connectTo, newNode);
+    RRTEdge newEdge = RRTEdge(connectTo, newNode, path, cost);
+    std::pair<std::pair<RRTNode*, RRTNode*>, RRTEdge> toAdd(edgePair, newEdge);
     
+    edgeMap.insert(toAdd);
+    std::pair<RRTPoint, RRTNode> insertNode(newNode->getPoint(), *newNode);
+    nodeMap.insert(insertNode);
 }
 
-void RRTTree::rewireEdge(RRTNode* from, RRTNode* toPrev, RRTNode* toNew) {
-
+void RRTTree::rewireEdge(RRTNode* from, RRTNode* toPrev, RRTNode* toNew, std::vector<RRTPoint> path, double cost) {
+    std::pair<RRTNode*, RRTNode*> toRemove(from, toPrev);
+    std::pair<RRTNode*, RRTNode*> toAdd(from, toNew);
+    
+    RRTEdge newEdge = RRTEdge(from, toNew, path, cost);
+    std::pair<std::pair<RRTNode*, RRTNode*>, RRTEdge> edgePair(toAdd, newEdge);
+    edgeMap.erase(toRemove);
+    edgeMap.insert(edgePair);
 }
 
 RRTNode* RRTTree::getNode(RRTPoint point) {
     if(nodeMap.count(point)) {
-        return nodeMap.at(point);
+        return &(nodeMap.at(point));
     }
     else {
         return nullptr;
