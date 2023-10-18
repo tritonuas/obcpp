@@ -52,8 +52,8 @@ void RRTEdge::setPath(std::vector<RRTPoint> path) {
     this->path = path;
 }
 
-void RRTTree::addNode(RRTNode* connectTo) {
-
+void RRTTree::addNode(RRTNode* connectTo, RRTNode* newNode) {
+    
 }
 
 void RRTTree::rewireEdge(RRTNode* from, RRTNode* toPrev, RRTNode* toNew) {
@@ -61,9 +61,25 @@ void RRTTree::rewireEdge(RRTNode* from, RRTNode* toPrev, RRTNode* toNew) {
 }
 
 RRTNode* RRTTree::getNode(RRTPoint point) {
-    
+    if(nodeMap.count(point)) {
+        return nodeMap.at(point);
+    }
+    else {
+        return nullptr;
+    }
 }
 
-RRTEdge RRTTree::getEdge(RRTPoint from, RRTPoint to) {
-
+RRTEdge* RRTTree::getEdge(RRTPoint from, RRTPoint to) {
+    RRTNode* node1 = getNode(from);
+    RRTNode* node2 = getNode(to);
+    if(node1 == nullptr || node2 == nullptr) {
+        return nullptr;
+    }
+    std::pair<RRTNode*, RRTNode*> edgePair(node1, node2);
+    if(edgeMap.count(edgePair)) {
+        return &(edgeMap.at(edgePair));
+    }
+    else {
+        return nullptr;
+    }
 }

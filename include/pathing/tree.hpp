@@ -53,10 +53,10 @@ class RRTEdge {
 
 class RRTTree {
     public:
-        void addNode(RRTNode* connectTo);
+        void addNode(RRTNode* connectTo, RRTNode* newNode);
         void rewireEdge(RRTNode* from, RRTNode* toPrev, RRTNode* toNew);
         RRTNode* getNode(RRTPoint point);
-        RRTEdge getEdge(RRTPoint from, RRTPoint to);
+        RRTEdge* getEdge(RRTPoint from, RRTPoint to);
 
     private:
         std::unordered_map<RRTPoint, RRTNode*> nodeMap;
