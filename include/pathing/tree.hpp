@@ -2,6 +2,7 @@
 #define PATHING_TREE_HPP_
 
 #include <vector>
+#include <unordered_map>
 class RRTNode;
 typedef std::vector<RRTNode*>  RRTNodeList;
 
@@ -51,7 +52,15 @@ class RRTEdge {
 };
 
 class RRTTree {
-    // TODO: Declare methods/fields
+    public:
+        void addNode(RRTNode* connectTo);
+        void rewireEdge(RRTNode* from, RRTNode* toPrev, RRTNode* toNew);
+        RRTNode* getNode(RRTPoint point);
+        RRTEdge getEdge(RRTPoint from, RRTPoint to);
+
+    private:
+        std::unordered_map<RRTPoint, RRTNode*> nodeMap;
+        std::unordered_map<std::pair<RRTNode*, RRTNode*>, RRTEdge> edgeMap;
 };
 
 #endif // PATHING_TREE_HPP_

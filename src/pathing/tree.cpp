@@ -51,3 +51,19 @@ std::vector<RRTPoint> RRTEdge::getPath() {
 void RRTEdge::setPath(std::vector<RRTPoint> path) {
     this->path = path;
 }
+
+void RRTTree::addNode(RRTNode* connectTo) {
+
+}
+
+void RRTTree::rewireEdge(RRTNode* from, RRTNode* toPrev, RRTNode* toNew) {
+
+}
+
+RRTNode* RRTTree::getNode(RRTPoint point) {
+    
+}
+
+RRTEdge RRTTree::getEdge(RRTPoint from, RRTPoint to) {
+
+}
