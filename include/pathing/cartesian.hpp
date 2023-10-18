@@ -3,37 +3,49 @@
 #define _USE_MATH_DEFINES
 #include <algorithm>
 #include <math.h>
+#include <string>
 
+/*
+* Defines a (lat,lng,alt) or (x,y,z) point on the coordinate plane.
+*/
+struct point {
+    double lat_x;
+    double lng_y;
+    double alt_z;
+};
+
+/*
+* Converter for between (lat,lng,alt) and (x,y,z).
+*/
 class CartesianConverter {
-    /*
-        DONE:
-        Function that takes GPSCoord and returns XYZCoord
-        Function that takes XYZCoord and returns GPSCoord
-    */
-
     private:
-        // Keep all coordinates as tuples. 
-        // Keep the center point coordinates as a pair so that it may be updated later.
-        std::pair<double,double> center;
+        point start;
         double EARTH_RADIUS = 6371008.7714; // Mean radius of the Earth as approximated by the IUGG.
 
     public:
         /* 
-        * Constructor that takes in (center point) in tuple(double,double) format.
+        * Constructor that takes in a starting (lat,long,alt) or (x,y,z) point.
         */
-        CartesianConverter(std::tuple<double,double> center_point){
-            center = std::make_pair(std::get<0>(center_point), std::get<1>(center_point));
+        CartesianConverter(struct point *pt){
+            start = *pt;
         };
 
         /*
-        * tuple(x: double, y: double) -> tuple(lat: double, lng: double)
+        * point(x,y,z) -> point(lat,long,alt)
         * Function that tkes XYZCoord and returns GPSCoord.
-        * Will return only positive coordinates, as angles cannot be uniquely converted.
+        * Will return only positive coordinates after distance calculations as angles cannot be uniquely converted.
+        * Does not calculate altitude change conversion; returned point will retain starting point altitude.
         */
-        std::tuple<double,double> xy_to_latlng(double dest_x, double dest_y){
-            double x = reverseDistanceBetween(std::make_tuple(center.first, center.second), std::make_tuple(dest_x, center.second));
-            double y = reverseDistanceBetween(std::make_tuple(center.first, center.second), std::make_tuple(center.first, dest_y));
-            return std::make_tuple(x, y);
+        struct point xy_to_latlng(point *dest){
+            double x = reverseDistanceBetween(std::make_tuple(start.lat_x, start.lng_y), std::make_tuple(dest->lat_x, start.lng_y));
+            double y = reverseDistanceBetween(std::make_tuple(start.lat_x, start.lng_y), std::make_tuple(start.lat_x, dest->lng_y));
+
+            point xyz;
+            xyz.lat_x = x,
+            xyz.lng_y = y,
+            xyz.alt_z = start.alt_z;
+
+            return xyz;
         }
         double reverseDistanceBetween(std::tuple<double,double> from, std::tuple<double,double> to){
             return toDegrees(distanceRadians(std::get<0>(from) / EARTH_RADIUS, std::get<1>(from) / EARTH_RADIUS, std::get<0>(to) / EARTH_RADIUS, std::get<1>(to) / EARTH_RADIUS));
@@ -44,17 +56,23 @@ class CartesianConverter {
         }
 
         /*
-        * tuple(lat: double, lng: double) -> tuple(x: double, y: double)
+        * point(lat,lng,alt) -> point(x,y,z)
         * Function that tkes GPSCoord and returns XYZCoord.
-        * Will return only positive XY meters, as angles cannot be uniquely converted.
+        * Will only return positive XY meter distance after distance calculations as angles cannot be uniquely converted.
+        * Does not calculate altitude change conversion; returned point will retain starting point altitude.
         */
-        std::tuple<double,double> latlng_to_xy(double dest_latitude, double dest_longitude){
+        struct point latlng_to_xy(point *dest){
 
-            // Compute the distance between the center and destination point's latitudes and longitudes.
-            double x = computeDistanceBetween(std::make_tuple(center.first, center.second), std::make_tuple(dest_latitude, center.second));
-            double y = computeDistanceBetween(std::make_tuple(center.first, center.second), std::make_tuple(center.first, dest_longitude));
+            // Compute the distance between the start and destination point's latitudes and longitudes.
+            double x = computeDistanceBetween(std::make_tuple(start.lat_x, start.lng_y), std::make_tuple(dest->lat_x, start.lng_y));
+            double y = computeDistanceBetween(std::make_tuple(start.lat_x, start.lng_y), std::make_tuple(start.lat_x, dest->lng_y));
 
-            return std::make_tuple(x, y);
+            point xyz;
+            xyz.lat_x = x,
+            xyz.lng_y = y,
+            xyz.alt_z = start.alt_z;
+
+            return xyz;
         }
 
         /* 
@@ -83,20 +101,20 @@ class CartesianConverter {
             return x * (M_PI / 180);
         }
         /*
-        * Haversine formula
+        * Haversine formula.
         * See http://www.movable-type.co.uk/scripts/latlong.html
         */
         double hav(double x) {
             return sin(x * 0.5) * sin(x * 0.5);
         }
         /*
-        * Inverse haversine formula
+        * Inverse haversine formula.
         */
         double arcHav(double x) {
             return 2 * asin(sqrt(x));
         }
         /* 
-        * Haversine distance between two points on the unit square
+        * Haversine distance between two points on the unit square.
         */
         double havDistance(double lat1, double lat2, double dLng) {
             return hav(lat1 - lat2) + hav(dLng) * cos(lat1) * cos(lat2);

@@ -18,6 +18,8 @@ target_include_directories(core_library
     PUBLIC
         ${PROJECT_SOURCE_DIR}/include
 )
+
+add_subdirectory(deps/json)
 # =============================
 
 # =============================
@@ -30,6 +32,7 @@ add_executable(obcpp
 target_link_libraries(obcpp
     PRIVATE
         core::library
+        nlohmann_json::nlohmann_json
 )
 
 # =============================
@@ -38,8 +41,10 @@ target_link_libraries(obcpp
 # =============================
 # Unit tests
 
+add_subdirectory(tests)
 add_subdirectory(deps/google-test)
 
+<<<<<<< HEAD
 # enable CTest testing
 enable_testing()
 
@@ -69,3 +74,7 @@ add_test(test_all ./bin/hello_test)
 add_test(test_all ./bin/hello_test2)
 add_test(test_all ./bin/cartesian_test)
 # =============================
+=======
+# =============================
+# Json Library
+>>>>>>> origin
