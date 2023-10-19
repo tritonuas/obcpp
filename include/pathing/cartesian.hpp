@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <math.h>
 #include <string>
+#include <tuple>
 
 /*
 * Defines a (lat,lng,alt) or (x,y,z) point on the coordinate plane.
