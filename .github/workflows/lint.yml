@@ -1,4 +1,4 @@
-name: Tests
+name: Lint
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    name: C++ Tests 
+    name: clang-tidy 
     runs-on: ubuntu-latest
 
     steps:
@@ -27,8 +27,8 @@ jobs:
       - name: Set up Cmake
         run: cd build && cmake ..
 
-      - name: Run tests
-        run: cd build && make test 
+      - name: Run clang-tidy
+        run: cd build && make lint 
 
 
 

@@ -4,4 +4,5 @@ RUN apt-get update \
     && apt-get install -y build-essential \
                            gdb \
                            git \
-                           cmake
+                           cmake \
+                           clang-tidy
