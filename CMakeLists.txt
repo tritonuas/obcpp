@@ -7,51 +7,61 @@ FATAL: In-source builds are not allowed.
 endif()
 
 
+cmake_minimum_required(VERSION 3.10)
+
+
 set(CMAKE_CXX_COMPILER g++)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_C_COMPILER gcc)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ./bin)
 
-cmake_minimum_required(VERSION 3.10)
 
 project(obcpp VERSION 1.0)
 
-# =============================
-# Libraries
-add_library(core_library SHARED
-    src/core/states.cpp
-)
-add_library(core::library ALIAS core_library)
-target_include_directories(core_library
-    PUBLIC
-        ${PROJECT_SOURCE_DIR}/include
-)
-
-add_subdirectory(deps/json)
-# =============================
+file(GLOB_RECURSE SOURCES "src/*.cpp")
+file(GLOB_RECURSE HEADERS "include/*.hpp")
 
 # =============================
 # Executable
-
-add_executable(obcpp
-    src/main.cpp
-)
-
-target_link_libraries(obcpp
-    PRIVATE
-        core::library
-        nlohmann_json::nlohmann_json
-)
-
+set(INCLUDE_DIRECTORY ${PROJECT_SOURCE_DIR}/include)
+include_directories(${INCLUDE_DIRECTORY})
+add_executable(${PROJECT_NAME} ${SOURCES})
 # =============================
 
+# =============================
+# Libraries
+# NOTE: add each library's include directory to clang-tidy in the Linting section 
+add_subdirectory(deps/json)
+target_link_libraries(${PROJECT_NAME}
+    PRIVATE
+    nlohmann_json::nlohmann_json
+)
+# =============================
 
 # =============================
 # Unit tests
-
 add_subdirectory(tests)
 add_subdirectory(deps/google-test)
+# =============================
 
 # =============================
-# Json Library
+# Linting 
+# Adding lint target if clang-tidy executable is found
+find_program(CLANG_TIDY "clang-tidy")
+if(CLANG_TIDY)
+  # define lint target
+  add_custom_target(lint
+    COMMAND ${CLANG_TIDY} 
+    ${SOURCES}
+    ${HEADERS}
+    --
+    -std=c++${CMAKE_CXX_STANDARD}
+    -I${INCLUDE_DIRECTORY}
+    # NOTE: need to add include directory for every library
+    -I./_deps/json-src/include/
+   )
+else()
+    message(FATAL_ERROR "clang-tidy executable not found. Check the README for steps to install it on your system")
+endif()
+# =============================
