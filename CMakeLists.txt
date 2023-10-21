@@ -7,7 +7,7 @@ FATAL: In-source builds are not allowed.
 endif()
 
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.13)
 
 
 set(CMAKE_CXX_COMPILER g++)
@@ -31,18 +31,17 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 
 # =============================
 # Libraries
+set(DEPS_DIRECTORY ${PROJECT_SOURCE_DIR}/deps)
+
 # NOTE: add each library's include directory to clang-tidy in the Linting section 
-add_subdirectory(deps/json)
-target_link_libraries(${PROJECT_NAME}
-    PRIVATE
-    nlohmann_json::nlohmann_json
-)
+add_subdirectory(${DEPS_DIRECTORY}/arena-sdk)
+add_subdirectory(${DEPS_DIRECTORY}/json)
 # =============================
 
 # =============================
 # Unit tests
 add_subdirectory(tests)
-add_subdirectory(deps/google-test)
+add_subdirectory(${DEPS_DIRECTORY}/google-test)
 # =============================
 
 # =============================

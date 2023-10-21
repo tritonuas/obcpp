@@ -1,0 +1,47 @@
+#!/bin/sh
+
+set -e
+
+PKGS_DIR=$1
+
+if [ ! "$PKGS_DIR" ]; then
+    echo "ERROR: Could not install Arena SDK. Did not specify installation directory. Must provide installation directory as an argument"
+    exit 1
+fi
+
+mkdir -p "$PKGS_DIR"
+
+ARCH=`uname -m`
+OS=`uname`
+
+echo "Installing Arena SDK for $ARCH on $OS to $PKGS_DIR"
+if [ $OS != "Linux" ]; then
+    echo "ERROR: Arena SDK can only be installed on Linux"
+    exit 1
+else
+    # pull Arena SDK from TUAS Google Drive 
+    # https://drive.google.com/drive/folders/1Ek1luFtO-FpDUJHP9_NQ9RH5dYhyhWXi?usp=share_link
+    if [ $ARCH = "aarch64" ]; then
+        FILE_NAME="ArenaSDK_v0.1.49_Linux_ARM64.tar.gz"
+        FILE_ID="1VtBji-cWfetM5nXZwt55JuHPWPGahQOH"
+        ARENA_SDK_DIR="ArenaSDK_Linux_ARM64"
+        ARENA_CONF="Arena_SDK_ARM64.conf"
+    elif [ $ARCH = "x86_64" ]; then
+        FILE_NAME="ArenaSDK_v0.1.68_Linux_x64.tar.gz"
+        FILE_ID="1pQtheOK-f2N4C2CDi43HTqttGuxHKptg"
+        ARENA_SDK_DIR="ArenaSDK_Linux_x64"
+        ARENA_CONF="Arena_SDK_Linux_x64.conf"
+    fi;
+
+    if [ ! -f "$PKGS_DIR/$FILE_NAME" ]; then \
+        # This command is kinda crazy to bypass Google drive's virus scanning warning for large files https://medium.com/@acpanjan/download-google-drive-files-using-wget-3c2c025a8b99
+        wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate "https://docs.google.com/uc?export=download&id=$FILE_ID" -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=$FILE_ID" -O "$PKGS_DIR/$FILE_NAME" && rm -rf /tmp/cookies.txt
+        tar xf "$PKGS_DIR/$FILE_NAME" --directory="$PKGS_DIR"
+    else \
+        echo "WARNING: Arena SDK is already installed. Will not download again."; \
+    fi;
+
+    # Symlink arch specific arena install to architecture agnostic directory.
+    # Build system can point to this folder without knowing which architecture to use.
+    ln -sf "$ARENA_SDK_DIR" "$PKGS_DIR/extracted"
+fi;
