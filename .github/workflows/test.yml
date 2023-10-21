@@ -16,19 +16,13 @@ jobs:
         run: sudo apt install cmake
 
       - name: Checkout Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: true
           token: ${{ secrets.SSH_TOKEN }}
 
-      - name: Create build dir
-        run: mkdir build
-
       - name: Set up Cmake
-        run: cd build && cmake ..
+        run: mkdir build && cd build && cmake ..
 
-      - name: Run tests
-        run: cd build && make test 
-
-
-
+      - name: Run Tests
+        run: cd build && make test
