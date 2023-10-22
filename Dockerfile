@@ -5,4 +5,5 @@ RUN apt-get update \
                            gdb \
                            git \
                            cmake \
-                           clang-tidy
+                           clang-tidy \
+                           gnuplot

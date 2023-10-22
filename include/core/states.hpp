@@ -3,6 +3,7 @@
 
 #include <string>
 #include <array>
+#include <optional>
 
 #include "utilities/datatypes.hpp"
 #include "utilities/constants.hpp"
@@ -40,9 +41,9 @@ class PreparationState: public MissionState {
         }
 
     private:
-        Polygon flightBoundary;
-        Polygon airdropBoundary;
-        Polyline waypoints;
+        std::optional<Polygon> flightBoundary;
+        std::optional<Polygon> airdropBoundary;
+        std::optional<Polyline> waypoints;
         std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES> bottles;
 };
 

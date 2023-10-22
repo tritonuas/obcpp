@@ -7,7 +7,7 @@ FATAL: In-source builds are not allowed.
 endif()
 
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.14)
 
 
 set(CMAKE_CXX_COMPILER g++)
@@ -29,10 +29,12 @@ include_directories(${INCLUDE_DIRECTORY})
 add_executable(${PROJECT_NAME} ${SOURCES})
 # =============================
 
+
 # =============================
 # Libraries
 # NOTE: add each library's include directory to clang-tidy in the Linting section 
 add_subdirectory(deps/json)
+add_subdirectory(deps/matplotplusplus)
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
     nlohmann_json::nlohmann_json
