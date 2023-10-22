@@ -31,17 +31,34 @@ else
         FILE_ID="1pQtheOK-f2N4C2CDi43HTqttGuxHKptg"
         ARENA_SDK_DIR="ArenaSDK_Linux_x64"
         ARENA_CONF="Arena_SDK_Linux_x64.conf"
+    else
+        echo "ERROR: Unable to install Arena-SDK. Unkown architecture $ARCH. Architecture must be aarch64 or x86_64."
+        exit 1
     fi;
 
-    if [ ! -f "$PKGS_DIR/$FILE_NAME" ]; then \
+    if [ ! -d "$PKGS_DIR/$ARENA_SDK_DIR" ]; then \
+        # Check that wget is installed
+        if ! command -v wget > /dev/null; then \
+            echo "ERROR: Unable to install Arena-SDK. wget is not installed. Install wget for your system and retry."
+            exit 1
+        fi;
+
+        # Check that tar is installed
+        if ! command -v tar > /dev/null; then \
+            echo "ERROR: Unable to install Arena-SDK. tar is not installed. Install tar for your system and retry."
+            exit 1
+        fi;
+    
         # This command is kinda crazy to bypass Google drive's virus scanning warning for large files https://medium.com/@acpanjan/download-google-drive-files-using-wget-3c2c025a8b99
         wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate "https://docs.google.com/uc?export=download&id=$FILE_ID" -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=$FILE_ID" -O "$PKGS_DIR/$FILE_NAME" && rm -rf /tmp/cookies.txt
         tar xf "$PKGS_DIR/$FILE_NAME" --directory="$PKGS_DIR"
     else \
-        echo "WARNING: Arena SDK is already installed. Will not download again."; \
+        echo "WARNING: Arena SDK is already installed at $PKGS_DIR/$ARENA_SDK_DIR. Will not download again."; \
     fi;
 
     # Symlink arch specific arena install to architecture agnostic directory.
     # Build system can point to this folder without knowing which architecture to use.
-    ln -sf "$ARENA_SDK_DIR" "$PKGS_DIR/extracted"
+    SYMLINKED_DIR="$PKGS_DIR/extracted"
+    echo "Symlinking $ARENA_SDK_DIR to $SYMLINKED_DIR"
+    ln -sf "$PKGS_DIR/$ARENA_SDK_DIR" "$SYMLINKED_DIR"
 fi;
