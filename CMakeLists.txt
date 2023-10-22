@@ -7,7 +7,7 @@ FATAL: In-source builds are not allowed.
 endif()
 
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.13)
 
 
 set(CMAKE_CXX_COMPILER g++)
@@ -31,22 +31,25 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 
 # =============================
 # Libraries
-# NOTE: add each library's include directory to clang-tidy in the Linting section 
-add_subdirectory(deps/json)
-target_link_libraries(${PROJECT_NAME}
-    PRIVATE
-    nlohmann_json::nlohmann_json
-)
+set(DEPS_DIRECTORY ${PROJECT_SOURCE_DIR}/deps)
+
+add_subdirectory(${DEPS_DIRECTORY}/arena-sdk)
+add_subdirectory(${DEPS_DIRECTORY}/json)
 # =============================
 
 # =============================
 # Unit tests
 add_subdirectory(tests)
-add_subdirectory(deps/google-test)
+add_subdirectory(${DEPS_DIRECTORY}/google-test)
 # =============================
 
 # =============================
 # Linting 
+get_target_property(PROJECT_LIBS_INCLUDE_DIRS ${PROJECT_NAME} INCLUDE_DIRECTORIES)
+foreach(dir ${PROJECT_LIBS_INCLUDE_DIRS})
+    string(APPEND LIB_INCLUDE_CLANG_TIDY_STRING "-I${dir};")
+endforeach()
+
 # Adding lint target if clang-tidy executable is found
 find_program(CLANG_TIDY "clang-tidy")
 if(CLANG_TIDY)
@@ -58,8 +61,10 @@ if(CLANG_TIDY)
     --
     -std=c++${CMAKE_CXX_STANDARD}
     -I${INCLUDE_DIRECTORY}
-    # NOTE: need to add include directory for every library
-    -I./_deps/json-src/include/
+    # NOTE:might need to add include directory if library's 
+    # include directory is not in LIB_INCLUDE_CLANG_TIDY_STRING
+    -I${CMAKE_BINARY_DIR}/_deps/json-src/single_include
+    ${LIB_INCLUDE_CLANG_TIDY_STRING}
    )
 else()
     message(FATAL_ERROR "clang-tidy executable not found. Check the README for steps to install it on your system")
