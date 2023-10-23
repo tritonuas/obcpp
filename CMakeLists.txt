@@ -6,8 +6,24 @@ FATAL: In-source builds are not allowed.
 ")
 endif()
 
+# Check if Ninja is available
+find_program(NINJA_EXECUTABLE ninja)
 
-cmake_minimum_required(VERSION 3.13)
+# Set the default generator
+if(NINJA_EXECUTABLE)
+    set(CMAKE_GENERATOR "Ninja")
+else()
+    set(CMAKE_GENERATOR "Unix Makefiles") # Use a fallback generator
+endif()
+
+# enable build caching
+find_program(CCACHE_FOUND ccache)
+if(CCACHE_FOUND)
+  set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
+  set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
+endif()
+
+cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
 
 
 set(CMAKE_CXX_COMPILER g++)
@@ -35,6 +51,8 @@ set(DEPS_DIRECTORY ${PROJECT_SOURCE_DIR}/deps)
 
 add_subdirectory(${DEPS_DIRECTORY}/arena-sdk)
 add_subdirectory(${DEPS_DIRECTORY}/json)
+add_subdirectory(${DEPS_DIRECTORY}/opencv)
+# add_subdirectory(${DEPS_DIRECTORY}/torch)
 # =============================
 
 # =============================

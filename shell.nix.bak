@@ -1,13 +1,13 @@
-# { pkgs ? import <nixpkgs> {} }:
+{ pkgs ? import <nixpkgs> {} }:
 
-# pkgs.mkShell {
-#   buildInputs = [
-#     pkgs.gcc
-#     pkgs.cmake
-#     pkgs.libclang
-#     pkgs.xz
-#     pkgs.bzip2
-#   ];
+pkgs.mkShell {
+  buildInputs = [
+    pkgs.gcc
+    pkgs.cmake
+    pkgs.libclang
+    pkgs.xz
+    pkgs.bzip2
+  ];
   # LD_LIBRARY_PATH = lib.makeLibPath [ pkgs.bzip2 pkgs.xz ];
 
   #  shellHook = ''
@@ -41,43 +41,5 @@
   #   echo "- g++ 5 or higher"
   #   echo "- make"
   # '';
-# }
+}
 
-
-{pkgs ? import <nixpkgs> {}}:
-(pkgs.buildFHSUserEnv {
-  name = "python 3.9";
-  targetPkgs = pkgs: (with pkgs; [
-	python3
-  ccache
-	# pipenv
-
-	# LSP
-	# python39Packages.python-lsp-server
-
-	# C deps
-	glib
-	glibc
-	stdenv
-	zlib
-
-  gcc
-  cmake
-  libclang
-  xz
-  bzip2
-
-  ]);
-# runScript = "zsh";
-profile = ''
-    LD_LIBRARY_PATH=${pkgs.zlib}/lib:${pkgs.stdenv.cc.cc.lib}/lib:${pkgs.glibc}/lib:${pkgs.glib}/lib:${pkgs.bzip2}/lib:$LD_LIBRARY_PATH
-    # set SOURCE_DATE_EPOCH so that we can use python wheels
-    SOURCE_DATE_EPOCH=$(date +%s)
-    PATH=$HOME/.local/bin:$PATH
-    # PYTHONPATH=$HOME/.local/lib/python3.9/site-packages:$PYTHONPATH
-    # export PIP_PREFIX=$(pwd)/_build/pip_packages
-    # export PYTHONPATH="$PIP_PREFIX/${pkgs.python3.sitePackages}:$PYTHONPATH"
-    # export PATH="$PIP_PREFIX/bin:$PATH"
-    # unset SOURCE_DATE_EPOCH
-  '';
-}).env

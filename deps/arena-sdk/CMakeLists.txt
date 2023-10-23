@@ -22,8 +22,8 @@ if(UNIX AND NOT APPLE)
         "${ARENA_SDK_DIR}/extracted/GenICam/library/CPP/include"
     )
     file(GLOB_RECURSE ARENA_LIBS 
-        "${ARENA_SDK_DIR}/extracted/lib64/*.so" 
-        "${ARENA_SDK_DIR}/extracted/ffmpeg/*.so"
+        # "${ARENA_SDK_DIR}/extracted/lib64/*.so" 
+        "${ARENA_SDK_DIR}/extracted/**/*.so"
     )
     target_link_libraries(${PROJECT_NAME} PRIVATE
         ${ARENA_LIBS}
