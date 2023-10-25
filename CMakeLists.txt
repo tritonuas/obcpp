@@ -41,7 +41,9 @@ file(GLOB_RECURSE HEADERS "include/*.hpp")
 # =============================
 # Executable
 set(INCLUDE_DIRECTORY ${PROJECT_SOURCE_DIR}/include)
-include_directories(${INCLUDE_DIRECTORY})
+message("OpenCV include directories: ${OpenCV_INCLUDE_DIRS}")
+
+include_directories(${INCLUDE_DIRECTORY} ${OpenCV_INCLUDE_DIRS} )
 add_executable(${PROJECT_NAME} ${SOURCES})
 # =============================
 
@@ -64,6 +66,7 @@ add_subdirectory(${DEPS_DIRECTORY}/google-test)
 # =============================
 # Linting 
 get_target_property(PROJECT_LIBS_INCLUDE_DIRS ${PROJECT_NAME} INCLUDE_DIRECTORIES)
+
 foreach(dir ${PROJECT_LIBS_INCLUDE_DIRS})
     string(APPEND LIB_INCLUDE_CLANG_TIDY_STRING "-I${dir};")
 endforeach()

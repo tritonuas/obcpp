@@ -1,0 +1,18 @@
+
+include(FetchContent)
+FetchContent_Declare(
+        opencv
+        GIT_REPOSITORY https://github.com/opencv/opencv.git
+        GIT_TAG 4.6.0
+        GIT_SHALLOW TRUE
+        GIT_PROGRESS TRUE
+)
+FetchContent_MakeAvailable(opencv)
+
+add_executable(my_target main.cpp)
+target_include_directories(ocv_test PRIVATE
+        ${OPENCV_CONFIG_FILE_INCLUDE_DIR}
+        ${OPENCV_MODULE_opencv_core_LOCATION}/include
+        ${OPENCV_MODULE_opencv_highgui_LOCATION}/include
+        )
+target_link_libraries(my_target opencv_core opencv_highgui)

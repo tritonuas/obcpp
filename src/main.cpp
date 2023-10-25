@@ -2,7 +2,7 @@
 
 #include "core/states.hpp"
 
-// #include <opencv2/opencv.hpp>
+#include <opencv2/opencv.hpp>
 // #include <torch/torch.h>
 #include <iostream>
 
