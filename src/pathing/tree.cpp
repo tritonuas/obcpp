@@ -65,6 +65,21 @@ void RRTTree::rewireEdge(RRTNode* from, RRTNode* toPrev, RRTNode* toNew, std::ve
     
     RRTEdge newEdge = RRTEdge(from, toNew, path, cost);
     std::pair<std::pair<RRTNode*, RRTNode*>, RRTEdge> edgePair(toAdd, newEdge);
+
+    // replace prev node in "from" node's neighbor list with new node 
+    RRTNodeList neighbors = from->getReachable();
+    for(int i = 0; i < neighbors.size(); i++) {
+        if(neighbors.at(i) == toPrev) {
+            neighbors[i] = toNew;
+        }
+    }
+    // remove "from" node from prev node's neighbors
+    neighbors = toPrev->getReachable();
+    for (RRTNodeList::iterator it = neighbors.begin() ; it != neighbors.end(); ++it) {
+        if(*it == from) {
+            neighbors.erase(it);
+        }
+    }
     edgeMap.erase(toRemove);
     edgeMap.insert(edgePair);
 }
