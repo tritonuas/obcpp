@@ -6,7 +6,7 @@ FetchContent_Declare(OpenCV
   OVERRIDE_FIND_PACKAGE
 )
 
-set( OPENCV_EXTRA_MODULES_PATH ${OpenCV_SOURCE_DIR}/../opencvcontrib-src/modules)
+# set( OPENCV_EXTRA_MODULES_PATH ${OpenCV_SOURCE_DIR}/../opencvcontrib-src/modules)
 # Fetch the OpenCV contrib repository
 FetchContent_Declare(OpenCVContrib
   URL https://github.com/opencv/opencv_contrib/archive/refs/tags/4.8.1.tar.gz
@@ -18,12 +18,11 @@ FetchContent_Declare(OpenCVContrib
 FetchContent_MakeAvailable(OpenCV OpenCVContrib)
 
 # Find OpenCV
-find_package(OpenCV REQUIRED COMPONENTS core imgproc highgui)
+find_package(OpenCV REQUIRED COMPONENTS core imgproc highgui features2d flann dnn imgcodecs videoio imgproc ml)
 set(OpenCV_INCLUDE_DIRS ${OpenCV_SOURCE_DIR}/include )
-file(GLOB_RECURSE HEADERS "${OpenCV_SOURCE_DIR}/modules/**/*.hpp")
-# message(FATAL_ERROR ${HEADERS})
+# file(GLOB_RECURSE HEADERS "${OpenCV_SOURCE_DIR}/modules/**/*.hpp")
 # Add OpenCV's contrib modules to the target
-target_link_libraries(${PROJECT_NAME} PRIVATE ${OpenCV_LIBS} opencv_core opencv_highgui opencv_contrib)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${OpenCV_LIBS} opencv_core opencv_highgui opencv_features2d opencv_flann opencv_imgcodecs opencv_dnn opencv_videoio opencv_imgproc opencv_ml )
 
 # Specify include directories, including OpenCV's contrib
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -32,5 +31,18 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${OPENCV_CONFIG_FILE_INCLUDE_DIR}
     ${OPENCV_MODULE_opencv_core_LOCATION}/include
     ${OPENCV_MODULE_opencv_highgui_LOCATION}/include
+    ${OPENCV_MODULE_opencv_features2d_LOCATION}/include
+
+    ${OPENCV_MODULE_opencv_flann_LOCATION}/include
+    ${OPENCV_MODULE_opencv_imgcodecs_LOCATION}/include
+    ${OPENCV_MODULE_opencv_dnn_LOCATION}/include
+    ${OPENCV_MODULE_opencv_videoio_LOCATION}/include
+    ${OPENCV_MODULE_opencv_imgproc_LOCATION}/include
+    ${OPENCV_MODULE_opencv_ml_LOCATION}/include
     # ${HEADERS}
 )
+
+# message(FATAL_ERROR ${OpenCVContrib_SOURCE_DIR})
+
+get_target_property(TMP ${PROJECT_NAME} INCLUDE_DIRECTORIES)
+# message(FATAL_ERROR ${TMP})
