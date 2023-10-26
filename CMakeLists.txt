@@ -35,6 +35,7 @@ set(DEPS_DIRECTORY ${PROJECT_SOURCE_DIR}/deps)
 
 add_subdirectory(${DEPS_DIRECTORY}/arena-sdk)
 add_subdirectory(${DEPS_DIRECTORY}/json)
+include(${DEPS_DIRECTORY}/eigen/CMakeLists.txt)
 # =============================
 
 # =============================
