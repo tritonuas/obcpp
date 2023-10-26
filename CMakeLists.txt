@@ -41,9 +41,6 @@ file(GLOB_RECURSE HEADERS "include/*.hpp")
 # =============================
 # Executable
 set(INCLUDE_DIRECTORY ${PROJECT_SOURCE_DIR}/include)
-message("OpenCV include directories: ${OpenCV_INCLUDE_DIRS}")
-
-include_directories(${INCLUDE_DIRECTORY} ${OpenCV_INCLUDE_DIRS} )
 add_executable(${PROJECT_NAME} ${SOURCES})
 # =============================
 
@@ -53,8 +50,6 @@ set(DEPS_DIRECTORY ${PROJECT_SOURCE_DIR}/deps)
 
 add_subdirectory(${DEPS_DIRECTORY}/arena-sdk)
 add_subdirectory(${DEPS_DIRECTORY}/json)
-# add_subdirectory(${DEPS_DIRECTORY}/opencv)
-# add_subdirectory(${DEPS_DIRECTORY}/torch)
 # =============================
 include(${DEPS_DIRECTORY}/torch/CMakeLists.txt)
 # NOTE: temporarily leaving out opencv until we have it working in dev container

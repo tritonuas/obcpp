@@ -41,8 +41,3 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${OPENCV_MODULE_opencv_ml_LOCATION}/include
     # ${HEADERS}
 )
-
-# message(FATAL_ERROR ${OpenCVContrib_SOURCE_DIR})
-
-get_target_property(TMP ${PROJECT_NAME} INCLUDE_DIRECTORIES)
-# message(FATAL_ERROR ${TMP})
