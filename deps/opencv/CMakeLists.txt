@@ -23,7 +23,7 @@ find_package(OpenCV REQUIRED COMPONENTS core imgproc highgui)
 
 target_compile_options(${PROJECT_NAME} PRIVATE -Wno-deprecated-enum-enum-conversion)
 
-file(GLOB_RECURSE HEADERS "include/*.hpp")
+file(GLOB_RECURSE HEADERS "include/**/*.hpp")
 
 message("OpenCV include directories: ${OpenCV_INCLUDE_DIRS}")
 set(OpenCV_INCLUDE_DIRS ${OpenCV_SOURCE_DIR}/include )
@@ -32,6 +32,9 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${OpenCV_INCLUDE_DIRS}       
         ${OPENCV_MODULE_opencv_core_LOCATION}/include
         ${OPENCV_MODULE_opencv_highgui_LOCATION}/include ${HEADERS})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${OpenCV_LIBS} opencv_core opencv_highgui)
+
+get_target_property(TMP ${PROJECT_NAME} INCLUDE_DIRECTORIES)
+# message(FATAL_ERROR ${TMP})
 
 # Set(  "OpenCV_DIR" "opencv-build" )
 # set(OpenCV_DIR ${CMAKE_CURRENT_BINARY_DIR})
