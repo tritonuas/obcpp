@@ -42,6 +42,7 @@ file(GLOB_RECURSE HEADERS "include/*.hpp")
 # Executable
 set(INCLUDE_DIRECTORY ${PROJECT_SOURCE_DIR}/include)
 add_executable(${PROJECT_NAME} ${SOURCES})
+include_directories(${INCLUDE_DIRECTORY})
 # =============================
 
 # =============================
