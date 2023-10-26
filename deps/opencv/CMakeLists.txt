@@ -6,7 +6,7 @@ Set(FETCHCONTENT_QUIET FALSE)
 FetchContent_Declare(OpenCV
   URL               https://github.com/opencv/opencv/archive/refs/tags/4.8.1.tar.gz
   OVERRIDE_FIND_PACKAGE
-  )
+)
 
 FetchContent_MakeAvailable(OpenCV)
 

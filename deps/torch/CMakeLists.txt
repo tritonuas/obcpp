@@ -8,12 +8,13 @@ FetchContent_Declare(Torch
 
 FetchContent_MakeAvailable(Torch)
 
-# message(FATAL_ERROR ${CMAKE_BINARY_DIR})
-set(Torch_DIR "${CMAKE_BINARY_DIR}/_deps/torch-src/share/cmake/Torch/")
-find_package(Torch REQUIRED)
+# message(FATAL_ERROR ${torch_SOURCE_DIR})
+# set(Torch_DIR "${CMAKE_BINARY_DIR}/_deps/torch-src/share/cmake/Torch/")
+find_package(Torch REQUIRED HINTS "${torch_SOURCE_DIR}")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 
+# message(FATAL_ERROR ${TORCH_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PRIVATE
     "${TORCH_LIBRARIES}"
 )
