@@ -57,7 +57,8 @@ add_subdirectory(${DEPS_DIRECTORY}/json)
 # add_subdirectory(${DEPS_DIRECTORY}/torch)
 # =============================
 include(${DEPS_DIRECTORY}/torch/CMakeLists.txt)
-include(${DEPS_DIRECTORY}/opencv/CMakeLists.txt)
+# NOTE: temporarily leaving out opencv until we have it working in dev container
+# include(${DEPS_DIRECTORY}/opencv/CMakeLists.txt)
 # =============================
 # Unit tests
 add_subdirectory(tests)
