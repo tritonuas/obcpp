@@ -6,8 +6,24 @@ FATAL: In-source builds are not allowed.
 ")
 endif()
 
+# Check if Ninja is available
+find_program(NINJA_EXECUTABLE ninja)
 
-cmake_minimum_required(VERSION 3.13)
+# Set the default generator
+if(NINJA_EXECUTABLE)
+    set(CMAKE_GENERATOR "Ninja")
+else()
+    set(CMAKE_GENERATOR "Unix Makefiles") # Use a fallback generator
+endif()
+
+# enable build caching
+find_program(CCACHE_FOUND ccache)
+if(CCACHE_FOUND)
+  set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
+  set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
+endif()
+
+cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
 
 
 set(CMAKE_CXX_COMPILER g++)
@@ -25,8 +41,8 @@ file(GLOB_RECURSE HEADERS "include/*.hpp")
 # =============================
 # Executable
 set(INCLUDE_DIRECTORY ${PROJECT_SOURCE_DIR}/include)
-include_directories(${INCLUDE_DIRECTORY})
 add_executable(${PROJECT_NAME} ${SOURCES})
+include_directories(${INCLUDE_DIRECTORY})
 # =============================
 
 # =============================
@@ -37,7 +53,9 @@ add_subdirectory(${DEPS_DIRECTORY}/arena-sdk)
 add_subdirectory(${DEPS_DIRECTORY}/json)
 include(${DEPS_DIRECTORY}/eigen/CMakeLists.txt)
 # =============================
-
+include(${DEPS_DIRECTORY}/torch/CMakeLists.txt)
+# NOTE: temporarily leaving out opencv until we have it working in dev container
+# include(${DEPS_DIRECTORY}/opencv/CMakeLists.txt)
 # =============================
 # Unit tests
 add_subdirectory(tests)
@@ -47,6 +65,7 @@ add_subdirectory(${DEPS_DIRECTORY}/google-test)
 # =============================
 # Linting 
 get_target_property(PROJECT_LIBS_INCLUDE_DIRS ${PROJECT_NAME} INCLUDE_DIRECTORIES)
+
 foreach(dir ${PROJECT_LIBS_INCLUDE_DIRS})
     string(APPEND LIB_INCLUDE_CLANG_TIDY_STRING "-I${dir};")
 endforeach()
