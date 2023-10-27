@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM amd64/ubuntu:22.04
 # https://gist.github.com/SSARCandy/fc960d8905330ac695e71e3f3807ce3d
 # OpenCV dependencies from above
 RUN apt-get update \
