@@ -93,6 +93,25 @@ add_subdirectory(${DEPS_DIRECTORY}/google-test)
 # =============================
 
 # =============================
+# Integration tests
+set(ARENA_SDK_DIR "${CMAKE_BINARY_DIR}/_deps/arena-sdk")
+add_executable(camera_playground tests/integration/camera_playground.cpp)
+target_include_directories(camera_playground PRIVATE 
+        "${ARENA_SDK_DIR}/extracted/include/Arena"
+        "${ARENA_SDK_DIR}/extracted/GenICam/library/CPP/include"
+    )
+file(GLOB_RECURSE ARENA_LIBS 
+    "${ARENA_SDK_DIR}/extracted/lib64/*.*" 
+    "${ARENA_SDK_DIR}/extracted/ffmpeg/*.so"
+    "${ARENA_SDK_DIR}/extracted/GenICam/library/lib/*/*.so"
+    "./_deps/arena-sdk/ArenaSDK_Linux_x64/lib64/*.*"
+)
+target_link_libraries(camera_playground PRIVATE
+    ${ARENA_LIBS}
+)
+# =============================
+
+# =============================
 # Linting 
 get_target_property(PROJECT_LIBS_INCLUDE_DIRS ${PROJECT_NAME} INCLUDE_DIRECTORIES)
 
