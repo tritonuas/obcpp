@@ -1,13 +1,17 @@
 #include <iostream>
-
 #include "core/states.hpp"
+#include "Eigen"
+// #include <opencv2/opencv.hpp>
+#include <torch/torch.h>
+#include <iostream>
 
-int main() {
-    std::cout << "hello" << std::endl;
+// using namespace cv;
 
-    PreparationState state;
+int main()
+{
+  PreparationState state;
 
-    state.tick();
-
-    return 0;
+  state.tick();
+  
+  return 0;
 }
