@@ -1,6 +1,11 @@
 #include <gtest/gtest.h>
 
-TEST(HelloTest, HelloTest1) {
-    // TODO: Write Tests
-}
 
+/*
+*   
+*
+*
+*/
+TEST(DubinsTest, Orthogonal2D) {
+    EXPECT_EQ(5,5);
+}
