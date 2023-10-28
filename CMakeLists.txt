@@ -86,6 +86,8 @@ target_add_mavsdk(mavsdk)
 target_add_matplot(mavsdk)
 # =============================
 
+include(${DEPS_DIRECTORY}/torch/CMakeLists.txt)
+include(${DEPS_DIRECTORY}/opencv/CMakeLists.txt)
 # =============================
 # Unit tests
 add_subdirectory(tests/unit)
