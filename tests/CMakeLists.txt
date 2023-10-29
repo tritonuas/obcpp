@@ -7,6 +7,7 @@ set(SOURCES ${TEST_SOURCES})
 add_executable(${BINARY} ${TEST_SOURCES})
 
 target_link_libraries(${BINARY} PUBLIC gtest_main)
+target_include_directories(${BINARY} PUBLIC ${CMAKE_BINARY_DIR}/_deps/eigen-src/Eigen)
 
 add_test(NAME ${BINARY} COMMAND ${BINARY})
 

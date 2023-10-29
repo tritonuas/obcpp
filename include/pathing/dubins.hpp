@@ -7,7 +7,7 @@
 #include "Eigen" 
 
 struct DubinsPath {
-    DubsinPath(double center_1, double center_2, double straight_dist)
+    DubinsPath(double center_1, double center_2, double straight_dist)
         :center_1(center_1), center_2(center_2), straight_dist(straight_dist) {}
     
     double center_1;
@@ -39,7 +39,7 @@ Eigen::Vector2d findOrthogonalVector2D(const Eigen::Vector2d& vector) {
 *   @return the magnitude of the displacement vector between the two vectors
 *   @see 
 */
-double distanceBetween(const Eigen::Vector2D& vector1, const Eigen::Vector2D& vector2) {
+double distanceBetween(const Eigen::Vector2d& vector1, const Eigen::Vector2d& vector2) {
     return (vector1 - vector2).norm();
 }
 
@@ -48,7 +48,7 @@ double distanceBetween(const Eigen::Vector2D& vector1, const Eigen::Vector2D& ve
 *   [TODO] - write desc.
 *
 */
-Eigen::Vector2d midpoint(const Eigen::Vector2D& vector1, const Eigen::Vector2D& vector2) {
+Eigen::Vector2d midpoint(const Eigen::Vector2d& vector1, const Eigen::Vector2d& vector2) {
     return (vector1 + vector2) / 2;
 }
 
@@ -77,11 +77,11 @@ public:
     Eigen::Vector2d circle_arc(const XYZCoord& starting_point, double beta, const Eigen::Vector2d& center, double path_length) {
         double angle = starting_point.psi + ((path_length / _radius) - M_PI / 2) * std::copysign(1.0, beta);
         Eigen::Vector2d vect(std::cos(angle), std::sin(angle));
-        return center + (vect * radius);
+        return center + (vect * _radius);
     }   
 private:
     double _radius;
-    double _point_seperation;
+    double _point_separation;
 
 };
 
