@@ -1,0 +1,26 @@
+// See this page for reference of options: https://containers.dev/implementors/json_reference
+{
+	"name": "Existing Dockerfile",
+	"build": {
+		"context": "..",
+		"dockerfile": "Dockerfile"
+	},
+
+	"customizations": {
+		"vscode": {
+			"settings": {
+				// Use bash instead of sh
+				"terminal.integrated.defaultProfile.linux": "bash"
+			},
+			"extensions": [
+				"shd101wyy.markdown-preview-enhanced",
+				"ms-vscode.cpptools",
+				"nick-dimeglio.family-guy-funny-moments", // ඞ
+				"twxs.cmake"
+			]
+		}
+	}
+
+	// Use 'postCreateCommand' to run commands after the container is created.
+	// "postCreateCommand": ""
+}

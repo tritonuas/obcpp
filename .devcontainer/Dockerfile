@@ -1,4 +1,13 @@
 FROM amd64/ubuntu:22.04
+
+# Create a non-root user
+ARG USERNAME=tuas
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
+
+
 # https://gist.github.com/SSARCandy/fc960d8905330ac695e71e3f3807ce3d
 # OpenCV dependencies from above
 RUN apt-get update \
@@ -20,6 +29,7 @@ RUN apt-get update \
 
 # TODO: is it possible to save the built opencv in the docker build? Need to see what cmake keeps checking and wasting time on.
 
+# Download latest CMake from their repositories
 RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
   && wget https://github.com/Kitware/CMake/releases/download/v3.27.7/cmake-3.27.7-linux-x86_64.sh \
@@ -30,24 +40,5 @@ RUN apt-get update \
       && rm /tmp/cmake-install.sh \
       && ln -s /opt/cmake-3.24.1/bin/* /usr/local/bin
 
-WORKDIR /obcpp
-
-COPY . /obcpp
-
-WORKDIR /obcpp/build
-
-# RUN cmake ..
-
-# RUN make obcpp # parallelize this
-
-CMD ["/bin/bash"]
-# CMD ["/obcpp/build/bin/obcpp"]
-
-# docker build - < Dockerfile
-# docker build -t "test" .
-# docker run -it --rm test
-
-# https://www.jmoisio.eu/en/blog/2020/06/01/building-cpp-containers-using-docker-and-cmake/
-# find -name "*Cache.txt" -delete
-
-# TODO: this container is way too big for some reason. Refer to above blog post for staged build (may not want to do that for development tho. I am unable to get devcontainers running)
+# login as non-root user
+USER $USERNAME
