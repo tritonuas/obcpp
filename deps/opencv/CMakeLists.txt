@@ -3,6 +3,8 @@ include(FetchContent)
 # Fetch the main OpenCV repository
 FetchContent_Declare(OpenCV
   URL https://github.com/opencv/opencv/archive/refs/tags/4.8.1.tar.gz
+  URL_HASH SHA256=62f650467a60a38794d681ae7e66e3e8cfba38f445e0bf87867e2f2cdc8be9d5
+  DOWNLOAD_EXTRACT_TIMESTAMP true
   # CMAKE_GENERATOR ${gen}
   
   # TODO: Everything still compiles fine for me with these, but they need to be tested.
@@ -22,6 +24,8 @@ FetchContent_Declare(OpenCV
 # Fetch the OpenCV contrib repository
 FetchContent_Declare(OpenCVContrib
   URL https://github.com/opencv/opencv_contrib/archive/refs/tags/4.8.1.tar.gz
+  URL_HASH SHA256=0c082a0b29b3118f2a0a1856b403bb098643af7b994a0080f402a12159a99c6e
+  DOWNLOAD_EXTRACT_TIMESTAMP true
   # SOURCE_DIR "${CMAKE_BINARY_DIR}/opencv_contrib-src" # Specify a separate source directory
   # PREFIX "${CMAKE_BINARY_DIR}/opencv_contrib-prefix"  # Specify a separate prefix directory
 )
