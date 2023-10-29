@@ -104,11 +104,17 @@ file(GLOB_RECURSE ARENA_LIBS
     "${ARENA_SDK_DIR}/extracted/lib64/*.*" 
     "${ARENA_SDK_DIR}/extracted/ffmpeg/*.so"
     "${ARENA_SDK_DIR}/extracted/GenICam/library/lib/*/*.so"
-    "./_deps/arena-sdk/ArenaSDK_Linux_x64/lib64/*.*"
 )
 target_link_libraries(camera_playground PRIVATE
     ${ARENA_LIBS}
 )
+add_custom_target(
+    run_camera_playground
+    ${CMAKE_COMMAND}
+    -E env LD_LIBRARY_PATH="./_deps/arena-sdk/extracted/lib64:./_deps/arena-sdk/extracted/GenICam/library/lib/Linux64_x64/"
+    ./bin/camera_playground
+)
+
 # =============================
 
 # =============================
