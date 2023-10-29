@@ -1,4 +1,13 @@
 FROM amd64/ubuntu:22.04
+
+# Create a non-root user
+ARG USERNAME=tuas
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
+
+
 # https://gist.github.com/SSARCandy/fc960d8905330ac695e71e3f3807ce3d
 # OpenCV dependencies from above
 RUN apt-get update \
@@ -40,7 +49,9 @@ WORKDIR /obcpp/build
 
 # RUN make obcpp # parallelize this
 
-CMD ["/bin/bash"]
+# login as non-root user
+USER $USERNAME
+
 # CMD ["/obcpp/build/bin/obcpp"]
 
 # docker build - < Dockerfile

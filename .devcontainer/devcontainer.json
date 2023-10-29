@@ -1,0 +1,17 @@
+// See this page for reference of options: https://containers.dev/implementors/json_reference
+{
+	"name": "Existing Dockerfile",
+	"build": {
+		"context": "..",
+		"dockerfile": "Dockerfile"
+	},
+
+	"customizations": {
+		"vscode": {
+			"settings": {
+				// Use bash instead of sh
+				"terminal.integrated.defaultProfile.linux": "bash"
+			}
+		}
+	}
+}
