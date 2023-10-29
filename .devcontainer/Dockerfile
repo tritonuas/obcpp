@@ -39,6 +39,9 @@ RUN apt-get update \
       && rm /tmp/cmake-install.sh \
       && ln -s /opt/cmake-3.24.1/bin/* /usr/local/bin
 
+# login as non-root user
+USER $USERNAME
+
 WORKDIR /obcpp
 
 COPY . /obcpp
@@ -49,8 +52,6 @@ WORKDIR /obcpp/build
 
 # RUN make obcpp # parallelize this
 
-# login as non-root user
-USER $USERNAME
 
 # CMD ["/obcpp/build/bin/obcpp"]
 
