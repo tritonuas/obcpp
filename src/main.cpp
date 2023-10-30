@@ -20,15 +20,16 @@ int main()
 #include <opencv2/photo.hpp>
 
 int main() {
-    std::vector<std::string> img_fn = {"../imgs/img1.jpeg", "../imgs/img2.jpeg", "../imgs/img3.jpeg", "../imgs/img4.jpeg"};
+    std::vector<std::string> img_fn = {"../imgs/img1.jpeg", "../imgs/img2.jpeg", "../imgs/img3.jpeg", "../imgs/img4.jpeg", "../imgs/img5.jpeg", "../imgs/img6.jpeg"};
     std::vector<cv::Mat> img_list;
     for (const std::string& fn : img_fn) {
         img_list.push_back(cv::imread(fn));
     }
 
-    cv::Mat exposure_times = (cv::Mat_<float>(1, 4) << 15.0, 2.5, 0.25, 0.0333);
+    cv::Mat exposure_times = (cv::Mat_<float>(1, 6) << 1 / 174, 1/120, 1/120, 1/1374, 1/6211, 1/12048);
     
     std::vector<cv::Mat> img_aligned = img_list;
+
 /*
     // Create an Aligner object for feature-based image alignment
     cv::Ptr<cv::AlignExposures> aligner = cv::AlignExposures();

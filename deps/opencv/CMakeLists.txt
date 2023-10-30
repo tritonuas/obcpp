@@ -1,5 +1,6 @@
 include(FetchContent)
 
+option(BUILD_TESTS "" OFF)
 # Fetch the main OpenCV repository
 FetchContent_Declare(OpenCV
   URL https://github.com/opencv/opencv/archive/refs/tags/4.8.1.tar.gz
@@ -9,10 +10,9 @@ FetchContent_Declare(OpenCV
   
   # TODO: Everything still compiles fine for me with these, but they need to be tested.
   CMAKE_ARGS
-  #  ${ep_common_args}
     -DBUILD_DOCS:BOOL=FALSE
     -DBUILD_EXAMPLES:BOOL=FALSE
-    -DBUILD_TESTS:BOOL=FALSE
+    -DBUILD_TESTS:BOOL=OFF
     -DBUILD_SHARED_LIBS:BOOL=TRUE
     -DWITH_CUDA:BOOL=FALSE
     -DWITH_FFMPEG:BOOL=FALSE

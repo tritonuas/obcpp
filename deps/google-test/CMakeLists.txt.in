@@ -16,5 +16,6 @@ ExternalProject_Add(googletest
   BUILD_COMMAND     ""
   INSTALL_COMMAND   ""
   TEST_COMMAND      ""
+  DOWNLOAD_EXTRACT_TIMESTAMP true
 )
 
