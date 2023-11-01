@@ -4,21 +4,37 @@
 #include <vector>
 
 struct GPSCoord {
+    // (lat,lon,alt)
     GPSCoord(double lat, double lon, double alt)
         :lat(lat), lon(lon), alt(alt) {}
 
     double lat;
     double lon;
     double alt;
+
+    // Default: (0,0,0)
+    GPSCoord(){
+        double lat = 0;
+        double lon = 0;
+        double alt = 0;
+    }
 };
 
 struct XYZCoord {
+    // (x,y,z)
     XYZCoord(double x, double y, double z)
         :x(x), y(y), z(z) {}
 
     double x;
     double y;
     double z;
+
+    // Default: (0,0,0)
+    XYZCoord(){
+        double lat = 0;
+        double lon = 0;
+        double alt = 0;
+    }
 };
  
 // In the future maybe make these their own classes with methods, etc...
