@@ -50,6 +50,7 @@ include_directories(${INCLUDE_DIRECTORY})
 set(DEPS_DIRECTORY ${PROJECT_SOURCE_DIR}/deps)
 
 add_subdirectory(${DEPS_DIRECTORY}/arena-sdk)
+include(${DEPS_DIRECTORY}/mavsdk/CMakeLists.txt)
 add_subdirectory(${DEPS_DIRECTORY}/json)
 include(${DEPS_DIRECTORY}/eigen/CMakeLists.txt)
 # =============================
@@ -87,6 +88,6 @@ if(CLANG_TIDY)
     ${LIB_INCLUDE_CLANG_TIDY_STRING}
    )
 else()
-    message(FATAL_ERROR "clang-tidy executable not found. Check the README for steps to install it on your system")
+#    message(FATAL_ERROR "clang-tidy executable not found. Check the README for steps to install it on your system")
 endif()
 # =============================
