@@ -18,7 +18,8 @@ RUN apt-get update \
                            clang-tidy \
                            wget \
                            ccache \
-                           vim
+                           vim \
+                           libopencv-dev 
 # cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev
 # python-dev python-numpy libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libjasper-dev libdc1394-22-dev
 
@@ -39,6 +40,13 @@ RUN apt-get update \
       && /tmp/cmake-install.sh --skip-license --prefix=/opt/cmake-3.24.1 \
       && rm /tmp/cmake-install.sh \
       && ln -s /opt/cmake-3.24.1/bin/* /usr/local/bin
+
+
+# install prebuilt MAVSDK to system
+# https://github.com/mavlink/MAVSDK/releases
+RUN wget https://github.com/mavlink/MAVSDK/releases/download/v1.4.17/libmavsdk-dev_1.4.17_ubuntu20.04_amd64.deb \
+    && dpkg -i  libmavsdk-dev_1.4.17_ubuntu20.04_amd64.deb \
+    && rm libmavsdk-dev_1.4.17_ubuntu20.04_amd64.deb
 
 # login as non-root user
 USER $USERNAME
