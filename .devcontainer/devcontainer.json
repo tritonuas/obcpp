@@ -1,9 +1,9 @@
 // See this page for reference of options: https://containers.dev/implementors/json_reference
 {
-	"name": "Existing Dockerfile",
+	"name": "OBCpp",
 	"build": {
 		"context": "..",
-		"dockerfile": "Dockerfile"
+		"dockerfile": "../Dockerfile"
 	},
 
 	"customizations": {
