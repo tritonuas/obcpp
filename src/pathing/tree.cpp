@@ -1,4 +1,4 @@
-#include "tree.hpp"
+#include "../../include/pathing/tree.hpp"
 
 RRTPoint::RRTPoint(XYZCoord xyz, double psi)
     : xyz{xyz}, psi{psi} {}
@@ -7,8 +7,8 @@ RRTPoint::RRTPoint(XYZCoord xyz, double psi)
 RRTNode::RRTNode(RRTPoint point, double cost)
     : point{point}, cost{cost} {}
 
-RRTNode::RRTNode(RRTPoint point, RRTNodeList reachable)
-    : point{point}, reachable{reachable} {}
+RRTNode::RRTNode(RRTPoint point, double cost, RRTNodeList reachable)
+    : point{point}, cost{cost}, reachable{reachable} {}
 
 RRTPoint RRTNode::getPoint() {
     return this->point;

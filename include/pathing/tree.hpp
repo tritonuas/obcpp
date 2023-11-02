@@ -1,7 +1,7 @@
 #ifndef PATHING_TREE_HPP_
 #define PATHING_TREE_HPP_
 
-#include "datatypes.hpp"
+#include "../utilities/datatypes.hpp"
 #include <vector>
 #include <unordered_map>
 class RRTNode;
@@ -19,7 +19,7 @@ class RRTNode {
 
     public:
         RRTNode(RRTPoint point, double cost);
-        RRTNode(RRTPoint point, RRTNodeList reachable);
+        RRTNode(RRTPoint point, double cost, RRTNodeList reachable);
         
         RRTPoint getPoint();
         void setReachable(RRTNodeList reachable);
