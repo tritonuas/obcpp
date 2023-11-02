@@ -91,10 +91,10 @@ TEST(DubinsTest, Midpoint) {
     Eigen::Vector2d result_vector4 = midpoint(start_vector4, end_vector4);
     Eigen::Vector2d result_vector5 = midpoint(start_vector5, end_vector5);
 
-    EXPECT_NEAR(result_vector4[0], midpoint4[0], 0.1);
-    EXPECT_NEAR(result_vector4[1], midpoint4[1], 0.1);
-    EXPECT_NEAR(result_vector5[0], midpoint5[0], 0.1);
-    EXPECT_NEAR(result_vector5[1], midpoint5[1], 0.1);
+    EXPECT_NEAR(result_vector4[0], midpoint4[0], 0.01);
+    EXPECT_NEAR(result_vector4[1], midpoint4[1], 0.01);
+    EXPECT_NEAR(result_vector5[0], midpoint5[0], 0.01);
+    EXPECT_NEAR(result_vector5[1], midpoint5[1], 0.01);
 }
 
 /*
@@ -146,7 +146,7 @@ TEST(DubinsTest, FindCenter) {
 }
 
 /*
-*   tests Dubins::circle_arc()
+*   tests Dubins::circleArc()
 *   (poorly)
 *
 *   [TODO] - add more tests (that are not trivial)
@@ -157,9 +157,9 @@ TEST(Dubinstest, CircleArc) {
     // points towards e1
     XYZCoord origin_x(0, 0, 0, 0);
 
-    // plane is facing x+, turning left with a turning radius of 5, 
-    // this should be the point wheree it turns 90deg (1/4 of the circle)
-    Eigen::Vector2d result1 = dubins1.circle_arc(origin_x, 1, 
+    // plane is facing x+, turning left/ccw with a turning radius of 5, 
+    // this should be the point where it turns 90deg (1/4 of the circle)
+    Eigen::Vector2d result1 = dubins1.circleArc(origin_x, 1, 
                             dubins1.findCenter(origin_x, 'L'), M_PI / 2 * 5);
     Eigen::Vector2d expected_result1(5.0, 5.0);
 
