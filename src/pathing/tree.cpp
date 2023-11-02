@@ -1,7 +1,7 @@
 #include "tree.hpp"
 
-RRTPoint::RRTPoint(double x, double y, double z, double psi)
-    : x{x}, y{y}, z{z}, psi{psi} {}
+RRTPoint::RRTPoint(XYZCoord xyz, double psi)
+    : xyz{xyz}, psi{psi} {}
 
 
 RRTNode::RRTNode(RRTPoint point, double cost)

@@ -1,17 +1,16 @@
 #ifndef PATHING_TREE_HPP_
 #define PATHING_TREE_HPP_
 
+#include "datatypes.hpp"
 #include <vector>
 #include <unordered_map>
 class RRTNode;
 typedef std::vector<RRTNode*>  RRTNodeList;
 
 struct RRTPoint {
-    RRTPoint(double x, double y, double z, double psi);
+    RRTPoint(XYZCoord xyz, double psi);
 
-    double x;
-    double y;
-    double z;
+    XYZCoord xyz;
     double psi;
 
 };
