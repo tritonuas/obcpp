@@ -1,7 +1,7 @@
 #ifndef CAMERA_INTERFACE_HPP_
 #define CAMERA_INTERFACE_HPP_
 #include <nlohmann/json.hpp>
-// TODO: import OpenCV library here
+#include <opencv2/opencv.hpp>
 
 /*
  * FYI: this is class that will standardize image data but

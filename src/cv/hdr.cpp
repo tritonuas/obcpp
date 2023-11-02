@@ -1,44 +1,30 @@
 #include <iostream>
-#include "core/states.hpp"
-#include "cv/hdr.hpp"
-#include "Eigen"
-#include <torch/torch.h>
-
-#include <iostream>
-#include <httplib.h>
-
-#include "core/states.hpp"
-#include "pathing/plotting.hpp"
-
-int main()
-{
-    httplib::Server svr;
-    svr.Get("/hi", [](const httplib::Request &, httplib::Response &res) {
-        res.set_content("Hello World!", "text/plain");
-    });
-    svr.listen("0.0.0.0", 8080);
 #include <opencv2/opencv.hpp>
 #include <opencv2/photo.hpp>
 
-int main() {
+int compute_hdr() {
+    // Uses hard coded local images
     std::vector<std::string> img_fn = {"../imgs/img1.jpeg", "../imgs/img2.jpeg", "../imgs/img3.jpeg", "../imgs/img4.jpeg", "../imgs/img5.jpeg", "../imgs/img6.jpeg"};
     std::vector<cv::Mat> img_list;
     for (const std::string& fn : img_fn) {
         img_list.push_back(cv::imread(fn));
     }
 
+    // you need to specify the exposures so HDR knows how to weight the images (in seconds)
     cv::Mat exposure_times = (cv::Mat_<float>(1, 6) << 1 / 174, 1/120, 1/120, 1/1374, 1/6211, 1/12048);
     
     std::vector<cv::Mat> img_aligned = img_list;
 
-/*
+    // TODO: The images must be aligned before the HDR superimposing
+    /*
     // Create an Aligner object for feature-based image alignment
     cv::Ptr<cv::AlignExposures> aligner = cv::AlignExposures();
 
     // Align images
     cv::Mat img_aligned;
     aligner->process(img_list, img_aligned, exposure_times);
-*/
+    */
+
     // Merge exposures to HDR image using Debevec method
     cv::Ptr<cv::MergeDebevec> merge_debevec = cv::createMergeDebevec();
     cv::Mat hdr_debevec;
@@ -73,17 +59,4 @@ int main() {
     cv::imwrite("ldr_robertson.jpg", res_robertson_8bit);
     cv::imwrite("fusion_mertens.jpg", res_mertens_8bit);
     return 0;
-
-/*
-  std::cout << "hellasdfasdfTarget torch_cpu not found.o" << std::endl;
-// #include <opencv2/opencv.hpp>
-// #include <torch/torch.h>
-
-int main()
-{
-  PreparationState state;
-
-  state.tick();
-  
-  return 0;
 }

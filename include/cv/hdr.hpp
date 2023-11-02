@@ -1,0 +1,2 @@
+
+int compute_hdr();
