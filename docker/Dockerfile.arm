@@ -1,4 +1,4 @@
-FROM amd64/ubuntu:22.04
+FROM arm64v8/ubuntu:22.04
 
 # Create a non-root user
 ARG USERNAME=tuas
@@ -32,7 +32,7 @@ RUN apt-get update \
 # Download latest CMake from their repositories
 RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
-  && wget https://github.com/Kitware/CMake/releases/download/v3.27.7/cmake-3.27.7-linux-x86_64.sh \
+  && wget https://github.com/Kitware/CMake/releases/download/v3.27.7/cmake-3.27.7-linux-aarch64.sh \
       -q -O /tmp/cmake-install.sh \
       && chmod u+x /tmp/cmake-install.sh \
       && mkdir /opt/cmake-3.24.1 \
@@ -47,7 +47,7 @@ WORKDIR /obcpp/build
 RUN cmake ..
 
 WORKDIR ./_deps/arena-sdk/extracted
-RUN sh Arena_SDK_Linux_x64.conf
+RUN sh Arena_SDK_ARM64.conf
 
 WORKDIR /obcpp/build
 

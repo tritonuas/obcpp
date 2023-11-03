@@ -1,9 +1,9 @@
 // See this page for reference of options: https://containers.dev/implementors/json_reference
 {
-	"name": "OBCpp x86",
+	"name": "OBCpp ARM",
 	"build": {
 		"context": "..",
-		"dockerfile": "../docker/Dockerfile.x86"
+		"dockerfile": "../docker/Dockerfile.arm"
 	},
 
 	"customizations": {
