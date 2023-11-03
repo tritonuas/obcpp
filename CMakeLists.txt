@@ -90,35 +90,3 @@ else()
     message(FATAL_ERROR "clang-tidy executable not found. Check the README for steps to install it on your system")
 endif()
 # =============================
-
-# =============================
-# Docker Build
-add_custom_target(
-    build-docker-x86
-    COMMAND docker build --tag tritonuas/obcpp:x86 -f ../docker/Dockerfile.x86 ..
-)
-add_custom_target(
-    build-docker-arm
-    COMMAND docker build --tag tritonuas/obcpp:arm -f ../docker/Dockerfile.arm ..
-)
-add_custom_target(
-    build-docker-nvidia
-    COMMAND docker build --tag tritonuas/obcpp:nvidia -f ../docker/Dockerfile.nvidia ..
-)
-# =============================
-
-# =============================
-# Docker Run
-add_custom_target(
-    run-docker-x86
-    COMMAND docker run --rm -it tritonuas/obcpp:x86
-)
-add_custom_target(
-    run-docker-arm
-    COMMAND docker run --rm -it tritonuas/obcpp:arm
-)
-add_custom_target(
-    run-docker-nvidia
-    COMMAND docker run --rm -it --network=host --runtime=nvidia tritonuas/obcpp:nvidia
-)
-# =============================
