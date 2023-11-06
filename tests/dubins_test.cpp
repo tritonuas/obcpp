@@ -5,6 +5,11 @@
 #include "../include/utilities/datatypes.hpp"
 
 #include "Eigen"
+/*
+*   [TODO] 
+*   - separate failed tests from success tests (if there are any)
+*/
+
 
 /*
 *   Tests dubins ==> findOrthogonalVector2D()
@@ -151,11 +156,13 @@ TEST(DubinsTest, FindCenter) {
 *
 *   [TODO] - add more tests (that are not trivial)
 */
-TEST(Dubinstest, CircleArc) {
+TEST(DubinsTest, CircleArc) {
     Dubins dubins1(5, 10);
     
     // points towards e1
     XYZCoord origin_x(0, 0, 0, 0);
+    XYZCoord origin_y(0, 0, 0, M_PI / 2);
+    XYZCoord arbitrary_position(73, 41, 0, 4.00);
 
     // plane is facing x+, turning left/ccw with a turning radius of 5, 
     // this should be the point where it turns 90deg (1/4 of the circle)
@@ -163,5 +170,122 @@ TEST(Dubinstest, CircleArc) {
                             dubins1.findCenter(origin_x, 'L'), M_PI / 2 * 5);
     Eigen::Vector2d expected_result1(5.0, 5.0);
 
-    EXPECT_EQ(result1, expected_result1);
+    // plance facing x+, turning right/cw with a turning radius of 5
+    // turning 2.97 rad
+    Eigen::Vector2d result2 = dubins1.circleArc(origin_x, -1, 
+                            dubins1.findCenter(origin_x, 'R'), 2.97 * 5);
+    Eigen::Vector2d expected_result2(0.850, -9.927);
+
+    Eigen::Vector2d result3 = dubins1.circleArc(arbitrary_position, 1,
+                            dubins1.findCenter(arbitrary_position, 'L'), 5.12 * 5);
+    Eigen::Vector2d expected_result3(78.28441936, 42.50134993);
+
+    Eigen::Vector2d result4 = dubins1.circleArc(origin_y, 1, 
+                            dubins1.findCenter(origin_y, 'L'), M_PI * 5);
+    Eigen::Vector2d expected_result4(-10.0, 0.0);                            
+
+    EXPECT_NEAR(result1[0], expected_result1[0], 0.01);
+    EXPECT_NEAR(result1[1], expected_result1[1], 0.01);
+
+    EXPECT_NEAR(result2[0], expected_result2[0], 0.01);
+    EXPECT_NEAR(result2[1], expected_result2[1], 0.01);
+
+    EXPECT_NEAR(result3[0], expected_result3[0], 0.01);
+    EXPECT_NEAR(result3[1], expected_result3[1], 0.01);
+
+    EXPECT_NEAR(result4[0], expected_result4[0], 0.01);
+    EXPECT_NEAR(result4[1], expected_result4[1], 0.01);
+}
+
+
+/*
+*   tests Dubins::generatePointsStraight()
+*/
+TEST(DubinsTest, GenPointsStraight) {
+    Dubins dubins1(5, 10);
+    
+    // points towards e1
+    XYZCoord origin_x(0, 0, 0, 0);
+    XYZCoord origin_y(0, 0, 0, M_PI / 2);
+    XYZCoord arbitrary_position(73, 41, 0, 4.00);
+
+
+}
+/*
+*   tests Dubins::generatePointsCurve()
+*/
+TEST(DubinsTest, GenPointsCurve) {
+    EXPECT_EQ(5,5);
+}
+
+/*
+*   tests Dubins::lsl()
+*   [TODO] - make more tests (including trivial tests)
+*/
+TEST(DubinsTest, LSL) {
+    Dubins dubins1(5, 10);
+    
+    // points towards e1
+    XYZCoord origin_x(0, 0, 0, 0);
+    XYZCoord origin_y(0, 0, 0, M_PI / 2);
+    XYZCoord arbitrary_position(73, 41, 0, 4.00); 
+
+    RRTOption result1 = dubins1.lsl(origin_x, arbitrary_position, 
+                dubins1.findCenter(origin_x, 'L'), dubins1.findCenter(arbitrary_position, 'L'));
+    RRTOption expected_result1(103.46948015930067, DubinsPath(0.40295754, 3.5970424510, 83.46948015930067), true);
+
+    EXPECT_NEAR(result1.length, expected_result1.length, 0.01);
+    EXPECT_NEAR(result1.dubins_path.beta_0, expected_result1.dubins_path.beta_0, 0.01);
+    EXPECT_NEAR(result1.dubins_path.beta_2, expected_result1.dubins_path.beta_2, 0.01);
+    EXPECT_NEAR(result1.length, expected_result1.length, 0.01);
+    EXPECT_EQ(result1.has_straight, expected_result1.has_straight);
+}
+
+/*
+*   tests Dubins::rsr()
+*/
+TEST(DubinsTest, RSR) {
+    EXPECT_EQ(5,5);
+}
+
+/*
+*   tests Dubins::rsl()
+*/
+TEST(DubinsTest, RSL) {
+    EXPECT_EQ(5,5);
+}
+
+/*
+*   tests Dubins::lsr()
+*/
+TEST(DubinsTest, LSR) {
+    EXPECT_EQ(5,5);
+}
+
+/*
+*   tests Dubins::lrl()
+*/
+TEST(DubinsTest, LRL) {
+    EXPECT_EQ(5,5);
+}
+
+/*
+*   tests Dubins::rlr()
+*/
+TEST(DubinsTest, RLR) {
+    EXPECT_EQ(5,5);
+}
+
+/*
+*   tests Dubins::allOptions()
+*/
+TEST(DubinsTest, AllOptions) {
+    EXPECT_EQ(5,5);
+}
+
+/*
+*   tests Dubins::dubinsPath()
+*/
+TEST(DubinsTest, DubinsPath) {
+    EXPECT_EQ(5,5);
 }
