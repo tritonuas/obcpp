@@ -3,7 +3,7 @@
 #define _USE_MATH_DEFINES
 #include <algorithm>
 #include <math.h>
-#include <string>
+#include <cmath>
 #include "../utilities/datatypes.hpp"
 
 /*
