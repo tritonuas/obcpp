@@ -1,7 +1,46 @@
 #ifndef CAMERA_INTERFACE_HPP_
 #define CAMERA_INTERFACE_HPP_
 #include <nlohmann/json.hpp>
+#include <string>
 // TODO: import OpenCV library here
+template <typename T> 
+class CameraConfigMetadata {
+    private:
+        const std::string name;
+        T value;
+        const std::string valueType;
+        const bool configurable;
+        const bool executable;
+        const std::unordered_map<std::string, T> requirements;// key string name  - T value of dependency 
+    public: 
+        LucidCameraConfigMetadata(std::name, T value, bool configurable, bool executable, std::unordered_map<std::string, T> requirements) {
+            this->name = name; 
+            this->value = value;
+            this->valueType = typeid(this->value).name();
+            this->executable = executable;
+            this->requirements = requirements;
+        }
+
+        std::string getName() {
+            return this->name; 
+        }
+
+        T getValue() {
+            return this->value;
+        }
+
+        void setValue(T value) {
+            this->value = value; 
+        }
+
+        std::string getValueType() {
+            return this->valueType;
+        }
+
+        std::unordered_map<std::string, T> getRequirments() {
+            return this->requirements;
+        }
+};
 
 /*
  * FYI: this is class that will standardize image data but
@@ -16,7 +55,7 @@ class ImageData
 {
 private:
     const std::string NAME;
-    const std::string PATHS;
+    const std::string PATH;
     const Mat DATA;
 
 public:
