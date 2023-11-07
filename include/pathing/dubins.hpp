@@ -1,15 +1,32 @@
 #ifndef PATHING_DUBINS_HPP_
 #define PATHING_DUBINS_HPP_
 
-#include <math.h>
+#include <cmath>
 #include <limits>
-
-#include "../utilities/datatypes.hpp"
 
 #include "Eigen"
 
+#include "../utilities/datatypes.hpp"
+
+/*
+ *   Notes from Christopher:
+ *
+ *   The reason everythin is named '0' and '2' instead of 01 or 12
+ *   is because
+ *       0 - first turn
+ *       1 - middle turn (only in [RLR, LRL] pathing)
+ *       2 - last turn
+ *
+ *   Also (for now) the naming is very inconsistant throughout the file.
+ *   This inconsistant naming was also present in the original dubins.py on
+ *   the original OBC
+ *
+ *   Additionally, the mod opertor is different in python and C, C will return
+ *   negative values in its mod operator
+ */
+
 const double TWO_PI_RAD = 2 * M_PI;
-const double HALF_PI_RAD = HALF_PI_RAD;
+const double HALF_PI_RAD = M_PI / 2;
 
 struct DubinsPath
 {
@@ -26,8 +43,8 @@ struct RRTOption
     RRTOption(double length, DubinsPath dubins_path, bool has_straight)
         : length(length), dubins_path(dubins_path), has_straight(has_straight) {}
 
-    double length;          // [TODO]
-    DubinsPath dubins_path; // [TODO]
+    double length;          // the total length of the path
+    DubinsPath dubins_path; // parameters of DubinsPath
     bool has_straight;      // if this option has a straight path or not
 };
 
@@ -46,10 +63,25 @@ int sign(T val)
     return (T(0) < val) - (val < T(0));
 }
 
+/** ((n % M) + M) % M
+ *  Mimics mod operator as used in python
+ *
+ * @param n    ==> the starting number
+ * @param m    ==> the divisor
+ * @returns    ==> positive number reflecting the remainder
+ * @see / from ==> https://stackoverflow.com/questions/1907565/c-and-python-different-behaviour-of-the-modulo-operation
+ */
+double mod(double n, double M)
+{
+    return std::fmod(std::fmod(n, M) + M, M);
+}
+
 /**
+ *  Finds a orthogonal 2-vector to the 2-vector inputted
+ *
  *  @param vector   ==> 2-vector
  *  @return         ==> orthogonal 2-vector to @param vector (always a 90 degree rotation counter-clockwise)
- *  @see https://mathworld.wolfram.com/PerpendicularVector.html
+ *  @see    https://mathworld.wolfram.com/PerpendicularVector.html
  */
 Eigen::Vector2d findOrthogonalVector2D(const Eigen::Vector2d &vector)
 {
@@ -57,6 +89,8 @@ Eigen::Vector2d findOrthogonalVector2D(const Eigen::Vector2d &vector)
 }
 
 /**
+ *   finds the distance between two 2-vectors
+ *
  *   @param vector1  ==> 2-vector
  *   @param vector2  ==> 2-vector
  *   @return         ==> the magnitude of the displacement vector between the two vectors
@@ -66,10 +100,13 @@ double distanceBetween(const Eigen::Vector2d &vector1, const Eigen::Vector2d &ve
     return (vector1 - vector2).norm();
 }
 
-/*
+/**
+ *  finds the midpoint between two 2-vectors via convex linear combinations
  *
- *   [TODO] - write desc.
- *
+ *  @param  vector1 ==> 2-vector
+ *  @param  vector2 ==> 2-vector
+ *  @return         ==> two vector that is at the midpoint between the two points
+ *  @see    https://en.wikipedia.org/wiki/Convex_combination
  */
 Eigen::Vector2d midpoint(const Eigen::Vector2d &vector1, const Eigen::Vector2d &vector2)
 {
@@ -79,8 +116,11 @@ Eigen::Vector2d midpoint(const Eigen::Vector2d &vector1, const Eigen::Vector2d &
 class Dubins
 {
     /*
-        TODO:
-            - copy the python code from the other obc repo
+        [TODO]:
+            - write tests
+            - optimize code
+            - follow some stype guidelines
+            - document the code
     */
 public:
     Dubins(double radius, double point_separation)
@@ -91,6 +131,9 @@ public:
     }
 
     /**
+     *   Finds the center of a given turn orignating at a vector turning left or right
+     *   Assumes the path may be done perfectly circularly
+     *
      *   @param  point   ==> current position of the plane (vector) with psi in radians
      *   @param  side    ==> whether the plane is planning to turn left (L) or right (R)
      *   @return         ==> center of a turning circle
@@ -109,6 +152,8 @@ public:
     }
 
     /**
+     *   Finds a point (vector) along a curved path given a distance already traveled
+     *
      *   @param starting_point   ==> position vector of the plane (only psi is used to ascertain direction)
      *   @param beta             ==> angle of the turn (positive is left/ccw)
      *   @param center           ==> center of the circle
@@ -216,7 +261,6 @@ public:
 
         double intercenter = distanceBetween(center_0, center_2);
 
-        // should be law of cosines or some shit
         Eigen::Vector2d center_1 = midpoint(center_0, center_2) // midpoint between the centers
                                    + sign(path.beta_0) * sqrt(  // hypotnuse - 2r (distance between center0/2 and center 1) | a - intercenter / 2 (half of distance between center 0 and center 2)
                                                              4 * this->_radius * this->_radius - (intercenter / 2) * (intercenter / 2)) *
@@ -252,6 +296,15 @@ public:
         return points_list;
     }
 
+    /**
+     *  Abstraction for generating points (curved/straight)
+     *
+     *  @param start        ==> vector at start position
+     *  @param end          ==> vector at end position
+     *  @param path         ==> DubinsPath encoding turning and straight information
+     *  @param has_straigt  ==> whether the given DubinsPath has a straight section or not
+     *  @return             ==> a list of points that represent the shortest dubin's path from start to end
+     */
     std::vector<Eigen::Vector2d> generatePoints(const XYZCoord &start, const XYZCoord &end, const DubinsPath &path, bool has_straight)
     {
         if (has_straight)
@@ -265,10 +318,22 @@ public:
     }
 
     /**
-     *  First computes the poisition of the centers of the turns, and then uses
-        the fact that the vector defined by the distance between the centers
-        gives the direction and distance of the straight segment.
-    */
+     *  First, the straight distance (it turns out) is equal to the
+     *  distance between the two centers
+     *  Next it calculates the turning angle (positive [CCW] turn from start to end vector)
+     *
+     *  @param start    ==> vector at start position
+     *  @param end      ==> vector at end position
+     *  @param center_0 ==> the center of the first turn
+     *  @param center_2 ==> the center of the last turn
+     *  @return             RRTOption detailing the parameters of the path
+     *                      - total distance
+     *                      - DubinsPath
+     *                          - turning angle 1
+     *                          - turning angle 2
+     *                          - straight_distance
+     *                      - if the path has a straight section
+     */
     RRTOption lsl(const XYZCoord &start, const XYZCoord &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2)
     {
         double straight_distance = distanceBetween(center_0, center_2);
@@ -277,8 +342,8 @@ public:
         double alpha = std::atan2(center_2[1] - center_0[1], center_2[0] - center_0[0]);
 
         // difference in angle on the interval [-2pi, 2pi]
-        double beta_0 = std::fmod(alpha - start.psi, TWO_PI_RAD);
-        double beta_2 = std::fmod(end.psi - alpha, TWO_PI_RAD);
+        double beta_0 = mod(alpha - start.psi, TWO_PI_RAD);
+        double beta_2 = mod(end.psi - alpha, TWO_PI_RAD);
 
         double total_distance = this->_radius * (beta_0 + beta_2) + straight_distance;
 
@@ -289,7 +354,18 @@ public:
      * First computes the poisition of the centers of the turns, and then uses
      *    the fact that the vector defined by the distance between the centers
      *    gives the direction and distance of the straight segment.
-     *   [TODO] - write documentation
+     *
+     *  @param start    ==> vector at start position
+     *  @param end      ==> vector at end position
+     *  @param center_0 ==> the center of the first turn
+     *  @param center_2 ==> the center of the last turn
+     *  @return             RRTOption detailing the parameters of the path
+     *                      - total distance
+     *                      - DubinsPath
+     *                          - turning angle 1
+     *                          - turning angle 2
+     *                          - straight_distance
+     *                      - if the path has a straight section
      */
     RRTOption rsr(const XYZCoord &start, const XYZCoord &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2)
     {
@@ -298,8 +374,8 @@ public:
         // angle relative to horizontal
         double alpha = std::atan2(center_2[1] - center_0[1], center_2[0] - center_0[0]);
 
-        double beta_0 = std::fmod(-alpha + start.psi, TWO_PI_RAD);
-        double beta_2 = std::fmod(-end.psi + alpha, TWO_PI_RAD);
+        double beta_2 = mod(-end.psi + alpha, TWO_PI_RAD);
+        double beta_0 = mod(-alpha + start.psi, TWO_PI_RAD);
 
         double total_distance = this->_radius * (beta_2 + beta_0) + straight_distance;
 
@@ -313,6 +389,18 @@ public:
         by the point between the two circles, the center point of one circle
         and the tangeancy point of this circle to compute the straight segment
         distance.
+     *
+     *  @param start    ==> vector at start position
+     *  @param end      ==> vector at end position
+     *  @param center_0 ==> the center of the first turn
+     *  @param center_2 ==> the center of the last turn
+     *  @return             RRTOption detailing the parameters of the path
+     *                      - total distance
+     *                      - DubinsPath
+     *                          - turning angle 1
+     *                          - turning angle 2
+     *                          - straight_distance
+     *                      - if the path has a straight section
      */
     RRTOption rsl(const XYZCoord &start, const XYZCoord &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2)
     {
@@ -326,9 +414,9 @@ public:
         }
 
         double alpha = std::acos(this->_radius / half_intercenter_length);
-        double beta_0 = std::fmod(-(psi_a + alpha - start.psi - HALF_PI_RAD), TWO_PI_RAD);
+        double beta_0 = mod(-(psi_a + alpha - start.psi - HALF_PI_RAD), TWO_PI_RAD);
         // is is better to simplify?
-        double beta_2 = std::fmod(M_PI + end.psi - HALF_PI_RAD - alpha - psi_a, TWO_PI_RAD);
+        double beta_2 = mod(M_PI + end.psi - HALF_PI_RAD - alpha - psi_a, TWO_PI_RAD);
 
         double straight_distance = 2 * std::pow(std::pow(half_intercenter_length, 2) - std::pow(this->_radius, 2), 0.5);
         double total_distance = this->_radius * (beta_0 + beta_2) + straight_distance;
@@ -343,6 +431,18 @@ public:
         by the point between the two circles, the center point of one circle
         and the tangeancy point of this circle to compute the straight segment
         distance.
+     *
+     *  @param start    ==> vector at start position
+     *  @param end      ==> vector at end position
+     *  @param center_0 ==> the center of the first turn
+     *  @param center_2 ==> the center of the last turn
+     *  @return             RRTOption detailing the parameters of the path
+     *                      - total distance
+     *                      - DubinsPath
+     *                          - turning angle 1
+     *                          - turning angle 2
+     *                          - straight_distance
+     *                      - if the path has a straight section
      */
     RRTOption lsr(const XYZCoord &start, const XYZCoord &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2)
     {
@@ -356,19 +456,31 @@ public:
         }
 
         double alpha = std::acos(this->_radius / half_intercenter_length);
-        double beta_0 = std::fmod(psi_a - alpha - start.psi + HALF_PI_RAD, TWO_PI_RAD);
+        double beta_0 = mod(psi_a - alpha - start.psi + HALF_PI_RAD, TWO_PI_RAD);
         // is is better to simplify?
-        double beta_2 = std::fmod(HALF_PI_RAD - end.psi - alpha + psi_a, TWO_PI_RAD);
+        double beta_2 = mod(HALF_PI_RAD - end.psi - alpha + psi_a, TWO_PI_RAD);
 
         double straight_distance = 2 * std::pow(std::pow(half_intercenter_length, 2) - std::pow(this->_radius, 2), 0.5);
         double total_distance = this->_radius * (beta_0 + beta_2) + straight_distance;
 
         return RRTOption(total_distance, DubinsPath(beta_0, -beta_2, straight_distance), true);
     }
-        
+
     /**
      *  Using the isoceles triangle made by the centers of the three circles,
         computes the required angles.
+     *
+     *  @param start    ==> vector at start position
+     *  @param end      ==> vector at end position
+     *  @param center_0 ==> the center of the first turn
+     *  @param center_2 ==> the center of the last turn
+     *  @return             RRTOption detailing the parameters of the path
+     *                      - total distance
+     *                      - DubinsPath
+     *                          - turning angle 1
+     *                          - turning angle 2
+     *                          - straight_distance
+     *                      - if the path has a straight section
      */
     RRTOption lrl(const XYZCoord &start, const XYZCoord &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2)
     {
@@ -383,9 +495,9 @@ public:
         }
 
         double gamma = 2 * std::asin(intercenter_distance / (4 * this->_radius));
-        double beta_0 = std::fmod(psi_a - start.psi + HALF_PI_RAD + (M_PI - gamma) / 2, TWO_PI_RAD);
+        double beta_0 = mod(psi_a - start.psi + HALF_PI_RAD + (M_PI - gamma) / 2, TWO_PI_RAD);
         // why called beta_1
-        double beta_1 = std::fmod(-psi_a + HALF_PI_RAD + end.psi + (M_PI - gamma) / 2, TWO_PI_RAD);
+        double beta_1 = mod(-psi_a + HALF_PI_RAD + end.psi + (M_PI - gamma) / 2, TWO_PI_RAD);
         double total_distance = (TWO_PI_RAD - gamma + std::abs(beta_0) + std::abs(beta_1)) * this->_radius;
         return RRTOption(total_distance, DubinsPath(beta_0, beta_1, TWO_PI_RAD - gamma), false);
     }
@@ -393,6 +505,18 @@ public:
     /**
      *  Using the isoceles triangle made by the centers of the three circles,
         computes the required angles.
+     *
+     *  @param start    ==> vector at start position
+     *  @param end      ==> vector at end position
+     *  @param center_0 ==> the center of the first turn
+     *  @param center_2 ==> the center of the last turn
+     *  @return             RRTOption detailing the parameters of the path
+     *                      - total distance
+     *                      - DubinsPath
+     *                          - turning angle 1
+     *                          - turning angle 2
+     *                          - straight_distance
+     *                      - if the path has a straight section
      */
     RRTOption rlr(const XYZCoord &start, const XYZCoord &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2)
     {
@@ -407,9 +531,9 @@ public:
         }
 
         double gamma = 2 * std::asin(intercenter_distance / (4 * this->_radius));
-        double beta_0 = std::fmod(psi_a - start.psi + HALF_PI_RAD + (M_PI - gamma) / 2, TWO_PI_RAD);
+        double beta_0 = mod(psi_a - start.psi + HALF_PI_RAD + (M_PI - gamma) / 2, TWO_PI_RAD);
         // why called beta_1
-        double beta_1 = std::fmod(-psi_a + HALF_PI_RAD + end.psi + (M_PI - gamma) / 2, TWO_PI_RAD);
+        double beta_1 = mod(-psi_a + HALF_PI_RAD + end.psi + (M_PI - gamma) / 2, TWO_PI_RAD);
         double total_distance = (TWO_PI_RAD - gamma + std::abs(beta_0) + std::abs(beta_1)) * this->_radius;
         return RRTOption(total_distance, DubinsPath(beta_0, beta_1, TWO_PI_RAD - gamma), false);
     }
@@ -419,9 +543,14 @@ public:
 
         Returns in the form of a list of tuples representing each option: (path_length,
         dubins_path, straight).
-     * 
+     *
+     *  @param start    ==> vector at start position
+     *  @param end      ==> vector at end position
+     *  @param sort     ==> whether the method sorts the resulting vector DEFALT-->FALSE (searching is faster)
+     *  @return         ==> list containing all the RRTOptions from the path generation
     */
-    std::vector<RRTOption> allOptions(const XYZCoord &start, const XYZCoord &end, bool sort=false) {
+    std::vector<RRTOption> allOptions(const XYZCoord &start, const XYZCoord &end, bool sort = false)
+    {
         Eigen::Vector2d center_0_left = this->findCenter(start, 'L');
         Eigen::Vector2d center_0_right = this->findCenter(start, 'R');
         Eigen::Vector2d center_2_left = this->findCenter(end, 'L');
@@ -433,15 +562,12 @@ public:
             this->rsl(start, end, center_0_right, center_2_left),
             this->lsr(start, end, center_0_left, center_2_right),
             this->rlr(start, end, center_0_right, center_2_right),
-            this->rlr(start, end, center_0_left, center_2_left)
-        };
+            this->rlr(start, end, center_0_left, center_2_left)};
 
         if (sort)
         {
             std::sort(options.begin(), options.end(), [](RRTOption a, RRTOption b)
-            {
-                return a.length > b.length;
-            });
+                      { return a.length > b.length; });
         }
         return options;
     }
@@ -450,17 +576,23 @@ public:
      * Compute all the possible Dubin's path.
 
         Returns sequence of points representing the shortest option.
+     *  @param start    ==> vector at start position
+     *  @param end      ==> vector at end position
+     *  @return         ==> the points for the most optimal path from @param start to @param end
     */
-    std::vector<Eigen::Vector2d> dubinsPath(const XYZCoord &start, const XYZCoord &end) {
+    std::vector<Eigen::Vector2d> dubinsPath(const XYZCoord &start, const XYZCoord &end)
+    {
         std::vector<RRTOption> options = this->allOptions(start, end);
         // too lazy to find a proper function to find min for vectors (as of now)
         RRTOption optimal_option = options[0];
 
-        for (int i = 1; i < options.size(); i++) {
-            if (optimal_option.length > options[i].length) {
+        for (int i = 1; i < options.size(); i++)
+        {
+            if (optimal_option.length > options[i].length)
+            {
                 optimal_option = options[i];
             }
-        } 
+        }
 
         return this->generatePoints(start, end, optimal_option.dubins_path, optimal_option.has_straight);
     }
