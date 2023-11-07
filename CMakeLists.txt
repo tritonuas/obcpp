@@ -15,7 +15,6 @@ endif()
 
 cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
 
-
 set(CMAKE_CXX_COMPILER g++)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_C_COMPILER gcc)
@@ -25,30 +24,47 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ./bin)
 
 project(obcpp VERSION 1.0)
 
+# =============================
+# Dependencies 
+set(DEPS_DIRECTORY ${PROJECT_SOURCE_DIR}/deps)
+
+include(${DEPS_DIRECTORY}/torch/torch.cmake)
+include(${DEPS_DIRECTORY}/arena-sdk/arena.cmake)
+include(${DEPS_DIRECTORY}/json/json.cmake)
+include(${DEPS_DIRECTORY}/eigen/eigen.cmake)
+include(${DEPS_DIRECTORY}/opencv/opencv.cmake)
+# =============================
+
+# =============================
+# obcpp executable
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 file(GLOB_RECURSE HEADERS "include/*.hpp")
 
-# =============================
-# Executable
 set(INCLUDE_DIRECTORY ${PROJECT_SOURCE_DIR}/include)
 add_executable(${PROJECT_NAME} ${SOURCES})
 include_directories(${INCLUDE_DIRECTORY})
+target_add_torch(${PROJECT_NAME})
+target_add_arena(${PROJECT_NAME})
+target_add_json(${PROJECT_NAME})
+target_add_eigen(${PROJECT_NAME})
+target_add_opencv(${PROJECT_NAME})
 # =============================
 
 # =============================
-# Libraries
-set(DEPS_DIRECTORY ${PROJECT_SOURCE_DIR}/deps)
+# Integration tests
 
-add_subdirectory(${DEPS_DIRECTORY}/arena-sdk)
-add_subdirectory(${DEPS_DIRECTORY}/json)
-include(${DEPS_DIRECTORY}/eigen/CMakeLists.txt)
+# playground
+add_executable(playground tests/integration/playground.cpp)
+target_add_torch(playground)
+target_add_arena(playground)
+target_add_json(playground)
+target_add_eigen(playground) 
+target_add_opencv(playground) 
 # =============================
-include(${DEPS_DIRECTORY}/torch/CMakeLists.txt)
-# NOTE: temporarily leaving out opencv until we have it working in dev container
-# include(${DEPS_DIRECTORY}/opencv/CMakeLists.txt)
+
 # =============================
 # Unit tests
-add_subdirectory(tests)
+add_subdirectory(tests/unit)
 add_subdirectory(${DEPS_DIRECTORY}/google-test)
 # =============================
 
