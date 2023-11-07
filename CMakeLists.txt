@@ -6,16 +6,6 @@ FATAL: In-source builds are not allowed.
 ")
 endif()
 
-# Check if Ninja is available
-find_program(NINJA_EXECUTABLE ninja)
-
-# Set the default generator
-if(NINJA_EXECUTABLE)
-    set(CMAKE_GENERATOR "Ninja")
-else()
-    set(CMAKE_GENERATOR "Unix Makefiles") # Use a fallback generator
-endif()
-
 # enable build caching
 find_program(CCACHE_FOUND ccache)
 if(CCACHE_FOUND)
