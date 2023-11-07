@@ -4,6 +4,7 @@ FROM amd64/ubuntu:22.04
 ARG USERNAME=tuas
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
+ARG DEBIAN_FRONTEND=noninteractive
 RUN groupadd --gid $USER_GID $USERNAME \
     && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
 
@@ -19,6 +20,8 @@ RUN apt-get update \
                            wget \
                            ccache \
                            vim
+
+RUN apt-get install -y libopencv-dev
 # cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev
 # python-dev python-numpy libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libjasper-dev libdc1394-22-dev
 
