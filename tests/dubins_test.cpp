@@ -10,6 +10,7 @@
  *   - separate failed tests from success tests (if there are any)
  */
 
+
 /*
  *   Tests dubins ==> findOrthogonalVector2D()
  */
@@ -65,9 +66,9 @@ TEST(DubinsTest, DistanceBetweenVectors)
 }
 
 /*
- *   tests dubins ==> midpoint()
+ *   tests dubins ==> halfDisplacement()
  */
-TEST(DubinsTest, Midpoint)
+TEST(DubinsTest, HalfDisplacement)
 {
     // 1] Results with Integer components
     Eigen::Vector2d start_vector1(0.0, 0.0);
@@ -76,27 +77,27 @@ TEST(DubinsTest, Midpoint)
 
     Eigen::Vector2d start_vector2(2.0, 0.0);
     Eigen::Vector2d end_vector2(0.0, 2.0);
-    Eigen::Vector2d midpoint2(1.0, 1.0);
+    Eigen::Vector2d midpoint2(-1.0, 1.0);
 
     Eigen::Vector2d start_vector3(2.0, 0.0);
     Eigen::Vector2d end_vector3(6.0, 0.0);
-    Eigen::Vector2d midpoint3(4.0, 0.0);
+    Eigen::Vector2d midpoint3(2.0, 0.0);
 
-    EXPECT_EQ(midpoint(start_vector1, end_vector1), midpoint1);
-    EXPECT_EQ(midpoint(start_vector2, end_vector2), midpoint2);
-    EXPECT_EQ(midpoint(start_vector3, end_vector3), midpoint3);
+    EXPECT_EQ(halfDisplacement(start_vector1, end_vector1), midpoint1);
+    EXPECT_EQ(halfDisplacement(start_vector2, end_vector2), midpoint2);
+    EXPECT_EQ(halfDisplacement(start_vector3, end_vector3), midpoint3);
 
     // 2] Results without Integer components
     Eigen::Vector2d start_vector4(1.0, 0.0);
     Eigen::Vector2d end_vector4(0.0, 1.0);
-    Eigen::Vector2d midpoint4(0.5, 0.5);
+    Eigen::Vector2d midpoint4(-0.5, 0.5);
 
     Eigen::Vector2d start_vector5(102.5, -125.5);
     Eigen::Vector2d end_vector5(1825.0, 2389.8);
-    Eigen::Vector2d midpoint5(963.75, 1132.15);
+    Eigen::Vector2d midpoint5(861.25, 1257.65);
 
-    Eigen::Vector2d result_vector4 = midpoint(start_vector4, end_vector4);
-    Eigen::Vector2d result_vector5 = midpoint(start_vector5, end_vector5);
+    Eigen::Vector2d result_vector4 = halfDisplacement(start_vector4, end_vector4);
+    Eigen::Vector2d result_vector5 = halfDisplacement(start_vector5, end_vector5);
 
     EXPECT_NEAR(result_vector4[0], midpoint4[0], 0.01);
     EXPECT_NEAR(result_vector4[1], midpoint4[1], 0.01);
@@ -316,7 +317,43 @@ TEST(DubinsTest, RSR)
  */
 TEST(DubinsTest, RSL)
 {
-    EXPECT_EQ(5, 5);
+    Dubins dubins1(5, 10);
+    // points towards e1
+    XYZCoord origin_x(0, 0, 0, 0);
+    XYZCoord origin_y(0, 0, 0, M_PI / 2);
+    XYZCoord arbitrary_position1(73, 41, 0, 4.00);
+    XYZCoord plus_x100(100, 0, 0, 0);
+    XYZCoord arbitrary_position2(10, -100, 0, 0);
+
+    RRTOption result1 = dubins1.rsl(origin_x, arbitrary_position1,
+                                    dubins1.findCenter(origin_x, 'R'), dubins1.findCenter(arbitrary_position1, 'L'));
+    RRTOption expected_result1(134.78090998278276, DubinsPath(-5.8893974274779834, 3.606212120298397, 87.30286224390085), true);
+
+    EXPECT_NEAR(result1.length, expected_result1.length, 0.01);
+    EXPECT_NEAR(result1.dubins_path.beta_0, expected_result1.dubins_path.beta_0, 0.01);
+    EXPECT_NEAR(result1.dubins_path.beta_2, expected_result1.dubins_path.beta_2, 0.01);
+    EXPECT_NEAR(result1.length, expected_result1.length, 0.01);
+    EXPECT_EQ(result1.has_straight, expected_result1.has_straight);
+
+    RRTOption result2 = dubins1.rsl(origin_x, plus_x100,
+                                    dubins1.findCenter(origin_x, 'R'), dubins1.findCenter(plus_x100, 'L'));
+    RRTOption expected_result2(100, DubinsPath(0, 0, 100), true);
+
+    EXPECT_NEAR(result2.length, expected_result2.length, 0.01);
+    EXPECT_NEAR(result2.dubins_path.beta_0, expected_result2.dubins_path.beta_0, 0.01);
+    EXPECT_NEAR(result2.dubins_path.beta_2, expected_result2.dubins_path.beta_2, 0.01);
+    EXPECT_NEAR(result2.length, expected_result2.length, 0.01);
+    EXPECT_EQ(result2.has_straight, expected_result2.has_straight);
+
+    RRTOption result3 = dubins1.rsl(origin_x, arbitrary_position2,
+                                    dubins1.findCenter(origin_x, 'R'), dubins1.findCenter(arbitrary_position2, 'L'));
+    RRTOption expected_result3(105.70796326794898, DubinsPath(-M_PI / 2, M_PI / 2, 90), true);
+
+    EXPECT_NEAR(result3.length, expected_result3.length, 0.01);
+    EXPECT_NEAR(result3.dubins_path.beta_0, expected_result3.dubins_path.beta_0, 0.01);
+    EXPECT_NEAR(result3.dubins_path.beta_2, expected_result3.dubins_path.beta_2, 0.01);
+    EXPECT_NEAR(result3.length, expected_result3.length, 0.01);
+    EXPECT_EQ(result3.has_straight, expected_result3.has_straight);
 }
 
 /*
@@ -324,7 +361,42 @@ TEST(DubinsTest, RSL)
  */
 TEST(DubinsTest, LSR)
 {
-    EXPECT_EQ(5, 5);
+    Dubins dubins1(5, 10);
+    // points towards e1
+    XYZCoord origin_x(0, 0, 0, 0);
+    XYZCoord origin_y(0, 0, 0, M_PI / 2);
+    XYZCoord arbitrary_position1(73, 41, 0, 4.00);
+    XYZCoord plus_x100(100, 0, 0, 0);
+    XYZCoord arbitrary_position2(10, 100, 0, 0);
+
+    RRTOption result1 = dubins1.lsr(origin_x, arbitrary_position1,
+                                    dubins1.findCenter(origin_x, 'L'), dubins1.findCenter(arbitrary_position1, 'R'));
+    RRTOption expected_result1(96.78474229907584, DubinsPath(0.6420440973470476, -2.925229404526634, 78.94837478970744), true);
+
+    EXPECT_NEAR(result1.length, expected_result1.length, 0.01);
+    EXPECT_NEAR(result1.dubins_path.beta_0, expected_result1.dubins_path.beta_0, 0.01);
+    EXPECT_NEAR(result1.dubins_path.beta_2, expected_result1.dubins_path.beta_2, 0.01);
+    EXPECT_NEAR(result1.length, expected_result1.length, 0.01);
+    EXPECT_EQ(result1.has_straight, expected_result1.has_straight);
+
+    RRTOption result2 = dubins1.lsr(origin_x, plus_x100,
+                                    dubins1.findCenter(origin_x, 'L'), dubins1.findCenter(plus_x100, 'R'));
+    RRTOption expected_result2(100, DubinsPath(0, 0, 100), true);
+
+    EXPECT_NEAR(result2.length, expected_result2.length, 0.01);
+    EXPECT_NEAR(result2.dubins_path.beta_0, expected_result2.dubins_path.beta_0, 0.01);
+    EXPECT_NEAR(result2.dubins_path.beta_2, expected_result2.dubins_path.beta_2, 0.01);
+    EXPECT_NEAR(result2.length, expected_result2.length, 0.01);
+    EXPECT_EQ(result2.has_straight, expected_result2.has_straight);
+
+    RRTOption result3 = dubins1.lsr(origin_x, arbitrary_position2,
+                                    dubins1.findCenter(origin_x, 'L'), dubins1.findCenter(arbitrary_position2, 'R'));
+    RRTOption expected_result3(105.70796326794898, DubinsPath(M_PI / 2, -M_PI / 2, 90), true);
+    EXPECT_NEAR(result3.length, expected_result3.length, 0.01);
+    EXPECT_NEAR(result3.dubins_path.beta_0, expected_result3.dubins_path.beta_0, 0.01);
+    EXPECT_NEAR(result3.dubins_path.beta_2, expected_result3.dubins_path.beta_2, 0.01);
+    EXPECT_NEAR(result3.length, expected_result3.length, 0.01);
+    EXPECT_EQ(result3.has_straight, expected_result3.has_straight);
 }
 
 /*

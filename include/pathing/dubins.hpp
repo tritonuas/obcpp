@@ -8,8 +8,10 @@
 
 #include "../utilities/datatypes.hpp"
 
-/*
+/**
  *   Notes from Christopher:
+ *
+ *  everything online about dubins assumes you can derive everyting yourself
  *
  *   The reason everythin is named '0' and '2' instead of 01 or 12
  *   is because
@@ -23,10 +25,14 @@
  *
  *   Additionally, the mod opertor is different in python and C, C will return
  *   negative values in its mod operator
+ *      ^ is important, as all distance calculations are done with raw values of beta
+ *      this means they need to be positive. if the beta value represents a right turn,
+ *      they will be made negative at the very end of each method. (e.g. if left turn ==> beta
+ *      if right turn ==> -beta)
  */
 
-const double TWO_PI_RAD = 2 * M_PI;
-const double HALF_PI_RAD = M_PI / 2;
+const double TWO_PI = 2 * M_PI;
+const double HALF_PI = M_PI / 2;
 
 struct DubinsPath
 {
@@ -63,17 +69,18 @@ int sign(T val)
     return (T(0) < val) - (val < T(0));
 }
 
-/** ((n % M) + M) % M
+/** ((a % n) + n) % n
+ *  a + n * [a / n] where [] is the floor function (i.e. integer division)
  *  Mimics mod operator as used in python
  *
- * @param n    ==> the starting number
- * @param m    ==> the divisor
+ * @param a    ==> the dividend
+ * @param n    ==> the divisor
  * @returns    ==> positive number reflecting the remainder
  * @see / from ==> https://stackoverflow.com/questions/1907565/c-and-python-different-behaviour-of-the-modulo-operation
  */
-double mod(double n, double M)
+double mod(double a, double n)
 {
-    return std::fmod(std::fmod(n, M) + M, M);
+    return std::fmod(std::fmod(a, n) + n, n);
 }
 
 /**
@@ -101,16 +108,15 @@ double distanceBetween(const Eigen::Vector2d &vector1, const Eigen::Vector2d &ve
 }
 
 /**
- *  finds the midpoint between two 2-vectors via convex linear combinations
+ *  returns half of the displacement vector from v1 to v2
  *
  *  @param  vector1 ==> 2-vector
  *  @param  vector2 ==> 2-vector
  *  @return         ==> two vector that is at the midpoint between the two points
- *  @see    https://en.wikipedia.org/wiki/Convex_combination
  */
-Eigen::Vector2d midpoint(const Eigen::Vector2d &vector1, const Eigen::Vector2d &vector2)
+Eigen::Vector2d halfDisplacement(const Eigen::Vector2d &vector1, const Eigen::Vector2d &vector2)
 {
-    return (vector1 + vector2) / 2;
+    return (vector2 - vector1) / 2;
 }
 
 class Dubins
@@ -144,7 +150,7 @@ public:
 
         // creates a right angle between the XYZCoord vector towards the center
         // left is 90 deg CCW, right is 90 deg CW
-        double angle = point.psi + (side == 'L' ? HALF_PI_RAD : -HALF_PI_RAD);
+        double angle = point.psi + (side == 'L' ? HALF_PI : -HALF_PI);
 
         // creates the vector offset from the existing position
         return Eigen::Vector2d(point.x + (std::cos(angle) * this->_radius),
@@ -163,7 +169,7 @@ public:
     Eigen::Vector2d circleArc(const XYZCoord &starting_point, double beta, const Eigen::Vector2d &center, double path_length)
     {
         // forward angle + [(displacement angle to the right) * -1 IF angle is negative ELSE 1]
-        double angle = starting_point.psi + ((path_length / this->_radius) - HALF_PI_RAD) * sign(beta);
+        double angle = starting_point.psi + ((path_length / this->_radius) - HALF_PI) * sign(beta);
         // unit vector encoding angle information
         Eigen::Vector2d angle_vector(std::cos(angle), std::sin(angle));
         return center + (angle_vector * this->_radius);
@@ -195,7 +201,7 @@ public:
         {
             // The total angle that the path is planning to turn along turn 1 (referece to center of the circle)
             // (start direction) + (*FROM CENTER OF CIRCLE, the angle traveled along curve * whether the plane is turning left/right)
-            double angle = start.psi + (std::abs(path.beta_0) - HALF_PI_RAD) * sign(path.beta_0);
+            double angle = start.psi + (std::abs(path.beta_0) - HALF_PI) * sign(path.beta_0);
             initial_point = center_0 + this->_radius * Eigen::Vector2d(std::cos(angle), std::sin(angle));
         }
         else
@@ -206,7 +212,7 @@ public:
         if (std::abs(path.beta_2) > 0)
         {
             // negative sign before beta_2 is because the path comes in through the back of the end vector
-            double angle = end.psi + (-std::abs(path.beta_2) - HALF_PI_RAD) * sign(path.beta_2);
+            double angle = end.psi + (-std::abs(path.beta_2) - HALF_PI) * sign(path.beta_2);
             final_point = center_2 + this->_radius * Eigen::Vector2d(std::cos(angle), std::sin(angle));
         }
         else
@@ -259,12 +265,13 @@ public:
         Eigen::Vector2d center_0 = findCenter(start, (path.beta_0 > 0) ? 'L' : 'R');
         Eigen::Vector2d center_2 = findCenter(end, (path.beta_2 > 0) ? 'L' : 'R');
 
-        double intercenter = distanceBetween(center_0, center_2);
+        double intercenter_distance = distanceBetween(center_0, center_2);
 
-        Eigen::Vector2d center_1 = midpoint(center_0, center_2) // midpoint between the centers
-                                   + sign(path.beta_0) * sqrt(  // hypotnuse - 2r (distance between center0/2 and center 1) | a - intercenter / 2 (half of distance between center 0 and center 2)
-                                                             4 * this->_radius * this->_radius - (intercenter / 2) * (intercenter / 2)) *
-                                         findOrthogonalVector2D((center_2 - center_0) / intercenter); // unit vector (direction vector) orthogonal to the displacement vector between the two centers
+        // uses pythagorean theorem to determine the center
+        Eigen::Vector2d center_1 = halfDisplacement(center_0, center_2) // half_displacement between the centers
+                                   + sign(path.beta_0) * sqrt(          // hypotnuse - 2r (distance between center0/2 and center 1) | a - intercenter_distance / 2 (half of distance between center 0 and center 2)
+                                                             4 * this->_radius * this->_radius - (intercenter_distance / 2) * (intercenter_distance / 2)) *
+                                         findOrthogonalVector2D((center_2 - center_0) / intercenter_distance); // unit vector (direction vector) orthogonal to the displacement vector between the two centers
 
         // angle from center 1 pointing towards center 0 parallel to the displacement vector
         // angle of the displacement vector relative to x+ (horizontal) MINUS pi (rotated 180 clockwise)
@@ -341,9 +348,9 @@ public:
         // angle relative to horizontal
         double alpha = std::atan2(center_2[1] - center_0[1], center_2[0] - center_0[0]);
 
-        // difference in angle on the interval [-2pi, 2pi]
-        double beta_0 = mod(alpha - start.psi, TWO_PI_RAD);
-        double beta_2 = mod(end.psi - alpha, TWO_PI_RAD);
+        // difference in angle on the interval [0, 2pi] (CCW)
+        double beta_0 = mod(alpha - start.psi, TWO_PI);
+        double beta_2 = mod(end.psi - alpha, TWO_PI);
 
         double total_distance = this->_radius * (beta_0 + beta_2) + straight_distance;
 
@@ -374,8 +381,12 @@ public:
         // angle relative to horizontal
         double alpha = std::atan2(center_2[1] - center_0[1], center_2[0] - center_0[0]);
 
-        double beta_2 = mod(-end.psi + alpha, TWO_PI_RAD);
-        double beta_0 = mod(-alpha + start.psi, TWO_PI_RAD);
+        // offset betwen alpha and other vector [0,2pi]
+        // 1] calculates the CCW (positive) rotation from start vector to end vector (end_a - start_a)
+        // 2] takes the negative value of ^
+        // 3] ^ % 2pi == the rotation CW in terms of positive radians
+        double beta_0 = mod(-(alpha - start.psi), TWO_PI);
+        double beta_2 = mod(-(end.psi - alpha), TWO_PI);
 
         double total_distance = this->_radius * (beta_2 + beta_0) + straight_distance;
 
@@ -404,20 +415,25 @@ public:
      */
     RRTOption rsl(const XYZCoord &start, const XYZCoord &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2)
     {
-        Eigen::Vector2d mid_point = midpoint(center_0, center_2);
-        double psi_a = std::atan2(mid_point[1], mid_point[0]);
-        double half_intercenter_length = mid_point.norm();
+        // displacement vector facing center_2 that terminates half way there (i.e. center_0 + midpoint = "intercenter")
+        Eigen::Vector2d midpoint = halfDisplacement(center_0, center_2);
+        double psi_a = std::atan2(midpoint[1], midpoint[0]);
+        double half_intercenter_length = midpoint.norm();
 
         if (half_intercenter_length < this->_radius)
         {
             return RRTOption(std::numeric_limits<double>::infinity(), DubinsPath(0, 0, 0), true);
         }
 
+        // angle of the path (not equal to the angle of the centers connected) [0, PI / 2]
         double alpha = std::acos(this->_radius / half_intercenter_length);
-        double beta_0 = mod(-(psi_a + alpha - start.psi - HALF_PI_RAD), TWO_PI_RAD);
-        // is is better to simplify?
-        double beta_2 = mod(M_PI + end.psi - HALF_PI_RAD - alpha - psi_a, TWO_PI_RAD);
+        // (STARTING_ANGLE) - (ANGLE_TO_TANGENT_POINT) [assuming everything is relative to horizontal]
+        // (start ==> normal to circle) - (angle to connect center + angle between center an "leave circle" point)
+        double beta_0 = mod((start.psi + HALF_PI) - (psi_a + alpha), TWO_PI);
+        // Same as ^, but shifted PI becuase both has been shifted M_PI
+        double beta_2 = mod(M_PI + (end.psi - HALF_PI) - (alpha + psi_a), TWO_PI);
 
+        // pythagorean theroem to calculate distance off of known right trangle using intercenter/radius
         double straight_distance = 2 * std::pow(std::pow(half_intercenter_length, 2) - std::pow(this->_radius, 2), 0.5);
         double total_distance = this->_radius * (beta_0 + beta_2) + straight_distance;
 
@@ -446,7 +462,7 @@ public:
      */
     RRTOption lsr(const XYZCoord &start, const XYZCoord &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2)
     {
-        Eigen::Vector2d mid_point = midpoint(center_0, center_2);
+        Eigen::Vector2d mid_point = halfDisplacement(center_0, center_2);
         double psi_a = std::atan2(mid_point[1], mid_point[0]);
         double half_intercenter_length = mid_point.norm();
 
@@ -455,11 +471,15 @@ public:
             return RRTOption(std::numeric_limits<double>::infinity(), DubinsPath(0, 0, 0), true);
         }
 
+        // angle between intercenter displacement vector AND vector orthogonal to the "leave circle" vector
         double alpha = std::acos(this->_radius / half_intercenter_length);
-        double beta_0 = mod(psi_a - alpha - start.psi + HALF_PI_RAD, TWO_PI_RAD);
-        // is is better to simplify?
-        double beta_2 = mod(HALF_PI_RAD - end.psi - alpha + psi_a, TWO_PI_RAD);
+        // (INTERCENTER _reference_) - (DISPLACEMENT TO TERMINAL) - (STARTING VECTOR NORMAL TO CIRCLE)
+        // (angle to terminal relative to horizontal) - (start angle)
+        double beta_0 = mod(psi_a - alpha - (start.psi - HALF_PI), TWO_PI);
+        // Same as ^, but shifted PI becuase alpha has been shifted M_PI
+        double beta_2 = mod(M_PI + psi_a - alpha - (end.psi + HALF_PI), TWO_PI);
 
+        // pythagorean theroem to calculate distance off of known right trangle using intercenter/radius
         double straight_distance = 2 * std::pow(std::pow(half_intercenter_length, 2) - std::pow(this->_radius, 2), 0.5);
         double total_distance = this->_radius * (beta_0 + beta_2) + straight_distance;
 
@@ -485,21 +505,21 @@ public:
     RRTOption lrl(const XYZCoord &start, const XYZCoord &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2)
     {
         double intercenter_distance = distanceBetween(center_0, center_2);
-        Eigen::Vector2d mid_point = midpoint(center_0, center_2);
+        Eigen::Vector2d mid_point = halfDisplacement(center_0, center_2);
         double psi_a = std::atan2(mid_point[1], mid_point[0]);
 
         // better to simplify?
-        if (2 * this->_radius < intercenter_distance && intercenter_distance > 4 * this->_radius)
+        if (intercenter_distance < 2 * this->_radius && intercenter_distance > 4 * this->_radius)
         {
             return RRTOption(std::numeric_limits<double>::infinity(), DubinsPath(0, 0, 0), false);
         }
 
         double gamma = 2 * std::asin(intercenter_distance / (4 * this->_radius));
-        double beta_0 = mod(psi_a - start.psi + HALF_PI_RAD + (M_PI - gamma) / 2, TWO_PI_RAD);
+        double beta_0 = mod(psi_a - start.psi + HALF_PI + (M_PI - gamma) / 2, TWO_PI);
         // why called beta_1
-        double beta_1 = mod(-psi_a + HALF_PI_RAD + end.psi + (M_PI - gamma) / 2, TWO_PI_RAD);
-        double total_distance = (TWO_PI_RAD - gamma + std::abs(beta_0) + std::abs(beta_1)) * this->_radius;
-        return RRTOption(total_distance, DubinsPath(beta_0, beta_1, TWO_PI_RAD - gamma), false);
+        double beta_1 = mod(-psi_a + HALF_PI + end.psi + (M_PI - gamma) / 2, TWO_PI);
+        double total_distance = (TWO_PI - gamma + std::abs(beta_0) + std::abs(beta_1)) * this->_radius;
+        return RRTOption(total_distance, DubinsPath(beta_0, beta_1, TWO_PI - gamma), false);
     }
 
     /**
@@ -521,7 +541,7 @@ public:
     RRTOption rlr(const XYZCoord &start, const XYZCoord &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2)
     {
         double intercenter_distance = distanceBetween(center_0, center_2);
-        Eigen::Vector2d mid_point = midpoint(center_0, center_2);
+        Eigen::Vector2d mid_point = halfDisplacement(center_0, center_2);
         double psi_a = std::atan2(mid_point[1], mid_point[0]);
 
         // better to simplify?
@@ -531,11 +551,11 @@ public:
         }
 
         double gamma = 2 * std::asin(intercenter_distance / (4 * this->_radius));
-        double beta_0 = mod(psi_a - start.psi + HALF_PI_RAD + (M_PI - gamma) / 2, TWO_PI_RAD);
+        double beta_0 = mod(psi_a - start.psi + HALF_PI + (M_PI - gamma) / 2, TWO_PI);
         // why called beta_1
-        double beta_1 = mod(-psi_a + HALF_PI_RAD + end.psi + (M_PI - gamma) / 2, TWO_PI_RAD);
-        double total_distance = (TWO_PI_RAD - gamma + std::abs(beta_0) + std::abs(beta_1)) * this->_radius;
-        return RRTOption(total_distance, DubinsPath(beta_0, beta_1, TWO_PI_RAD - gamma), false);
+        double beta_1 = mod(-psi_a + HALF_PI + end.psi + (M_PI - gamma) / 2, TWO_PI);
+        double total_distance = (TWO_PI - gamma + std::abs(beta_0) + std::abs(beta_1)) * this->_radius;
+        return RRTOption(total_distance, DubinsPath(beta_0, beta_1, TWO_PI - gamma), false);
     }
 
     /**
