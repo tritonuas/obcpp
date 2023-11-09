@@ -33,6 +33,7 @@ include(${DEPS_DIRECTORY}/arena-sdk/arena.cmake)
 include(${DEPS_DIRECTORY}/json/json.cmake)
 include(${DEPS_DIRECTORY}/eigen/eigen.cmake)
 include(${DEPS_DIRECTORY}/opencv/opencv.cmake)
+include(${DEPS_DIRECTORY}/httplib/httplib.cmake)
 # =============================
 
 # =============================
@@ -48,6 +49,7 @@ target_add_arena(${PROJECT_NAME})
 target_add_json(${PROJECT_NAME})
 target_add_eigen(${PROJECT_NAME})
 target_add_opencv(${PROJECT_NAME})
+target_add_httplib(${PROJECT_NAME})
 # =============================
 
 # =============================
@@ -60,6 +62,7 @@ target_add_arena(playground)
 target_add_json(playground)
 target_add_eigen(playground) 
 target_add_opencv(playground) 
+target_add_httplib(playground)
 # =============================
 
 # =============================
