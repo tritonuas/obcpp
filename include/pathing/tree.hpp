@@ -23,6 +23,7 @@ class RRTNode {
         
         RRTPoint getPoint();
         void setReachable(RRTNodeList reachable);
+        void addReachable(RRTNode* newNode);
         RRTNodeList getReachable();
         double getCost();
         void setCost(double newCost);

@@ -18,6 +18,10 @@ void RRTNode::setReachable(RRTNodeList reachable) {
     this->reachable = reachable;
 }
 
+void RRTNode::addReachable(RRTNode* newNode) {
+    this->reachable.push_back(newNode);
+}
+
 RRTNodeList RRTNode::getReachable() {
     return this->reachable;
 }
@@ -57,6 +61,9 @@ void RRTTree::addNode(RRTNode* connectTo, RRTNode* newNode, std::vector<RRTPoint
     edgeMap.insert(toAdd);
     std::pair<RRTPoint, RRTNode> insertNode(newNode->getPoint(), *newNode);
     nodeMap.insert(insertNode);
+
+    connectTo->addReachable(newNode);
+    newNode->addReachable(connectTo);
 }
 
 void RRTTree::rewireEdge(RRTNode* from, RRTNode* toPrev, RRTNode* toNew, std::vector<RRTPoint> path, double cost) {
