@@ -26,6 +26,7 @@ project(obcpp VERSION 1.0)
 
 # =============================
 # Dependencies 
+set(FETCHCONTENT_QUIET FALSE)
 set(DEPS_DIRECTORY ${PROJECT_SOURCE_DIR}/deps)
 
 include(${DEPS_DIRECTORY}/torch/torch.cmake)
