@@ -157,4 +157,29 @@ Each module has its own folder in `include/` and `src/`. Currently all of the he
 
 ## Style
 
-We are still deciding on a linting/style pipeline. When this is decided, this section should be updated.
+### Linting
+
+[`clang-tidy`](https://clang.llvm.org/extra/clang-tidy/) is the linter that statically analyzes the code for style issues and other errors.
+
+#### Setup
+If you're using the Devcontainer, `clang-tidy` will already be installed.
+
+If you're working outside the container, install it on your host system.
+
+For Ubuntu/Debian Linux distributions:
+```sh
+sudo apt-get install clang-tidy
+```
+
+For macOS, try the proposed solution on this post: https://stackoverflow.com/questions/53111082/how-to-install-clang-tidy-on-macos. If anyone on macOS has an easier solution, feel free to replace this section in a PR.
+
+#### Usage
+To run the linter locally:
+
+```sh
+make lint
+```
+
+### Formatting
+
+No formatter has been added yet. Formatting will be enforced once one is set up.
