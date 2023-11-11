@@ -20,9 +20,9 @@ cmake ..    # configures the CMake build system
 
 Now you can use our Make targets.
 
-- `make`: Makes the binary which you can run using `./bin/obcpp`
-- `make test`: Run the tests in `tests/`
-- `make playground`: Runs the `playground.cpp` test which makes sure all dependencies work correctly
+- `make obcpp`: Makes the binary which you can run using `./bin/obcpp`
+- `make test`: Run the tests in `tests/unit`
+- `make playground`: Runs the `tests/integration/playground.cpp` test which makes sure all dependencies work correctly
 - `make lint`: Check code for problems using `clang-tidy`
 
 ## Modules
