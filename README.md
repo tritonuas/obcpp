@@ -4,6 +4,27 @@ The `obcpp` is the repository for our `Onboard Computer`, which is currently a J
 
 (Thankfully the pixhawk is a completely separate piece of hardware, so if this code crashes the plane will not immediately crash, but let's try not to do that!)
 
+## Quick Setup
+
+See [full setup](https://github.com/tritonuas/obcpp#setup) below.
+
+```
+git clone git@github.com:tritonuas/obcpp.git
+cd obcpp
+code .      # once in VSCode, use the Devcontainers extension to
+            # launch our Devcontainer environment (using Docker)
+
+mkdir build && cd build
+cmake ..    # configures the CMake build system
+```
+
+Now you can use our Make targets.
+
+- `make`: Makes the binary which you can run using `./bin/obcpp`
+- `make test`: Run the tests in `tests/`
+- `make playground`: Runs the `playground.cpp` test which makes sure all dependencies work correctly
+- `make lint`: Check code for problems using `clang-tidy`
+
 ## Modules
 
 ### Airdrop
