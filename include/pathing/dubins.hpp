@@ -19,7 +19,7 @@
  *
  *   Also (for now) the naming is very inconsistant throughout the file.
  *   This inconsistant naming was also present in the original dubins.py on
- *   the original OBC
+ *   the original OBC (the code was also inconsistant in styling)
  *
  *   Additionally, the mod opertor is different in python and C, C will return
  *   negative values in its mod operator
@@ -40,7 +40,8 @@ struct DubinsPath
     double beta_0;        // total angle turned in first_turn     radians
     double beta_2;        // total angle turned in last_turn    radians
     double straight_dist; // distance that the path moves in a straightaway
-                          // IF [LRL, RLR], beta_1 ==> totale angle for middle_turn
+                          // IF [LRL, RLR], beta_1 ==> angle for middle_turn
+                          //                !!! beta_1 only used for total_distance, see Dubins::lrl() or Dubins::rlr()
 };
 
 struct RRTOption
@@ -83,18 +84,15 @@ double mod(double a, double n)
 }
 
 /**
- * [TODO]
+ *  For sorting function, a min sort bsed on path length
+ *  i.e shortest path better
+ *
+ *  @param first    ==> first option
+ *  @param second   ==> second option
+ *  @return         ==> true if @param first has a smaller length
  */
 bool compareRRTOptionLength(const RRTOption &first, const RRTOption &second)
 {
-    if (std::isinf(first.length)) {
-        return false;
-    }
-
-    if (std::isinf(second.length)) {
-        return true;
-    }
-
     return first.length < second.length;
 }
 
@@ -107,7 +105,7 @@ bool compareRRTOptionLength(const RRTOption &first, const RRTOption &second)
  */
 Eigen::Vector2d findOrthogonalVector2D(const Eigen::Vector2d &vector)
 {
-    return Eigen::Vector2d(-vector[1], vector[0]);
+    return Eigen::Vector2d(-vector.y(), vector.x());
 }
 
 /**
@@ -137,13 +135,6 @@ Eigen::Vector2d halfDisplacement(const Eigen::Vector2d &vector1, const Eigen::Ve
 
 class Dubins
 {
-    /*
-        [TODO]:
-            - write tests
-            - optimize code
-            - follow some style guidelines
-            - document the code
-    */
 public:
     Dubins(double radius, double point_separation)
         : _radius(radius), _point_separation(point_separation)
@@ -184,9 +175,9 @@ public:
      */
     Eigen::Vector2d circleArc(const XYZCoord &starting_point, double beta, const Eigen::Vector2d &center, double path_length)
     {
-        // forward angle + [(displacement angle to the right) * -1 IF angle is negative ELSE 1]
+        // forward angle + [(displacement angle pointing from the center of the turning curcle)
+        // * -1 IF angle is negative ELSE 1]
         double angle = starting_point.psi + ((path_length / _radius) - HALF_PI) * sign(beta);
-        // unit vector encoding angle information
         Eigen::Vector2d angle_vector(std::cos(angle), std::sin(angle));
         return center + (angle_vector * _radius);
     }
@@ -209,14 +200,14 @@ public:
         Eigen::Vector2d center_2 = findCenter(end, (path.beta_2 > 0) ? 'L' : 'R');
 
         Eigen::Vector2d initial_point(0, 0); // start of the straight secton
-
-        Eigen::Vector2d final_point(0, 0); // end of the straight section
+        Eigen::Vector2d final_point(0, 0);   // end of the straight section
 
         // finds starting and ending points of the _straight section_
         if (std::abs(path.beta_0) > 0)
         {
-            // The total angle that the path is planning to turn along turn 1 (referece to center of the circle)
-            // (start direction) + (*FROM CENTER OF CIRCLE, the angle traveled along curve * whether the plane is turning left/right)
+            // Angle the path is going to turn along turn_1
+            // (start direction) + (FROM CENTER OF CIRCLE, the angle traveled along curve
+            //  * -1 if the plane is turning right)
             double angle = start.psi + (std::abs(path.beta_0) - HALF_PI) * sign(path.beta_0);
             initial_point = center_0 + _radius * Eigen::Vector2d(std::cos(angle), std::sin(angle));
         }
@@ -240,28 +231,36 @@ public:
 
         //  generates the points for the entire curve.
         std::vector<Eigen::Vector2d> points_list;
-        for (int distance = 0; distance < total_distance; distance += _point_separation)
+        for (int current_distance = 0; current_distance < total_distance; current_distance += _point_separation)
         {
-            if (distance < std::abs(path.beta_0) * _radius)
+            if (current_distance < std::abs(path.beta_0) * _radius)
             { // First turn
-                points_list.push_back(circleArc(start, path.beta_0, center_0, distance));
+                points_list.push_back(circleArc(start, path.beta_0, center_0, current_distance));
             }
-            else if (distance > total_distance - std::abs(path.beta_2) * _radius)
+            else if (current_distance > total_distance - std::abs(path.beta_2) * _radius)
             { // Last turn
-                // beta2 is the opposite direction and the distance argument is negative, so it works!
-                points_list.push_back(circleArc(end, path.beta_2, center_2, distance - total_distance));
+                // need to calculate new "start" point, which is the difference in end angle to turn angle
+                XYZCoord final_point_XYZ(final_point.x(), final_point.y(), 0, end.psi - path.beta_2);
+                // last section is how much distance is covered in second turn
+                points_list.push_back(circleArc(final_point_XYZ, path.beta_2, center_2, current_distance - (total_distance - std::abs(path.beta_2) * _radius)));
+
+                // old code, more consise, and clever geometry, but less intuitive
+                // the distance is the max negative distance and it gets smaller, so that the angle starts out at
+                // final_point and moves towards the back of end
+                // points_list.push_back(circleArc(end, path.beta_2, center_2, current_distance - total_distance));
             }
             else
             { // Straignt Section
                 // coefficient is the ratio of the straight distance that has been traversed.
                 // (current_distance_traved - (LENGTH_OF_FIRST_TURN_CURVED_PATH)) / length_of_the_straight_path
-                double coefficient = (distance - (std::abs(path.beta_0) * _radius)) / distance_straight;
+                double coefficient = (current_distance - (std::abs(path.beta_0) * _radius)) / distance_straight;
                 // convex linear combination to find the vector along the straight path between the initial and final point
+                // https://en.wikiversity.org/wiki/Convex_combination
                 points_list.push_back(coefficient * final_point + (1 - coefficient) * initial_point);
             }
         }
-
         points_list.push_back(Eigen::Vector2d(end.x, end.y));
+
         return points_list;
     }
 
@@ -282,39 +281,37 @@ public:
         Eigen::Vector2d center_0 = findCenter(start, (path.beta_0 > 0) ? 'L' : 'R');
         Eigen::Vector2d center_2 = findCenter(end, (path.beta_2 > 0) ? 'L' : 'R');
 
-        double intercenter_distance = distanceBetween(center_0, center_2);
-        double half_intercenter_distance = intercenter_distance / 2;
-
+        double half_intercenter_distance = distanceBetween(center_0, center_2) / 2;
         // uses pythagorean theorem to determine the center
         Eigen::Vector2d center_1 = ((center_0 + center_2) / 2) // midpoint
-                                    + sign(path.beta_0) 
-                                    // hypotnuse - 2r (distance between center0/2 and center 1) 
-                                    // a - intercenter_distance / 2 (half of distance between center 0 and center 2)
-                                    * sqrt(std::pow(2 * _radius, 2) - std::pow(half_intercenter_distance, 2)) 
-                                    * findOrthogonalVector2D(center_2 - center_0).normalized(); // unit vector (direction vector) orthogonal to the displacement vector between the two centers
+                                   + sign(path.beta_0)
+                                         // hypotnuse - 2r (distance between center0/2 and center 1)
+                                         // a - intercenter_distance / 2 (half of distance between center 0 and center 2)
+                                         * sqrt(std::pow(2 * _radius, 2) - std::pow(half_intercenter_distance, 2)) //
+                                         * findOrthogonalVector2D(center_2 - center_0).normalized();               // unit vector (direction vector) orthogonal to the displacement vector between the two centers
 
-        // angle from center 1 pointing towards center 0 parallel to the displacement vector
-        // angle of the displacement vector relative to x+ (horizontal) MINUS pi (rotated 180 clockwise)
-        double psi_0 = std::atan2(center_1[1] - center_0[1], center_1[0] - center_0[0]) - M_PI;
+        // angle between x+ and the "handoff vector" between turn 1 and turn 2
+        // i.e the angle from center_1 (x+) to center_0
+        // angle of the displacement vector relative to x+ (horizontal) - 180 deg [supplimentary interior angle]
+        double psi_0 = std::atan2(center_1.y() - center_0.y(), center_1.x() - center_0.x()) - M_PI;
 
-        // now to generate the actual points
         std::vector<Eigen::Vector2d> points_list;
-        for (double distance = 0; distance < total_distance; distance += _point_separation)
+        for (double current_distance = 0; current_distance < total_distance; current_distance += _point_separation)
         {
-            if (distance < std::abs(path.beta_0) * _radius)
-            { // First turn
-                points_list.push_back(circleArc(start, path.beta_0, center_0, distance));
+            if (current_distance < std::abs(path.beta_0) * _radius)
+            { // First Turn
+                points_list.push_back(circleArc(start, path.beta_0, center_0, current_distance));
             }
-            else if (distance > total_distance - std::abs(path.beta_2) * _radius)
-            { // Last turn
-                points_list.push_back(circleArc(end, path.beta_2, center_2, distance - total_distance));
+            else if (current_distance > total_distance - std::abs(path.beta_2) * _radius)
+            { // Last Turn
+                points_list.push_back(circleArc(end, path.beta_2, center_2, current_distance - total_distance));
             }
             else
             { // Middle Turn
                 // angle relative to center 1 pointing around the curve
-                // from left + (angular distance for center 1)
-                // left pointer + (+LEFT/-RIGHT) (total angular distance - angular distance for turn 1)
-                double angle = psi_0 - sign(path.beta_0) * (distance / _radius - std::abs(path.beta_0));
+                // starting angle - (1 if LRL, -1 if RLR, * (total angular distance - angular distance from first turn))
+                // *note, it is subtracting because the sign of the middle curve is always opposite to the start curve
+                double angle = psi_0 - (sign(path.beta_0) * (current_distance / _radius - std::abs(path.beta_0)));
                 Eigen::Vector2d vect(std::cos(angle), std::sin(angle));
                 points_list.push_back(center_1 + _radius * vect);
             }
@@ -368,7 +365,7 @@ public:
         double straight_distance = distanceBetween(center_0, center_2);
 
         // angle relative to horizontal
-        double alpha = std::atan2(center_2[1] - center_0[1], center_2[0] - center_0[0]);
+        double alpha = std::atan2(center_2.y() - center_0.y(), center_2.x() - center_0.x());
 
         // difference in angle on the interval [0, 2pi] (CCW)
         double beta_0 = mod(alpha - start.psi, TWO_PI);
@@ -380,9 +377,9 @@ public:
     }
 
     /**
-     * First computes the poisition of the centers of the turns, and then uses
-     *    the fact that the vector defined by the distance between the centers
-     *    gives the direction and distance of the straight segment.
+     *  First, the straight distance (it turns out) is equal to the
+     *  distance between the two centers
+     *  Next it calculates the turning angle (negative [CW] turn from start to end vector)
      *
      *  @param start    ==> vector at start position
      *  @param end      ==> vector at end position
@@ -401,7 +398,7 @@ public:
         double straight_distance = distanceBetween(center_0, center_2);
 
         // angle relative to horizontal
-        double alpha = std::atan2(center_2[1] - center_0[1], center_2[0] - center_0[0]);
+        double alpha = std::atan2(center_2.y() - center_0.y(), center_2.x() - center_0.x());
 
         // offset betwen alpha and other vector [0,2pi]
         // 1] calculates the CCW (positive) rotation from start vector to end vector (end_a - start_a)
@@ -417,58 +414,11 @@ public:
 
     /**
      *  Because of the change in turn direction, it is a little more complex to
-        compute than in the RSR or LSL cases. First computes the position of
-        the centers of the turns, and then uses the rectangle triangle defined
-        by the point between the two circles, the center point of one circle
-        and the tangeancy point of this circle to compute the straight segment
-        distance.
+     *  compute than in the RSR or LSL cases.
      *
-     *  @param start    ==> vector at start position
-     *  @param end      ==> vector at end position
-     *  @param center_0 ==> the center of the first turn
-     *  @param center_2 ==> the center of the last turn
-     *  @return             RRTOption detailing the parameters of the path
-     *                      - total distance
-     *                      - DubinsPath
-     *                          - turning angle 1
-     *                          - turning angle 2
-     *                          - straight_distance
-     *                      - if the path has a straight section
-     */
-    RRTOption rsl(const XYZCoord &start, const XYZCoord &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2)
-    {
-        // displacement vector facing center_2 that terminates half way there (i.e. center_0 + midpoint = "intercenter")
-        Eigen::Vector2d midpoint = halfDisplacement(center_2, center_0);
-        double psi_a = std::atan2(midpoint[1], midpoint[0]);
-        double half_intercenter_length = midpoint.norm();
-
-        if (half_intercenter_length < _radius)
-        {
-            return RRTOption(std::numeric_limits<double>::infinity(), DubinsPath(0, 0, 0), true);
-        }
-
-        // angle of the path (not equal to the angle of the centers connected) [0, PI / 2]
-        double alpha = std::acos(_radius / half_intercenter_length);
-        // (STARTING_ANGLE) - (ANGLE_TO_TANGENT_POINT) [assuming everything is relative to horizontal]
-        // (start ==> normal to circle) - (angle to connect center + angle between center an "leave circle" point)
-        double beta_0 = mod((start.psi + HALF_PI) - (psi_a + alpha), TWO_PI);
-        // Same as ^, but shifted PI becuase both has been shifted M_PI
-        double beta_2 = mod(M_PI + (end.psi - HALF_PI) - (alpha + psi_a), TWO_PI);
-
-        // pythagorean theroem to calculate distance off of known right trangle using intercenter/radius
-        double straight_distance = 2 * std::pow(std::pow(half_intercenter_length, 2) - std::pow(_radius, 2), 0.5);
-        double total_distance = _radius * (beta_0 + beta_2) + straight_distance;
-
-        return RRTOption(total_distance, DubinsPath(-beta_0, beta_2, straight_distance), true);
-    }
-
-    /**
-     *  Because of the change in turn direction, it is a little more complex to
-        compute than in the RSR or LSL cases. First computes the poisition of
-        the centers of the turns, and then uses the rectangle triangle defined
-        by the point between the two circles, the center point of one circle
-        and the tangeancy point of this circle to compute the straight segment
-        distance.
+     *  The tangent line between both turns turns out to bisect the intercenter.
+     *  With that knowledge, it is possible to compute both the length and the angle of the
+     *  tangent line ==> then allowing the calculation for the proper turning angles.
      *
      *  @param start    ==> vector at start position
      *  @param end      ==> vector at end position
@@ -484,33 +434,79 @@ public:
      */
     RRTOption lsr(const XYZCoord &start, const XYZCoord &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2)
     {
-        Eigen::Vector2d mid_point = halfDisplacement(center_2, center_0);
-        double psi_a = std::atan2(mid_point[1], mid_point[0]);
-        double half_intercenter_length = mid_point.norm();
+        Eigen::Vector2d half_displacement = halfDisplacement(center_2, center_0);
+        double psi_0 = std::atan2(half_displacement.y(), half_displacement.x());
+        double half_intercenter_distance = half_displacement.norm();
 
-        if (half_intercenter_length < _radius)
+        if (half_intercenter_distance < _radius)
         {
             return RRTOption(std::numeric_limits<double>::infinity(), DubinsPath(0, 0, 0), true);
         }
 
         // angle between intercenter displacement vector AND vector orthogonal to the "leave circle" vector
-        double alpha = std::acos(_radius / half_intercenter_length);
-        // (INTERCENTER _reference_) - (DISPLACEMENT TO TERMINAL) - (STARTING VECTOR NORMAL TO CIRCLE)
-        // (angle to terminal relative to horizontal) - (start angle)
-        double beta_0 = mod(psi_a - alpha - (start.psi - HALF_PI), TWO_PI);
-        // Same as ^, but shifted PI becuase alpha has been shifted M_PI
-        double beta_2 = mod(M_PI + psi_a - alpha - (end.psi + HALF_PI), TWO_PI);
+        double alpha = std::acos(_radius / half_intercenter_distance);
+        // (INTERCENTER _reference_) - (ANGLE TO TERMINAL) - (STARTING VECTOR NORMAL TO CIRCLE)
+        // i.e. (angle to terminal relative to horizontal) - (start angle)
+        double beta_0 = mod(psi_0 - alpha - (start.psi - HALF_PI), TWO_PI);
+        // Same as ^, but shifted PI becuase psi_0 has been shifted PI (to face the opposite center)
+        double beta_2 = mod((M_PI + psi_0) - alpha - (end.psi + HALF_PI), TWO_PI);
 
         // pythagorean theroem to calculate distance off of known right trangle using intercenter/radius
-        double straight_distance = 2 * std::pow(std::pow(half_intercenter_length, 2) - std::pow(_radius, 2), 0.5);
+        double straight_distance = 2 * std::sqrt(std::pow(half_intercenter_distance, 2) - std::pow(_radius, 2));
         double total_distance = _radius * (beta_0 + beta_2) + straight_distance;
 
         return RRTOption(total_distance, DubinsPath(beta_0, -beta_2, straight_distance), true);
     }
 
     /**
+     *  Because of the change in turn direction, it is a little more complex to
+     *  compute than in the RSR or LSL cases.
+     *
+     *  The tangent line between both turns turns out to bisect the intercenter.
+     *  With that knowledge, it is possible to compute both the length and the angle of the
+     *  tangent line ==> then allowing the calculation for the proper turning angles.
+     *
+     *  @param start    ==> vector at start position
+     *  @param end      ==> vector at end position
+     *  @param center_0 ==> the center of the first turn
+     *  @param center_2 ==> the center of the last turn
+     *  @return             RRTOption detailing the parameters of the path
+     *                      - total distance
+     *                      - DubinsPath
+     *                          - turning angle 1
+     *                          - turning angle 2
+     *                          - straight_distance
+     *                      - if the path has a straight section
+     */
+    RRTOption rsl(const XYZCoord &start, const XYZCoord &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2)
+    {
+        Eigen::Vector2d half_displacement = halfDisplacement(center_2, center_0);
+        double psi_0 = std::atan2(half_displacement.y(), half_displacement.x());
+        double half_intercenter_distance = half_displacement.norm();
+
+        if (half_intercenter_distance < _radius)
+        {
+            return RRTOption(std::numeric_limits<double>::infinity(), DubinsPath(0, 0, 0), true);
+        }
+
+        // angle between intercenter displacement vector AND vector orthogonal to the "leave circle" vector
+        double alpha = std::acos(_radius / half_intercenter_distance);
+        // (STARTING_ANGLE) - (ANGLE TO TERMINAL) [assuming everything is relative to horizontal]
+        // i.e. (start ==> normal to circle) - (angle to connect center + angle between center an "leave circle" point)
+        double beta_0 = mod((start.psi + HALF_PI) - (psi_0 + alpha), TWO_PI);
+        // Same as ^, but shifted PI becuase psi_0 has been shifted PI (to face the opposite center)
+        double beta_2 = mod((end.psi - HALF_PI) - (alpha + psi_0 + M_PI), TWO_PI);
+
+        // pythagorean theroem to calculate distance off of known right trangle using intercenter/radius
+        double straight_distance = 2 * std::sqrt(std::pow(half_intercenter_distance, 2) - std::pow(_radius, 2));
+        double total_distance = _radius * (beta_0 + beta_2) + straight_distance;
+
+        return RRTOption(total_distance, DubinsPath(-beta_0, beta_2, straight_distance), true);
+    }
+
+    /**
      *  Using the isoceles triangle made by the centers of the three circles,
-        computes the required angles.
+     *  computes the required angles.
      *
      *  @param start    ==> vector at start position
      *  @param end      ==> vector at end position
@@ -527,10 +523,9 @@ public:
     RRTOption lrl(const XYZCoord &start, const XYZCoord &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2)
     {
         double intercenter_distance = distanceBetween(center_0, center_2);
-        Eigen::Vector2d mid_point = halfDisplacement(center_2, center_0);
-        double psi_a = std::atan2(mid_point[1], mid_point[0]);
+        Eigen::Vector2d half_displacement = halfDisplacement(center_2, center_0);
+        double psi_0 = std::atan2(half_displacement.y(), half_displacement.x());
 
-        // better to simplify?
         if (intercenter_distance < 2 * _radius && intercenter_distance > 4 * _radius)
         {
             return RRTOption(std::numeric_limits<double>::infinity(), DubinsPath(0, 0, 0), false);
@@ -540,23 +535,22 @@ public:
         // 2 * (sin of the triangle made by splitting the isocoles triangle in half (a similar triangle twice as large))
         //                                                  [half of gamma (splitting the right triangle in two)]
         double gamma = 2 * std::asin(intercenter_distance / (4 * _radius));
+        // bottom two angles of isocoles (180 - gamma) = 2 * theta
         double theta = (M_PI - gamma) / 2;
-        // (ANGLE REQUIRED TO GET FROM START TO PSI_A) + (THETA)
-        //                                               [THETA = bottom two angles of isocoles]
-        //                                                i.e. 180 - gamma = 2 theta
-        double beta_0 = mod(psi_a - (start.psi - HALF_PI) + theta, TWO_PI);
-        // (ANGLE FROM PSI_A --> END) + (THETA [see above]) + Phase_shift_180_deg
-        double beta_2 = mod(M_PI + (end.psi - HALF_PI) - psi_a + theta, TWO_PI);
+        // (ANGLE REQUIRED TO GET FROM START TO psi_0) + (THETA)
+        double beta_0 = mod(psi_0 - (start.psi - HALF_PI) + theta, TWO_PI);
+        // (ANGLE FROM psi_0 --> END) + (THETA) [psi_0 now needs to point towards center_0]
+        double beta_2 = mod((end.psi - HALF_PI) - (psi_0 + M_PI) + theta, TWO_PI);
 
-        // beta_1 ==> (2PI - gamma) is angle that the plane flys through
+        // beta_1 ==> (2PI - gamma) is positive angle that the plane flys through
         double beta_1 = TWO_PI - gamma;
-        double total_distance = (beta_1 + std::abs(beta_0) + std::abs(beta_2)) * _radius;
-        return RRTOption(total_distance, DubinsPath(beta_0, beta_2, beta_1), false);
+        double total_distance = (beta_1 + beta_0 + beta_2) * _radius;
+        return RRTOption(total_distance, DubinsPath(beta_0, beta_2, -beta_1), false);
     }
 
     /**
      *  Using the isoceles triangle made by the centers of the three circles,
-        computes the required angles.
+     *  computes the required angles.
      *
      *  @param start    ==> vector at start position
      *  @param end      ==> vector at end position
@@ -573,8 +567,8 @@ public:
     RRTOption rlr(const XYZCoord &start, const XYZCoord &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2)
     {
         double intercenter_distance = distanceBetween(center_0, center_2);
-        Eigen::Vector2d mid_point = halfDisplacement(center_2, center_0);
-        double psi_a = std::atan2(mid_point[1], mid_point[0]);
+        Eigen::Vector2d half_displacement = halfDisplacement(center_2, center_0);
+        double psi_0 = std::atan2(half_displacement.y(), half_displacement.x());
 
         if (intercenter_distance < 2 * _radius && intercenter_distance > 4 * _radius)
         {
@@ -588,25 +582,26 @@ public:
         double theta = (M_PI - gamma) / 2;
 
         // same as lrl, except its a negative angle because its a right turn
-        double beta_0 = -mod((start.psi + HALF_PI) - psi_a + theta, TWO_PI);
-        double beta_2 = -mod((psi_a + HALF_PI) - end.psi + theta, TWO_PI);
-        double beta_1 = TWO_PI - gamma;
+        // (ANGLE REQUIRED TO GET FROM START TO psi_0) + (THETA)
+        double beta_0 = mod((start.psi + HALF_PI) - psi_0 + theta, TWO_PI);
+        // (ANGLE FROM psi_0 --> END) + (THETA) [psi_0 now needs to point towards center_0]
+        double beta_2 = mod((psi_0 + HALF_PI) - end.psi + theta, TWO_PI);
 
-        double total_distance = (beta_1 + std::abs(beta_0) + std::abs(beta_2)) * _radius;
-        return RRTOption(total_distance, DubinsPath(beta_0, beta_2, beta_1), false);
+        // beta_1 ==> (2PI - gamma) is positive angle that the plane flys through
+        double beta_1 = TWO_PI - gamma;
+        double total_distance = (beta_1 + beta_0 + beta_2) * _radius;
+        return RRTOption(total_distance, DubinsPath(-beta_0, -beta_2, beta_1), false);
     }
 
     /**
-     * Compute all the possible Dubin's path and returns them.
-
-        Returns in the form of a list of tuples representing each option: (path_length,
-        dubins_path, straight).
+     * Compute all the possible Dubin's path and returns a list
+     *  containing RRTOption(s) with path data.
      *
      *  @param start    ==> vector at start position
      *  @param end      ==> vector at end position
      *  @param sort     ==> whether the method sorts the resulting vector DEFALT-->FALSE (searching is faster)
      *  @return         ==> list containing all the RRTOptions from the path generation
-    */
+     */
     std::vector<RRTOption> allOptions(const XYZCoord &start, const XYZCoord &end, bool sort = false)
     {
         Eigen::Vector2d center_0_left = findCenter(start, 'L');
@@ -631,14 +626,13 @@ public:
     }
 
     /**
-     * Compute all the possible Dubin's path.
+     * Compute all the possible Dubin's path(s) and
+     * Returns sequence of points representing the shortest option.
      *
-     * Returns sequence of points representing the shortest option.  
-     * 
      *  @param start    ==> vector at start position
      *  @param end      ==> vector at end position
      *  @return         ==> the points for the most optimal path from @param start to @param end
-    */
+     */
     std::vector<Eigen::Vector2d> dubinsPath(const XYZCoord &start, const XYZCoord &end)
     {
         std::vector<RRTOption> options = allOptions(start, end);
