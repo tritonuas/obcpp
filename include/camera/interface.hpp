@@ -15,50 +15,50 @@
 class ImageData
 {
 private:
-    const String NAME;
-    const String PATHS;
+    const std::string NAME;
+    const std::string PATHS;
     const Mat DATA;
 
 public:
-    ImageData(String NAME, String PATH, Mat DATA);
-    String getName();
-    String getPath();
+    ImageData(std::string NAME, std::string PATH, Mat DATA);
+    std::string getName();
+    std::string getPath();
     Mat getData();
-}
+};
 
 // ? possibly convert most common / important json fields to
 // ? data fields
 class CameraConfiguration
 {
 private:
-    json configJson;
+    nlohmann::json configJson;
 
 public:
-    CameraConfiguration(json config);
+    explicit CameraConfiguration(nlohmann::json config);
 
-    void updateConfig(json newSetting);
+    void updateConfig(nlohmann::json newSetting);
 
-    void updateConfigField(String key, T value);
+    void updateConfigField(std::string key, T value);
 
-    json getConfig();
+    nlohmann::json getConfig();
 
-    json getConfigField();
+    nlohmann::json getConfigField();
 };
 
 class CameraInterface
 {
 private:
-    CameraConfiguration config
+    CameraConfiguration config;
         ImageData recentPicture; // might need to move it to public
     bool doneTakingPicture;      // overengineering time
-    String uploadPath;
+    std::string uploadPath;
     // Interpreter interp
     // TODO: SERVER CONNECTION HERE ?
 
     void imgConvert();
 
 public:
-    CameraInterface(CameraConfiguration config);
+    explicit CameraInterface(CameraConfiguration config);
 
     void connect();
 
@@ -78,17 +78,17 @@ public:
 
     void updateConfig(CameraConfiguration newConfig);
 
-    void updateConfig(json newJsonConfig);
+    void updateConfig(nlohmann::json newJsonConfig);
 
-    String getUploadPath();
+    std::string getUploadPath();
 
-    void setUploadPath(String path);
+    void setUploadPath(std::string path);
 
     void uploadPicture(ImageData img);
 
-    vector<ImageData> listPicturesFromUploadPath();
+    std::vector<ImageData> listPicturesFromUploadPath();
 
-    ImageData getImageByName(String name);
+    ImageData getImageByName(std::string name);
 
     // server connection methods here
     // virtual methods for all possible camera actions

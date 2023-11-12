@@ -16,7 +16,8 @@
 				"shd101wyy.markdown-preview-enhanced",
 				"ms-vscode.cpptools",
 				"nick-dimeglio.family-guy-funny-moments", // ඞ
-				"twxs.cmake"
+				"twxs.cmake",
+				"ms-vscode.cpptools-extension-pack"
 			]
 		}
 	}

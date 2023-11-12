@@ -2,10 +2,11 @@ function(target_add_torch target_name)
     message("Adding torch as a dependency for target ${target_name}")
 
     include(FetchContent)
-    Set(FETCHCONTENT_QUIET FALSE)
 
     FetchContent_Declare(Torch
       URL https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.1.0%2Bcpu.zip
+      URL_HASH SHA256=04f699d5181048b0062ef52de1df44b46859b8fbeeee12abdbcb9aac63e2a14b
+      DOWNLOAD_EXTRACT_TIMESTAMP true
     )
 
     FetchContent_MakeAvailable(Torch)

@@ -15,6 +15,9 @@ jobs:
       - name: Install CMake
         run: sudo apt install cmake
 
+      - name: Install OpenCV
+        run: sudo apt install libopencv-dev
+
       - name: Checkout Repo
         uses: actions/checkout@v4
         with:
