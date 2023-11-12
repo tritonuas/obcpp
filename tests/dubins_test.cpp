@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <math.h>
 
-#include "../include/pathing/dubins.hpp"
+#include "../src/pathing/dubins.cpp"
 #include "../include/utilities/datatypes.hpp"
 
 #include "Eigen"
@@ -725,6 +725,7 @@ TEST(DubinsTest, AllOptions)
     // points towards e1
     XYZCoord origin_x(0, 0, 0, 0);
     XYZCoord arbitrary_position1(9, 6, 0, 4.00);
+    XYZCoord arbitrary_position2(3, -1, 0, 2.36);
 
     std::vector<RRTOption> result1 = dubins1.allOptions(origin_x, arbitrary_position1);
     std::vector<RRTOption> expected_result1 = {
@@ -735,6 +736,15 @@ TEST(DubinsTest, AllOptions)
         RRTOption(56.99424154724155, DubinsPath(-1.0585943958426456, -5.782422412471302, 4.557831501134362), false),
         RRTOption(37.28571149387029, DubinsPath(2.25948315258286, 0.3274953432143759, -4.870163802976823), false),
     };
+
+    std::vector<RRTOption> result2 = dubins1.allOptions(arbitrary_position1, arbitrary_position2);
+    std::vector<RRTOption> expected_result2 = {
+        RRTOption(69.79960318782443, DubinsPath(5.92544955425334, 5.000921060105833, 15.167750116028579), true),
+        RRTOption(46.460939412666036, DubinsPath(-5.378813639968769, -2.544371667210817, 6.84501287676811), true),
+        RRTOption(38.47693182697205, DubinsPath(-0.4132680790016785, 5.056453386181265, 11.128324501057335), true),
+        RRTOption(std::numeric_limits<double>::infinity(), DubinsPath(0, 0, 0), true),
+        RRTOption(64.04562997430888, DubinsPath(-1.8879098315046257, -5.336653165926261, 5.584562997430888), false),
+        RRTOption(37.41514012689866, DubinsPath(1.9230212534186863, 0.9984927592711799, -4.561514012689866), false)};
 
     for (int i = 0; i < result1.size(); i++)
     {
@@ -755,7 +765,24 @@ TEST(DubinsTest, AllOptions)
         EXPECT_EQ(result1[i].has_straight, expected_result1[i].has_straight);
     }
 
-    EXPECT_EQ(5, 5);
+    for (int i = 0; i < result2.size(); i++)
+    {
+        // if the path is impossible or provablly non-competitive (length == inf),
+        // then checking inf is unique, and nothing else needs to be checked (should be garbage data)
+        if (std::isinf(result2[i].length) || std::isinf(expected_result2[i].length))
+        {
+            EXPECT_EQ(std::isinf(result2[i].length), std::isinf(expected_result2[i].length));
+        }
+        else
+        {
+            EXPECT_NEAR(result2[i].length, expected_result2[i].length, 0.01);
+            EXPECT_NEAR(result2[i].dubins_path.beta_0, expected_result2[i].dubins_path.beta_0, 0.01);
+            EXPECT_NEAR(result2[i].dubins_path.beta_2, expected_result2[i].dubins_path.beta_2, 0.01);
+            EXPECT_NEAR(result2[i].dubins_path.straight_dist, expected_result2[i].dubins_path.straight_dist, 0.01);
+        }
+
+        EXPECT_EQ(result2[i].has_straight, expected_result2[i].has_straight);
+    }
 }
 
 /*
