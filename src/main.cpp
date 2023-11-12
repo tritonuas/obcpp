@@ -3,11 +3,8 @@
 #include "Eigen"
 // #include <opencv2/opencv.hpp>
 #include <torch/torch.h>
-<<<<<<< HEAD
 #include <iostream>
 #include <httplib.h>
-=======
->>>>>>> main
 
 // using namespace cv;
 
