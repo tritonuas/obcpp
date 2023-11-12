@@ -1,15 +1,10 @@
 #include <gtest/gtest.h>
 #include <math.h>
 
-#include "../src/pathing/dubins.cpp"
+#include "../include/pathing/dubins.hpp"
 #include "../include/utilities/datatypes.hpp"
 
 #include "Eigen"
-/*
- *   [TODO]
- *      - delete unnessisary var
- *      - standardize namingconventions, and test order
- */
 
 /*
  *   Tests dubins ==> findOrthogonalVector2D()

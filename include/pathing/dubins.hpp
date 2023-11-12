@@ -304,7 +304,7 @@ public:
      *  @param sort     ==> whether the method sorts the resulting vector DEFALT-->FALSE (searching is faster)
      *  @return         ==> list containing all the RRTOptions from the path generation
      */
-    std::vector<RRTOption> allOptions(const XYZCoord &start, const XYZCoord &end, bool sort);
+    std::vector<RRTOption> allOptions(const XYZCoord &start, const XYZCoord &end, bool sort = false);
 
     /**
      * Compute all the possible Dubin's path(s) and
