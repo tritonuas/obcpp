@@ -4,6 +4,27 @@ The `obcpp` is the repository for our `Onboard Computer`, which is currently a J
 
 (Thankfully the pixhawk is a completely separate piece of hardware, so if this code crashes the plane will not immediately crash, but let's try not to do that!)
 
+## Quick Setup
+
+See [full setup](https://github.com/tritonuas/obcpp#setup) below.
+
+```
+git clone git@github.com:tritonuas/obcpp.git
+cd obcpp
+code .      # once in VSCode, use the Devcontainers extension to
+            # launch our Devcontainer environment (using Docker)
+
+mkdir build && cd build
+cmake ..    # configures the CMake build system
+```
+
+Now you can use our Make targets.
+
+- `make obcpp`: Makes the binary which you can run using `./bin/obcpp`
+- `make test`: Run the tests in `tests/unit`
+- `make playground`: Runs the `tests/integration/playground.cpp` test which makes sure all dependencies work correctly
+- `make lint`: Check code for problems using `clang-tidy`
+
 ## Modules
 
 ### Airdrop
@@ -92,9 +113,15 @@ Now that everything is installed, here is the process to build and run the appli
     root@d26aba74c8cd:/workspaces/obcpp# 
     ```
 
+8. Create a build directory and enter it (All the following commands should be run from inside the build directory)
+    ```sh
+    mkdir build
+    cd build
+    ```
+
 8. Build CMake files with the following command:
     ```sh
-    cmake .
+    cmake ..
     ```
 
 9. Build executable with the following command. (You will need to do this anytime you edit code.)
@@ -109,7 +136,7 @@ Now that everything is installed, here is the process to build and run the appli
 
 11. Verify that the testing framework is set up correctly
     ```sh
-    ctest .
+    make test
     ```
 
     If you receive output about certain tests passing/failing, then you are good. Ideally the main branch (which should be what
@@ -130,4 +157,29 @@ Each module has its own folder in `include/` and `src/`. Currently all of the he
 
 ## Style
 
-We are still deciding on a linting/style pipeline. When this is decided, this section should be updated.
+### Linting
+
+[`clang-tidy`](https://clang.llvm.org/extra/clang-tidy/) is the linter that statically analyzes the code for style issues and other errors.
+
+#### Setup
+If you're using the Devcontainer, `clang-tidy` will already be installed.
+
+If you're working outside the container, install it on your host system.
+
+For Ubuntu/Debian Linux distributions:
+```sh
+sudo apt-get install clang-tidy
+```
+
+For macOS, try the proposed solution on this post: https://stackoverflow.com/questions/53111082/how-to-install-clang-tidy-on-macos. If anyone on macOS has an easier solution, feel free to replace this section in a PR.
+
+#### Usage
+To run the linter locally:
+
+```sh
+make lint
+```
+
+### Formatting
+
+No formatter has been added yet. Formatting will be enforced once one is set up.

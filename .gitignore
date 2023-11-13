@@ -3,13 +3,15 @@ lib/
 bin/
 
 Makefile
-*.cmake
 CMakeFiles/
 build/
 CMakeCache.txt
 cmake_install.cmake
+_deps/
 
 Testing/
 
 .vscode
-.devcontainer
+
+libcore_library.dylib
+.DS_Store

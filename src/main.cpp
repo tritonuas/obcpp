@@ -1,13 +1,17 @@
 #include <iostream>
-
 #include "core/states.hpp"
+#include "Eigen"
+// #include <opencv2/opencv.hpp>
+#include <torch/torch.h>
+#include <iostream>
+#include <httplib.h>
 
-int main() {
-    std::cout << "hello" << std::endl;
+// using namespace cv;
+#include "pathing/dubins.hpp"
 
-    PreparationState state;
+int main()
+{
+  std::cout << mod(-1, 10) << std::endl;
 
-    state.tick();
-
-    return 0;
+  return 0;
 }

@@ -13,18 +13,19 @@ struct GPSCoord {
 };
 
 struct XYZCoord {
-    XYZCoord(double x, double y, double z)
-        :x(x), y(y), z(z) {}
+    XYZCoord(double x, double y, double z, double psi = 0)
+        :x(x), y(y), z(z), psi(psi) {}
 
     double x;
     double y;
     double z;
+    double psi;
 };
  
 // In the future maybe make these their own classes with methods, etc...
 // should be easyish to migrate because the type names will be the same
-typedef std::vector<XYZCoord> Polygon;
-typedef std::vector<XYZCoord> Polyline;
+using Polygon = std::vector<XYZCoord>;
+using Polyline = std::vector<XYZCoord>;
 
 // TODO: these will eventually be redefined in a protobuf, so once the generated protobuf code exists we remove these
 enum class ODLCShape {
