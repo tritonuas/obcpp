@@ -34,7 +34,7 @@ virtual ~MissionState() = default;
 */
 class PreparationState: public MissionState {
     public:
-~PreparationState() override = default;
+        ~PreparationState() override = default;
         MissionState* tick() override;
 
         std::string getName() override {
