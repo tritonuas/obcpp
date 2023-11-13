@@ -15,8 +15,8 @@ TEST(SimpleTreeTest, addNodeTest) {
     simpleTree.addNode(nullptr, &a, std::vector<RRTPoint>(), 0);
     simpleTree.addNode(&a, &b, path, edgeCost);
     
-    EXPECT_TRUE(a.getReachable().back() == &b);
-    EXPECT_TRUE(b.getReachable().back() == &a);
+    EXPECT_TRUE(a.getReachable()->back() == &b);
+    EXPECT_TRUE(b.getReachable()->back() == &a);
 
     EXPECT_TRUE(simpleTree.getNode(point1) == &a);
     EXPECT_TRUE(simpleTree.getNode(point2) == &b);
@@ -37,7 +37,10 @@ TEST(SimpleTreeTest, getNodeTest) {
     simpleTree.addNode(&a, &b, path, edgeCost);
 
     EXPECT_TRUE(simpleTree.getNode(point1) != nullptr);
+    EXPECT_TRUE(*(simpleTree.getNode(point1)) == a);
+
     EXPECT_TRUE(simpleTree.getNode(point2) != nullptr);
+    EXPECT_TRUE(*(simpleTree.getNode(point2)) == b);
 }
 
 TEST(SimpleTreeTest, getEdgeTest) {
@@ -73,8 +76,8 @@ TEST(SimpleTreeTest, rewireEdgeTest) {
 
     simpleTree.rewireEdge(&a, &b, &c, path, edgeCost);
 
-    EXPECT_TRUE(a.getReachable().back() == &c);
-    EXPECT_TRUE(std::count(a.getReachable().begin(), a.getReachable().end(), b) == 0);
+    EXPECT_TRUE(a.getReachable()->back() == &c);
+    EXPECT_TRUE(std::count(a.getReachable()->begin(), a.getReachable()->end(), b) == 0);
 
     EXPECT_TRUE(simpleTree.getNode(point2) == nullptr);
     EXPECT_TRUE(simpleTree.getNode(point3) != nullptr);

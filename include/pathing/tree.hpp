@@ -9,6 +9,7 @@ typedef std::vector<RRTNode*>  RRTNodeList;
 
 struct RRTPoint {
     RRTPoint(XYZCoord xyz, double psi);
+    bool operator == (const RRTPoint &otherPoint);
 
     XYZCoord xyz;
     double psi;
@@ -21,10 +22,11 @@ class RRTNode {
         RRTNode(RRTPoint point, double cost);
         RRTNode(RRTPoint point, double cost, RRTNodeList reachable);
         
+        bool operator == (const RRTNode &otherNode);
         RRTPoint getPoint();
         void setReachable(RRTNodeList reachable);
         void addReachable(RRTNode* newNode);
-        RRTNodeList getReachable();
+        RRTNodeList* getReachable();
         double getCost();
         void setCost(double newCost);
 
@@ -38,6 +40,7 @@ class RRTNode {
 class RRTEdge {
     public:
         RRTEdge(RRTNode* from, RRTNode* to, std::vector<RRTPoint> path, double cost);
+        bool operator == (const RRTEdge &otherEdge);
         void setCost(double newCost);
         double getCost();
         std::vector<RRTPoint> getPath();

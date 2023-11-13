@@ -3,6 +3,14 @@
 RRTPoint::RRTPoint(XYZCoord xyz, double psi)
     : xyz{xyz}, psi{psi} {}
 
+bool RRTPoint::operator == (const RRTPoint &otherPoint) {
+    bool equal = this->xyz.x == otherPoint.xyz.x
+                && this->xyz.y == otherPoint.xyz.y
+                && this->xyz.z == otherPoint.xyz.z
+                && this->psi == otherPoint.psi;
+
+    return equal;
+}
 
 RRTNode::RRTNode(RRTPoint point, double cost)
     : point{point}, cost{cost} {}
@@ -10,20 +18,31 @@ RRTNode::RRTNode(RRTPoint point, double cost)
 RRTNode::RRTNode(RRTPoint point, double cost, RRTNodeList reachable)
     : point{point}, cost{cost}, reachable{reachable} {}
 
+bool RRTNode::operator == (const RRTNode &otherNode) {
+    bool equal = this->point == otherNode.point
+                && this->cost == otherNode.cost;
+
+    return equal;
+}
+
 RRTPoint RRTNode::getPoint() {
     return this->point;
 }
 
 void RRTNode::setReachable(RRTNodeList reachable) {
     this->reachable = reachable;
+    for(RRTNode* node : reachable) {
+        node->parent = this;
+    }
 }
 
 void RRTNode::addReachable(RRTNode* newNode) {
     this->reachable.push_back(newNode);
+    newNode->parent = this;
 }
 
-RRTNodeList RRTNode::getReachable() {
-    return this->reachable;
+RRTNodeList* RRTNode::getReachable() {
+    return &(this->reachable);
 }
 
 double RRTNode::getCost() {
@@ -36,6 +55,21 @@ void RRTNode::setCost(double newCost) {
 
 RRTEdge::RRTEdge(RRTNode* from, RRTNode* to, std::vector<RRTPoint> path, double cost)
     : from{from}, to{to}, path{path}, cost{cost} {}
+
+bool RRTEdge::operator == (const RRTEdge &otherEdge) {
+    bool equal = this->from == otherEdge.from
+                && this->to == otherEdge.to
+                && this->cost == otherEdge.cost;
+    if(otherEdge.path.size() != this->path.size()) {
+        return false;
+    }
+    for(int i = 0; i < otherEdge.path.size(); i++) {
+        if(!(this->path.at(i) == otherEdge.path.at(i))) {
+            equal = false;
+        }
+    }
+    return equal;
+}
 
 void RRTEdge::setCost(double newCost) {
     this->cost = newCost;
@@ -74,17 +108,17 @@ void RRTTree::rewireEdge(RRTNode* from, RRTNode* toPrev, RRTNode* toNew, std::ve
     std::pair<std::pair<RRTNode*, RRTNode*>, RRTEdge> edgePair(toAdd, newEdge);
 
     // replace prev node in "from" node's neighbor list with new node 
-    RRTNodeList neighbors = from->getReachable();
-    for(int i = 0; i < neighbors.size(); i++) {
-        if(neighbors.at(i) == toPrev) {
-            neighbors[i] = toNew;
+    RRTNodeList* neighbors = from->getReachable();
+    for(int i = 0; i < neighbors->size(); i++) {
+        if(neighbors->at(i) == toPrev) {
+            (*neighbors)[i] = toNew;
         }
     }
     // remove "from" node from prev node's neighbors
     neighbors = toPrev->getReachable();
-    for (RRTNodeList::iterator it = neighbors.begin() ; it != neighbors.end(); ++it) {
+    for (RRTNodeList::iterator it = neighbors->begin() ; it != neighbors->end(); ++it) {
         if(*it == from) {
-            neighbors.erase(it);
+            neighbors->erase(it);
         }
     }
     edgeMap.erase(toRemove);
