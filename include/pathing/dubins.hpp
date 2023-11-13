@@ -6,28 +6,9 @@
 
 #include "Eigen"
 
-#include "../utilities/datatypes.hpp"
+#include "utilities/datatypes.hpp"
 
-/**
- *   Notes from Christopher:
- *
- *   The reason everythin is named '0' and '2' instead of 01 or 12
- *   is because
- *       0 - first turn
- *       1 - middle turn (only in [RLR, LRL] pathing)
- *       2 - last turn
- *
- *   Also (for now) the naming is very inconsistant throughout the file.
- *   This inconsistant naming was also present in the original dubins.py on
- *   the original OBC (the code was also inconsistant in styling)
- *
- *   Additionally, the mod opertor is different in python and C, C will return
- *   negative values in its mod operator
- *      ^ is important, as all distance calculations are done with raw values of beta
- *      this means they need to be positive. if the beta value represents a right turn,
- *      they will be made negative at the very end of each method. (e.g. if left turn ==> beta
- *      if right turn ==> -beta)
- */
+
 
 const double TWO_PI = 2 * M_PI;
 const double HALF_PI = M_PI / 2;
