@@ -4,8 +4,8 @@
 
 #include "Eigen"
 
-#include "../../include/utilities/datatypes.hpp"
-#include "../../include/pathing/dubins.hpp"
+#include "utilities/datatypes.hpp"
+#include "pathing/dubins.hpp"
 
 /**
  *   Notes from Christopher:
