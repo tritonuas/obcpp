@@ -1,9 +1,31 @@
 #include "../../include/pathing/tree.hpp"
 
+// Hashes RRTPoint using the Cantor Pairing Function
+std::size_t PointHashFunction::operator()(const RRTPoint &point) const {
+    unsigned int h1 = std::hash<double>{}(point.xyz.x);
+    unsigned int h2 = std::hash<double>{}(point.xyz.y);
+    unsigned int h3 = std::hash<double>{}(point.xyz.z);
+
+    unsigned int c1 = 0.5 * (h1 + h2) * (h1 + h2 + 1) + h2;
+    unsigned int c2 = 0.5 * (c1 + h3) * (c1 + h3 + 1) + h3;
+
+    return c2;
+}
+
+std::size_t EdgeHashFunction::operator()(const std::pair<RRTNode*, RRTNode*> &nodePair) const{
+    PointHashFunction p = PointHashFunction();
+    unsigned int h1 = p(nodePair.first->getPoint());
+    unsigned int h2 = p(nodePair.second->getPoint());
+
+    unsigned int c1 = 0.5 * (h1 + h2) * (h1 + h2 + 1) + h2;
+    
+    return c1;
+}
+
 RRTPoint::RRTPoint(XYZCoord xyz, double psi)
     : xyz{xyz}, psi{psi} {}
 
-bool RRTPoint::operator == (const RRTPoint &otherPoint) {
+bool RRTPoint::operator== (const RRTPoint &otherPoint) const {
     bool equal = this->xyz.x == otherPoint.xyz.x
                 && this->xyz.y == otherPoint.xyz.y
                 && this->xyz.z == otherPoint.xyz.z
@@ -18,7 +40,7 @@ RRTNode::RRTNode(RRTPoint point, double cost)
 RRTNode::RRTNode(RRTPoint point, double cost, RRTNodeList reachable)
     : point{point}, cost{cost}, reachable{reachable} {}
 
-bool RRTNode::operator == (const RRTNode &otherNode) {
+bool RRTNode::operator == (const RRTNode &otherNode) const {
     bool equal = this->point == otherNode.point
                 && this->cost == otherNode.cost;
 
@@ -56,7 +78,7 @@ void RRTNode::setCost(double newCost) {
 RRTEdge::RRTEdge(RRTNode* from, RRTNode* to, std::vector<RRTPoint> path, double cost)
     : from{from}, to{to}, path{path}, cost{cost} {}
 
-bool RRTEdge::operator == (const RRTEdge &otherEdge) {
+bool RRTEdge::operator == (const RRTEdge &otherEdge) const {
     bool equal = this->from == otherEdge.from
                 && this->to == otherEdge.to
                 && this->cost == otherEdge.cost;

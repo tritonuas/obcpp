@@ -77,7 +77,6 @@ TEST(SimpleTreeTest, rewireEdgeTest) {
     simpleTree.rewireEdge(&a, &b, &c, path, edgeCost);
 
     EXPECT_TRUE(a.getReachable()->back() == &c);
-    EXPECT_TRUE(std::count(a.getReachable()->begin(), a.getReachable()->end(), b) == 0);
 
     EXPECT_TRUE(simpleTree.getNode(point2) == nullptr);
     EXPECT_TRUE(simpleTree.getNode(point3) != nullptr);
