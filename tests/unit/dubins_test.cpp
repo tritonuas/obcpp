@@ -7,9 +7,49 @@
 #include "Eigen"
 
 /*
+*   Tests dubins ==> sign()
+*/
+TEST(DubinsUtilTest, Sign) {
+    EXPECT_EQ(sign(99.0), 1.0);
+    EXPECT_EQ(sign(0.0), 0.0);
+    EXPECT_EQ(sign(-50.0), -1.0);
+}
+
+
+/*
+*   Tests dubins ==> mod()
+*/
+TEST(DubinsUtilTest, Modulo) {
+    EXPECT_NEAR(mod(95.7, 10.5), 1.2, 0.001);
+    EXPECT_NEAR(mod(0.0, 10.0), 0.0, 0.001);
+    EXPECT_NEAR(mod(-1.0, 10.0), 9, 0.001);
+    EXPECT_NEAR(mod(5.0, 5.0), 0.0, 0.001); 
+    EXPECT_NEAR(mod(-5.0, -5.0), 0.0, 0.001);
+}
+
+/*
+*   Tests dubins ==> compareRRTLength()
+*/
+TEST(DubinsUtilTest, CompareRRT) {
+    RRTOption infinite_length = RRTOption(std::numeric_limits<double>::infinity(), DubinsPath(0,0,0), true);
+    RRTOption long_length = RRTOption(99999, DubinsPath(0,0,0), true);
+    RRTOption short_length = RRTOption(10, DubinsPath(0,0,9999), false);
+
+    EXPECT_EQ(compareRRTOptionLength(infinite_length, long_length), false);
+    EXPECT_EQ(compareRRTOptionLength(short_length, long_length), true);
+    EXPECT_EQ(compareRRTOptionLength(long_length, short_length), false);
+
+    // not needed for the behavior of the function, but testing predictable implementation
+    EXPECT_EQ(compareRRTOptionLength(short_length, short_length), false);
+    EXPECT_EQ(compareRRTOptionLength(infinite_length, infinite_length), false);
+    
+}
+
+
+/*
  *   Tests dubins ==> findOrthogonalVector2D()
  */
-TEST(DubinsTest, Orthogonal2D)
+TEST(DubinsUtilTest, Orthogonal2D)
 {
     Eigen::Vector2d input_vector1(1.0, 2.0);
     Eigen::Vector2d input_vector2(-3.0, 4.0);
@@ -33,7 +73,7 @@ TEST(DubinsTest, Orthogonal2D)
 /*
  *   Tests dubins ==> distanceBetween()
  */
-TEST(DubinsTest, DistanceBetweenVectors)
+TEST(DubinsUtilTest, DistanceBetweenVectors)
 {
     // 3-4-5 right triangle
     Eigen::Vector2d start_vector1(3.0, 0.0);
@@ -63,7 +103,7 @@ TEST(DubinsTest, DistanceBetweenVectors)
 /*
  *   tests dubins ==> halfDisplacement()
  */
-TEST(DubinsTest, HalfDisplacement)
+TEST(DubinsUtilTest, HalfDisplacement)
 {
     // 1] Results with Integer components
     Eigen::Vector2d start_vector1(0.0, 0.0);
