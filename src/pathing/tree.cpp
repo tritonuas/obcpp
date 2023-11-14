@@ -112,10 +112,9 @@ void RRTEdge::setPath(std::vector<RRTPoint> path) {
 void RRTTree::addNode(RRTNode* connectTo, RRTNode* newNode, std::vector<RRTPoint> path, double cost) {
     std::pair<RRTNode*, RRTNode*> edgePair(connectTo, newNode);
     RRTEdge newEdge = RRTEdge(connectTo, newNode, path, cost);
-    std::pair<std::pair<RRTNode*, RRTNode*>, RRTEdge> toAdd(edgePair, newEdge);
     
-    edgeMap.insert(toAdd);
-    std::pair<RRTPoint, RRTNode> insertNode(newNode->getPoint(), *newNode);
+    edgeMap.insert(std::make_pair(edgePair, newEdge));
+    std::pair<RRTPoint, RRTNode*> insertNode(newNode->getPoint(), newNode);
     nodeMap.insert(insertNode);
 
     connectTo->addReachable(newNode);
@@ -133,23 +132,28 @@ void RRTTree::rewireEdge(RRTNode* from, RRTNode* toPrev, RRTNode* toNew, std::ve
     RRTNodeList* neighbors = from->getReachable();
     for(int i = 0; i < neighbors->size(); i++) {
         if(neighbors->at(i) == toPrev) {
-            (*neighbors)[i] = toNew;
+            neighbors->at(i) = toNew;
         }
     }
+
     // remove "from" node from prev node's neighbors
     neighbors = toPrev->getReachable();
-    for (RRTNodeList::iterator it = neighbors->begin() ; it != neighbors->end(); ++it) {
-        if(*it == from) {
-            neighbors->erase(it);
+    for (int i = 0; i < neighbors->size(); i++) {
+        if(neighbors->at(i) == from) {
+            neighbors->erase(neighbors->begin() + i);
         }
     }
+
     edgeMap.erase(toRemove);
     edgeMap.insert(edgePair);
+
+    nodeMap.insert(std::make_pair(toNew->getPoint(), toNew));
+    nodeMap.erase(toPrev->getPoint());
 }
 
 RRTNode* RRTTree::getNode(RRTPoint point) {
     if(nodeMap.count(point)) {
-        return &(nodeMap.at(point));
+        return nodeMap.at(point);
     }
     else {
         return nullptr;
@@ -162,8 +166,9 @@ RRTEdge* RRTTree::getEdge(RRTPoint from, RRTPoint to) {
     if(node1 == nullptr || node2 == nullptr) {
         return nullptr;
     }
+
     std::pair<RRTNode*, RRTNode*> edgePair(node1, node2);
-    if(edgeMap.count(edgePair)) {
+    if(edgeMap.count(edgePair) > 0) {
         return &(edgeMap.at(edgePair));
     }
     else {

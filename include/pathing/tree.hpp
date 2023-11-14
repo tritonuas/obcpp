@@ -69,14 +69,13 @@ class RRTEdge {
 
 class RRTTree {
     public:
-        //RRTTree();
         void addNode(RRTNode* connectTo, RRTNode* newNode, std::vector<RRTPoint> path, double cost);
         void rewireEdge(RRTNode* from, RRTNode* toPrev, RRTNode* toNew, std::vector<RRTPoint> path, double cost);
         RRTNode* getNode(RRTPoint point);
         RRTEdge* getEdge(RRTPoint from, RRTPoint to);
 
-    private:
-        std::unordered_map<RRTPoint, RRTNode, PointHashFunction> nodeMap;
+    //private:
+        std::unordered_map<RRTPoint, RRTNode*, PointHashFunction> nodeMap;
         std::unordered_map<std::pair<RRTNode*, RRTNode*>, RRTEdge, EdgeHashFunction> edgeMap;
 };
 
