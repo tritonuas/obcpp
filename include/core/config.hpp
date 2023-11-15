@@ -44,7 +44,7 @@ class MissionConfig {
         void setBottles(const std::unordered_map<char, CompetitionBottle>& bottleUpdates);
 
         // Use when need to update many things at once
-        void update(
+        void batchUpdate(
             std::optional<Polygon> flight,
             std::optional<Polygon> airdrop,
             std::optional<Polyline> waypoints,

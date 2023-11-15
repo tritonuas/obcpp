@@ -1,8 +1,10 @@
 #include <memory>
+#include <mutex>
 
 #include "core/config.hpp"
 #include "core/states.hpp"
 #include "core/ticks.hpp"
+#include "utilities/locks.hpp"
 
 // in future might add to this
 MissionState::MissionState() = default;
@@ -16,24 +18,18 @@ const MissionConfig& MissionState::getConfig() {
 }
 
 std::chrono::milliseconds MissionState::doTick() {
-    this->tick_mut.lock();
+    Lock lock(this->tick_mut);
 
     Tick* newTick = tick->tick();
     if (newTick != nullptr) {
         tick.reset(newTick);
     }
 
-    auto wait = tick->getWait();
-
-    this->tick_mut.unlock();
-
-    return wait;
+    return tick->getWait();
 }
 
 void MissionState::setTick(Tick* newTick) {
-    this->tick_mut.lock();
+    Lock lock(this->tick_mut);
 
     tick.reset(newTick);
-
-    this->tick_mut.unlock();
 }
