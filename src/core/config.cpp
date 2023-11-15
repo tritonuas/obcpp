@@ -8,11 +8,19 @@
 #include "core/config.hpp"
 #include "utilities/constants.hpp"
 
-MissionConfig::MissionConfig() {
-    
+MissionConfig::MissionConfig():
+    flightBoundary(FLIGHT_BOUND_COLOR),
+    airdropBoundary(AIRDROP_BOUND_COLOR),
+    waypoints(WAYPOINTS_COLOR) 
+{
+        
 }
 
-MissionConfig::MissionConfig(std::string filename) {
+MissionConfig::MissionConfig(std::string filename):
+    flightBoundary(FLIGHT_BOUND_COLOR),
+    airdropBoundary(AIRDROP_BOUND_COLOR),
+    waypoints(WAYPOINTS_COLOR) 
+{
     // TODO: load from file
 }
 
