@@ -20,8 +20,7 @@ class OBC {
         void run();
 
     private:
-        std::shared_ptr<MissionConfig> config;
-        std::shared_ptr<std::unique_ptr<MissionState>> state;
+        std::shared_ptr<MissionState> state;
 
         std::unique_ptr<GCSServer> gcs_server;
 };

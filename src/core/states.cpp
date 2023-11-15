@@ -1,21 +1,39 @@
-#include <iostream>
 #include <memory>
 
 #include "core/config.hpp"
 #include "core/states.hpp"
+#include "core/ticks.hpp"
 
-MissionState::MissionState(std::shared_ptr<MissionConfig> config) {
-    this->config = config;
+// in future might add to this
+MissionState::MissionState() = default;
+
+// Need to explicitly define now that Tick is no longer an incomplete class
+// See: https://stackoverflow.com/questions/9954518/stdunique-ptr-with-an-incomplete-type-wont-compile
+MissionState::~MissionState() = default;
+
+const MissionConfig& MissionState::getConfig() {
+    return this->config;
 }
 
-PreparationState::PreparationState(std::shared_ptr<MissionConfig> config) 
-    :MissionState{config} {}
+std::chrono::milliseconds MissionState::doTick() {
+    this->tick_mut.lock();
 
-MissionState* PreparationState::tick() {
-    // TODO: logic to check for takeoff signal, and double check to make sure that
-    // all the mission parameters are valid
+    Tick* newTick = tick->tick();
+    if (newTick != nullptr) {
+        tick.reset(newTick);
+    }
 
-    std::cout << "tick\n";
+    auto wait = tick->getWait();
 
-    return nullptr;
+    this->tick_mut.unlock();
+
+    return wait;
+}
+
+void MissionState::setTick(Tick* newTick) {
+    this->tick_mut.lock();
+
+    tick.reset(newTick);
+
+    this->tick_mut.unlock();
 }

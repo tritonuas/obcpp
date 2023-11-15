@@ -9,15 +9,11 @@
 
 class GCSServer {
     public:
-        GCSServer(
-            std::shared_ptr<MissionConfig> config,
-            std::shared_ptr<std::unique_ptr<MissionState>> state
-        );
+        GCSServer(std::shared_ptr<MissionState> state);
 
         ~GCSServer();
     private:
-        std::shared_ptr<MissionConfig> config;
-        std::shared_ptr<std::unique_ptr<MissionState>> state;
+        std::shared_ptr<MissionState> state;
 
         std::thread server_thread;
 

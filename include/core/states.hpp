@@ -1,54 +1,36 @@
 #ifndef CORE_STATES_HPP_
 #define CORE_STATES_HPP_
 
-#include <string>
-#include <array>
-#include <optional>
+#include <memory>
+#include <mutex>
+#include <functional>
+#include <chrono>
 
 #include "core/config.hpp"
 #include "utilities/datatypes.hpp"
 #include "utilities/constants.hpp"
 
-#include <memory>
+class Tick;
 
-/*
-    Interface for an arbitrary mission state.
-*/
 class MissionState {
     public:
-        MissionState(std::shared_ptr<MissionConfig> config);
-        virtual ~MissionState() = default;
-        /*
-            Function that runs approx 1 time per second, doing the calculations/checks
-            needed for the current phase of the mission.
+        MissionState();
+        ~MissionState();
 
-            Returns the new MissionState if a state change needs to occur. If the optional
-            type does not have a value, then no state change needs to occur. 
-        */
-        virtual MissionState* tick() = 0;
+        void init();
 
-        /*
-            Plain text name of the current state for display purposes 
-        */
-        virtual std::string getName() = 0;
+        const MissionConfig& getConfig();
 
-    protected:
-        std::shared_ptr<MissionConfig> config;
+        std::chrono::milliseconds doTick();
+        void setTick(Tick* newTick);
+    private: 
+        MissionConfig config; // has its own mutex
+
+        std::mutex tick_mut; // for reading/writing tick
+        std::unique_ptr<Tick> tick;
+
+        // other state...
 };
 
-/*
-    State for when the system has just been turned on and is waiting for
-    mission parameters.
-*/
-class PreparationState: public MissionState {
-    public:
-        PreparationState(std::shared_ptr<MissionConfig> config);
-        ~PreparationState() override = default;
-        MissionState* tick() override;
-
-        std::string getName() override {
-            return "Mission Preparation";
-        }
-};
 
 #endif // CORE_STATES_HPP_

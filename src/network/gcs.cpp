@@ -6,11 +6,7 @@
 #include "core/config.hpp"
 #include "core/states.hpp"
 
-GCSServer::GCSServer(
-    std::shared_ptr<MissionConfig> config,
-    std::shared_ptr<std::unique_ptr<MissionState>> state
-) {
-    this->config = config;
+GCSServer::GCSServer(std::shared_ptr<MissionState> state) {
     this->state = state;
 
     this->server_thread = std::thread([this]() {this->_listen();});
