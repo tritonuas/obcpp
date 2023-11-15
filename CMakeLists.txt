@@ -59,7 +59,6 @@ include_directories(${INCLUDE_DIRECTORY})
 target_add_torch(${PROJECT_NAME})
 # target_add_arena(${PROJECT_NAME}) # Tyler: currently broken, so we had to comment this out
 target_add_torchvision(${PROJECT_NAME})
-target_add_arena(${PROJECT_NAME})
 target_add_json(${PROJECT_NAME})
 target_add_eigen(${PROJECT_NAME})
 target_add_opencv(${PROJECT_NAME})
