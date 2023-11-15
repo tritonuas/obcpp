@@ -50,12 +50,8 @@ set(INCLUDE_DIRECTORY ${PROJECT_SOURCE_DIR}/include)
 add_executable(${PROJECT_NAME} ${SOURCES} "src/main.cpp")
 include_directories(${INCLUDE_DIRECTORY})
 target_add_torch(${PROJECT_NAME})
-<<<<<<< HEAD
-# target_add_arena(${PROJECT_NAME})
-=======
 target_add_torchvision(${PROJECT_NAME})
 target_add_arena(${PROJECT_NAME})
->>>>>>> 47150ba (failed attempt to add torchvision as a dependency)
 target_add_json(${PROJECT_NAME})
 target_add_eigen(${PROJECT_NAME})
 target_add_opencv(${PROJECT_NAME})
