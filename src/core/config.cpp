@@ -9,7 +9,7 @@
 #include "utilities/constants.hpp"
 
 MissionConfig::MissionConfig() {
-
+    
 }
 
 MissionConfig::MissionConfig(std::string filename) {
