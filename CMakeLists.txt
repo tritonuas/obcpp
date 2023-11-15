@@ -35,6 +35,7 @@ include(${DEPS_DIRECTORY}/json/json.cmake)
 include(${DEPS_DIRECTORY}/eigen/eigen.cmake)
 include(${DEPS_DIRECTORY}/opencv/opencv.cmake)
 include(${DEPS_DIRECTORY}/httplib/httplib.cmake)
+include(${DEPS_DIRECTORY}/matplot/matplot.cmake)
 # =============================
 
 # =============================
@@ -52,6 +53,7 @@ target_add_json(${PROJECT_NAME})
 target_add_eigen(${PROJECT_NAME})
 target_add_opencv(${PROJECT_NAME})
 target_add_httplib(${PROJECT_NAME})
+target_add_matplot(${PROJECT_NAME})
 # =============================
 
 # =============================
@@ -66,6 +68,7 @@ target_add_json(playground)
 target_add_eigen(playground) 
 target_add_opencv(playground) 
 target_add_httplib(playground)
+target_add_matplot(playground)
 # =============================
 
 # =============================

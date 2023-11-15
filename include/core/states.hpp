@@ -3,6 +3,7 @@
 
 #include <string>
 #include <array>
+#include <optional>
 
 #include "core/config.hpp"
 #include "utilities/datatypes.hpp"

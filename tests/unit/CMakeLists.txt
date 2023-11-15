@@ -11,6 +11,7 @@ include_directories(${INCLUDE_DIRECTORY})
 target_link_libraries(${BINARY} PUBLIC gtest_main)
 include(${DEPS_DIRECTORY}/eigen/eigen.cmake)
 target_add_eigen(${BINARY})
+target_add_matplot(${BINARY})
 
 add_test(NAME ${BINARY} COMMAND ${BINARY})
 

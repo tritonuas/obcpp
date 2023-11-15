@@ -2,6 +2,7 @@
 #define UTILITIES_DATATYPES_HPP_
 
 #include <vector>
+#include <matplot/matplot.h>
 
 #include "utilities/constants.hpp"
 
@@ -16,18 +17,35 @@ struct GPSCoord {
 
 struct XYZCoord {
     XYZCoord(double x, double y, double z, double psi = 0)
-        :x(x), y(y), z(z), psi(psi) {}
+        :x(x), y(y), z(z), psi(psi), color(matplot::color::black) {}
+
+    XYZCoord(double x, double y, double z, double psi, matplot::color color)
+        :x(x), y(y), z(z), psi(psi), color(color) {}
 
     double x;
     double y;
     double z;
     double psi;
+    matplot::color color;
 };
  
-// In the future maybe make these their own classes with methods, etc...
-// should be easyish to migrate because the type names will be the same
-using Polygon = std::vector<XYZCoord>;
-using Polyline = std::vector<XYZCoord>;
+class Polygon : public std::vector<XYZCoord> {
+    public:
+        Polygon(matplot::color color);
+
+        matplot::color getColor() const;
+    private:
+        matplot::color color;
+};
+
+class Polyline: public std::vector<XYZCoord> {
+    public:
+        Polyline(matplot::color color);
+
+        matplot::color getColor() const;
+    private:
+        matplot::color color;
+};
 
 // TODO: these will eventually be redefined in a protobuf, so once the generated protobuf code exists we remove these
 enum class ODLCShape {
