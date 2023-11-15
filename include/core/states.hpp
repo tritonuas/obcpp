@@ -13,6 +13,7 @@
 */
 class MissionState {
     public:
+virtual ~MissionState() = default;
         /*
             Function that runs approx 1 time per second, doing the calculations/checks
             needed for the current phase of the mission.
@@ -34,6 +35,7 @@ class MissionState {
 */
 class PreparationState: public MissionState {
     public:
+~PreparationState() override = default;
         MissionState* tick() override;
 
         std::string getName() override {

@@ -1,12 +1,10 @@
 FROM amd64/ubuntu:22.04
 
+ARG USERNAME=tuas USER_UID=1000 USER_GID=1000 DEBIAN_FRONTEND=noninteractive
+
 # Create a non-root user
-ARG USERNAME=tuas
-ARG USER_UID=1000
-ARG USER_GID=$USER_UID
 RUN groupadd --gid $USER_GID $USERNAME \
     && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
-
 
 # https://gist.github.com/SSARCandy/fc960d8905330ac695e71e3f3807ce3d
 # OpenCV dependencies from above
@@ -18,16 +16,9 @@ RUN apt-get update \
                            clang-tidy \
                            wget \
                            ccache \
-                           vim
-# cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev
-# python-dev python-numpy libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libjasper-dev libdc1394-22-dev
-
-# the official docs say also these
-# https://docs.opencv.org/4.x/d7/d9f/tutorial_linux_install.html
-# sudo apt update && sudo apt install -y cmake g++ wget unzip
-# xz? bzip2?
-
-# TODO: is it possible to save the built opencv in the docker build? Need to see what cmake keeps checking and wasting time on.
+                           vim \
+                           curl \
+                           libopencv-dev
 
 # Download latest CMake from their repositories
 RUN apt-get update \
@@ -40,5 +31,16 @@ RUN apt-get update \
       && rm /tmp/cmake-install.sh \
       && ln -s /opt/cmake-3.24.1/bin/* /usr/local/bin
 
-# login as non-root user
+# the official docs say also these
+# https://docs.opencv.org/4.x/d7/d9f/tutorial_linux_install.html
+# cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev
+# python-dev python-numpy libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libjasper-dev libdc1394-22-dev
+
+# Add clang-tidy-cache (doesn't work)
+ARG CLANG_TIDY_SHA1=c191254ea00d47ade11d7170ef82fe038c213774
+RUN curl -Lo /usr/bin/clang-tidy-cache \
+        "https://raw.githubusercontent.com/matus-chochlik/ctcache/$CLANG_TIDY_SHA1/clang-tidy-cache" \
+    && chmod +x /usr/bin/clang-tidy-cache
+    
+# Use the non-root user
 USER $USERNAME
