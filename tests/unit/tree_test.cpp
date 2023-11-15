@@ -1,5 +1,5 @@
-#include "../include/pathing/tree.hpp"
-#include "../include/utilities/datatypes.hpp"
+#include "pathing/tree.hpp"
+#include "utilities/datatypes.hpp"
 #include <gtest/gtest.h>
 
 TEST(SimpleTreeTest, addNodeTest) {
@@ -15,9 +15,9 @@ TEST(SimpleTreeTest, addNodeTest) {
     simpleTree.addNode(&a, &a, std::vector<RRTPoint>(), 0);
     simpleTree.addNode(&a, &b, path, edgeCost);
 
-    EXPECT_TRUE(a.getReachable()->size() > 0);
+    EXPECT_TRUE(a.getReachable().size() > 0);
     
-    EXPECT_TRUE(a.getReachable()->back() == &b);
+    EXPECT_TRUE(a.getReachable().back() == &b);
 
     EXPECT_TRUE(simpleTree.getNode(point1) != nullptr);
     EXPECT_TRUE(simpleTree.getNode(point2) != nullptr);
@@ -79,7 +79,7 @@ TEST(SimpleTreeTest, rewireEdgeTest) {
 
     simpleTree.rewireEdge(&a, &b, &c, path, edgeCost);
 
-    EXPECT_TRUE(a.getReachable()->back() == &c);
+    EXPECT_TRUE(a.getReachable().back() == &c);
 
     EXPECT_TRUE(simpleTree.getNode(point2) == nullptr);
     EXPECT_TRUE(simpleTree.getNode(point3) != nullptr);
