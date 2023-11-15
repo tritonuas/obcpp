@@ -13,12 +13,13 @@ struct GPSCoord {
 };
 
 struct XYZCoord {
-    XYZCoord(double x, double y, double z)
-        :x(x), y(y), z(z) {}
+    XYZCoord(double x, double y, double z, double psi = 0)
+        :x(x), y(y), z(z), psi(psi) {}
 
     double x;
     double y;
     double z;
+    double psi;
 };
  
 // In the future maybe make these their own classes with methods, etc...
