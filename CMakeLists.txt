@@ -40,10 +40,11 @@ include(${DEPS_DIRECTORY}/httplib/httplib.cmake)
 # =============================
 # obcpp executable
 file(GLOB_RECURSE SOURCES "src/*.cpp")
+list(REMOVE_ITEM SOURCES "${CMAKE_SOURCE_DIR}/src/main.cpp")
 file(GLOB_RECURSE HEADERS "include/*.hpp")
 
 set(INCLUDE_DIRECTORY ${PROJECT_SOURCE_DIR}/include)
-add_executable(${PROJECT_NAME} ${SOURCES})
+add_executable(${PROJECT_NAME} ${SOURCES} "src/main.cpp")
 include_directories(${INCLUDE_DIRECTORY})
 target_add_torch(${PROJECT_NAME})
 target_add_arena(${PROJECT_NAME})
@@ -57,7 +58,8 @@ target_add_httplib(${PROJECT_NAME})
 # Integration tests
 
 # playground
-add_executable(playground tests/integration/playground.cpp)
+add_executable(playground ${SOURCES} "tests/integration/playground.cpp")
+target_include_directories(playground PRIVATE ${INCLUDE_DIRECTORY})
 target_add_torch(playground)
 target_add_arena(playground)
 target_add_json(playground)
