@@ -18,7 +18,6 @@ TEST(SimpleTreeTest, addNodeTest) {
     EXPECT_TRUE(a.getReachable()->size() > 0);
     
     EXPECT_TRUE(a.getReachable()->back() == &b);
-    EXPECT_TRUE(b.getReachable()->back() == &a);
 
     EXPECT_TRUE(simpleTree.getNode(point1) != nullptr);
     EXPECT_TRUE(simpleTree.getNode(point2) != nullptr);

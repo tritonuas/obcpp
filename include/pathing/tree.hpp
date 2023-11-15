@@ -27,6 +27,7 @@ class RRTNode {
         RRTPoint getPoint();
         void setReachable(RRTNodeList reachable);
         void addReachable(RRTNode* newNode);
+        void removeReachable(RRTNode* oldNode);
         RRTNodeList* getReachable();
         double getCost();
         void setCost(double newCost);
@@ -36,11 +37,10 @@ class RRTNode {
         RRTNodeList reachable;
         double cost;
         RRTNode* parent;
+        int numNodes;
 };
 
 //Hash functions for the tree's member variables
-//unsigned int hashPoint(const RRTPoint &point);
-//unsigned int hashEdge(const std::pair<RRTNode*, RRTNode*> &nodePair);
 class PointHashFunction {
     public:
         std::size_t operator()(const RRTPoint &point) const;
@@ -73,8 +73,9 @@ class RRTTree {
         void rewireEdge(RRTNode* from, RRTNode* toPrev, RRTNode* toNew, std::vector<RRTPoint> path, double cost);
         RRTNode* getNode(RRTPoint point);
         RRTEdge* getEdge(RRTPoint from, RRTPoint to);
+        bool isEmpty = true;
 
-    //private:
+    private:
         std::unordered_map<RRTPoint, RRTNode*, PointHashFunction> nodeMap;
         std::unordered_map<std::pair<RRTNode*, RRTNode*>, RRTEdge, EdgeHashFunction> edgeMap;
 };
