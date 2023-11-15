@@ -6,25 +6,14 @@ FATAL: In-source builds are not allowed.
 ")
 endif()
 
-# Check if Ninja is available
-find_program(NINJA_EXECUTABLE ninja)
-
-# Set the default generator
-if(NINJA_EXECUTABLE)
-    set(CMAKE_GENERATOR "Ninja")
-else()
-    set(CMAKE_GENERATOR "Unix Makefiles") # Use a fallback generator
-endif()
-
 # enable build caching
-find_program(CCACHE_FOUND ccache)
-if(CCACHE_FOUND)
-  set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
-  set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
-endif()
+find_program(CCACHE ccache)
+if(CCACHE)
+    set(CMAKE_C_COMPILER_LAUNCHER ${CCACHE})
+    set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE})
+endif(CCACHE)
 
 cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
-
 
 set(CMAKE_CXX_COMPILER g++)
 set(CMAKE_CXX_STANDARD 20)
@@ -35,31 +24,61 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ./bin)
 
 project(obcpp VERSION 1.0)
 
-file(GLOB_RECURSE SOURCES "src/*.cpp")
-file(GLOB_RECURSE HEADERS "include/*.hpp")
-
 # =============================
-# Executable
-set(INCLUDE_DIRECTORY ${PROJECT_SOURCE_DIR}/include)
-add_executable(${PROJECT_NAME} ${SOURCES})
-include_directories(${INCLUDE_DIRECTORY})
-# =============================
-
-# =============================
-# Libraries
+# Dependencies 
+set(FETCHCONTENT_QUIET FALSE)
 set(DEPS_DIRECTORY ${PROJECT_SOURCE_DIR}/deps)
 
-add_subdirectory(${DEPS_DIRECTORY}/arena-sdk)
-include(${DEPS_DIRECTORY}/mavsdk/CMakeLists.txt)
-add_subdirectory(${DEPS_DIRECTORY}/json)
-include(${DEPS_DIRECTORY}/eigen/CMakeLists.txt)
+include(${DEPS_DIRECTORY}/torch/torch.cmake)
+include(${DEPS_DIRECTORY}/arena-sdk/arena.cmake)
+include(${DEPS_DIRECTORY}/json/json.cmake)
+include(${DEPS_DIRECTORY}/eigen/eigen.cmake)
+include(${DEPS_DIRECTORY}/opencv/opencv.cmake)
+include(${DEPS_DIRECTORY}/httplib/httplib.cmake)
+include(${DEPS_DIRECTORY}/mavsdk/mavsdk.cmake)
 # =============================
-include(${DEPS_DIRECTORY}/torch/CMakeLists.txt)
-# NOTE: temporarily leaving out opencv until we have it working in dev container
-# include(${DEPS_DIRECTORY}/opencv/CMakeLists.txt)
+
+# =============================
+# obcpp executable
+file(GLOB_RECURSE SOURCES "src/*.cpp")
+list(REMOVE_ITEM SOURCES "${CMAKE_SOURCE_DIR}/src/main.cpp")
+file(GLOB_RECURSE HEADERS "include/*.hpp")
+
+set(INCLUDE_DIRECTORY ${PROJECT_SOURCE_DIR}/include)
+add_executable(${PROJECT_NAME} ${SOURCES} "src/main.cpp")
+include_directories(${INCLUDE_DIRECTORY})
+target_add_torch(${PROJECT_NAME})
+target_add_arena(${PROJECT_NAME})
+target_add_json(${PROJECT_NAME})
+target_add_eigen(${PROJECT_NAME})
+target_add_opencv(${PROJECT_NAME})
+target_add_httplib(${PROJECT_NAME})
+target_add_mavsdk(${PROJECT_NAME})
+# =============================
+
+# =============================
+# Integration tests
+
+# playground
+add_executable(playground ${SOURCES} "tests/integration/playground.cpp")
+target_include_directories(playground PRIVATE ${INCLUDE_DIRECTORY})
+target_add_torch(playground)
+target_add_arena(playground)
+target_add_json(playground)
+target_add_eigen(playground) 
+target_add_opencv(playground) 
+target_add_httplib(playground)
+target_add_mavsdk(playground)
+
+# mavsdk
+add_executable(mavsdk ${SOURCES} "tests/integration/mavsdk.cpp")
+target_include_directories(mavsdk PRIVATE ${INCLUDE_DIRECTORY})
+target_add_mavsdk(mavsdk)
+# =============================
+
 # =============================
 # Unit tests
-add_subdirectory(tests)
+add_subdirectory(tests/unit)
 add_subdirectory(${DEPS_DIRECTORY}/google-test)
 # =============================
 
@@ -71,14 +90,33 @@ foreach(dir ${PROJECT_LIBS_INCLUDE_DIRS})
     string(APPEND LIB_INCLUDE_CLANG_TIDY_STRING "-I${dir};")
 endforeach()
 
+# Add caching to clang-tidy using
+# https://github.com/matus-chochlik/ctcache (doesn't work)
+# stolen from https://stackoverflow.com/questions/53597508/is-it-possible-to-accelerate-clang-tidy-using-ccache-or-similar
+find_program (CLANG_TIDY_CACHE_PATH NAMES "clang-tidy-cache")
+if (CLANG_TIDY_CACHE_PATH)
+    find_program (_CLANG_TIDY_PATH NAMES "clang-tidy" "clang-tidy-15" "clang-tidy-14" "clang-tidy-13" "clang-tidy-12")
+
+    # Why do we use ';' here?
+    # It's a cmake black magic: https://cmake.org/cmake/help/latest/prop_tgt/LANG_CLANG_TIDY.html#prop_tgt:%3CLANG%3E_CLANG_TIDY
+    # The CLANG_TIDY_PATH is passed to CMAKE_CXX_CLANG_TIDY, which follows CXX_CLANG_TIDY syntax.
+    set (CLANG_TIDY_PATH "${CLANG_TIDY_CACHE_PATH};${_CLANG_TIDY_PATH}" CACHE STRING "A combined command to run clang-tidy with caching wrapper")
+else ()
+    find_program (CLANG_TIDY_PATH NAMES "clang-tidy" "clang-tidy-15" "clang-tidy-14" "clang-tidy-13" "clang-tidy-12")
+endif ()
+
+# set(CTCACHE_DIR "/home/tuas/mycache") # testing
+set (CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_PATH}")
+
 # Adding lint target if clang-tidy executable is found
 find_program(CLANG_TIDY "clang-tidy")
 if(CLANG_TIDY)
   # define lint target
   add_custom_target(lint
-    COMMAND ${CLANG_TIDY} 
+    COMMAND ${CMAKE_CXX_CLANG_TIDY} 
     ${SOURCES}
     ${HEADERS}
+    --use-color
     --
     -std=c++${CMAKE_CXX_STANDARD}
     -I${INCLUDE_DIRECTORY}
@@ -86,7 +124,26 @@ if(CLANG_TIDY)
     # include directory is not in LIB_INCLUDE_CLANG_TIDY_STRING
     -I${CMAKE_BINARY_DIR}/_deps/json-src/single_include
     ${LIB_INCLUDE_CLANG_TIDY_STRING}
-   )
+  )
+
+  # run formatting using clang-tidy
+  add_custom_target(format
+    COMMAND ${CMAKE_CXX_CLANG_TIDY} 
+    ${SOURCES}
+    ${HEADERS}
+    --use-color
+    --fix
+    --fix-errors
+    --fix-notes
+    --format-style=file
+    -extra-arg=-std=c++${CMAKE_CXX_STANDARD}
+    --
+    -I${INCLUDE_DIRECTORY}
+    # NOTE:might need to add include directory if library's 
+    # include directory is not in LIB_INCLUDE_CLANG_TIDY_STRING
+    -I${CMAKE_BINARY_DIR}/_deps/json-src/single_include
+    ${LIB_INCLUDE_CLANG_TIDY_STRING}
+  )
 else()
 #    message(FATAL_ERROR "clang-tidy executable not found. Check the README for steps to install it on your system")
 endif()
