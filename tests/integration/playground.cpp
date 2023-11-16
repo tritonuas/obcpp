@@ -1,10 +1,11 @@
 #include <iostream>
 
 // #include "ArenaApi.h"
-// #include <torch/torch.h>
-// #include <nlohmann/json.hpp>
-// #include <Eigen>
-// #include <opencv2/opencv.hpp>
+#include <torch/torch.h>
+#include <nlohmann/json.hpp>
+#include <Eigen>
+#include <opencv2/opencv.hpp>
+#include <matplot/matplot.h>
 
 // using json = nlohmann::json;
 
@@ -30,10 +31,14 @@ int main (int argc, char *argv[]) {
     // Eigen::Vector3d vec = Eigen::Vector3d(1, 2, 3);
     // std::cout << vec << "\n" << std::endl;
 
-    // // test opencv
-    // std::cout << "Testing opencv installation" << std::endl;
-    // cv::Mat opencv_mat = cv::Mat::eye(300, 300, CV_32F);
-    // std::cout << "Rows: " << opencv_mat.rows << " Cols: " << opencv_mat.cols << std::endl;
+    // test opencv
+    std::cout << "Testing opencv installation" << std::endl;
+    cv::Mat opencv_mat = cv::Mat::eye(300, 300, CV_32F);
+    std::cout << "Rows: " << opencv_mat.rows << " Cols: " << opencv_mat.cols << std::endl;
+
+    std::cout << "Testing matplot installation" << std::endl;
+    matplot::color c = matplot::color::black;
+    std::cout << "Black: " << static_cast<int>(c) << std::endl;
     
     // return 0;
 }
