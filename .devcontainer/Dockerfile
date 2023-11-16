@@ -11,25 +11,25 @@ RUN groupadd --gid $USER_GID $USERNAME \
 RUN apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y build-essential \
-    gdb \
-    git \
-    clang-tidy \
-    wget \
-    ccache \
-    vim \
-    curl \
-    libopencv-dev
+                           gdb \
+                           git \
+                           clang-tidy \
+                           wget \
+                           ccache \
+                           vim \
+                           curl \
+                           libopencv-dev
 
 # Download latest CMake from their repositories
 RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && wget https://github.com/Kitware/CMake/releases/download/v3.27.7/cmake-3.27.7-linux-x86_64.sh \
-    -q -O /tmp/cmake-install.sh \
-    && chmod u+x /tmp/cmake-install.sh \
-    && mkdir /opt/cmake-3.24.1 \
-    && /tmp/cmake-install.sh --skip-license --prefix=/opt/cmake-3.24.1 \
-    && rm /tmp/cmake-install.sh \
-    && ln -s /opt/cmake-3.24.1/bin/* /usr/local/bin
+      -q -O /tmp/cmake-install.sh \
+      && chmod u+x /tmp/cmake-install.sh \
+      && mkdir /opt/cmake-3.24.1 \
+      && /tmp/cmake-install.sh --skip-license --prefix=/opt/cmake-3.24.1 \
+      && rm /tmp/cmake-install.sh \
+      && ln -s /opt/cmake-3.24.1/bin/* /usr/local/bin
 
 
 # install prebuilt MAVSDK to system
@@ -46,7 +46,7 @@ RUN wget https://github.com/mavlink/MAVSDK/releases/download/v1.4.17/libmavsdk-d
 # Add clang-tidy-cache (doesn't work)
 ARG CLANG_TIDY_SHA1=c191254ea00d47ade11d7170ef82fe038c213774
 RUN curl -Lo /usr/bin/clang-tidy-cache \
-    "https://raw.githubusercontent.com/matus-chochlik/ctcache/$CLANG_TIDY_SHA1/clang-tidy-cache" \
+        "https://raw.githubusercontent.com/matus-chochlik/ctcache/$CLANG_TIDY_SHA1/clang-tidy-cache" \
     && chmod +x /usr/bin/clang-tidy-cache
 
 # Use the non-root user

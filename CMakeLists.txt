@@ -151,6 +151,6 @@ if(CLANG_TIDY)
     ${LIB_INCLUDE_CLANG_TIDY_STRING}
   )
 else()
-#    message(FATAL_ERROR "clang-tidy executable not found. Check the README for steps to install it on your system")
+   message(FATAL_ERROR "clang-tidy executable not found. Check the README for steps to install it on your system")
 endif()
 # =============================
