@@ -36,6 +36,7 @@ include(${DEPS_DIRECTORY}/eigen/eigen.cmake)
 include(${DEPS_DIRECTORY}/opencv/opencv.cmake)
 include(${DEPS_DIRECTORY}/httplib/httplib.cmake)
 include(${DEPS_DIRECTORY}/mavsdk/mavsdk.cmake)
+include(${DEPS_DIRECTORY}/matplot/matplot.cmake)
 # =============================
 
 # =============================
@@ -54,6 +55,7 @@ target_add_eigen(${PROJECT_NAME})
 target_add_opencv(${PROJECT_NAME})
 target_add_httplib(${PROJECT_NAME})
 target_add_mavsdk(${PROJECT_NAME})
+target_add_matplot(${PROJECT_NAME})
 # =============================
 
 # =============================
@@ -69,6 +71,7 @@ target_add_eigen(playground)
 target_add_opencv(playground) 
 target_add_httplib(playground)
 target_add_mavsdk(playground)
+target_add_matplot(playground)
 
 # mavsdk
 add_executable(mavsdk ${SOURCES} "tests/integration/mavsdk.cpp")
@@ -80,6 +83,7 @@ target_add_eigen(mavsdk)
 target_add_opencv(mavsdk) 
 target_add_httplib(mavsdk)
 target_add_mavsdk(mavsdk)
+target_add_matplot(mavsdk)
 # =============================
 
 # =============================

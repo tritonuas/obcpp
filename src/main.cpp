@@ -7,6 +7,11 @@
 #include <iostream>
 #include <httplib.h>
 
+<<<<<<< HEAD
+=======
+#include "core/states.hpp"
+#include "pathing/plotting.hpp"
+>>>>>>> main
 
 int main()
 {

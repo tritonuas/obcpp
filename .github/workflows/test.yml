@@ -18,6 +18,12 @@ jobs:
       - name: Install OpenCV
         run: sudo apt install libopencv-dev
 
+      - name: Install MavSDK
+        run: |
+            wget https://github.com/mavlink/MAVSDK/releases/download/v1.4.17/libmavsdk-dev_1.4.17_ubuntu20.04_amd64.deb
+            dpkg -i  libmavsdk-dev_1.4.17_ubuntu20.04_amd64.deb
+            rm libmavsdk-dev_1.4.17_ubuntu20.04_amd64.deb
+
       - name: Checkout Repo
         uses: actions/checkout@v4
         with:
