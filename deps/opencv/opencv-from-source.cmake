@@ -1,6 +1,8 @@
-  # The following is for building opencv from source (not currently working)
-  # We use the prebuilt version, which is much faster than cmake scanning
-  # all of opencv every time you want to build our binary.
+
+message(FATAL_ERROR "You should be using system wide precompiled OpenCV")
+# The following is for building opencv from source (not currently working)
+# We use the prebuilt version, which is much faster than cmake scanning
+# all of opencv every time you want to build our binary.
 
 include(FetchContent)
 

@@ -149,7 +149,7 @@ class RRTTree {
         *  Returns a pointer to the node in the tree corresponding to the RRTPoint.
         *  If the node doesn't exist in the tree, returns nullptr.
         */
-        static RRTNode* getNode(RRTPoint point);
+        RRTNode* getNode(RRTPoint point);
 
         /*
         *  Returns a pointer to the edge in the tree corresponding to the point pair.
