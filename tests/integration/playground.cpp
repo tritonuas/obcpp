@@ -6,6 +6,7 @@
 #include <Eigen>
 #include <opencv2/opencv.hpp>
 #include <matplot/matplot.h>
+#include <mavsdk/mavsdk.h>
 
 using json = nlohmann::json;
 
@@ -36,9 +37,15 @@ int main (int argc, char *argv[]) {
     cv::Mat opencv_mat = cv::Mat::eye(300, 300, CV_32F);
     std::cout << "Rows: " << opencv_mat.rows << " Cols: " << opencv_mat.cols << std::endl;
 
+    // test matplot
     std::cout << "Testing matplot installation" << std::endl;
     matplot::color c = matplot::color::black;
     std::cout << "Black: " << static_cast<int>(c) << std::endl;
+    
+    // test mavsdk
+    mavsdk::Mavsdk mavsdk;
+    mavsdk::ConnectionResult conn_result = mavsdk.add_any_connection("tcp://127.0.0.1:5760
+");
     
     return 0;
 }

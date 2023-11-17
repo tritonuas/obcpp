@@ -6,15 +6,18 @@
 
 /*
 * Test mavsdk connection to an endpoint 
-* bin/mavsdk [connection_link]
-* connection_link -> [protocol]://[ip]:[port]
-* example: 
-*   bin/mavsdk tcp://127.0.0.1:5760
 */ 
 int main(int argc, char *argv[]) {
-    
-    mavsdk::Mavsdk dc;
-    mavsdk::ConnectionResult conn_result = dc.add_any_connection(argv[1]);
+    // Print help blurb if no connection arg given
+    if (argc == 1) {
+        cout << "Usage:" 
+                "bin/mavsdk tcp://127.0.0.1:5760\n"
+                "bin/mavsdk [connection_link]"
+                "connection_link -> [protocol]://[ip]:[port]";
+    }
+
+    mavsdk::Mavsdk mavsdk;
+    mavsdk::ConnectionResult conn_result = mavsdk.add_any_connection(argv[1]);
     
     // Wait for the system to connect via heartbeat
     if (conn_result != mavsdk::ConnectionResult::Success) {

@@ -49,7 +49,7 @@ set(INCLUDE_DIRECTORY ${PROJECT_SOURCE_DIR}/include)
 add_executable(${PROJECT_NAME} ${SOURCES} "src/main.cpp")
 include_directories(${INCLUDE_DIRECTORY})
 target_add_torch(${PROJECT_NAME})
-# target_add_arena(${PROJECT_NAME})
+# target_add_arena(${PROJECT_NAME}) # Tyler: currently broken, so we had to comment this out
 target_add_json(${PROJECT_NAME})
 target_add_eigen(${PROJECT_NAME})
 target_add_opencv(${PROJECT_NAME})
@@ -76,14 +76,7 @@ target_add_matplot(playground)
 # mavsdk
 add_executable(mavsdk ${SOURCES} "tests/integration/mavsdk.cpp")
 target_include_directories(mavsdk PRIVATE ${INCLUDE_DIRECTORY})
-target_add_torch(mavsdk)
-# target_add_arena(mavsdk)
-target_add_json(mavsdk)
-target_add_eigen(mavsdk) 
-target_add_opencv(mavsdk) 
-target_add_httplib(mavsdk)
 target_add_mavsdk(mavsdk)
-target_add_matplot(mavsdk)
 # =============================
 
 # =============================

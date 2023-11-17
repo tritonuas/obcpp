@@ -35,7 +35,7 @@ RUN apt-get update \
 # install prebuilt MAVSDK to system
 # https://github.com/mavlink/MAVSDK/releases
 RUN wget https://github.com/mavlink/MAVSDK/releases/download/v1.4.17/libmavsdk-dev_1.4.17_ubuntu20.04_amd64.deb \
-    && dpkg -i  libmavsdk-dev_1.4.17_ubuntu20.04_amd64.deb \
+    && dpkg -i libmavsdk-dev_1.4.17_ubuntu20.04_amd64.deb \
     && rm libmavsdk-dev_1.4.17_ubuntu20.04_amd64.deb
 
 # the official docs say also these
