@@ -72,7 +72,7 @@ const RRTNodeList& RRTNode::getReachable() {
     return  (this->reachable);
 }
 
-double RRTNode::getCost() {
+double RRTNode::getCost() const {
     return this->cost;
 }
 
@@ -103,7 +103,7 @@ void RRTEdge::setCost(double newCost) {
     this->cost = newCost;
 }
 
-double RRTEdge::getCost() {
+double RRTEdge::getCost() const {
     return this->cost;
 }
 

@@ -62,7 +62,7 @@ class RRTNode {
         /*
         *  Get the cost associated with this node
         */
-        double getCost();
+        double getCost() const;
 
         /*
         *  Set the cost associated with this node
@@ -71,9 +71,9 @@ class RRTNode {
 
     private:
         RRTPoint point;
-        RRTNodeList reachable;
+        RRTNodeList reachable{};
         double cost;
-        RRTNode* parent;
+        RRTNode* parent{};
 };
 
 //Hash functions for the tree's member variables
@@ -112,7 +112,7 @@ class RRTEdge {
         /*
         *  Get the cost associated with this edge
         */
-        double getCost();
+        double getCost() const;
 
         /*
         *  Get the path vector associated with this edge
@@ -128,7 +128,7 @@ class RRTEdge {
         RRTNode* from;
         RRTNode* to;
         double cost;
-        std::vector<Eigen::Vector2d> path;
+        std::vector<RRTPoint> path{};
 };
 
 class RRTTree {
@@ -149,7 +149,7 @@ class RRTTree {
         *  Returns a pointer to the node in the tree corresponding to the RRTPoint.
         *  If the node doesn't exist in the tree, returns nullptr.
         */
-        RRTNode* getNode(RRTPoint point);
+        static RRTNode* getNode(RRTPoint point);
 
         /*
         *  Returns a pointer to the edge in the tree corresponding to the point pair.
@@ -158,8 +158,8 @@ class RRTTree {
         RRTEdge* getEdge(RRTPoint from, RRTPoint to);
 
     private:
-        std::unordered_map<RRTPoint, RRTNode*, PointHashFunction> nodeMap;
-        std::unordered_map<std::pair<RRTNode*, RRTNode*>, RRTEdge, EdgeHashFunction> edgeMap;
+        std::unordered_map<RRTPoint, RRTNode*, PointHashFunction> nodeMap{};
+        std::unordered_map<std::pair<RRTNode*, RRTNode*>, RRTEdge, EdgeHashFunction> edgeMap{};
 };
 
 #endif // PATHING_TREE_HPP_
