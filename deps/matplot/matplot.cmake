@@ -5,7 +5,7 @@ function(target_add_matplot target_name)
     # The binaries on the release page are 4MB, we should use those.
     FetchContent_Declare(matplotplusplus
             GIT_REPOSITORY https://github.com/alandefreitas/matplotplusplus
-            GIT_TAG origin/master # v1.2.0
+            GIT_TAG origin/master # v1.2.0 TODO(SAmir): this tag doesn't work? Maybe intermittent issue on my end.
             # URL https://github.com/alandefreitas/matplotplusplus/archive/refs/tags/v1.2.0.zip
             DOWNLOAD_EXTRACT_TIMESTAMP true
             GIT_PROGRESS TRUE

@@ -4,6 +4,7 @@ int compute_hdr() {
     // Uses hard coded local images
     std::vector<std::string> img_fn = {"../imgs/img1.jpeg", "../imgs/img2.jpeg", "../imgs/img3.jpeg", "../imgs/img4.jpeg", "../imgs/img5.jpeg", "../imgs/img6.jpeg"};
     std::vector<cv::Mat> img_list;
+    img_list.reserve(img_fn.size());
     for (const std::string& fn : img_fn) {
         img_list.push_back(cv::imread(fn));
     }
