@@ -35,6 +35,7 @@ include(${DEPS_DIRECTORY}/json/json.cmake)
 include(${DEPS_DIRECTORY}/eigen/eigen.cmake)
 include(${DEPS_DIRECTORY}/opencv/opencv.cmake)
 include(${DEPS_DIRECTORY}/httplib/httplib.cmake)
+include(${DEPS_DIRECTORY}/mavsdk/mavsdk.cmake)
 include(${DEPS_DIRECTORY}/matplot/matplot.cmake)
 # =============================
 
@@ -53,6 +54,7 @@ target_add_json(${PROJECT_NAME})
 target_add_eigen(${PROJECT_NAME})
 target_add_opencv(${PROJECT_NAME})
 target_add_httplib(${PROJECT_NAME})
+target_add_mavsdk(${PROJECT_NAME})
 target_add_matplot(${PROJECT_NAME})
 # =============================
 
@@ -68,7 +70,20 @@ target_add_json(playground)
 target_add_eigen(playground) 
 target_add_opencv(playground) 
 target_add_httplib(playground)
+target_add_mavsdk(playground)
 target_add_matplot(playground)
+
+# mavsdk
+add_executable(mavsdk ${SOURCES} "tests/integration/mavsdk.cpp")
+target_include_directories(mavsdk PRIVATE ${INCLUDE_DIRECTORY})
+target_add_torch(mavsdk)
+# target_add_arena(mavsdk)
+target_add_json(mavsdk)
+target_add_eigen(mavsdk) 
+target_add_opencv(mavsdk) 
+target_add_httplib(mavsdk)
+target_add_mavsdk(mavsdk)
+target_add_matplot(mavsdk)
 # =============================
 
 # =============================
@@ -140,6 +155,6 @@ if(CLANG_TIDY)
     ${LIB_INCLUDE_CLANG_TIDY_STRING}
   )
 else()
-    message(FATAL_ERROR "clang-tidy executable not found. Check the README for steps to install it on your system")
+   message(FATAL_ERROR "clang-tidy executable not found. Check the README for steps to install it on your system")
 endif()
 # =============================

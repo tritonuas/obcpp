@@ -23,13 +23,20 @@ RUN apt-get update \
 # Download latest CMake from their repositories
 RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
-  && wget https://github.com/Kitware/CMake/releases/download/v3.27.7/cmake-3.27.7-linux-x86_64.sh \
+    && wget https://github.com/Kitware/CMake/releases/download/v3.27.7/cmake-3.27.7-linux-x86_64.sh \
       -q -O /tmp/cmake-install.sh \
       && chmod u+x /tmp/cmake-install.sh \
       && mkdir /opt/cmake-3.24.1 \
       && /tmp/cmake-install.sh --skip-license --prefix=/opt/cmake-3.24.1 \
       && rm /tmp/cmake-install.sh \
       && ln -s /opt/cmake-3.24.1/bin/* /usr/local/bin
+
+
+# install prebuilt MAVSDK to system
+# https://github.com/mavlink/MAVSDK/releases
+RUN wget https://github.com/mavlink/MAVSDK/releases/download/v1.4.17/libmavsdk-dev_1.4.17_ubuntu20.04_amd64.deb \
+    && dpkg -i  libmavsdk-dev_1.4.17_ubuntu20.04_amd64.deb \
+    && rm libmavsdk-dev_1.4.17_ubuntu20.04_amd64.deb
 
 # the official docs say also these
 # https://docs.opencv.org/4.x/d7/d9f/tutorial_linux_install.html
@@ -41,6 +48,6 @@ ARG CLANG_TIDY_SHA1=c191254ea00d47ade11d7170ef82fe038c213774
 RUN curl -Lo /usr/bin/clang-tidy-cache \
         "https://raw.githubusercontent.com/matus-chochlik/ctcache/$CLANG_TIDY_SHA1/clang-tidy-cache" \
     && chmod +x /usr/bin/clang-tidy-cache
-    
+
 # Use the non-root user
 USER $USERNAME
