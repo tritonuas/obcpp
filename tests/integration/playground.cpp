@@ -44,9 +44,11 @@ int main (int argc, char *argv[]) {
     std::cout << "Black: " << static_cast<int>(c) << std::endl;
     
     // test mavsdk
+    std::cout << "Testing mavsdk installation" << std::endl;
     mavsdk::Mavsdk mavsdk;
-    string connection_address = "tcp://127.0.0.1:5760";
+    std::string connection_address = "tcp://127.0.0.1:5760";
     mavsdk::ConnectionResult conn_result = mavsdk.add_any_connection(connection_address);
+    std::cout << "Expected connection to be refused" << std::endl;
     
     return 0;
 }
