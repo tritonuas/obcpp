@@ -7,6 +7,7 @@
 #include "Eigen"
 
 #include "utilities/datatypes.hpp"
+#include "pathing/tree.hpp"
 
 struct DubinsPath
 {
@@ -107,7 +108,7 @@ public:
      *   @param  side    ==> whether the plane is planning to turn left (L) or right (R)
      *   @return         ==> center of a turning circle
      */
-    Eigen::Vector2d findCenter(const XYZCoord &point, char side) const;
+    Eigen::Vector2d findCenter(const RRTPoint &point, char side) const;
 
     /**
      *   Finds a point (vector) along a curved path given a distance already traveled
@@ -118,7 +119,7 @@ public:
      *   @param path_length      ==> the arc-length along the circle
      *   @returns                ==> point along circle path
      */
-    Eigen::Vector2d circleArc(const XYZCoord &starting_point, double beta, const Eigen::Vector2d &center, double path_length) const;
+    Eigen::Vector2d circleArc(const RRTPoint &starting_point, double beta, const Eigen::Vector2d &center, double path_length) const;
     /**
      *  Generates points for the paths that contain a straight section
      *  [LSL, LSR, RSR, RSL]
@@ -128,7 +129,7 @@ public:
      *  @param path     ==> Some given dubins's path parameters
      *  @return         ==> a list of vectors along the entire path
      */
-    std::vector<Eigen::Vector2d> generatePointsStraight(const XYZCoord &start, const XYZCoord &end, const DubinsPath &path) const;
+    std::vector<Eigen::Vector2d> generatePointsStraight(const RRTPoint &start, const RRTPoint &end, const DubinsPath &path) const;
 
     /**
      *  Generates points for the paths that only contain curved sections
@@ -139,7 +140,7 @@ public:
      *  @param path     ==> Some given dubins's path parameters
      *  @return         ==> a list of vectors along the entire path
      */
-    std::vector<Eigen::Vector2d> generatePointsCurve(const XYZCoord &start, const XYZCoord &end, const DubinsPath &path) const;
+    std::vector<Eigen::Vector2d> generatePointsCurve(const RRTPoint &start, const RRTPoint &end, const DubinsPath &path) const;
 
     /**
      *  Abstraction for generating points (curved/straight)
@@ -150,7 +151,7 @@ public:
      *  @param has_straigt  ==> whether the given DubinsPath has a straight section or not
      *  @return             ==> a list of points that represent the shortest dubin's path from start to end
      */
-    std::vector<Eigen::Vector2d> generatePoints(const XYZCoord &start, const XYZCoord &end, const DubinsPath &path, bool has_straight) const; 
+    std::vector<Eigen::Vector2d> generatePoints(const RRTPoint &start, const RRTPoint &end, const DubinsPath &path, bool has_straight) const; 
 
     /**
      *  First, the straight distance (it turns out) is equal to the
@@ -169,7 +170,7 @@ public:
      *                          - straight_distance
      *                      - if the path has a straight section
      */
-    RRTOption lsl(const XYZCoord &start, const XYZCoord &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2) const;
+    RRTOption lsl(const RRTPoint &start, const RRTPoint &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2) const;
 
     /**
      *  First, the straight distance (it turns out) is equal to the
@@ -188,7 +189,7 @@ public:
      *                          - straight_distance
      *                      - if the path has a straight section
      */
-    RRTOption rsr(const XYZCoord &start, const XYZCoord &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2) const;
+    RRTOption rsr(const RRTPoint &start, const RRTPoint &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2) const;
 
     /**
      *  Because of the change in turn direction, it is a little more complex to
@@ -210,7 +211,7 @@ public:
      *                          - straight_distance
      *                      - if the path has a straight section
      */
-    RRTOption lsr(const XYZCoord &start, const XYZCoord &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2) const;
+    RRTOption lsr(const RRTPoint &start, const RRTPoint &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2) const;
 
     /**
      *  Because of the change in turn direction, it is a little more complex to
@@ -232,7 +233,7 @@ public:
      *                          - straight_distance
      *                      - if the path has a straight section
      */
-    RRTOption rsl(const XYZCoord &start, const XYZCoord &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2) const;
+    RRTOption rsl(const RRTPoint &start, const RRTPoint &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2) const;
 
     /**
      *  Using the isoceles triangle made by the centers of the three circles,
@@ -250,7 +251,7 @@ public:
      *                          - straight_distance
      *                      - if the path has a straight section
      */
-    RRTOption lrl(const XYZCoord &start, const XYZCoord &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2) const;
+    RRTOption lrl(const RRTPoint &start, const RRTPoint &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2) const;
 
     /**
      *  Using the isoceles triangle made by the centers of the three circles,
@@ -268,7 +269,7 @@ public:
      *                          - straight_distance
      *                      - if the path has a straight section
      */
-    RRTOption rlr(const XYZCoord &start, const XYZCoord &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2) const;
+    RRTOption rlr(const RRTPoint &start, const RRTPoint &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2) const;
 
     /**
      * Compute all the possible Dubin's path and returns a list
@@ -279,7 +280,7 @@ public:
      *  @param sort     ==> whether the method sorts the resulting vector DEFALT-->FALSE (searching is faster)
      *  @return         ==> list containing all the RRTOptions from the path generation
      */
-    std::vector<RRTOption> allOptions(const XYZCoord &start, const XYZCoord &end, bool sort = false) const;
+    std::vector<RRTOption> allOptions(const RRTPoint &start, const RRTPoint &end, bool sort = false) const;
 
     /**
      * Compute all the possible Dubin's path(s) and
@@ -289,7 +290,7 @@ public:
      *  @param end      ==> vector at end position
      *  @return         ==> the points for the most optimal path from @param start to @param end
      */
-    std::vector<Eigen::Vector2d> dubinsPath(const XYZCoord &start, const XYZCoord &end) const;
+    std::vector<Eigen::Vector2d> dubinsPath(const RRTPoint &start, const RRTPoint &end) const;
 
 private:
     const double _radius;

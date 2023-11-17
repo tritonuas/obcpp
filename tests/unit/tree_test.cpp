@@ -1,5 +1,6 @@
 #include "pathing/tree.hpp"
 #include "utilities/datatypes.hpp"
+#include "Eigen"
 #include <gtest/gtest.h>
 
 TEST(SimpleTreeTest, addNodeTest) {
@@ -7,12 +8,12 @@ TEST(SimpleTreeTest, addNodeTest) {
     RRTPoint point2 = RRTPoint(XYZCoord(0, 2, 0), 0);
     RRTNode a = RRTNode(point1, 10);
     RRTNode b = RRTNode(point2, 10);
-    std::vector<RRTPoint> path = {RRTPoint(XYZCoord(0.5, 2, 0), 0), RRTPoint(XYZCoord(0.25, 2, 0), 0)};
+    std::vector<Eigen::Vector2d> path = {Eigen::Vector2d(0.5, 2), Eigen::Vector2d(0.25, 2)};
     double edgeCost = 1;
     RRTEdge edge = RRTEdge(&a, &b, path, edgeCost);
     RRTTree simpleTree = RRTTree();
 
-    simpleTree.addNode(&a, &a, std::vector<RRTPoint>(), 0);
+    simpleTree.addNode(&a, &a, std::vector<Eigen::Vector2d>(), 0);
     simpleTree.addNode(&a, &b, path, edgeCost);
 
     EXPECT_TRUE(a.getReachable().size() > 0);
@@ -30,11 +31,11 @@ TEST(SimpleTreeTest, getNodeTest) {
     RRTPoint point2 = RRTPoint(XYZCoord(0, 2, 0), 0);
     RRTNode a = RRTNode(point1, 10);
     RRTNode b = RRTNode(point2, 10);
-    std::vector<RRTPoint> path = {RRTPoint(XYZCoord(0.5, 2, 0), 0), RRTPoint(XYZCoord(0.25, 2, 0), 0)};
+    std::vector<Eigen::Vector2d> path = {Eigen::Vector2d(0.5, 2), Eigen::Vector2d(0.25, 2)};
     double edgeCost = 1;
     RRTEdge edge = RRTEdge(&a, &b, path, edgeCost);
     RRTTree simpleTree = RRTTree();
-    simpleTree.addNode(&a, &a, std::vector<RRTPoint>(), 0);
+    simpleTree.addNode(&a, &a, std::vector<Eigen::Vector2d>(), 0);
     simpleTree.addNode(&a, &b, path, edgeCost);
 
     EXPECT_TRUE(simpleTree.getNode(point1) != nullptr);
@@ -49,11 +50,11 @@ TEST(SimpleTreeTest, getEdgeTest) {
     RRTPoint point2 = RRTPoint(XYZCoord(0, 2, 0), 0);
     RRTNode a = RRTNode(point1, 10);
     RRTNode b = RRTNode(point2, 10);
-    std::vector<RRTPoint> path = {RRTPoint(XYZCoord(0.5, 2, 0), 0), RRTPoint(XYZCoord(0.25, 2, 0), 0)};
+    std::vector<Eigen::Vector2d> path = {Eigen::Vector2d(0.5, 2), Eigen::Vector2d(0.25, 2)};
     double edgeCost = 1;
     RRTEdge edge = RRTEdge(&a, &b, path, edgeCost);
     RRTTree simpleTree = RRTTree();
-    simpleTree.addNode(&a, &a, std::vector<RRTPoint>(), 0);
+    simpleTree.addNode(&a, &a, std::vector<Eigen::Vector2d>(), 0);
     simpleTree.addNode(&a, &b, path, edgeCost);
 
     EXPECT_TRUE(simpleTree.getEdge(point1, point2) != nullptr);
@@ -65,12 +66,12 @@ TEST(SimpleTreeTest, rewireEdgeTest) {
     RRTPoint point2 = RRTPoint(XYZCoord(0, 2, 0), 0);
     RRTNode a = RRTNode(point1, 10);
     RRTNode b = RRTNode(point2, 10);
-    std::vector<RRTPoint> path = {RRTPoint(XYZCoord(0.5, 2, 0), 0), RRTPoint(XYZCoord(0.25, 2, 0), 0)};
+    std::vector<Eigen::Vector2d> path = {Eigen::Vector2d(0.5, 2), Eigen::Vector2d(0.25, 2)};
     double edgeCost = 1;
 
     RRTTree simpleTree = RRTTree();
 
-    simpleTree.addNode(&a, &a, std::vector<RRTPoint>(), 0);
+    simpleTree.addNode(&a, &a, std::vector<Eigen::Vector2d>(), 0);
     simpleTree.addNode(&a, &b, path, edgeCost);
 
     RRTPoint point3 = RRTPoint(XYZCoord(3,2,0), 0);

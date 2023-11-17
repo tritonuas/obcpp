@@ -148,20 +148,20 @@ TEST(DubinsTest, FindCenter)
     Dubins dubins1(5, 10);
 
     // points towards e1
-    XYZCoord origin_x(0, 0, 0, 0);
+    RRTPoint origin_x{XYZCoord {0, 0, 0} , 0};
     Eigen::Vector2d result1 = dubins1.findCenter(origin_x, 'L');
     Eigen::Vector2d expected_result1(0.0, 5.0);
     Eigen::Vector2d result2 = dubins1.findCenter(origin_x, 'R');
     Eigen::Vector2d expected_result2(0.0, -5.0);
 
     // points towards e2
-    XYZCoord origin_y(0, 0, 0, M_PI / 2);
+    RRTPoint origin_y{XYZCoord{0, 0, 0}, M_PI / 2};
     Eigen::Vector2d result3 = dubins1.findCenter(origin_y, 'L');
     Eigen::Vector2d expected_result3(-5.0, 0.0);
     Eigen::Vector2d result4 = dubins1.findCenter(origin_y, 'R');
     Eigen::Vector2d expected_result4(5.0, 0.0);
 
-    XYZCoord arbitrary(12, 156, 100, 1.3);
+    RRTPoint arbitrary{XYZCoord{12, 156, 100}, 1.3};
     Eigen::Vector2d result5 = dubins1.findCenter(arbitrary, 'L');
     // [-4.817, 1.341] ==> magnitude 5 * e1 vector rotated 2.87 [1.3 + pi/2] raidans
     Eigen::Vector2d expected_result5(12 - 4.817, 156 + 1.341);
@@ -197,9 +197,9 @@ TEST(DubinsTest, CircleArc)
     Dubins dubins1(5, 10);
 
     // points towards e1
-    XYZCoord origin_x(0, 0, 0, 0);
-    XYZCoord origin_y(0, 0, 0, M_PI / 2);
-    XYZCoord arbitrary_position1(73, 41, 0, 4.00);
+    RRTPoint origin_x{XYZCoord{0, 0, 0}, 0};
+    RRTPoint origin_y{XYZCoord{0, 0, 0}, M_PI / 2};
+    RRTPoint arbitrary_position1{XYZCoord{73, 41, 0}, 4.00};
 
     // plane is facing x+, turning left/ccw with a turning radius of 5,
     // this should be the point where it turns 90deg (1/4 of the circle)
@@ -242,8 +242,8 @@ TEST(DubinsTest, GenPointsStraight)
 {
     Dubins dubins1(5, 1);
     // points towards e1
-    XYZCoord origin_x(0, 0, 0, 0);
-    XYZCoord arbitrary_position1(9, 6, 0, 4.00);
+    RRTPoint origin_x{XYZCoord{0, 0, 0}, 0};
+    RRTPoint arbitrary_position1{XYZCoord{9, 6, 0}, 4.00};
 
     // lsl  origin_x ==> arbitrary_position
     DubinsPath path(6.107586558274035, 4.175598748905551, 12.983673916464376);
@@ -334,8 +334,8 @@ TEST(DubinsTest, GenPointsCurve)
 {
     Dubins dubins1(5, 1);
     // points towards e1
-    XYZCoord origin_x(0, 0, 0, 0);
-    XYZCoord arbitrary_position1(9, 6, 0, 4.00);
+    RRTPoint origin_x{XYZCoord{0, 0, 0}, 0};
+    RRTPoint arbitrary_position1{XYZCoord{9, 6, 0}, 4.00};
 
     // lrl  origin_x ==> arbitrary_position
     DubinsPath path(2.25948315258286, 0.3274953432143759, 4.870163802976823);
@@ -399,8 +399,8 @@ TEST(DubinsTest, GenPoints)
 {
     Dubins dubins1(5, 1);
     // points towards e1
-    XYZCoord origin_x(0, 0, 0, 0);
-    XYZCoord arbitrary_position1(9, 6, 0, 4.00);
+    RRTPoint origin_x{XYZCoord{0, 0, 0}, 0};
+    RRTPoint arbitrary_position1{XYZCoord{9, 6, 0}, 4.00};
 
     // straight path
     RRTOption lsl(64.39960045236231, DubinsPath(6.107586558274035, 4.175598748905551, 12.983673916464376), true);
@@ -545,10 +545,10 @@ TEST(DubinsTest, LSL)
     Dubins dubins1(5, 10);
 
     // points towards e1
-    XYZCoord origin_x(0, 0, 0, 0);
-    XYZCoord arbitrary_position1(73, 41, 0, 4.00);
-    XYZCoord plus_x100(100, 0, 0, 0);
-    XYZCoord arbitrary_position2(5, 100, 0, M_PI / 2);
+    RRTPoint origin_x{XYZCoord{0, 0, 0}, 0};
+    RRTPoint arbitrary_position1{XYZCoord{73, 41, 0}, 4.00};
+    RRTPoint plus_x100{XYZCoord{100, 0, 0}, 0};
+    RRTPoint arbitrary_position2{XYZCoord{5, 100, 0}, M_PI / 2};
 
     RRTOption result1 = dubins1.lsl(origin_x, arbitrary_position1,
                                     dubins1.findCenter(origin_x, 'L'), dubins1.findCenter(arbitrary_position1, 'L'));
@@ -588,10 +588,10 @@ TEST(DubinsTest, RSR)
 {
     Dubins dubins1(5, 10);
     // points towards e1
-    XYZCoord origin_x(0, 0, 0, 0);
-    XYZCoord arbitrary_position1(73, 41, 0, 4.00);
-    XYZCoord plus_x100(100, 0, 0, 0);
-    XYZCoord arbitrary_position2(5, -100, 0, -M_PI / 2);
+    RRTPoint origin_x{XYZCoord{0, 0, 0}, 0};
+    RRTPoint arbitrary_position1{XYZCoord{73, 41, 0}, 4.00};
+    RRTPoint plus_x100{XYZCoord{100, 0, 0}, 0};
+    RRTPoint arbitrary_position2{XYZCoord{5, -100, 0}, -M_PI / 2};
 
     RRTOption result1 = dubins1.rsr(origin_x, arbitrary_position1,
                                     dubins1.findCenter(origin_x, 'R'), dubins1.findCenter(arbitrary_position1, 'R'));
@@ -631,10 +631,10 @@ TEST(DubinsTest, RSL)
 {
     Dubins dubins1(5, 10);
     // points towards e1
-    XYZCoord origin_x(0, 0, 0, 0);
-    XYZCoord arbitrary_position1(73, 41, 0, 4.00);
-    XYZCoord plus_x100(100, 0, 0, 0);
-    XYZCoord arbitrary_position2(10, -100, 0, 0);
+    RRTPoint origin_x{XYZCoord{0, 0, 0}, 0};
+    RRTPoint arbitrary_position1{XYZCoord{73, 41, 0}, 4.00};
+    RRTPoint plus_x100{XYZCoord{100, 0, 0}, 0};
+    RRTPoint arbitrary_position2{XYZCoord{10, -100, 0}, 0};
 
     RRTOption result1 = dubins1.rsl(origin_x, arbitrary_position1,
                                     dubins1.findCenter(origin_x, 'R'), dubins1.findCenter(arbitrary_position1, 'L'));
@@ -674,10 +674,10 @@ TEST(DubinsTest, LSR)
 {
     Dubins dubins1(5, 10);
     // points towards e1
-    XYZCoord origin_x(0, 0, 0, 0);
-    XYZCoord arbitrary_position1(73, 41, 0, 4.00);
-    XYZCoord plus_x100(100, 0, 0, 0);
-    XYZCoord arbitrary_position2(10, 100, 0, 0);
+    RRTPoint origin_x{XYZCoord{0, 0, 0}, 0};
+    RRTPoint arbitrary_position1{XYZCoord{73, 41, 0}, 4.00};
+    RRTPoint plus_x100{XYZCoord{100, 0, 0}, 0};
+    RRTPoint arbitrary_position2{XYZCoord{10, 100, 0}, 0};
 
     RRTOption result1 = dubins1.lsr(origin_x, arbitrary_position1,
                                     dubins1.findCenter(origin_x, 'L'), dubins1.findCenter(arbitrary_position1, 'R'));
@@ -716,8 +716,8 @@ TEST(DubinsTest, LRL)
 {
     Dubins dubins1(5, 10);
     // points towards e1
-    XYZCoord origin_x(0, 0, 0, 0);
-    XYZCoord arbitrary_position1(9, 6, 0, 4.00);
+    RRTPoint origin_x{XYZCoord{0, 0, 0}, 0};
+    RRTPoint arbitrary_position1{XYZCoord{9, 6, 0}, 4.00};
 
     RRTOption result1 = dubins1.lrl(origin_x, arbitrary_position1,
                                     dubins1.findCenter(origin_x, 'L'), dubins1.findCenter(arbitrary_position1, 'L'));
@@ -737,8 +737,8 @@ TEST(DubinsTest, RLR)
 {
     Dubins dubins1(5, 10);
     // points towards e1
-    XYZCoord origin_x(0, 0, 0, 0);
-    XYZCoord arbitrary_position1(9, 6, 0, 4.00);
+    RRTPoint origin_x{XYZCoord{0, 0, 0}, 0};
+    RRTPoint arbitrary_position1{XYZCoord{9, 6, 0}, 4.00};
 
     RRTOption result1 = dubins1.rlr(origin_x, arbitrary_position1,
                                     dubins1.findCenter(origin_x, 'R'), dubins1.findCenter(arbitrary_position1, 'R'));
@@ -758,9 +758,9 @@ TEST(DubinsTest, AllOptions)
 {
     Dubins dubins1(5, 10);
     // points towards e1
-    XYZCoord origin_x(0, 0, 0, 0);
-    XYZCoord arbitrary_position1(9, 6, 0, 4.00);
-    XYZCoord arbitrary_position2(3, -1, 0, 2.36);
+    RRTPoint origin_x{XYZCoord{0, 0, 0}, 0};
+    RRTPoint arbitrary_position1{XYZCoord{9, 6, 0}, 4.00};
+    RRTPoint arbitrary_position2{XYZCoord{3, -1, 0}, 2.36};
 
     std::vector<RRTOption> result1 = dubins1.allOptions(origin_x, arbitrary_position1);
     std::vector<RRTOption> expected_result1 = {
@@ -827,8 +827,8 @@ TEST(DubinsTest, DubinsPath)
 {
     Dubins dubins1(5, 1);
     // points towards e1
-    XYZCoord origin_x(0, 0, 0, 0);
-    XYZCoord arbitrary_position1(9, 6, 0, 4.00);
+    RRTPoint origin_x{XYZCoord{0, 0, 0}, 0};
+    RRTPoint arbitrary_position1{XYZCoord{9, 6, 0}, 4.00};
 
     std::vector<Eigen::Vector2d> result1 = dubins1.dubinsPath(origin_x, arbitrary_position1);
     std::vector<Eigen::Vector2d> expected_result1 = {
