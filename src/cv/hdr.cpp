@@ -1,6 +1,4 @@
-#include <iostream>
-#include <opencv2/opencv.hpp>
-#include <opencv2/photo.hpp>
+#include "cv/hdr.hpp"
 
 int compute_hdr() {
     // Uses hard coded local images
