@@ -1,13 +1,17 @@
 #include <iostream>
-#include "core/states.hpp"
+
 #include "Eigen"
-// #include <opencv2/opencv.hpp>
+#include "core/states.hpp"
 #include <torch/torch.h>
+
 #include <iostream>
 #include <httplib.h>
 
+<<<<<<< HEAD
+=======
 #include "core/states.hpp"
 #include "pathing/plotting.hpp"
+>>>>>>> main
 
 int main()
 {
