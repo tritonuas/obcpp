@@ -14,16 +14,15 @@ struct GPSCoord {
 };
 
 struct XYZCoord {
-    XYZCoord(double x, double y, double z, double psi = 0)
-        :x(x), y(y), z(z), psi(psi), color(matplot::color::black) {}
+    XYZCoord(double x, double y, double z)
+        :x(x), y(y), z(z), color(matplot::color::black) {}
 
-    XYZCoord(double x, double y, double z, double psi, matplot::color color)
-        :x(x), y(y), z(z), psi(psi), color(color) {}
+    XYZCoord(double x, double y, double z, matplot::color color)
+        :x(x), y(y), z(z), color(color) {}
 
     double x;
     double y;
     double z;
-    double psi;
     matplot::color color;
 };
  
