@@ -20,6 +20,7 @@ int main(int argc, char *argv[]) {
     mavsdk::ConnectionResult conn_result = mavsdk.add_any_connection(argv[1]);
     
     // Wait for the system to connect via heartbeat
+    // TODO: add timeout
     if (conn_result != mavsdk::ConnectionResult::Success) {
         std::cout << "Adding connection failed: " << conn_result << '\n';
     }

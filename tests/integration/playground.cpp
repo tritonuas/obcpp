@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 
 // #include "ArenaApi.h"
 #include <torch/torch.h>
@@ -44,8 +45,8 @@ int main (int argc, char *argv[]) {
     
     // test mavsdk
     mavsdk::Mavsdk mavsdk;
-    mavsdk::ConnectionResult conn_result = mavsdk.add_any_connection("tcp://127.0.0.1:5760
-");
+    string connection_address = "tcp://127.0.0.1:5760";
+    mavsdk::ConnectionResult conn_result = mavsdk.add_any_connection(connection_address);
     
     return 0;
 }

@@ -5,6 +5,8 @@ function(target_add_eigen target_name)
 
     FetchContent_Declare(eigen
         GIT_REPOSITORY https://gitlab.com/libeigen/eigen
+        URL_HASH SHA256=282446b30a285ea593ee7baaf6fb8978551fd3671e78b1b869270a62d1decf3b
+        DOWNLOAD_EXTRACT_TIMESTAMP true
         GIT_PROGRESS TRUE
         GIT_SHALLOW TRUE
         GIT_TAG 3.4.0)

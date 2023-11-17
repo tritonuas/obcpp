@@ -12,6 +12,7 @@ FetchContent_Declare(OpenCV
   URL_HASH SHA256=62f650467a60a38794d681ae7e66e3e8cfba38f445e0bf87867e2f2cdc8be9d5
   DOWNLOAD_EXTRACT_TIMESTAMP true
   OVERRIDE_FIND_PACKAGE  
+  SHOW_PROGRESS
   
   # TODO: Everything still compiles fine for me with these, but they need to be tested.
   CMAKE_ARGS

@@ -1,8 +1,12 @@
+cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
+
 # Disable in-source builds to prevent source tree corruption.
 if(" ${CMAKE_SOURCE_DIR}" STREQUAL " ${CMAKE_BINARY_DIR}")
   message(FATAL_ERROR "
 FATAL: In-source builds are not allowed.
        You should create a separate directory for build files.
+       If you think this error is wrong, try clearing cache:
+       `find -name CMakeCache.txt -delete`
 ")
 endif()
 
@@ -12,8 +16,6 @@ if(CCACHE)
     set(CMAKE_C_COMPILER_LAUNCHER ${CCACHE})
     set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE})
 endif(CCACHE)
-
-cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
 
 set(CMAKE_CXX_COMPILER g++)
 set(CMAKE_CXX_STANDARD 20)
