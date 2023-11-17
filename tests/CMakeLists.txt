@@ -9,7 +9,7 @@ set(SOURCES ${TEST_SOURCES})
 
 add_executable(${BINARY} ${TEST_SOURCES})
 
-target_link_libraries(${BINARY} PUBLIC gtest_main opencv)
+target_link_libraries(${BINARY} PUBLIC gtest_main opencv opencv_core)
 
 add_test(NAME ${BINARY} COMMAND ${BINARY})
 
