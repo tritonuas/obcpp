@@ -3,6 +3,7 @@
 
 #include <string>
 #include <memory>
+#include <cstdint>
 
 #include "core/config.hpp"
 #include "core/states.hpp"
@@ -15,7 +16,7 @@
  */
 class OBC {
     public:
-        OBC();
+        OBC(uint16_t gcs_port);
 
         void run();
 
