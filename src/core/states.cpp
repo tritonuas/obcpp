@@ -33,3 +33,18 @@ void MissionState::setTick(Tick* newTick) {
 
     tick.reset(newTick);
 }
+
+void MissionState::setInitPath(std::vector<GPSCoord> init_path) {
+    Lock lock(this->init_path_mut);
+    this->init_path = init_path;
+}
+
+const std::vector<GPSCoord>& MissionState::getInitPath() {
+    Lock lock(this->init_path_mut);
+    return this->init_path;
+}
+
+bool MissionState::isInitPathValidated() {
+    Lock lock(this->init_path_mut);
+    return this->init_path_validated;
+}
