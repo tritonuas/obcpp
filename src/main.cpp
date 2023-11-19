@@ -1,22 +1,10 @@
-#include <iostream>
-
-#include "Eigen"
-#include "core/states.hpp"
-#include <torch/torch.h>
-
-#include <iostream>
-#include <httplib.h>
-
-#include "core/states.hpp"
-#include "pathing/plotting.hpp"
+#include "core/obc.hpp"
+#include "utilities/constants.hpp"
 
 int main()
 {
-    httplib::Server svr;
-    svr.Get("/hi", [](const httplib::Request &, httplib::Response &res) {
-        res.set_content("Hello World!", "text/plain");
-    });
-    svr.listen("0.0.0.0", 8080);
-  
-  return 0;
+    // In future, load configs, perhaps command line parameters, and pass
+    // into the obc object
+    OBC obc(DEFAULT_GCS_PORT);
+    obc.run();
 }

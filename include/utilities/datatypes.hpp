@@ -4,6 +4,8 @@
 #include <vector>
 #include <matplot/matplot.h>
 
+#include "utilities/constants.hpp"
+
 struct GPSCoord {
     GPSCoord(double lat, double lon, double alt)
         :lat(lat), lon(lon), alt(alt) {}
@@ -73,5 +75,7 @@ struct CompetitionBottle {
     ODLCColor alphaColor;
     char alphanumeric;
 };
+
+typedef std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES> BottleArray;
 
 #endif // UTILITIES_DATATYPES_HPP_

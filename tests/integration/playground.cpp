@@ -7,29 +7,29 @@
 #include <opencv2/opencv.hpp>
 #include <matplot/matplot.h>
 
-using json = nlohmann::json;
+// using json = nlohmann::json;
 
 int main (int argc, char *argv[]) {
     // test arena
     // Arena::ISystem* pSystem = Arena::OpenSystem();
 
     // test torch
-    std::cout << "Testing torch installation" << std::endl;
-    torch::Tensor tensor = torch::eye(3);
-    std::cout << tensor << "\n" << std::endl;
+    // std::cout << "Testing torch installation" << std::endl;
+    // torch::Tensor tensor = torch::eye(3);
+    // std::cout << tensor << "\n" << std::endl;
 
-    // test json
-    std::cout << "Testing json installation" << std::endl;
-    json data = {
-        {"json", true},
-        {"works", true},
-    };
-    std::cout << data << "\n" << std::endl;
+    // // test json
+    // std::cout << "Testing json installation" << std::endl;
+    // json data = {
+    //     {"json", true},
+    //     {"works", true},
+    // };
+    // std::cout << data << "\n" << std::endl;
 
-    // test eigen
-    std::cout << "Testing eigen installation" << std::endl;
-    Eigen::Vector3d vec = Eigen::Vector3d(1, 2, 3);
-    std::cout << vec << "\n" << std::endl;
+    // // test eigen
+    // std::cout << "Testing eigen installation" << std::endl;
+    // Eigen::Vector3d vec = Eigen::Vector3d(1, 2, 3);
+    // std::cout << vec << "\n" << std::endl;
 
     // test opencv
     std::cout << "Testing opencv installation" << std::endl;
@@ -40,5 +40,5 @@ int main (int argc, char *argv[]) {
     matplot::color c = matplot::color::black;
     std::cout << "Black: " << static_cast<int>(c) << std::endl;
     
-    return 0;
+    // return 0;
 }
