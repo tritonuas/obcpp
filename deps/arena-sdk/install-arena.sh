@@ -32,7 +32,7 @@ else
         ARENA_SDK_DIR="ArenaSDK_Linux_x64"
         ARENA_CONF="Arena_SDK_Linux_x64.conf"
     else
-        echo "ERROR: Unable to install Arena-SDK. Unknown architecture $ARCH. Architecture must be aarch64 or x86_64."
+        echo "ERROR: Unable to install Arena-SDK. Unkown architecture $ARCH. Architecture must be aarch64 or x86_64."
         exit 1
     fi;
 
