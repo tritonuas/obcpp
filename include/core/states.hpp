@@ -10,6 +10,7 @@
 #include "core/config.hpp"
 #include "utilities/datatypes.hpp"
 #include "utilities/constants.hpp"
+#include "obc.pb.h"
 
 class Tick;
 

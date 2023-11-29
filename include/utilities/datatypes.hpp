@@ -6,15 +6,6 @@
 
 #include "utilities/constants.hpp"
 
-struct GPSCoord {
-    GPSCoord(double lat, double lon, double alt)
-        :lat(lat), lon(lon), alt(alt) {}
-
-    double lat;
-    double lon;
-    double alt;
-};
-
 struct XYZCoord {
     XYZCoord(double x, double y, double z, double psi = 0)
         :x(x), y(y), z(z), psi(psi), color(matplot::color::black) {}
@@ -46,37 +37,5 @@ class Polyline: public std::vector<XYZCoord> {
     private:
         matplot::color color;
 };
-
-// TODO: these will eventually be redefined in a protobuf, so once the generated protobuf code exists we remove these
-enum class ODLCShape {
-    Circle, 
-    Semicircle, 
-    QuarterCircle,
-    Triangle,
-    Rectangle, 
-    Pentagon, 
-    Star, 
-    Cross
-};
-
-enum class ODLCColor {
-    White,
-    Black, 
-    Red, 
-    Blue, 
-    Green, 
-    Purple, 
-    Brown, 
-    Orange
-};
-
-struct CompetitionBottle {
-    ODLCColor shapeColor;
-    ODLCShape shape;
-    ODLCColor alphaColor;
-    char alphanumeric;
-};
-
-typedef std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES> BottleArray;
 
 #endif // UTILITIES_DATATYPES_HPP_

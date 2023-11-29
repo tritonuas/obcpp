@@ -119,22 +119,22 @@ Now that everything is installed, here is the process to build and run the appli
     cd build
     ```
 
-8. Build CMake files with the following command:
+9. Build CMake files with the following command:
     ```sh
     cmake ..
     ```
 
-9. Build executable with the following command. (You will need to do this anytime you edit code.)
+10. Build executable with the following command. (You will need to do this anytime you edit code.)
     ```sh
     make
     ```
 
-10. Run the generated executable to verify it was created correctly.
+11. Run the generated executable to verify it was created correctly.
     ```sh
     bin/obcpp
     ```
 
-11. Verify that the testing framework is set up correctly
+12. Verify that the testing framework is set up correctly
     ```sh
     make test
     ```

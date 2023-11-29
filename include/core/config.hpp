@@ -9,6 +9,7 @@
 #include "utilities/datatypes.hpp"
 #include "utilities/constants.hpp"
 
+#include "obc.pb.h"
 
 /*
  *  Thread-safe wrapper around the Mission Configuration options.
@@ -25,30 +26,30 @@ class MissionConfig {
         Polygon getFlightBoundary();        
         Polygon getAirdropBoundary();
         Polyline getWaypoints();
-        BottleArray getAirdropBottles(); 
+        const std::vector<Bottle>& getAirdropBottles(); 
 
         // Getters for multiple values
         // Use when need to get multiple values
         // Important to use this instead of the singular getters
         // to avoid race conditions
-        std::tuple<Polygon, Polygon, Polyline, BottleArray> getConfig();
+        std::tuple<Polygon, Polygon, Polyline, std::vector<Bottle>> getConfig();
 
         // Setters for singular value
         // Use when only need to update one value
         void setFlightBoundary(Polygon bound);
         void setAirdropBoundary(Polygon bound);
         void setWaypoints(Polyline wpts);
-        // label must be a letter from 'A' to 'F', lowercase is also accepted
-        void setBottle(char label, CompetitionBottle bottle);
+        // whatever index the bottle has, will replace that corresponding bottle in this config class
+        void setBottle(Bottle bottle);
         // Update multiple bottles at a time
-        void setBottles(const std::unordered_map<char, CompetitionBottle>& bottleUpdates);
+        void setBottles(const std::vector<Bottle>& bottleUpdates);
 
         // Use when need to update many things at once
         void batchUpdate(
             std::optional<Polygon> flight,
             std::optional<Polygon> airdrop,
             std::optional<Polyline> waypoints,
-            std::unordered_map<char, CompetitionBottle> bottleUpdates
+            std::vector<Bottle> bottleUpdates
         );
 
         void saveToFile(std::string filename);
@@ -58,11 +59,10 @@ class MissionConfig {
         Polygon flightBoundary;
         Polygon airdropBoundary;
         Polyline waypoints;
-        BottleArray bottles;
+        std::vector<Bottle> bottles;
 
         // internal function which doesn't apply the mutex
-        // abstracts the logic checking the char label
-        void _setBottle(char label, CompetitionBottle bottle);
+        void _setBottle(Bottle bottle);
 };
 
 #endif

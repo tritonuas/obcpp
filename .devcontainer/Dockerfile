@@ -18,7 +18,8 @@ RUN apt-get update \
                            ccache \
                            vim \
                            curl \
-                           libopencv-dev
+                           libopencv-dev \
+                           protobuf-compiler
 
 # Download latest CMake from their repositories
 RUN apt-get update \

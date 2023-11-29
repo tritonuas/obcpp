@@ -37,17 +37,32 @@ include(${DEPS_DIRECTORY}/opencv/opencv.cmake)
 include(${DEPS_DIRECTORY}/httplib/httplib.cmake)
 include(${DEPS_DIRECTORY}/mavsdk/mavsdk.cmake)
 include(${DEPS_DIRECTORY}/matplot/matplot.cmake)
+include(${DEPS_DIRECTORY}/protobuf/protobuf.cmake)
+# =============================
+
+# =============================
+# Set up protos
+
+execute_process(
+    COMMAND sh ${PROJECT_SOURCE_DIR}/scripts/install-protos.sh
+    RESULT_VARIABLE ret
+)
+if(NOT (ret EQUAL "0"))
+    message(FATAL_ERROR "Unable to install protos. Script exited with code ${ret}.")
+endif()
+
 # =============================
 
 # =============================
 # obcpp executable
-file(GLOB_RECURSE SOURCES "src/*.cpp")
+file(GLOB_RECURSE SOURCES "src/*.cpp" "build/gen_protos/*.pb.cc")
 list(REMOVE_ITEM SOURCES "${CMAKE_SOURCE_DIR}/src/main.cpp")
-file(GLOB_RECURSE HEADERS "include/*.hpp")
+file(GLOB_RECURSE HEADERS "include/*.hpp" "build/gen_protos/*.pb.h")
 
 set(INCLUDE_DIRECTORY ${PROJECT_SOURCE_DIR}/include)
+set(GEN_PROTOS_DIRECTORY ${PROJECT_SOURCE_DIR}/build/gen_protos)
 add_executable(${PROJECT_NAME} ${SOURCES} "src/main.cpp")
-include_directories(${INCLUDE_DIRECTORY})
+include_directories(${INCLUDE_DIRECTORY} ${GEN_PROTOS_DIRECTORY})
 target_add_torch(${PROJECT_NAME})
 # target_add_arena(${PROJECT_NAME})
 target_add_json(${PROJECT_NAME})
@@ -56,6 +71,7 @@ target_add_opencv(${PROJECT_NAME})
 target_add_httplib(${PROJECT_NAME})
 target_add_mavsdk(${PROJECT_NAME})
 target_add_matplot(${PROJECT_NAME})
+target_add_protobuf(${PROJECT_NAME})
 # =============================
 
 # =============================
@@ -63,7 +79,7 @@ target_add_matplot(${PROJECT_NAME})
 
 # playground
 add_executable(playground ${SOURCES} "tests/integration/playground.cpp")
-target_include_directories(playground PRIVATE ${INCLUDE_DIRECTORY})
+target_include_directories(playground PRIVATE ${INCLUDE_DIRECTORY} ${GEN_PROTOS_DIRECTORY})
 target_add_torch(playground)
 # target_add_arena(playground)
 target_add_json(playground)
@@ -72,10 +88,11 @@ target_add_opencv(playground)
 target_add_httplib(playground)
 target_add_mavsdk(playground)
 target_add_matplot(playground)
+target_add_protobuf(playground)
 
 # mavsdk
 add_executable(mavsdk ${SOURCES} "tests/integration/mavsdk.cpp")
-target_include_directories(mavsdk PRIVATE ${INCLUDE_DIRECTORY})
+target_include_directories(mavsdk PRIVATE ${INCLUDE_DIRECTORY} ${GEN_PROTOS_DIRECTORY})
 target_add_torch(mavsdk)
 # target_add_arena(mavsdk)
 target_add_json(mavsdk)
@@ -84,6 +101,7 @@ target_add_opencv(mavsdk)
 target_add_httplib(mavsdk)
 target_add_mavsdk(mavsdk)
 target_add_matplot(mavsdk)
+target_add_protobuf(mavsdk)
 # =============================
 
 # =============================
