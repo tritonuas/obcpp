@@ -18,6 +18,7 @@ RUN apt-get update \
                            ccache \
                            vim \
                            curl \
+                           unzip \
                            libopencv-dev
 
 # Download latest CMake from their repositories
@@ -49,5 +50,20 @@ RUN curl -Lo /usr/bin/clang-tidy-cache \
         "https://raw.githubusercontent.com/matus-chochlik/ctcache/$CLANG_TIDY_SHA1/clang-tidy-cache" \
     && chmod +x /usr/bin/clang-tidy-cache
 
-# Use the non-root user
+# pull pre-built torch
+WORKDIR /stuff
+RUN wget https://download.pytorch.org/libtorch/nightly/cpu/libtorch-shared-with-deps-latest.zip
+RUN unzip libtorch-shared-with-deps-latest.zip
+ENV CMAKE_PREFIX_PATH="/stuff/libtorch"
+
+# pull and build torchvision
+WORKDIR /stuff
+RUN wget "https://github.com/pytorch/vision/archive/refs/tags/v0.16.0.zip"
+RUN unzip v0.16.0.zip
+WORKDIR /stuff/vision-0.16.0/build
+RUN cmake -DWITH_CUDA=off -DCMAKE_PREFIX_PATH="/stuff/libtorch" ..
+RUN make
+RUN make install
+
+# login as non-root user
 USER $USERNAME
