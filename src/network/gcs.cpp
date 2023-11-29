@@ -38,8 +38,7 @@ void GCSServer::_bindHandlers() {
 
     server.Get("/mission", HANDLE(_getMission));
     server.Post("/mission", HANDLE(_postMission));
-    server.Post("/waypoints/airdrop", HANDLE(_postWaypointsAirdrop));
-    server.Post("/waypoints/initial", HANDLE(_postWaypointsInitial));
+    server.Post("/airdrop", HANDLE(_postAirdropTargets));
     server.Get("/path/initial", HANDLE(_getPathInitial));
     server.Get("/path/initial/new", HANDLE(_getPathInitialNew));
     server.Get("/camera/status", HANDLE(_getCameraStatus));
@@ -62,15 +61,11 @@ void GCSServer::_postMission(const httplib::Request& request, httplib::Response&
     response.status = HTTPStatus::NOT_IMPLEMENTED;
 }
 
-void GCSServer::_postWaypointsAirdrop(const httplib::Request& request, httplib::Response& response) {
-    response.set_content("TODO: upload airdrop waypoints!", "text/plain");
+void GCSServer::_postAirdropTargets(const httplib::Request& request, httplib::Response& response) {
+    response.set_content("TODO: upload airdrop targets!", "text/plain");
     response.status = HTTPStatus::NOT_IMPLEMENTED;
 }
 
-void GCSServer::_postWaypointsInitial(const httplib::Request& request, httplib::Response& response) {
-    response.set_content("TODO: upload initial (competition) waypoints!", "text/plain");
-    response.status = HTTPStatus::NOT_IMPLEMENTED;
-}
 void GCSServer::_getPathInitial(const httplib::Request& request, httplib::Response& response) {
     response.set_content("TODO: get cached path and return back!", "text/plain");
     response.status = HTTPStatus::NOT_IMPLEMENTED;

@@ -66,9 +66,7 @@ class GCSServer {
         void _postMission(const httplib::Request&, httplib::Response&);
 
         /*
-         * POST /waypoints/airdrop
-         *           or
-         * POST /waypoints/initial
+         * POST /airdrop
          * 
          * {
          *      TODO: fill in the expected JSON format
@@ -80,8 +78,7 @@ class GCSServer {
          * 200 OK: waypoints were in correct format and uploaded to server
          * 400 BAD REQUEST: waypoints were not in correct format; ignored
          */
-        void _postWaypointsAirdrop(const httplib::Request&, httplib::Response&);
-        void _postWaypointsInitial(const httplib::Request&, httplib::Response&);
+        void _postAirdropTargets(const httplib::Request&, httplib::Response&);
 
         /*
          * GET /path/initial
