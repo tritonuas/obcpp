@@ -37,6 +37,7 @@ set(FETCHCONTENT_QUIET FALSE)
 set(DEPS_DIRECTORY ${PROJECT_SOURCE_DIR}/deps)
 
 include(${DEPS_DIRECTORY}/torch/torch.cmake)
+include(${DEPS_DIRECTORY}/torchvision/torchvision.cmake)
 include(${DEPS_DIRECTORY}/arena-sdk/arena.cmake)
 include(${DEPS_DIRECTORY}/json/json.cmake)
 include(${DEPS_DIRECTORY}/eigen/eigen.cmake)
@@ -85,6 +86,12 @@ target_add_matplot(playground)
 add_executable(mavsdk "tests/integration/mavsdk.cpp")
 target_include_directories(mavsdk PRIVATE ${INCLUDE_DIRECTORY})
 target_add_mavsdk(mavsdk)
+target_add_matplot(mavsdk)
+
+# load_torchvision_model
+add_executable(load_torchvision_model tests/integration/load_torchvision_model.cpp)
+target_add_torch(load_torchvision_model)
+target_add_torchvision(load_torchvision_model)
 # =============================
 
 # =============================
