@@ -3,11 +3,13 @@
 #include <functional>
 
 #include <httplib.h>
+#include <google/protobuf/util/json_util.h>
 
 #include "network/gcs.hpp"
 #include "core/config.hpp"
 #include "core/states.hpp"
 #include "utilities/locks.hpp"
+#include "obc.pb.h"
 
 GCSServer::GCSServer(uint16_t port, std::shared_ptr<MissionState> state)
     :port{port}, state{state}
@@ -57,6 +59,11 @@ void GCSServer::_getMission(const httplib::Request& request, httplib::Response& 
 }
 
 void GCSServer::_postMission(const httplib::Request& request, httplib::Response& response) {
+    Mission mission;
+    google::protobuf::util::JsonStringToMessage(request.body, &mission);
+
+    // TODO: need the cartesian converstion code so that we can convert to XYZ coords from mission
+    // and store in this->state.getConfig()
     response.set_content("TODO: upload mission config!", "text/plain");
     response.status = HTTPStatus::NOT_IMPLEMENTED;
 }
