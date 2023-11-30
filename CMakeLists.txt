@@ -81,7 +81,7 @@ target_add_mavsdk(playground)
 target_add_matplot(playground)
 
 # mavsdk
-add_executable(mavsdk ${SOURCES} "tests/integration/mavsdk.cpp")
+add_executable(mavsdk "tests/integration/mavsdk.cpp")
 target_include_directories(mavsdk PRIVATE ${INCLUDE_DIRECTORY})
 target_add_mavsdk(mavsdk)
 # =============================
