@@ -128,7 +128,7 @@ class RRTEdge {
         RRTNode* from;
         RRTNode* to;
         double cost;
-        std::vector<RRTPoint> path{};
+        std::vector<Eigen::Vector2d> path{};
 };
 
 class RRTTree {
