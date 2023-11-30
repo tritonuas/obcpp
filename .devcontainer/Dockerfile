@@ -52,8 +52,8 @@ RUN curl -Lo /usr/bin/clang-tidy-cache \
 
 # pull pre-built torch
 WORKDIR /stuff
-RUN wget https://download.pytorch.org/libtorch/nightly/cpu/libtorch-shared-with-deps-latest.zip
-RUN unzip libtorch-shared-with-deps-latest.zip
+RUN wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.1.1%2Bcpu.zip
+RUN unzip libtorch-cxx11-abi-shared-with-deps-2.1.1+cpu.zip
 ENV CMAKE_PREFIX_PATH="/stuff/libtorch"
 
 # pull and build torchvision
@@ -61,8 +61,8 @@ WORKDIR /stuff
 RUN wget "https://github.com/pytorch/vision/archive/refs/tags/v0.16.0.zip"
 RUN unzip v0.16.0.zip
 WORKDIR /stuff/vision-0.16.0/build
-RUN cmake -DWITH_CUDA=off -DCMAKE_PREFIX_PATH="/stuff/libtorch" ..
-RUN make
+RUN cmake -DWITH_CUDA=off -D_GLIBCXX_USE_CXX11_ABI=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/stuff/libtorch" ..
+RUN make -j2
 RUN make install
 
 # login as non-root user
