@@ -1,44 +1,54 @@
 #include "cv/hdr.hpp"
 
-int compute_hdr() {
+std::vector<cv::Mat> generate_test_images() {
+  std::vector<cv::Mat> img_list;
+  std::vector<cv::Scalar> colors = {
+      cv::Scalar(255, 0, 0),   // Blue
+      cv::Scalar(0, 255, 0),   // Green
+      cv::Scalar(0, 0, 255),   // Red
+      cv::Scalar(255, 255, 0), // Cyan
+      cv::Scalar(255, 0, 255), // Magenta
+      cv::Scalar(0, 255, 255)  // Yellow
+  };
+
+  img_list.reserve(colors.size());
+
+  // Generate images of different colors
+  for (const auto &color : colors) {
+    // Create a 200x200 image filled with the specified color
+    cv::Mat colorImg(200, 200, CV_8UC3, color);
+    img_list.push_back(colorImg);
+  }
+
+  return img_list;
+}
+
+std::vector<cv::Mat> load_images() {
   std::vector<cv::Mat> img_list;
 
   // Use generated colors or real images
-  if (false) {
-    // Uses hard coded local images
-    std::vector<std::string> img_fn = {
-        "../imgs/img1.jpeg", "../imgs/img2.jpeg", "../imgs/img3.jpeg",
-        "../imgs/img4.jpeg", "../imgs/img5.jpeg", "../imgs/img6.jpeg"};
-    img_list.reserve(img_fn.size());
-    for (const std::string &fn : img_fn) {
-      img_list.push_back(cv::imread(fn));
-    }
-  } else {
-    std::vector<cv::Scalar> colors = {
-        cv::Scalar(255, 0, 0),   // Blue
-        cv::Scalar(0, 255, 0),   // Green
-        cv::Scalar(0, 0, 255),   // Red
-        cv::Scalar(255, 255, 0), // Cyan
-        cv::Scalar(255, 0, 255), // Magenta
-        cv::Scalar(0, 255, 255)  // Yellow
-    };
-
-    img_list.reserve(colors.size());
-
-    // Generate images of different colors
-    for (const auto &color : colors) {
-      // Create a 200x200 image filled with the specified color
-      cv::Mat colorImg(200, 200, CV_8UC3, color);
-      img_list.push_back(colorImg);
-    }
+  // Uses hard coded local images
+  std::vector<std::string> img_fn = {
+      "../imgs/img1.jpeg", "../imgs/img2.jpeg", "../imgs/img3.jpeg",
+      "../imgs/img4.jpeg", "../imgs/img5.jpeg", "../imgs/img6.jpeg"};
+  img_list.reserve(img_fn.size());
+  for (const std::string &fn : img_fn) {
+    img_list.push_back(cv::imread(fn));
   }
+  
+  return img_list;
+ }
 
+cv::Mat get_image_exposure_times() {
   // you need to specify the exposures so HDR knows how to weight the images (in
   // seconds)
   cv::Mat exposure_times = (cv::Mat_<float>(1, 6) << 1 / 174, 1 / 120, 1 / 120,
                             1 / 1374, 1 / 6211, 1 / 12048);
+  return exposure_times;
+}
 
-  std::vector<cv::Mat> img_aligned = img_list;
+int compute_hdr(std::vector<cv::Mat> img_list, const cv::Mat& exposure_times) {
+  std::vector<cv::Mat>& img_aligned = img_list;
 
   // TODO: The images must be aligned before the HDR superimposing
   /*
