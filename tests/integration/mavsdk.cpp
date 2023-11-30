@@ -3,17 +3,17 @@
 #include <iostream>
 #include <mavsdk/mavsdk.h>
 
-
 /*
 * Test mavsdk connection to an endpoint 
 */ 
 int main(int argc, char *argv[]) {
     // Print help blurb if no connection arg given
     if (argc == 1) {
-        cout << "Usage:" 
+        std::cout << "Usage:\n" 
                 "bin/mavsdk tcp://127.0.0.1:5760\n"
-                "bin/mavsdk [connection_link]"
-                "connection_link -> [protocol]://[ip]:[port]";
+                "bin/mavsdk [connection_link]\n"
+                "connection_link -> [protocol]://[ip]:[port]\n";
+        return 0;
     }
 
     mavsdk::Mavsdk mavsdk;
