@@ -90,6 +90,12 @@ target_add_matplot(mavsdk)
 add_executable(load_torchvision_model tests/integration/load_torchvision_model.cpp)
 target_add_torch(load_torchvision_model)
 target_add_torchvision(load_torchvision_model)
+# saliency
+add_executable(saliency "tests/integration/saliency.cpp")
+target_include_directories(saliency PRIVATE ${INCLUDE_DIRECTORY})
+target_add_torch(saliency)
+target_add_opencv(saliency) 
+
 # =============================
 
 # =============================
