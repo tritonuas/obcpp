@@ -26,7 +26,6 @@ std::vector<cv::Mat> generate_test_images() {
 std::vector<cv::Mat> load_images() {
   std::vector<cv::Mat> img_list;
 
-  // Use generated colors or real images
   // Uses hard coded local images
   std::vector<std::string> img_fn = {
       "../imgs/img1.jpeg", "../imgs/img2.jpeg", "../imgs/img3.jpeg",
