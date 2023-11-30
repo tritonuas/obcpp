@@ -12,11 +12,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install CMake
-        run: sudo apt install cmake
-
-      - name: Install OpenCV
-        run: sudo apt install libopencv-dev
+      - name: Install Dependencies
+        run: sudo apt update && sudo apt install cmake libopencv-dev
 
       - name: Checkout Repo
         uses: actions/checkout@v2
