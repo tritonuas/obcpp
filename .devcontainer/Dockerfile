@@ -50,20 +50,27 @@ RUN curl -Lo /usr/bin/clang-tidy-cache \
         "https://raw.githubusercontent.com/matus-chochlik/ctcache/$CLANG_TIDY_SHA1/clang-tidy-cache" \
     && chmod +x /usr/bin/clang-tidy-cache
 
-# pull pre-built torch
-WORKDIR /stuff
-RUN wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.1.1%2Bcpu.zip
-RUN unzip libtorch-cxx11-abi-shared-with-deps-2.1.1+cpu.zip
-ENV CMAKE_PREFIX_PATH="/stuff/libtorch"
+# pull pre-built libtorch
+ARG LIBTORCH_VERSION=2.1.0
+ARG LIBTORCH_INSTALL_DIR=/libtorch-tmp
+WORKDIR ${LIBTORCH_INSTALL_DIR}
+RUN wget "https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-${LIBTORCH_VERSION}%2Bcpu.zip" \
+    && unzip "libtorch-cxx11-abi-shared-with-deps-${LIBTORCH_VERSION}+cpu.zip"
+# needed to build torchvision below and to build targets that use libtorch inside the container
+ENV CMAKE_PREFIX_PATH="${LIBTORCH_INSTALL_DIR}/libtorch"
 
 # pull and build torchvision
-WORKDIR /stuff
-RUN wget "https://github.com/pytorch/vision/archive/refs/tags/v0.16.0.zip"
-RUN unzip v0.16.0.zip
-WORKDIR /stuff/vision-0.16.0/build
-RUN cmake -DWITH_CUDA=off -D_GLIBCXX_USE_CXX11_ABI=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/stuff/libtorch" ..
-RUN make -j2
-RUN make install
+# refer to this page for version compatibilty with pytorch (libtorch) https://github.com/pytorch/pytorch/wiki/PyTorch-Versions
+ARG TORCHVISION_VERSION=0.16.0
+ARG TORCHVISION_INSTALL_DIR=/torchvision-tmp
+WORKDIR ${TORCHVISION_INSTALL_DIR} 
+RUN wget "https://github.com/pytorch/vision/archive/refs/tags/v${TORCHVISION_VERSION}.zip" \
+    && unzip "v${TORCHVISION_VERSION}.zip" \
+    && mkdir -p "${TORCHVISION_INSTALL_DIR}/vision-${TORCHVISION_VERSION}/build" \
+    && cd "${TORCHVISION_INSTALL_DIR}/vision-${TORCHVISION_VERSION}/build" \
+    && cmake -DWITH_CUDA=off -D_GLIBCXX_USE_CXX11_ABI=1 -DCMAKE_BUILD_TYPE=Release .. \
+    && make -j2 \
+    && make install
 
 # login as non-root user
 USER $USERNAME
