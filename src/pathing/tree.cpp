@@ -31,6 +31,12 @@ bool RRTPoint::operator== (const RRTPoint &otherPoint) const {
             && this->psi == otherPoint.psi);
 }
 
+double RRTPoint::distanceTo(const RRTPoint &otherPoint) const {
+    return std::sqrt(std::pow(this->xyz.x - otherPoint.xyz.x, 2)
+                    + std::pow(this->xyz.y - otherPoint.xyz.y, 2)
+                    + std::pow(this->xyz.z - otherPoint.xyz.z, 2));
+}
+
 RRTNode::RRTNode(RRTPoint point, double cost)
     : point{point}, cost{cost} {}
 

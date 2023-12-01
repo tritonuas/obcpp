@@ -29,7 +29,6 @@
  *      if right turn ==> -beta)
  */
 
-
 template <typename T>
 int sign(T number)
 {
@@ -74,18 +73,18 @@ Eigen::Vector2d Dubins::findCenter(const RRTPoint &point, char side) const
 
     // creates a right angle between the RRTPoint vector towards the center
     // left is 90 deg CCW, right is 90 deg CW
-    double angle = point.psi+ (side == 'L' ? HALF_PI : -HALF_PI);
+    double angle = point.psi + (side == 'L' ? HALF_PI : -HALF_PI);
 
     // creates the vector offset from the existing position
-    return Eigen::Vector2d{point.xyz.x+ (std::cos(angle) * _radius),
-                           point.xyz.y+ (std::sin(angle) * _radius)};
+    return Eigen::Vector2d{point.xyz.x + (std::cos(angle) * _radius),
+                           point.xyz.y + (std::sin(angle) * _radius)};
 }
 
 Eigen::Vector2d Dubins::circleArc(const RRTPoint &starting_point, double beta, const Eigen::Vector2d &center, double path_length) const
 {
     // Code is not nessisarily intuitive (I don't want to call sign twice)
-    // starting_angle_(+- half_pi depending on the sign) + the_angular_distance_tranveled_(depending on the sign) 
-    double angle = starting_point.psi+ ((path_length / _radius) - HALF_PI) * sign(beta);
+    // starting_angle_(+- half_pi depending on the sign) + the_angular_distance_tranveled_(depending on the sign)
+    double angle = starting_point.psi + ((path_length / _radius) - HALF_PI) * sign(beta);
     Eigen::Vector2d direction_vector{std::cos(angle), std::sin(angle)};
     return center + (direction_vector * _radius);
 }
@@ -107,7 +106,7 @@ std::vector<Eigen::Vector2d> Dubins::generatePointsStraight(const RRTPoint &star
         // Angle the path is going to turn along turn_1
         // (start direction) + (FROM CENTER OF CIRCLE, the angle traveled along curve
         //  * -1 if the plane is turning right)
-        double angle = start.psi+ (std::abs(path.beta_0) - HALF_PI) * sign(path.beta_0);
+        double angle = start.psi + (std::abs(path.beta_0) - HALF_PI) * sign(path.beta_0);
         initial_terminal_point = center_0 + _radius * Eigen::Vector2d{std::cos(angle), std::sin(angle)};
     }
     else
@@ -118,7 +117,7 @@ std::vector<Eigen::Vector2d> Dubins::generatePointsStraight(const RRTPoint &star
     if (std::abs(path.beta_2) > 0)
     {
         // negative sign before beta_2 is because the path comes in through the back of the end vector
-        double angle = end.psi+ (-std::abs(path.beta_2) - HALF_PI) * sign(path.beta_2);
+        double angle = end.psi + (-std::abs(path.beta_2) - HALF_PI) * sign(path.beta_2);
         final_terminal_point = center_2 + _radius * Eigen::Vector2d{std::cos(angle), std::sin(angle)};
     }
     else
@@ -139,7 +138,7 @@ std::vector<Eigen::Vector2d> Dubins::generatePointsStraight(const RRTPoint &star
         else if (current_distance > total_distance - std::abs(path.beta_2) * _radius)
         { // Last turn
             // need to calculate new "start" point, which is the difference in end angle to turn angle
-            RRTPoint final_point_RRT{XYZCoord{final_terminal_point.x(), final_terminal_point.y(), 0}, end.psi- path.beta_2};
+            RRTPoint final_point_RRT{XYZCoord{final_terminal_point.x(), final_terminal_point.y(), 0}, end.psi - path.beta_2};
             // last section is how much distance is covered in second turn
             points_list.emplace_back(circleArc(final_point_RRT, path.beta_2, center_2, current_distance - (total_distance - std::abs(path.beta_2) * _radius)));
 
@@ -231,7 +230,7 @@ RRTOption Dubins::lsl(const RRTPoint &start, const RRTPoint &end, const Eigen::V
 
     // difference in angle on the interval [0, 2pi] (CCW)
     double beta_0 = mod(alpha - start.psi, TWO_PI);
-    double beta_2 = mod(end.psi- alpha, TWO_PI);
+    double beta_2 = mod(end.psi - alpha, TWO_PI);
 
     double total_distance = _radius * (beta_0 + beta_2) + straight_distance;
 
@@ -250,7 +249,7 @@ RRTOption Dubins::rsr(const RRTPoint &start, const RRTPoint &end, const Eigen::V
     // 2] takes the negative value of ^
     // 3] ^ % 2pi == the rotation CW in terms of positive radians
     double beta_0 = mod(-(alpha - start.psi), TWO_PI);
-    double beta_2 = mod(-(end.psi- alpha), TWO_PI);
+    double beta_2 = mod(-(end.psi - alpha), TWO_PI);
 
     double total_distance = _radius * (beta_2 + beta_0) + straight_distance;
 
@@ -272,9 +271,9 @@ RRTOption Dubins::lsr(const RRTPoint &start, const RRTPoint &end, const Eigen::V
     double alpha = std::acos(_radius / half_intercenter_distance);
     // (INTERCENTER _reference_) - (ANGLE TO TERMINAL) - (STARTING VECTOR NORMAL TO CIRCLE)
     // i.e. (angle to terminal relative to horizontal) - (start angle)
-    double beta_0 = mod(psi_0 - alpha - (start.psi- HALF_PI), TWO_PI);
+    double beta_0 = mod(psi_0 - alpha - (start.psi - HALF_PI), TWO_PI);
     // Same as ^, but shifted PI becuase psi_0 has been shifted PI (to face the opposite center)
-    double beta_2 = mod((M_PI + psi_0) - alpha - (end.psi+ HALF_PI), TWO_PI);
+    double beta_2 = mod((M_PI + psi_0) - alpha - (end.psi + HALF_PI), TWO_PI);
 
     // pythagorean theroem to calculate distance off of known right trangle using intercenter/radius
     double straight_distance = 2 * std::sqrt(std::pow(half_intercenter_distance, 2) - std::pow(_radius, 2));
@@ -298,9 +297,9 @@ RRTOption Dubins::rsl(const RRTPoint &start, const RRTPoint &end, const Eigen::V
     double alpha = std::acos(_radius / half_intercenter_distance);
     // (STARTING_ANGLE) - (ANGLE TO TERMINAL) [assuming everything is relative to horizontal]
     // i.e. (start ==> normal to circle) - (angle to connect center + angle between center an "leave circle" point)
-    double beta_0 = mod((start.psi+ HALF_PI) - (psi_0 + alpha), TWO_PI);
+    double beta_0 = mod((start.psi + HALF_PI) - (psi_0 + alpha), TWO_PI);
     // Same as ^, but shifted PI becuase psi_0 has been shifted PI (to face the opposite center)
-    double beta_2 = mod((end.psi- HALF_PI) - (alpha + psi_0 + M_PI), TWO_PI);
+    double beta_2 = mod((end.psi - HALF_PI) - (alpha + psi_0 + M_PI), TWO_PI);
 
     // pythagorean theroem to calculate distance off of known right trangle using intercenter/radius
     double straight_distance = 2 * std::sqrt(std::pow(half_intercenter_distance, 2) - std::pow(_radius, 2));
@@ -327,9 +326,9 @@ RRTOption Dubins::lrl(const RRTPoint &start, const RRTPoint &end, const Eigen::V
     // bottom two angles of isocoles (180 - gamma) = 2 * theta
     double theta = (M_PI - gamma) / 2;
     // (ANGLE REQUIRED TO GET FROM START TO psi_0) + (THETA)
-    double beta_0 = mod(psi_0 - (start.psi- HALF_PI) + theta, TWO_PI);
+    double beta_0 = mod(psi_0 - (start.psi - HALF_PI) + theta, TWO_PI);
     // (ANGLE FROM psi_0 --> END) + (THETA) [psi_0 now needs to point towards center_0]
-    double beta_2 = mod((end.psi- HALF_PI) - (psi_0 + M_PI) + theta, TWO_PI);
+    double beta_2 = mod((end.psi - HALF_PI) - (psi_0 + M_PI) + theta, TWO_PI);
 
     // beta_1 ==> (2PI - gamma) is positive angle that the plane flys through
     double beta_1 = TWO_PI - gamma;
@@ -356,9 +355,9 @@ RRTOption Dubins::rlr(const RRTPoint &start, const RRTPoint &end, const Eigen::V
 
     // same as lrl, except its a negative angle because its a right turn
     // (ANGLE REQUIRED TO GET FROM START TO psi_0) + (THETA)
-    double beta_0 = mod((start.psi+ HALF_PI) - psi_0 + theta, TWO_PI);
+    double beta_0 = mod((start.psi + HALF_PI) - psi_0 + theta, TWO_PI);
     // (ANGLE FROM psi_0 --> END) + (THETA) [psi_0 now needs to point towards center_0]
-    double beta_2 = mod((psi_0 + HALF_PI) - end.psi+ theta, TWO_PI);
+    double beta_2 = mod((psi_0 + HALF_PI) - end.psi + theta, TWO_PI);
 
     // beta_1 ==> (2PI - gamma) is positive angle that the plane flys through
     double beta_1 = TWO_PI - gamma;

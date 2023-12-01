@@ -14,7 +14,6 @@ const double HALF_PI = M_PI / 2;
 const double TURNING_RADIUS = 5;
 const double POINT_SEPARATION = 1;
 
-
 const int DEFAULT_GCS_PORT = 5010;
 
 const std::string MISSION_CONFIG_PATH = "./mission-config.json";

@@ -30,11 +30,11 @@ double random_01()
 class RRT
 {
 public:
-    RRT(RRTPoint start, RRTPoint goal, int num_iterations, double goal_bias, double search_radius)
-        : _root{start, 0}, _goal{goal}, _num_iterations{num_iterations}, _goal_bias{goal_bias},
-          _search_radius{search_radius}, _dubins{TURNING_RADIUS, POINT_SEPARATION}
+    RRT(RRTPoint start, RRTPoint goal, int num_iterations, double goal_bias, double search_radius, double tolerance)
+        : _root{&RRTNode{start, 0}}, _goal{goal}, _num_iterations{num_iterations}, _goal_bias{goal_bias},
+          _search_radius{search_radius}, _tolerance{tolerance}, _dubins{TURNING_RADIUS, POINT_SEPARATION}, _found_goal{false}, _goal_node{nullptr}
     {
-        _tree.addNode(nullptr, &_root, {}, 0);
+        _tree.addNode(nullptr, _root, {}, 0);
     }
 
     RRTPoint generateSamplePoint(const RRTPoint &from)
@@ -67,13 +67,12 @@ public:
         return true;
     }
 
-
     void run()
     {
-        _distance_to_goal = std::sqrt(std::pow(_goal.xyz.x - _root.getPoint().xyz.x, 2) + std::pow(_goal.xyz.y - _root.getPoint().xyz.y, 2));
+        _distance_to_goal = std::sqrt(std::pow(_goal.xyz.x - _root->getPoint().xyz.x, 2) + std::pow(_goal.xyz.y - _root->getPoint().xyz.y, 2));
         for (int _; _ < _num_iterations; _++)
         {
-            RRTPoint sample = generateSamplePoint(_root.getPoint());
+            RRTPoint sample = generateSamplePoint(_root->getPoint());
 
             std::vector<std::pair<RRTNode *, RRTOption>> options = pathingOptions(sample);
 
@@ -84,9 +83,13 @@ public:
                     break;
                 }
 
-                std::vector<Eigen::Vector2d> path = _dubins.generatePoints(_root.getPoint(), sample, option.dubins_path, option.has_straight);
+                std::vector<Eigen::Vector2d> path = _dubins.generatePoints(_root->getPoint(), sample, option.dubins_path, option.has_straight);
 
                 // TODO: check whats in bounds or not
+                if (!validPath(path))
+                {
+                    continue;
+                }
 
                 // discard point if it is not distinct from the sample
                 if (node->getPoint() == sample)
@@ -95,6 +98,7 @@ public:
                 }
 
                 RRTNode new_node{sample, node->getCost() + option.length};
+
                 // If node is uncompetitive, discard it
                 if (_tree.getNode(sample) != nullptr && new_node.getCost() >= _tree.getNode(sample)->getCost())
                 {
@@ -105,6 +109,18 @@ public:
                 _tree.addNode(node, &new_node, _dubins.generatePoints(node->getPoint(), sample, option.dubins_path, option.has_straight), new_node.getCost());
 
                 // TODO, call optimize_tree
+                optimizeTree();
+
+                // if the new node is within the tolerance of the goal, return ???
+                // TODO
+                if (inGoalRegion(sample))
+                {
+                    _found_goal = true;
+                    _goal_node = _tree.getNode(sample);
+                    return;
+                }
+
+                break;
             }
         }
     }
@@ -113,33 +129,52 @@ public:
     {
         std::vector<std::pair<RRTNode *, RRTOption>> options;
 
-        // for (RRTNode *node : // [TODO] need a way to go through every node)
-        // {
-        //     std::vector<RRTOption> local_options = _dubins.allOptions(node->getPoint(), end);
+        fillOptions(options, _root);
 
-        //     for (const RRTOption &option : local_options)
-        //     {
-        //         options.emplace_back(std::pair<RRTNode *, RRTOption>{node, option});
-        //     }
-        // }
-
-        // std::sort(options.begin(), options.end(), [](std::pair<RRTNode *, RRTOption> a, std::pair<RRTNode *, RRTOption> b)
-        //           { return compareRRTOptionLength(a.second, b.second); });
-
-        if (options.size() < quantity_options) {
+        if (options.size() < quantity_options)
+        {
             return options;
         }
 
         return {options.begin(), options.begin() + quantity_options};
     }
 
+    // traverses the tree, and puts in all RRTOptions from dubins into the options
+    void fillOptions(std::vector<std::pair<RRTNode *, RRTOption>> &options, RRTNode *node) 
+    {
+        if (node == nullptr)
+        {
+            return;
+        }
+
+        std::vector<RRTOption> local_options = _dubins.allOptions(node->getPoint(), _goal);
+
+        for (const RRTOption &option : local_options)
+        {
+            options.emplace_back(std::pair<RRTNode *, RRTOption>{node, option});
+        }
+
+        for (RRTNode *child : node->getReachable())
+        {
+            fillOptions(options, child);
+        }
+    }
+
+    void optimizeTree()
+    {
+        // TODO
+        return;
+    }
+
     // TODO, compare distance to goal with tolarance
-    bool inGoalRegion(const RRTPoint &sample) {
-        return false;
+    bool inGoalRegion(const RRTPoint &sample)
+    {
+        return _goal.distanceTo(sample) <= _tolerance;
     }
 
 private:
-    RRTNode _root;
+    RRTNode *_root;
+    RRTNode *_goal_node;
     RRTTree _tree;
     RRTPoint _goal;
 
@@ -149,5 +184,8 @@ private:
     double _goal_bias;
     double _search_radius;
     double _distance_to_goal;
+    double _tolerance;
+
+    bool _found_goal;
 };
 #endif // PATHING_STATIC_HPP_

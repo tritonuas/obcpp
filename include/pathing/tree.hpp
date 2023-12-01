@@ -16,6 +16,8 @@ struct RRTPoint {
     */
     bool operator== (const RRTPoint &otherPoint) const;
 
+    double distanceTo(const RRTPoint &otherPoint) const;
+
     XYZCoord xyz;
     double psi;
 
