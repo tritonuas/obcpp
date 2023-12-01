@@ -89,6 +89,7 @@ target_add_matplot(mavsdk)
 # =============================
 # Unit tests
 add_subdirectory(tests/unit)
+add_subdirectory(tests/unit)
 add_subdirectory(${DEPS_DIRECTORY}/google-test)
 # =============================
 
