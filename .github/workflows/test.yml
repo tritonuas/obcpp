@@ -10,7 +10,8 @@ jobs:
   test:
     name: C++ Tests 
     runs-on: ubuntu-latest
-
+    container:
+      image: ghcr.io/tritonuas/obcpp:main
     steps:
       - name: Install Dependencies
         run: sudo apt update && sudo apt install cmake libopencv-dev

@@ -10,13 +10,14 @@ jobs:
   test:
     name: clang-tidy 
     runs-on: ubuntu-latest
-
+    container:
+      image: ghcr.io/tritonuas/obcpp:main
     steps:
       - name: Install Dependencies
         run: sudo apt update && sudo apt install cmake libopencv-dev
 
       - name: Checkout Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: true
           token: ${{ secrets.SSH_TOKEN }}
