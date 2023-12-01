@@ -14,7 +14,9 @@ jobs:
       image: ghcr.io/tritonuas/obcpp:main
     steps:
       - name: Clone Repo
-        run: git clone git@github.com:tritonuas/obcpp.git ${HOME}
+        run: git clone git@github.com:tritonuas/obcpp.git /home/tuas
+        env:
+          REPO_KEY: ${{secrets.ACTION_PAT}}
 
       - name: Set up Cmake
         run: mkdir build && cd build && cmake ..
