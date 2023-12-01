@@ -13,9 +13,6 @@ jobs:
     container:
       image: ghcr.io/tritonuas/obcpp:main
     steps:
-      - name: Install Dependencies
-        run: sudo apt update && sudo apt install cmake libopencv-dev
-
       - name: Checkout Repo
         uses: actions/checkout@v4
         with:

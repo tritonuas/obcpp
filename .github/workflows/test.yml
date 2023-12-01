@@ -13,15 +13,6 @@ jobs:
     container:
       image: ghcr.io/tritonuas/obcpp:main
     steps:
-      - name: Install Dependencies
-        run: sudo apt update && sudo apt install cmake libopencv-dev
-
-      - name: Install MavSDK
-        run: |
-            sudo wget https://github.com/mavlink/MAVSDK/releases/download/v1.4.17/libmavsdk-dev_1.4.17_ubuntu20.04_amd64.deb
-            sudo dpkg -i libmavsdk-dev_1.4.17_ubuntu20.04_amd64.deb
-            sudo rm libmavsdk-dev_1.4.17_ubuntu20.04_amd64.deb
-
       - name: Checkout Repo
         uses: actions/checkout@v4
         with:
