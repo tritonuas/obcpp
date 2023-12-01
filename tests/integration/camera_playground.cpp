@@ -1,22 +1,14 @@
-/***************************************************************************************
- ***                                                                                 ***
- ***  Copyright (c) 2022, Lucid Vision Labs, Inc.                                    ***
- ***                                                                                 ***
- ***  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     ***
- ***  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       ***
- ***  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    ***
- ***  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         ***
- ***  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  ***
- ***  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  ***
- ***  SOFTWARE.                                                                      ***
- ***                                                                                 ***
- ***************************************************************************************/
+// Trigger software used for acquiring a single image from the Lucid Camera
+// Code sourced from Lucid, settings adjusted by Anthony & Miles
 
 #include "stdafx.h"
 #include "GenTL.h"
 #include "SaveApi.h"
 #include <chrono>
 
+#include <iostream>
+#include <fstream>
+#include <filesystem>
 
 #ifdef __linux__
 #pragma GCC diagnostic push
@@ -37,32 +29,20 @@
 
 #define PIXEL_FORMAT BGR8
 
-// Trigger: Introduction
-//    This example introduces basic trigger configuration and use. In order to
-//    configure trigger, enable trigger mode and set the source and selector. The
-//    trigger must be armed before it is prepared to execute. Once the trigger is
-//    armed, execute the trigger and retrieve an image.
-
-// =-=-=-=-=-=-=-=-=-
-// =-=- SETTINGS =-=-
-// =-=-=-=-=-=-=-=-=-
+// Basic trigger configuration and use. In order to configure trigger, enable
+// trigger mode and set the source and selector. The trigger must be armed
+// before it is prepared to execute. Once the trigger is armed, execute the
+// trigger and retrieve an image.
 
 // image timeout
 #define TIMEOUT 2000
 
-// =-=-=-=-=-=-=-=-=-
-// =-=- EXAMPLE -=-=-
-// =-=-=-=-=-=-=-=-=-
-
-void SaveImage(Arena::IImage* pImage, const char* filename)
+void SaveImage(Arena::IImage *pImage, const char *filename)
 {
 
 	// Convert image
-	//    Convert the image to a displayable pixel format. It is worth keeping in
-	//    mind the best pixel and file formats for your application. This example
-	//    converts the image so that it is displayable by the operating system.
-	std::cout << TAB1 << "Convert image to " << GetPixelFormatName(PIXEL_FORMAT) << "\n";
-
+	//    Convert the image to a displayable pixel format.
+	// 	  Converts the image so that it is displayable by the operating system.
 	auto pConverted = Arena::ImageFactory::Convert(
 		pImage,
 		PIXEL_FORMAT);
@@ -72,7 +52,6 @@ void SaveImage(Arena::IImage* pImage, const char* filename)
 	//    disk. Its size and stride (i.e. pitch) can be calculated from those 3
 	//    inputs. Notice that an image's size and stride use bytes as a unit
 	//    while the bits per pixel uses bits.
-	std::cout << TAB1 << "Prepare image parameters\n";
 
 	Save::ImageParams params(
 		pConverted->GetWidth(),
@@ -85,7 +64,6 @@ void SaveImage(Arena::IImage* pImage, const char* filename)
 	//    save. Providing these should result in a successfully saved file on the
 	//    disk. Because an image's parameters and file name pattern may repeat,
 	//    they can be passed into the image writer's constructor.
-	std::cout << TAB1 << "Prepare image writer\n";
 
 	Save::ImageWriter writer(
 		params,
@@ -96,8 +74,6 @@ void SaveImage(Arena::IImage* pImage, const char* filename)
 	//    operator (<<) triggers a save. Notice that the << operator accepts the
 	//    image data as a constant unsigned 8-bit integer pointer (const
 	//    uint8_t*) and the file name as a character string (const char*).
-	std::cout << TAB1 << "Save image\n";
-
 	writer << pConverted->GetData();
 
 	// destroy converted image
@@ -112,7 +88,7 @@ void SaveImage(Arena::IImage* pImage, const char* filename)
 // (5) gets image
 // (6) requeues buffer
 // (7) stops stream
-void ConfigureTriggerAndAcquireImage(Arena::IDevice* pDevice)
+void ConfigureTriggerAndAcquireImage(Arena::IDevice *pDevice)
 {
 	// get node values that will be changed in order to return their values at
 	// the end of the example
@@ -124,7 +100,6 @@ void ConfigureTriggerAndAcquireImage(Arena::IDevice* pDevice)
 	//    Set the trigger selector to FrameStart. When triggered, the device will
 	//    start acquiring a single frame. This can also be set to
 	//    AcquisitionStart or FrameBurstStart.
-	std::cout << TAB1 << "Set trigger selector to FrameStart\n";
 
 	Arena::SetNodeValue<GenICam::gcstring>(
 		pDevice->GetNodeMap(),
@@ -135,7 +110,6 @@ void ConfigureTriggerAndAcquireImage(Arena::IDevice* pDevice)
 	//    Enable trigger mode before setting the source and selector and before
 	//    starting the stream. Trigger mode cannot be turned on and off while the
 	//    device is streaming.
-	std::cout << TAB1 << "Enable trigger mode\n";
 
 	Arena::SetNodeValue<GenICam::gcstring>(
 		pDevice->GetNodeMap(),
@@ -146,20 +120,81 @@ void ConfigureTriggerAndAcquireImage(Arena::IDevice* pDevice)
 	//    Set the trigger source to software in order to trigger images without
 	//    the use of any additional hardware. Lines of the GPIO can also be used
 	//    to trigger.
-	std::cout << TAB1 << "Set trigger source to Software\n";
-
 	Arena::SetNodeValue<GenICam::gcstring>(
 		pDevice->GetNodeMap(),
 		"TriggerSource",
 		"Software");
-	
-	// enable global reset
+
+	// enable  rolling shutter
 	Arena::SetNodeValue<GenICam::gcstring>(
 		pDevice->GetNodeMap(),
 		"SensorShutterMode",
-		"GlobalReset"
-	);
-	
+		"Rolling");
+
+	// enable auto exposure
+	Arena::SetNodeValue<GenICam::gcstring>(
+		pDevice->GetNodeMap(),
+		"ExposureAuto",
+		"Continuous");
+
+	// turn on acquisition frame rate & set to max value
+	Arena::SetNodeValue<bool>(
+		pDevice->GetNodeMap(),
+		"AcquisitionFrameRateEnable",
+		true);
+	GenApi::CFloatPtr pAcquisitionFrameRate = pDevice->GetNodeMap()->GetNode("AcquisitionFrameRate");
+	double acquisitionFrameRate = pAcquisitionFrameRate->GetMax();
+	pAcquisitionFrameRate->SetValue(acquisitionFrameRate);
+
+	// Set target brightness to 70, suggested value from Lucid for outdoor imaging
+	Arena::SetNodeValue<int64_t>(
+		pDevice->GetNodeMap(),
+		"TargetBrightness",
+		70);
+
+	Arena::SetNodeValue<bool>(
+		pDevice->GetNodeMap(),
+		"GammaEnable",
+		true);
+
+	Arena::SetNodeValue<double>(
+		pDevice->GetNodeMap(),
+		"Gamma",
+		0.5);
+
+	Arena::SetNodeValue<GenICam::gcstring>(
+		pDevice->GetNodeMap(),
+		"GainAuto",
+		"Continuous");
+
+	Arena::SetNodeValue<double>(
+		pDevice->GetNodeMap(),
+		"ExposureAutoDamping",
+		1);
+
+	Arena::SetNodeValue<GenICam::gcstring>(
+		pDevice->GetNodeMap(),
+		"ExposureAutoAlgorithm",
+		"Median");
+
+	Arena::SetNodeValue<double>(
+		pDevice->GetNodeMap(),
+		"ExposureAutoUpperLimit",
+		500);
+
+	Arena::SetNodeValue<double>(
+		pDevice->GetNodeMap(),
+		"ExposureAutoLowerLimit",
+		360);
+
+	Arena::SetNodeValue<double>(
+		pDevice->GetNodeMap(),
+		"GainAutoUpperLimit",
+		10);
+	Arena::SetNodeValue<double>(
+		pDevice->GetNodeMap(),
+		"GainAutoLowerLimit",
+		1);
 
 	// enable stream auto negotiate packet size
 	Arena::SetNodeValue<bool>(
@@ -178,53 +213,68 @@ void ConfigureTriggerAndAcquireImage(Arena::IDevice* pDevice)
 	//    continuously, starting the stream will have the camera begin acquiring
 	//    a steady stream of images. However, with trigger mode enabled, the
 	//    device will wait for the trigger before acquiring any.
-	std::cout << TAB1 << "Start stream\n";
 
 	pDevice->StartStream();
 
-	// Trigger Armed
-	//    Continually check until trigger is armed. Once the trigger is armed, it
-	//    is ready to be executed.
-	std::cout << TAB2 << "Wait until trigger is armed\n";
-	bool triggerArmed = false;
-
-	do
-	{
-		triggerArmed = Arena::GetNodeValue<bool>(pDevice->GetNodeMap(), "TriggerArmed");
-	} while (triggerArmed == false);
-
-	// Trigger an image
-	//    Trigger an image manually, since trigger mode is enabled. This triggers
-	//    the camera to acquire a single image. A buffer is then filled and moved
-	//    to the output queue, where it will wait to be retrieved.
-	std::cout << TAB2 << "Trigger image\n";
-
-	Arena::ExecuteNode(
-		pDevice->GetNodeMap(),
-		"TriggerSoftware");
-
-	// Get image
-	//    Once an image has been triggered, it can be retrieved. If no image has
-	//    been triggered, trying to retrieve an image will hang for the duration
-	//    of the timeout and then throw an exception.
-	std::cout << TAB2 << "Get image";
-
-	Arena::IImage* pImage = pDevice->GetImage(TIMEOUT);
-
 	const auto p1 = std::chrono::system_clock::now();
-
 	const auto time = std::chrono::duration_cast<std::chrono::seconds>(
-                   p1.time_since_epoch()).count();
-	const auto filename = std::to_string(time)+".png";
-	std::cout << filename << std::endl;
-	SaveImage(pImage, filename.c_str());
+						  p1.time_since_epoch())
+						  .count();
+	std::string imgs_dir = "images_" + std::to_string(time);
+	std::filesystem::create_directory(imgs_dir);
 
-	std::cout << " (" << pImage->GetWidth() << "x" << pImage->GetHeight() << ")\n";
+	while (true)
+	{
+		// const auto start_time = std::chrono::steady_clock::now();
 
-	// requeue buffer
-	std::cout << TAB2 << "Requeue buffer\n";
+		// Trigger Armed
+		//    Continually check until trigger is armed. Once the trigger is armed, it
+		//    is ready to be executed.
+		// std::cout << TAB2 << "Wait until trigger is armed\n";
+		bool triggerArmed = false;
 
-	pDevice->RequeueBuffer(pImage);
+		do
+		{
+			triggerArmed = Arena::GetNodeValue<bool>(pDevice->GetNodeMap(), "TriggerArmed");
+		} while (triggerArmed == false);
+
+		// Trigger an image
+		//    Trigger an image manually, since trigger mode is enabled. This triggers
+		//    the camera to acquire a single image. A buffer is then filled and moved
+		//    to the output queue, where it will wait to be retrieved.
+		// std::cout << TAB2 << "Trigger image\n";
+
+		Arena::ExecuteNode(
+			pDevice->GetNodeMap(),
+			"TriggerSoftware");
+
+		// Get image
+		//    Once an image has been triggered, it can be retrieved. If no image has
+		//    been triggered, trying to retrieve an image will hang for the duration
+		//    of the timeout and then throw an exception.
+		// std::cout << TAB2 << "Get image";
+
+		Arena::IImage *pImage = pDevice->GetImage(TIMEOUT);
+
+		const auto p1 = std::chrono::system_clock::now();
+		const auto time = std::chrono::duration_cast<std::chrono::seconds>(
+							  p1.time_since_epoch())
+							  .count();
+		const auto filename = imgs_dir + "/" + std::to_string(time) + "_image.png";
+		std::cout << filename << std::endl;
+		SaveImage(pImage, filename.c_str());
+
+		// std::cout << " (" << pImage->GetWidth() << "x" << pImage->GetHeight() << ")\n";
+
+		// requeue buffer
+		// std::cout << TAB2 << "Requeue buffer\n";
+
+		pDevice->RequeueBuffer(pImage);
+
+		// const auto end_time = std::chrono::steady_clock::now();
+		// const auto time_diff = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
+		// std::cout << "Took " << time_diff << " milliseconds to capture a photo" << std::endl;
+	}
 
 	// Stop the stream
 	std::cout << TAB1 << "Stop stream\n";
@@ -256,7 +306,7 @@ int main()
 	try
 	{
 		// prepare example
-		Arena::ISystem* pSystem = Arena::OpenSystem();
+		Arena::ISystem *pSystem = Arena::OpenSystem();
 		pSystem->UpdateDevices(1000);
 		std::vector<Arena::DeviceInfo> deviceInfos = pSystem->GetDevices();
 		if (deviceInfos.size() == 0)
@@ -265,7 +315,7 @@ int main()
 			std::getchar();
 			return 0;
 		}
-		Arena::IDevice* pDevice = pSystem->CreateDevice(deviceInfos[0]);
+		Arena::IDevice *pDevice = pSystem->CreateDevice(deviceInfos[0]);
 
 		// run example
 		std::cout << "Commence example\n\n";
@@ -276,12 +326,12 @@ int main()
 		pSystem->DestroyDevice(pDevice);
 		Arena::CloseSystem(pSystem);
 	}
-	catch (GenICam::GenericException& ge)
+	catch (GenICam::GenericException &ge)
 	{
 		std::cout << "\nGenICam exception thrown: " << ge.what() << "\n";
 		exceptionThrown = true;
 	}
-	catch (std::exception& ex)
+	catch (std::exception &ex)
 	{
 		std::cout << "Standard exception thrown: " << ex.what() << "\n";
 		exceptionThrown = true;
@@ -299,4 +349,72 @@ int main()
 		return -1;
 	else
 		return 0;
+}
+
+void saveSettingsToFile(std::string filename, Arena::IDevice *pDevice)
+{
+	std::ofstream out;
+	out.open(filename);
+
+	out << "{" << std::endl;
+
+	// traverse through all the nodes of the nodemap
+	GenApi::NodeList_t nodes;
+	pDevice->GetNodeMap()->GetNodes(nodes);
+	for (GenApi::CCategoryPtr pCategoryNode : nodes)
+	{
+		if (!pCategoryNode)
+		{
+			continue;
+		}
+		GenApi::FeatureList_t children;
+		pCategoryNode->GetFeatures(children);
+		for (GenApi::CValuePtr pValue : children)
+		{
+			try
+			{
+				auto nodeName = pValue->GetNode()->GetName();
+				// std::cout << nodeName << std::endl;
+				switch (pValue->GetNode()->GetPrincipalInterfaceType())
+				{
+				case GenApi::intfIBoolean:
+					out << "\t\"" << nodeName << "\": ";
+					out << Arena::GetNodeValue<bool>(pDevice->GetNodeMap(), nodeName) << "," << std::endl;
+					break;
+				case GenApi::intfIString:
+					out << "\t\"" << nodeName << "\": ";
+					out << "\"" << Arena::GetNodeValue<GenICam::gcstring>(pDevice->GetNodeMap(), nodeName) << "\"," << std::endl;
+					break;
+				// case GenApi::intfIEnumeration:
+				// 	out << "\t\"" << nodeName << "\": ";
+				// 	out << "\"" << Arena::GetNodeValue<GenICam::>(pDevice->GetNodeMap(), nodeName) << "\"," << std::endl;
+				// 	break;
+				case GenApi::intfIInteger:
+					out << "\t\"" << nodeName << "\": ";
+					out << Arena::GetNodeValue<int64_t>(pDevice->GetNodeMap(), nodeName) << "," << std::endl;
+					break;
+				case GenApi::intfIFloat:
+					out << "\t\"" << nodeName << "\": ";
+					out << Arena::GetNodeValue<float64_t>(pDevice->GetNodeMap(), nodeName) << "," << std::endl;
+					break;
+					/*default:
+						// std::cout << TAB3 << nodeName << " type not found\n";*/
+				}
+			}
+			catch (GenICam::GenericException &ge)
+			{
+				std::cout << "\nGenICam exception thrown: " << ge.what() << "\n";
+			}
+			catch (std::exception &ex)
+			{
+				std::cout << "Standard exception thrown: " << ex.what() << "\n";
+			}
+			catch (...)
+			{
+				std::cout << "Unexpected exception thrown\n";
+			}
+		}
+	}
+	out << "}";
+	out.close();
 }

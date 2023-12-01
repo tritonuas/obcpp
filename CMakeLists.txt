@@ -48,13 +48,13 @@ file(GLOB_RECURSE HEADERS "include/*.hpp")
 set(INCLUDE_DIRECTORY ${PROJECT_SOURCE_DIR}/include)
 add_executable(${PROJECT_NAME} ${SOURCES} "src/main.cpp")
 include_directories(${INCLUDE_DIRECTORY})
-target_add_torch(${PROJECT_NAME})
+# target_add_torch(${PROJECT_NAME})
 # target_add_arena(${PROJECT_NAME})
 target_add_json(${PROJECT_NAME})
 target_add_eigen(${PROJECT_NAME})
 target_add_opencv(${PROJECT_NAME})
 target_add_httplib(${PROJECT_NAME})
-target_add_mavsdk(${PROJECT_NAME})
+# target_add_mavsdk(${PROJECT_NAME})
 target_add_matplot(${PROJECT_NAME})
 # =============================
 
@@ -64,25 +64,25 @@ target_add_matplot(${PROJECT_NAME})
 # playground
 add_executable(playground ${SOURCES} "tests/integration/playground.cpp")
 target_include_directories(playground PRIVATE ${INCLUDE_DIRECTORY})
-target_add_torch(playground)
+# target_add_torch(playground)
 # target_add_arena(playground)
 target_add_json(playground)
 target_add_eigen(playground) 
 target_add_opencv(playground) 
 target_add_httplib(playground)
-target_add_mavsdk(playground)
+# target_add_mavsdk(playground)
 target_add_matplot(playground)
 
 # mavsdk
 add_executable(mavsdk ${SOURCES} "tests/integration/mavsdk.cpp")
 target_include_directories(mavsdk PRIVATE ${INCLUDE_DIRECTORY})
-target_add_torch(mavsdk)
+# target_add_torch(mavsdk)
 # target_add_arena(mavsdk)
 target_add_json(mavsdk)
 target_add_eigen(mavsdk) 
 target_add_opencv(mavsdk) 
 target_add_httplib(mavsdk)
-target_add_mavsdk(mavsdk)
+# target_add_mavsdk(mavsdk)
 target_add_matplot(mavsdk)
 # =============================
 
@@ -94,24 +94,13 @@ add_subdirectory(${DEPS_DIRECTORY}/google-test)
 
 # =============================
 # Integration tests
-set(ARENA_SDK_DIR "${CMAKE_BINARY_DIR}/_deps/arena-sdk")
 add_executable(camera_playground tests/integration/camera_playground.cpp)
-target_include_directories(camera_playground PRIVATE 
-        "${ARENA_SDK_DIR}/extracted/include/Arena"
-        "${ARENA_SDK_DIR}/extracted/GenICam/library/CPP/include"
-    )
-file(GLOB_RECURSE ARENA_LIBS 
-    "${ARENA_SDK_DIR}/extracted/lib64/*.*" 
-    "${ARENA_SDK_DIR}/extracted/ffmpeg/*.so"
-    "${ARENA_SDK_DIR}/extracted/GenICam/library/lib/*/*.so"
-)
-target_link_libraries(camera_playground PRIVATE
-    ${ARENA_LIBS}
-)
+target_include_directories(camera_playground PRIVATE ${INCLUDE_DIRECTORY})
+target_add_arena(camera_playground)
 add_custom_target(
     run_camera_playground
     ${CMAKE_COMMAND}
-    -E env LD_LIBRARY_PATH="./_deps/arena-sdk/extracted/lib64:./_deps/arena-sdk/extracted/GenICam/library/lib/Linux64_x64/"
+    -E env LD_LIBRARY_PATH="./_deps/arena-sdk/extracted/lib:./_deps/arena-sdk/extracted/GenICam/library/lib/Linux64_ARM/"
     ./bin/camera_playground
 )
 
