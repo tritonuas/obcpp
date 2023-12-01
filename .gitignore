@@ -10,6 +10,7 @@ cmake_install.cmake
 _deps/
 
 Testing/
+imgs/
 
 .vscode
 

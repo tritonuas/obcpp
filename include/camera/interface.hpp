@@ -1,7 +1,7 @@
 #ifndef CAMERA_INTERFACE_HPP_
 #define CAMERA_INTERFACE_HPP_
 #include <nlohmann/json.hpp>
-// TODO: import OpenCV library here
+#include <opencv2/opencv.hpp>
 
 /*
  * FYI: this is class that will standardize image data but
@@ -17,13 +17,13 @@ class ImageData
 private:
     const std::string NAME;
     const std::string PATHS;
-    const Mat DATA;
+    const cv::Mat DATA;
 
 public:
-    ImageData(std::string NAME, std::string PATH, Mat DATA);
+    ImageData(std::string NAME, std::string PATH, cv::Mat DATA);
     std::string getName();
     std::string getPath();
-    Mat getData();
+    cv::Mat getData();
 };
 
 // ? possibly convert most common / important json fields to

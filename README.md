@@ -155,6 +155,9 @@ The `CMakeLists.txt` file tells `cmake` how to build the program. It will need t
 
 Each module has its own folder in `include/` and `src/`. Currently all of the header files that we expect to need are planned out, but many do not have accompanying source files. As we add these source files, new libraries will need to be added to the CMake file. You can follow the example for the libraries already included to make this change.
 
+Note: you may need to clear you CMake cache if things get messed up.
+`find -name "*Cache.txt" -delete`
+
 ## Style
 
 ### Linting
