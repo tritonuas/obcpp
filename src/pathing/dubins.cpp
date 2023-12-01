@@ -6,6 +6,7 @@
 #include "utilities/datatypes.hpp"
 #include "pathing/dubins.hpp"
 #include "pathing/tree.hpp"
+#include "utilities/constants.hpp"
 
 /**
  *  Notes from Christopher:
@@ -28,8 +29,6 @@
  *      if right turn ==> -beta)
  */
 
-const double TWO_PI = 2 * M_PI;
-const double HALF_PI = M_PI / 2;
 
 template <typename T>
 int sign(T number)

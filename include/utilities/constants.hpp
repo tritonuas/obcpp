@@ -6,6 +6,14 @@
 
 #include <matplot/matplot.h>
 
+// common ratios of pi
+const double TWO_PI = 2 * M_PI;
+const double HALF_PI = M_PI / 2;
+
+// FOR TEST, VALUES DONT MAKE SENSE
+const double TURNING_RADIUS = 5;
+const double POINT_SEPARATION = 1;
+
 const int NUM_AIRDROP_BOTTLES = 5;
 
 const int DEFAULT_GCS_PORT = 5010;

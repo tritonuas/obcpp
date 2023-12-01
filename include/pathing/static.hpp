@@ -101,7 +101,7 @@ public:
                     continue;
                 }
 
-                // else, add the node to the tree.
+                // else, add the node to the
                 _tree.addNode(node, &new_node, _dubins.generatePoints(node->getPoint(), sample, option.dubins_path, option.has_straight), new_node.getCost());
 
                 // TODO, call optimize_tree
