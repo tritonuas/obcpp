@@ -30,20 +30,20 @@ struct XYZCoord {
  
 class Polygon : public std::vector<XYZCoord> {
     public:
-        Polygon(matplot::color color);
+        explicit Polygon(matplot::color color);
 
-        matplot::color getColor() const;
+        [[nodiscard]] matplot::color getColor() const;
     private:
-        matplot::color color;
+        matplot::color color{};
 };
 
 class Polyline: public std::vector<XYZCoord> {
     public:
-        Polyline(matplot::color color);
+        explicit Polyline(matplot::color color);
 
-        matplot::color getColor() const;
+        [[nodiscard]] matplot::color getColor() const;
     private:
-        matplot::color color;
+        matplot::color color{};
 };
 
 // TODO: these will eventually be redefined in a protobuf, so once the generated protobuf code exists we remove these

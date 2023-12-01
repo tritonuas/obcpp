@@ -8,6 +8,7 @@
 
 class PathingPlot {
     public:
+virtual ~PathingPlot() = default;
         void addPoints(std::vector<XYZCoord> pts);
         void addPolygons(std::vector<Polygon> polygons);
         void addPolylines(std::vector<Polyline> polylines);
@@ -29,6 +30,7 @@ class PathingPlot {
 // When plotted, creates a GIF
 class AnimationPathingPlot : public PathingPlot {
     public:
+virtual ~AnimationPathingPlot() = default;
         AnimationPathingPlot();
 
         void beginUpdate() override;
@@ -40,15 +42,16 @@ class AnimationPathingPlot : public PathingPlot {
 
         void output(std::string filename) override;
     private:
-        std::list<std::list<XYZCoord>> coords;
-        std::list<std::list<Polygon>> polygons;
-        std::list<std::list<Polyline>> polylines;
+        std::list<std::list<XYZCoord>> coords{};
+        std::list<std::list<Polygon>> polygons{};
+        std::list<std::list<Polyline>> polylines{};
 };
 
 // Only records the most recent state of the plot
 // When plotted, creates a PNG
 class StaticPathingPlot : public PathingPlot {
     public:
+virtual ~StaticPathingPlot() = default;
         StaticPathingPlot();
 
         void beginUpdate() override;
@@ -60,9 +63,9 @@ class StaticPathingPlot : public PathingPlot {
 
         void output(std::string filename) override;
     private:
-        std::list<XYZCoord> coords;
-        std::list<Polygon> polygons;
-        std::list<Polyline> polylines;
+        std::list<XYZCoord> coords{};
+        std::list<Polygon> polygons{};
+        std::list<Polyline> polylines{};
 };
 
 #endif

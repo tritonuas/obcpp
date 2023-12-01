@@ -1,8 +1,12 @@
+cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
+
 # Disable in-source builds to prevent source tree corruption.
 if(" ${CMAKE_SOURCE_DIR}" STREQUAL " ${CMAKE_BINARY_DIR}")
   message(FATAL_ERROR "
 FATAL: In-source builds are not allowed.
        You should create a separate directory for build files.
+       If you think this error is wrong, try clearing cache:
+       `find -name CMakeCache.txt -delete`
 ")
 endif()
 
@@ -13,14 +17,17 @@ if(CCACHE)
     set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE})
 endif(CCACHE)
 
-cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
-
 set(CMAKE_CXX_COMPILER g++)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_C_COMPILER gcc)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ./bin)
 
+SET(GCC_COMPILE_FLAGS "")
+SET(GCC_LINK_FLAGS    "-lopencv_core -lopencv_highgui -lopencv_features2d -lopencv_flann -lopencv_imgcodecs -lopencv_dnn -lopencv_videoio -lopencv_imgproc -lopencv_ml -lopencv_photo")
+
+SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COMPILE_FLAGS}")
+SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${GCC_LINK_FLAGS}")
 
 project(obcpp VERSION 1.0)
 
@@ -49,7 +56,7 @@ set(INCLUDE_DIRECTORY ${PROJECT_SOURCE_DIR}/include)
 add_executable(${PROJECT_NAME} ${SOURCES} "src/main.cpp")
 include_directories(${INCLUDE_DIRECTORY})
 target_add_torch(${PROJECT_NAME})
-# target_add_arena(${PROJECT_NAME})
+# target_add_arena(${PROJECT_NAME}) # Tyler: currently broken, so we had to comment this out
 target_add_json(${PROJECT_NAME})
 target_add_eigen(${PROJECT_NAME})
 target_add_opencv(${PROJECT_NAME})
@@ -74,16 +81,9 @@ target_add_mavsdk(playground)
 target_add_matplot(playground)
 
 # mavsdk
-add_executable(mavsdk ${SOURCES} "tests/integration/mavsdk.cpp")
+add_executable(mavsdk "tests/integration/mavsdk.cpp")
 target_include_directories(mavsdk PRIVATE ${INCLUDE_DIRECTORY})
-target_add_torch(mavsdk)
-# target_add_arena(mavsdk)
-target_add_json(mavsdk)
-target_add_eigen(mavsdk) 
-target_add_opencv(mavsdk) 
-target_add_httplib(mavsdk)
 target_add_mavsdk(mavsdk)
-target_add_matplot(mavsdk)
 # =============================
 
 # =============================

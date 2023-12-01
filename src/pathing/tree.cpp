@@ -72,7 +72,7 @@ const RRTNodeList& RRTNode::getReachable() {
     return  (this->reachable);
 }
 
-double RRTNode::getCost() {
+double RRTNode::getCost() const {
     return this->cost;
 }
 
@@ -103,7 +103,7 @@ void RRTEdge::setCost(double newCost) {
     this->cost = newCost;
 }
 
-double RRTEdge::getCost() {
+double RRTEdge::getCost() const {
     return this->cost;
 }
 
@@ -114,7 +114,6 @@ const std::vector<Eigen::Vector2d>& RRTEdge::getPath() {
 void RRTEdge::setPath(std::vector<Eigen::Vector2d> path) {
     this->path = path;
 }
-
 
 void RRTTree::addNode(RRTNode* connectTo, RRTNode* newNode, std::vector<Eigen::Vector2d> path, double cost) {
     if(this->nodeMap.empty()) {
@@ -153,7 +152,7 @@ void RRTTree::rewireEdge(RRTNode* from, RRTNode* toPrev, RRTNode* toNew, std::ve
 }
 
 RRTNode* RRTTree::getNode(RRTPoint point) {
-    if(nodeMap.count(point)) {
+    if (nodeMap.count(point)) {
         return nodeMap.at(point);
     }
     else {
