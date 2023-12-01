@@ -13,13 +13,16 @@ jobs:
     container:
       image: ghcr.io/tritonuas/obcpp:main
     steps:
+      - name: Create directory
+        run: mkdir -p /home/tuas/obcpp
+
       - name: Clone Repo
-        run: git clone git@github.com:tritonuas/obcpp.git /home/tuas
+        run: git clone git@github.com:tritonuas/obcpp.git /home/tuas/obcpp
         env:
           REPO_KEY: ${{secrets.ACTION_PAT}}
 
       - name: Set up Cmake
-        run: mkdir build && cd build && cmake ..
+        run: cd /home/tuas/obcpp && mkdir build && cd build && cmake ..
 
       - name: Run Tests
         run: cd build && make test
