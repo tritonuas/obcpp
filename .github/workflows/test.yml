@@ -13,11 +13,8 @@ jobs:
     container:
       image: ghcr.io/tritonuas/obcpp:main
     steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v4
-        with:
-          submodules: true
-          token: ${{ secrets.SSH_TOKEN }}
+      - name: Clone Repo
+        run: git clone git@github.com:tritonuas/obcpp.git 
 
       - name: Set up Cmake
         run: mkdir build && cd build && cmake ..
