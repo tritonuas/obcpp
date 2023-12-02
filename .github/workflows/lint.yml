@@ -23,4 +23,4 @@ jobs:
         run: cd /home/tuas/obcpp && mkdir build && cd build && sudo cmake -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" ..
 
       - name: Run clang-tidy
-        run: cd /home/tuas/obcpp/build && sudo make test
+        run: cd /home/tuas/obcpp/build && sudo make lint
