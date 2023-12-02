@@ -16,6 +16,9 @@ jobs:
       - name: Create directory
         run: mkdir -p /home/tuas/obcpp
 
+      - name: check cmake env
+        run: echo $CMAKE_PREFIX_PATH
+
       - name: Clone Repo
         run: git clone https://oauth2:${{secrets.GITHUB_TOKEN}}@github.com/tritonuas/obcpp.git /home/tuas/obcpp
 
