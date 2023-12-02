@@ -11,6 +11,7 @@ RUN groupadd --gid $USER_GID $USERNAME \
 RUN apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y build-essential \
+                           sudo \
                            gdb \
                            git \
                            clang-tidy \
@@ -20,6 +21,9 @@ RUN apt-get update \
                            curl \
                            unzip \
                            libopencv-dev
+
+RUN echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
+    && chmod 0440 /etc/sudoers.d/$USERNAME
 
 # Download latest CMake from their repositories
 RUN apt-get update \
