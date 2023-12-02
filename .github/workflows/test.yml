@@ -16,14 +16,11 @@ jobs:
       - name: Create directory
         run: mkdir -p /home/tuas/obcpp
 
-      - name: check cmake env
-        run: sudo echo $CMAKE_PREFIX_PATH
-
       - name: Clone Repo
         run: git clone https://oauth2:${{secrets.GITHUB_TOKEN}}@github.com/tritonuas/obcpp.git /home/tuas/obcpp
 
       - name: Set up Cmake
-        run: cd /home/tuas/obcpp && mkdir build && cd build && sudo cmake ..
+        run: cd /home/tuas/obcpp && mkdir build && cd build && sudo cmake -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" ..
 
       - name: Run Tests
         run: cd /home/tuas/obcpp/build && sudo make test
