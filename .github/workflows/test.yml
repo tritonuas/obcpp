@@ -13,6 +13,9 @@ jobs:
     container:
       image: ghcr.io/tritonuas/obcpp:main
     steps:
+      - name: check env vars
+        run echo $HOME $USER
+
       - name: Create directory
         run: mkdir -p /home/tuas/obcpp
 
