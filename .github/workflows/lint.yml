@@ -20,7 +20,7 @@ jobs:
         run: git clone https://oauth2:${{secrets.GITHUB_TOKEN}}@github.com/tritonuas/obcpp.git /home/tuas/obcpp
 
       - name: Set up Cmake
-        run: cd /home/tuas/obcpp && mkdir build && cd build && cmake ..
+        run: cd /home/tuas/obcpp && mkdir build && cd build && sudo cmake ..
 
       - name: Run clang-tidy
-        run: cd /home/tuas/obcpp/build && make test
+        run: cd /home/tuas/obcpp/build && sudo make test
