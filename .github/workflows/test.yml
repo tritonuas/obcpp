@@ -6,29 +6,25 @@ on:
       - main
   pull_request:
 
+env:
+  # home directory of user in obcpp docker image
+  HOME_DIR: /home/tuas
+
 jobs:
   test:
     name: C++ Tests 
     runs-on: ubuntu-latest
-
+    container:
+      image: ghcr.io/tritonuas/obcpp:main
     steps:
-      - name: Install Dependencies
-        run: sudo apt update && sudo apt install cmake libopencv-dev
+      - name: Create directory
+        run: mkdir -p "$HOME_DIR/obcpp"
 
-      - name: Install MavSDK
-        run: |
-            sudo wget https://github.com/mavlink/MAVSDK/releases/download/v1.4.17/libmavsdk-dev_1.4.17_ubuntu20.04_amd64.deb
-            sudo dpkg -i libmavsdk-dev_1.4.17_ubuntu20.04_amd64.deb
-            sudo rm libmavsdk-dev_1.4.17_ubuntu20.04_amd64.deb
-
-      - name: Checkout Repo
-        uses: actions/checkout@v4
-        with:
-          submodules: true
-          token: ${{ secrets.SSH_TOKEN }}
+      - name: Clone Repo
+        run: git clone https://oauth2:${{secrets.GITHUB_TOKEN}}@github.com/tritonuas/obcpp.git /home/tuas/obcpp
 
       - name: Set up Cmake
-        run: mkdir build && cd build && cmake ..
+        run: cd "$HOME_DIR/obcpp" && mkdir build && cd build && sudo cmake -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" ..
 
       - name: Run Tests
-        run: cd build && make test
+        run: cd "$HOME_DIR/obcpp/build" && sudo make test
