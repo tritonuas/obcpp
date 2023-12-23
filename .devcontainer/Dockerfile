@@ -49,12 +49,6 @@ RUN wget https://github.com/mavlink/MAVSDK/releases/download/v1.4.17/libmavsdk-d
 # cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev
 # python-dev python-numpy libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libjasper-dev libdc1394-22-dev
 
-# Add clang-tidy-cache (doesn't work)
-ARG CLANG_TIDY_SHA1=c191254ea00d47ade11d7170ef82fe038c213774
-RUN curl -Lo /usr/bin/clang-tidy-cache \
-        "https://raw.githubusercontent.com/matus-chochlik/ctcache/$CLANG_TIDY_SHA1/clang-tidy-cache" \
-    && chmod +x /usr/bin/clang-tidy-cache
-
 # pull pre-built libtorch
 ARG LIBTORCH_VERSION=2.1.0
 ARG LIBTORCH_INSTALL_DIR=/libtorch-tmp
