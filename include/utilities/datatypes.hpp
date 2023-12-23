@@ -1,8 +1,8 @@
-#ifndef UTILITIES_DATATYPES_HPP_
-#define UTILITIES_DATATYPES_HPP_
+#ifndef INCLUDE_UTILITIES_DATATYPES_HPP_
+#define INCLUDE_UTILITIES_DATATYPES_HPP_
 
-#include <vector>
 #include <matplot/matplot.h>
+#include <vector>
 
 struct GPSCoord {
     GPSCoord(double lat, double lon, double alt)
@@ -25,45 +25,46 @@ struct XYZCoord {
     double z;
     matplot::color color;
 };
- 
-class Polygon : public std::vector<XYZCoord> {
-    public:
-        explicit Polygon(matplot::color color);
 
-        [[nodiscard]] matplot::color getColor() const;
-    private:
-        matplot::color color{};
+class Polygon : public std::vector<XYZCoord> {
+ public:
+    explicit Polygon(matplot::color color);
+
+    [[nodiscard]] matplot::color getColor() const;
+ private:
+    matplot::color color{};
 };
 
 class Polyline: public std::vector<XYZCoord> {
-    public:
-        explicit Polyline(matplot::color color);
+ public:
+    explicit Polyline(matplot::color color);
 
-        [[nodiscard]] matplot::color getColor() const;
-    private:
-        matplot::color color{};
+    [[nodiscard]] matplot::color getColor() const;
+ private:
+    matplot::color color{};
 };
 
-// TODO: these will eventually be redefined in a protobuf, so once the generated protobuf code exists we remove these
+// TODO: these will eventually be redefined in a protobuf,
+// so once the generated protobuf code exists we remove these
 enum class ODLCShape {
-    Circle, 
-    Semicircle, 
+    Circle,
+    Semicircle,
     QuarterCircle,
     Triangle,
-    Rectangle, 
-    Pentagon, 
-    Star, 
+    Rectangle,
+    Pentagon,
+    Star,
     Cross
 };
 
 enum class ODLCColor {
     White,
-    Black, 
-    Red, 
-    Blue, 
-    Green, 
-    Purple, 
-    Brown, 
+    Black,
+    Red,
+    Blue,
+    Green,
+    Purple,
+    Brown,
     Orange
 };
 
@@ -74,4 +75,4 @@ struct CompetitionBottle {
     char alphanumeric;
 };
 
-#endif // UTILITIES_DATATYPES_HPP_
+#endif  // INCLUDE_UTILITIES_DATATYPES_HPP_

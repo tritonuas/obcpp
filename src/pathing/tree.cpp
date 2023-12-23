@@ -11,13 +11,16 @@ std::size_t PointHashFunction::operator()(const RRTPoint &point) const {
     return c2;
 }
 
-std::size_t EdgeHashFunction::operator()(const std::pair<RRTNode*, RRTNode*> &nodePair) const{
+std::size_t EdgeHashFunction::operator()(
+    const std::pair<RRTNode*,
+    RRTNode*> &nodePair) const {
+
     PointHashFunction p = PointHashFunction();
     unsigned int h1 = p(nodePair.first->getPoint());
     unsigned int h2 = p(nodePair.second->getPoint());
 
     unsigned int c1 = 0.5 * (h1 + h2) * (h1 + h2 + 1) + h2;
-    
+
     return c1;
 }
 
@@ -48,7 +51,7 @@ RRTPoint RRTNode::getPoint() {
 
 void RRTNode::setReachable(RRTNodeList reachable) {
     this->reachable = reachable;
-    for(RRTNode* node : reachable) {
+    for (RRTNode* node : reachable) {
         node->parent = this;
     }
 }
@@ -60,8 +63,8 @@ void RRTNode::addReachable(RRTNode* newNode) {
 
 void RRTNode::removeReachable(RRTNode* oldNode) {
     RRTNodeList neighbors = this->getReachable();
-    for(int i = 0; i < neighbors.size(); i++) {
-        if(neighbors.at(i) == oldNode) {
+    for (int i = 0; i < neighbors.size(); i++) {
+        if (neighbors.at(i) == oldNode) {
             neighbors.at(i)->parent = nullptr;
             neighbors.erase(neighbors.begin() + i);
         }
@@ -81,18 +84,22 @@ void RRTNode::setCost(double newCost) {
 }
 
 
-RRTEdge::RRTEdge(RRTNode* from, RRTNode* to, std::vector<Eigen::Vector2d> path, double cost)
+RRTEdge::RRTEdge(
+    RRTNode* from,
+    RRTNode* to,
+    std::vector<Eigen::Vector2d> path,
+    double cost)
     : from{from}, to{to}, path{path}, cost{cost} {}
 
 bool RRTEdge::operator == (const RRTEdge &otherEdge) const {
     bool equal = this->from == otherEdge.from
                 && this->to == otherEdge.to
                 && this->cost == otherEdge.cost;
-    if(!equal || otherEdge.path.size() != this->path.size()) {
+    if (!equal || otherEdge.path.size() != this->path.size()) {
         return false;
     }
-    for(int i = 0; i < otherEdge.path.size(); i++) {
-        if(!(this->path.at(i) == otherEdge.path.at(i))) {
+    for (int i = 0; i < otherEdge.path.size(); i++) {
+        if (!(this->path.at(i) == otherEdge.path.at(i))) {
             return false;
         }
     }
@@ -115,15 +122,19 @@ void RRTEdge::setPath(std::vector<Eigen::Vector2d> path) {
     this->path = path;
 }
 
-void RRTTree::addNode(RRTNode* connectTo, RRTNode* newNode, std::vector<Eigen::Vector2d> path, double cost) {
-    if(this->nodeMap.empty()) {
+void RRTTree::addNode(
+    RRTNode* connectTo,
+    RRTNode* newNode,
+    std::vector<Eigen::Vector2d> path,
+    double cost) {
+    if (this->nodeMap.empty()) {
         std::pair<RRTPoint, RRTNode*> insertNode(newNode->getPoint(), newNode);
         nodeMap.insert(insertNode);
         return;
     }
     std::pair<RRTNode*, RRTNode*> edgePair(connectTo, newNode);
     RRTEdge newEdge = RRTEdge(connectTo, newNode, path, cost);
-    
+
     edgeMap.insert(std::make_pair(edgePair, newEdge));
     std::pair<RRTPoint, RRTNode*> insertNode(newNode->getPoint(), newNode);
     nodeMap.insert(insertNode);
@@ -131,14 +142,19 @@ void RRTTree::addNode(RRTNode* connectTo, RRTNode* newNode, std::vector<Eigen::V
     connectTo->addReachable(newNode);
 }
 
-void RRTTree::rewireEdge(RRTNode* from, RRTNode* toPrev, RRTNode* toNew, std::vector<Eigen::Vector2d> path, double cost) {
+void RRTTree::rewireEdge(
+    RRTNode* from,
+    RRTNode* toPrev,
+    RRTNode* toNew,
+    std::vector<Eigen::Vector2d> path,
+    double cost) {
     std::pair<RRTNode*, RRTNode*> toRemove(from, toPrev);
     std::pair<RRTNode*, RRTNode*> toAdd(from, toNew);
-    
+
     RRTEdge newEdge = RRTEdge(from, toNew, path, cost);
     std::pair<std::pair<RRTNode*, RRTNode*>, RRTEdge> edgePair(toAdd, newEdge);
 
-    // replace prev node in "from" node's neighbor list with new node 
+    // replace prev node in "from" node's neighbor list with new node
     from->addReachable(toNew);
     from->removeReachable(toPrev);
 
@@ -154,8 +170,7 @@ void RRTTree::rewireEdge(RRTNode* from, RRTNode* toPrev, RRTNode* toNew, std::ve
 RRTNode* RRTTree::getNode(RRTPoint point) {
     if (nodeMap.count(point)) {
         return nodeMap.at(point);
-    }
-    else {
+    } else {
         return nullptr;
     }
 }
@@ -163,15 +178,14 @@ RRTNode* RRTTree::getNode(RRTPoint point) {
 RRTEdge* RRTTree::getEdge(RRTPoint from, RRTPoint to) {
     RRTNode* node1 = getNode(from);
     RRTNode* node2 = getNode(to);
-    if(node1 == nullptr || node2 == nullptr) {
+    if (node1 == nullptr || node2 == nullptr) {
         return nullptr;
     }
 
     std::pair<RRTNode*, RRTNode*> edgePair(node1, node2);
-    if(edgeMap.count(edgePair) > 0) {
+    if (edgeMap.count(edgePair) > 0) {
         return &(edgeMap.at(edgePair));
-    }
-    else {
+    } else {
         return nullptr;
     }
 }
