@@ -12,7 +12,7 @@ env:
 
 jobs:
   test:
-    name: clang-tidy 
+    name: cpplint 
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/tritonuas/obcpp:main
@@ -26,5 +26,5 @@ jobs:
       - name: Set up Cmake
         run: cd "$HOME_DIR/obcpp" && mkdir build && cd build && sudo cmake -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" ..
 
-      - name: Run clang-tidy
+      - name: Run cpplint
         run: cd "$HOME_DIR/obcpp/build" && sudo make lint
