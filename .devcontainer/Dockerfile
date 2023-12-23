@@ -14,7 +14,8 @@ RUN apt-get update \
                            sudo \
                            gdb \
                            git \
-                           clang-tidy \
+                           python3 \
+                           python3-pip \
                            wget \
                            ccache \
                            vim \
@@ -75,6 +76,8 @@ RUN wget "https://github.com/pytorch/vision/archive/refs/tags/v${TORCHVISION_VER
     && cmake -DWITH_CUDA=off -D_GLIBCXX_USE_CXX11_ABI=1 -DCMAKE_BUILD_TYPE=Release .. \
     && make -j2 \
     && make install
+
+RUN pip3 install cpplint
 
 # login as non-root user
 USER $USERNAME

@@ -108,61 +108,36 @@ foreach(dir ${PROJECT_LIBS_INCLUDE_DIRS})
     string(APPEND LIB_INCLUDE_CLANG_TIDY_STRING "-I${dir};")
 endforeach()
 
-# Add caching to clang-tidy using
-# https://github.com/matus-chochlik/ctcache (doesn't work)
-# stolen from https://stackoverflow.com/questions/53597508/is-it-possible-to-accelerate-clang-tidy-using-ccache-or-similar
-find_program (CLANG_TIDY_CACHE_PATH NAMES "clang-tidy-cache")
-if (CLANG_TIDY_CACHE_PATH)
-    find_program (_CLANG_TIDY_PATH NAMES "clang-tidy" "clang-tidy-15" "clang-tidy-14" "clang-tidy-13" "clang-tidy-12")
 
-    # Why do we use ';' here?
-    # It's a cmake black magic: https://cmake.org/cmake/help/latest/prop_tgt/LANG_CLANG_TIDY.html#prop_tgt:%3CLANG%3E_CLANG_TIDY
-    # The CLANG_TIDY_PATH is passed to CMAKE_CXX_CLANG_TIDY, which follows CXX_CLANG_TIDY syntax.
-    set (CLANG_TIDY_PATH "${CLANG_TIDY_CACHE_PATH};${_CLANG_TIDY_PATH}" CACHE STRING "A combined command to run clang-tidy with caching wrapper")
-else ()
-    find_program (CLANG_TIDY_PATH NAMES "clang-tidy" "clang-tidy-15" "clang-tidy-14" "clang-tidy-13" "clang-tidy-12")
-endif ()
-
-# set(CTCACHE_DIR "/home/tuas/mycache") # testing
-set (CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_PATH}")
-
-# Adding lint target if clang-tidy executable is found
-find_program(CLANG_TIDY "clang-tidy")
-if(CLANG_TIDY)
+# Adding lint target if cpplint executable is found
+find_program(CPPLINT "cpplint")
+if(CPPLINT)
   # define lint target
   add_custom_target(lint
-    COMMAND ${CMAKE_CXX_CLANG_TIDY} 
-    ${SOURCES}
-    ${HEADERS}
-    --use-color
-    --
-    -std=c++${CMAKE_CXX_STANDARD}
-    -I${INCLUDE_DIRECTORY}
-    # NOTE:might need to add include directory if library's 
-    # include directory is not in LIB_INCLUDE_CLANG_TIDY_STRING
-    -I${CMAKE_BINARY_DIR}/_deps/json-src/single_include
-    ${LIB_INCLUDE_CLANG_TIDY_STRING}
+    COMMAND cpplint
+    --filter=-legal,-readability/todo
+    --recursive
+    ../src
+    ../include
   )
 
-  # run formatting using clang-tidy
-  add_custom_target(format
-    COMMAND ${CMAKE_CXX_CLANG_TIDY} 
-    ${SOURCES}
-    ${HEADERS}
-    --use-color
-    --fix
-    --fix-errors
-    --fix-notes
-    --format-style=file
-    -extra-arg=-std=c++${CMAKE_CXX_STANDARD}
-    --
-    -I${INCLUDE_DIRECTORY}
-    # NOTE:might need to add include directory if library's 
-    # include directory is not in LIB_INCLUDE_CLANG_TIDY_STRING
-    -I${CMAKE_BINARY_DIR}/_deps/json-src/single_include
-    ${LIB_INCLUDE_CLANG_TIDY_STRING}
-  )
-else()
-   message(FATAL_ERROR "clang-tidy executable not found. Check the README for steps to install it on your system")
+  # # run formatting using clang-tidy
+  # add_custom_target(format
+  #   COMMAND ${CMAKE_CXX_CLANG_TIDY} 
+  #   ${SOURCES}
+  #   ${HEADERS}
+  #   --use-color
+  #   --fix
+  #   --fix-errors
+  #   --fix-notes
+  #   --format-style=file
+  #   -extra-arg=-std=c++${CMAKE_CXX_STANDARD}
+  #   --
+  #   -I${INCLUDE_DIRECTORY}
+  #   # NOTE:might need to add include directory if library's 
+  #   # include directory is not in LIB_INCLUDE_CLANG_TIDY_STRING
+  #   -I${CMAKE_BINARY_DIR}/_deps/json-src/single_include
+  #   ${LIB_INCLUDE_CLANG_TIDY_STRING}
+  # )
 endif()
 # =============================
