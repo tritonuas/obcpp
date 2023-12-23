@@ -24,7 +24,7 @@ jobs:
         run: git clone https://oauth2:${{secrets.GITHUB_TOKEN}}@github.com/tritonuas/obcpp.git /home/tuas/obcpp
 
       - name: Set up Cmake
-        run: cd "$HOME_DIR/obcpp" && mkdir build && cd build && sudo cmake -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" ..
+        run: cd "$HOME_DIR/obcpp" && rm -rf build && mkdir build && cd build && sudo cmake -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" ..
 
       - name: Run cpplint
         run: cd "$HOME_DIR/obcpp/build" && sudo make lint
