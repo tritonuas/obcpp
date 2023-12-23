@@ -102,12 +102,6 @@ add_subdirectory(${DEPS_DIRECTORY}/google-test)
 
 # =============================
 # Linting 
-get_target_property(PROJECT_LIBS_INCLUDE_DIRS ${PROJECT_NAME} INCLUDE_DIRECTORIES)
-
-foreach(dir ${PROJECT_LIBS_INCLUDE_DIRS})
-    string(APPEND LIB_INCLUDE_CLANG_TIDY_STRING "-I${dir};")
-endforeach()
-
 
 # Adding lint target if cpplint executable is found
 find_program(CPPLINT "cpplint")
@@ -120,24 +114,5 @@ if(CPPLINT)
     ../src
     ../include
   )
-
-  # # run formatting using clang-tidy
-  # add_custom_target(format
-  #   COMMAND ${CMAKE_CXX_CLANG_TIDY} 
-  #   ${SOURCES}
-  #   ${HEADERS}
-  #   --use-color
-  #   --fix
-  #   --fix-errors
-  #   --fix-notes
-  #   --format-style=file
-  #   -extra-arg=-std=c++${CMAKE_CXX_STANDARD}
-  #   --
-  #   -I${INCLUDE_DIRECTORY}
-  #   # NOTE:might need to add include directory if library's 
-  #   # include directory is not in LIB_INCLUDE_CLANG_TIDY_STRING
-  #   -I${CMAKE_BINARY_DIR}/_deps/json-src/single_include
-  #   ${LIB_INCLUDE_CLANG_TIDY_STRING}
-  # )
 endif()
 # =============================
