@@ -114,5 +114,7 @@ if(CPPLINT)
     ../src
     ../include
   )
+else()
+  message(FATAL_ERROR "cpplint executable not found. Check the README for steps to install it on your system")
 endif()
 # =============================
