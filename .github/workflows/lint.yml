@@ -25,9 +25,9 @@ jobs:
       - name: Clone Repo
         run: git clone --branch $BRANCH_NAME https://oauth2:${{secrets.GITHUB_TOKEN}}@github.com/tritonuas/obcpp.git $HOME_DIR/obcpp
 
-      - name: Set up Cmake
+      - name: Set up CMake
         # uses ${CMAKE_PREFIX_PATH} set in Dockerfile env
-        run: cd "$HOME_DIR/obcpp" && rm -rf build && mkdir build && cd build && sudo cmake -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" ..
+        run: cd "$HOME_DIR/obcpp" && mkdir build && cd build && sudo cmake -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" ..
 
       - name: Run cpplint
         run: cd "$HOME_DIR/obcpp/build" && sudo make lint
