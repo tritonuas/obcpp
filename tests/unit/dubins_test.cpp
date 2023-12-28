@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <math.h>
+#include <cmath>
 
 #include "pathing/dubins.hpp"
 #include "utilities/datatypes.hpp"
