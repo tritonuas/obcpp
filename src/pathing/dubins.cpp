@@ -1,7 +1,6 @@
 #include <cmath>
 #include <limits>
-
-#include "Eigen"
+#include <cassert>
 
 #include "utilities/datatypes.hpp"
 #include "pathing/dubins.hpp"
@@ -28,6 +27,7 @@
  *      if right turn ==> -beta)
  */
 
+typedef XYZCoord Vector;
 const double TWO_PI = 2 * M_PI;
 const double HALF_PI = M_PI / 2;
 
@@ -47,19 +47,19 @@ bool compareRRTOptionLength(const RRTOption &first, const RRTOption &second)
     return first.length < second.length;
 }
 
-Eigen::Vector2d findOrthogonalVector2D(const Eigen::Vector2d &vector)
+Vector findOrthogonalVector2D(const Vector &vector)
 {
-    return Eigen::Vector2d{-vector.y(), vector.x()};
+    return Vector{-vector.y, vector.x, vector.z};
 }
 
-double distanceBetween(const Eigen::Vector2d &vector1, const Eigen::Vector2d &vector2)
+double distanceBetween(const Vector &vector1, const Vector &vector2)
 {
     return (vector1 - vector2).norm();
 }
 
-Eigen::Vector2d halfDisplacement(const Eigen::Vector2d &vector1, const Eigen::Vector2d &vector2)
+Vector halfDisplacement(const Vector &vector1, const Vector &vector2)
 {
-    return (vector1 - vector2) / 2;
+    return 0.5 * (vector1 - vector2);
 }
 
 Dubins::Dubins(double radius, double point_separation)
@@ -69,7 +69,7 @@ Dubins::Dubins(double radius, double point_separation)
     assert(point_separation > 0);
 }
 
-Eigen::Vector2d Dubins::findCenter(const RRTPoint &point, char side) const
+Vector Dubins::findCenter(const RRTPoint &point, char side) const
 {
     assert(side == 'L' || side == 'R');
 
@@ -78,29 +78,30 @@ Eigen::Vector2d Dubins::findCenter(const RRTPoint &point, char side) const
     double angle = point.psi+ (side == 'L' ? HALF_PI : -HALF_PI);
 
     // creates the vector offset from the existing position
-    return Eigen::Vector2d{point.xyz.x+ (std::cos(angle) * _radius),
-                           point.xyz.y+ (std::sin(angle) * _radius)};
+    return Vector{point.xyz.x+ (std::cos(angle) * _radius),
+                           point.xyz.y+ (std::sin(angle) * _radius),
+                           0};
 }
 
-Eigen::Vector2d Dubins::circleArc(const RRTPoint &starting_point, double beta, const Eigen::Vector2d &center, double path_length) const
+Vector Dubins::circleArc(const RRTPoint &starting_point, double beta, const Vector &center, double path_length) const
 {
     // Code is not nessisarily intuitive (I don't want to call sign twice)
     // starting_angle_(+- half_pi depending on the sign) + the_angular_distance_tranveled_(depending on the sign) 
     double angle = starting_point.psi+ ((path_length / _radius) - HALF_PI) * sign(beta);
-    Eigen::Vector2d direction_vector{std::cos(angle), std::sin(angle)};
+    Vector direction_vector{std::cos(angle), std::sin(angle), 0};
     return center + (direction_vector * _radius);
 }
 
-std::vector<Eigen::Vector2d> Dubins::generatePointsStraight(const RRTPoint &start, const RRTPoint &end, const DubinsPath &path) const
+std::vector<Vector> Dubins::generatePointsStraight(const RRTPoint &start, const RRTPoint &end, const DubinsPath &path) const
 {
     // the arclength of both curved sections + straight section
     double total_distance = _radius * (std::abs(path.beta_0) + std::abs(path.beta_2)) + path.straight_dist;
 
-    Eigen::Vector2d center_0 = findCenter(start, (path.beta_0 > 0) ? 'L' : 'R');
-    Eigen::Vector2d center_2 = findCenter(end, (path.beta_2 > 0) ? 'L' : 'R');
+    Vector center_0 = findCenter(start, (path.beta_0 > 0) ? 'L' : 'R');
+    Vector center_2 = findCenter(end, (path.beta_2 > 0) ? 'L' : 'R');
 
-    Eigen::Vector2d initial_terminal_point; // start of the straight secton
-    Eigen::Vector2d final_terminal_point;   // end of the straight section
+    Vector initial_terminal_point {0,0,0}; // start of the straight secton
+    Vector final_terminal_point {0,0,0};   // end of the straight section
 
     // finds starting and ending points of the _straight section_
     if (std::abs(path.beta_0) > 0)
@@ -109,28 +110,28 @@ std::vector<Eigen::Vector2d> Dubins::generatePointsStraight(const RRTPoint &star
         // (start direction) + (FROM CENTER OF CIRCLE, the angle traveled along curve
         //  * -1 if the plane is turning right)
         double angle = start.psi+ (std::abs(path.beta_0) - HALF_PI) * sign(path.beta_0);
-        initial_terminal_point = center_0 + _radius * Eigen::Vector2d{std::cos(angle), std::sin(angle)};
+        initial_terminal_point = center_0 + _radius * Vector{std::cos(angle), std::sin(angle), 0};
     }
     else
     {
-        initial_terminal_point = Eigen::Vector2d{start.xyz.x, start.xyz.y};
+        initial_terminal_point = Vector{start.xyz.x, start.xyz.y, start.xyz.z};
     }
 
     if (std::abs(path.beta_2) > 0)
     {
         // negative sign before beta_2 is because the path comes in through the back of the end vector
         double angle = end.psi+ (-std::abs(path.beta_2) - HALF_PI) * sign(path.beta_2);
-        final_terminal_point = center_2 + _radius * Eigen::Vector2d{std::cos(angle), std::sin(angle)};
+        final_terminal_point = center_2 + _radius * Vector{std::cos(angle), std::sin(angle), 0};
     }
     else
     {
-        final_terminal_point = Eigen::Vector2d{end.xyz.x, end.xyz.y};
+        final_terminal_point = Vector{end.xyz.x, end.xyz.y, 0};
     }
 
     double distance_straight = distanceBetween(initial_terminal_point, final_terminal_point);
 
     //  generates the points for the entire curve.
-    std::vector<Eigen::Vector2d> points_list;
+    std::vector<Vector> points_list;
     for (double current_distance = 0; current_distance < total_distance; current_distance += _point_separation)
     {
         if (current_distance < std::abs(path.beta_0) * _radius)
@@ -139,15 +140,18 @@ std::vector<Eigen::Vector2d> Dubins::generatePointsStraight(const RRTPoint &star
         }
         else if (current_distance > total_distance - std::abs(path.beta_2) * _radius)
         { // Last turn
-            // need to calculate new "start" point, which is the difference in end angle to turn angle
-            RRTPoint final_point_RRT{XYZCoord{final_terminal_point.x(), final_terminal_point.y(), 0}, end.psi- path.beta_2};
-            // last section is how much distance is covered in second turn
-            points_list.emplace_back(circleArc(final_point_RRT, path.beta_2, center_2, current_distance - (total_distance - std::abs(path.beta_2) * _radius)));
 
+            // OPTION 1:
+            // need to calculate new "start" point, which is the difference in end angle to turn angle
+            // RRTPoint final_point_RRT{XYZCoord{final_terminal_point.x, final_terminal_point.y, 0}, end.psi- path.beta_2};
+            // last section is how much distance is covered in second turn
+            // points_list.emplace_back(circleArc(final_point_RRT, path.beta_2, center_2, current_distance - (total_distance - std::abs(path.beta_2) * _radius)));
+
+            // OPTION 2:
             // old code, more consise, and clever geometry, but less intuitive
             // the distance is the max negative distance and it gets smaller, so that the angle starts out at
             // final_terminal_point and moves towards the back of end
-            // points_list.emplace_back(circleArc(end, path.beta_2, center_2, current_distance - total_distance));
+            points_list.emplace_back(circleArc(end, path.beta_2, center_2, current_distance - total_distance));
         }
         else
         { // Straignt Section
@@ -159,22 +163,22 @@ std::vector<Eigen::Vector2d> Dubins::generatePointsStraight(const RRTPoint &star
             points_list.emplace_back(coefficient * final_terminal_point + (1 - coefficient) * initial_terminal_point);
         }
     }
-    points_list.emplace_back(Eigen::Vector2d{end.xyz.x, end.xyz.y});
+    points_list.emplace_back(Vector{end.xyz.x, end.xyz.y, 0});
 
     return points_list;
 }
 
-std::vector<Eigen::Vector2d> Dubins::generatePointsCurve(const RRTPoint &start, const RRTPoint &end, const DubinsPath &path) const
+std::vector<Vector> Dubins::generatePointsCurve(const RRTPoint &start, const RRTPoint &end, const DubinsPath &path) const
 {
     // the arclength of all paths
     double total_distance = _radius * (std::abs(path.beta_2) + std::abs(path.beta_0) + std::abs(path.straight_dist));
 
-    Eigen::Vector2d center_0 = findCenter(start, (path.beta_0 > 0) ? 'L' : 'R');
-    Eigen::Vector2d center_2 = findCenter(end, (path.beta_2 > 0) ? 'L' : 'R');
+    Vector center_0 = findCenter(start, (path.beta_0 > 0) ? 'L' : 'R');
+    Vector center_2 = findCenter(end, (path.beta_2 > 0) ? 'L' : 'R');
 
     double half_intercenter_distance = distanceBetween(center_0, center_2) / 2;
     // uses pythagorean theorem to determine the center
-    Eigen::Vector2d center_1 = (center_0 + center_2) / 2 // midpoint
+    Vector center_1 = 0.5 * (center_0 + center_2) // midpoint
                                + sign(path.beta_0)
                                      // hypotnuse - 2r (distance between center0/2 and center 1)
                                      // a - intercenter_distance / 2 (half of distance between center 0 and center 2)
@@ -184,9 +188,9 @@ std::vector<Eigen::Vector2d> Dubins::generatePointsCurve(const RRTPoint &start, 
     // angle between x+ and the "terminal vector" between turn 1 and turn 2
     // i.e the angle from center_1 (x+) to center_0
     // angle of the displacement vector relative to x+ (horizontal) - 180 deg [supplimentary interior angle]
-    double psi_0 = std::atan2(center_1.y() - center_0.y(), center_1.x() - center_0.x()) - M_PI;
+    double psi_0 = std::atan2(center_1.y - center_0.y, center_1.x - center_0.x) - M_PI;
 
-    std::vector<Eigen::Vector2d> points_list;
+    std::vector<Vector> points_list;
     for (double current_distance = 0; current_distance < total_distance; current_distance += _point_separation)
     {
         if (current_distance < std::abs(path.beta_0) * _radius)
@@ -203,17 +207,17 @@ std::vector<Eigen::Vector2d> Dubins::generatePointsCurve(const RRTPoint &start, 
             // starting angle - (1 if LRL, -1 if RLR, * (total angular distance - angular distance from first turn))
             // *note, it is subtracting because the sign of the middle curve is always opposite to the start curve
             double angle = psi_0 - (sign(path.beta_0) * (current_distance / _radius - std::abs(path.beta_0)));
-            Eigen::Vector2d direction_vector{std::cos(angle), std::sin(angle)};
+            Vector direction_vector{std::cos(angle), std::sin(angle), 0};
             points_list.emplace_back(center_1 + _radius * direction_vector);
         }
     }
 
-    points_list.emplace_back(Eigen::Vector2d{end.xyz.x, end.xyz.y});
+    points_list.emplace_back(Vector{end.xyz.x, end.xyz.y, 0});
 
     return points_list;
 }
 
-std::vector<Eigen::Vector2d> Dubins::generatePoints(const RRTPoint &start, const RRTPoint &end, const DubinsPath &path, bool has_straight) const
+std::vector<Vector> Dubins::generatePoints(const RRTPoint &start, const RRTPoint &end, const DubinsPath &path, bool has_straight) const
 {
     if (has_straight)
     {
@@ -223,12 +227,12 @@ std::vector<Eigen::Vector2d> Dubins::generatePoints(const RRTPoint &start, const
     return generatePointsCurve(start, end, path);
 }
 
-RRTOption Dubins::lsl(const RRTPoint &start, const RRTPoint &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2) const
+RRTOption Dubins::lsl(const RRTPoint &start, const RRTPoint &end, const Vector &center_0, const Vector &center_2) const
 {
     double straight_distance = distanceBetween(center_0, center_2);
 
     // angle relative to horizontal
-    double alpha = std::atan2(center_2.y() - center_0.y(), center_2.x() - center_0.x());
+    double alpha = std::atan2(center_2.y - center_0.y, center_2.x - center_0.x);
 
     // difference in angle on the interval [0, 2pi] (CCW)
     double beta_0 = mod(alpha - start.psi, TWO_PI);
@@ -239,12 +243,12 @@ RRTOption Dubins::lsl(const RRTPoint &start, const RRTPoint &end, const Eigen::V
     return RRTOption{total_distance, DubinsPath(beta_0, beta_2, straight_distance), true};
 }
 
-RRTOption Dubins::rsr(const RRTPoint &start, const RRTPoint &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2) const
+RRTOption Dubins::rsr(const RRTPoint &start, const RRTPoint &end, const Vector &center_0, const Vector &center_2) const
 {
     double straight_distance = distanceBetween(center_0, center_2);
 
     // angle relative to horizontal
-    double alpha = std::atan2(center_2.y() - center_0.y(), center_2.x() - center_0.x());
+    double alpha = std::atan2(center_2.y - center_0.y, center_2.x - center_0.x);
 
     // offset betwen alpha and other vector [0,2pi]
     // 1] calculates the CCW (positive) rotation from start vector to end vector (end_a - start_a)
@@ -258,10 +262,10 @@ RRTOption Dubins::rsr(const RRTPoint &start, const RRTPoint &end, const Eigen::V
     return RRTOption{total_distance, DubinsPath(-beta_0, -beta_2, straight_distance), true};
 }
 
-RRTOption Dubins::lsr(const RRTPoint &start, const RRTPoint &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2) const
+RRTOption Dubins::lsr(const RRTPoint &start, const RRTPoint &end, const Vector &center_0, const Vector &center_2) const
 {
-    Eigen::Vector2d half_displacement = halfDisplacement(center_2, center_0);
-    double psi_0 = std::atan2(half_displacement.y(), half_displacement.x());
+    Vector half_displacement = halfDisplacement(center_2, center_0);
+    double psi_0 = std::atan2(half_displacement.y, half_displacement.x);
     double half_intercenter_distance = half_displacement.norm();
 
     if (half_intercenter_distance < _radius)
@@ -284,10 +288,10 @@ RRTOption Dubins::lsr(const RRTPoint &start, const RRTPoint &end, const Eigen::V
     return RRTOption{total_distance, DubinsPath(beta_0, -beta_2, straight_distance), true};
 }
 
-RRTOption Dubins::rsl(const RRTPoint &start, const RRTPoint &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2) const
+RRTOption Dubins::rsl(const RRTPoint &start, const RRTPoint &end, const Vector &center_0, const Vector &center_2) const
 {
-    Eigen::Vector2d half_displacement = halfDisplacement(center_2, center_0);
-    double psi_0 = std::atan2(half_displacement.y(), half_displacement.x());
+    Vector half_displacement = halfDisplacement(center_2, center_0);
+    double psi_0 = std::atan2(half_displacement.y, half_displacement.x);
     double half_intercenter_distance = half_displacement.norm();
 
     if (half_intercenter_distance < _radius)
@@ -310,11 +314,11 @@ RRTOption Dubins::rsl(const RRTPoint &start, const RRTPoint &end, const Eigen::V
     return RRTOption{total_distance, DubinsPath(-beta_0, beta_2, straight_distance), true};
 }
 
-RRTOption Dubins::lrl(const RRTPoint &start, const RRTPoint &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2) const
+RRTOption Dubins::lrl(const RRTPoint &start, const RRTPoint &end, const Vector &center_0, const Vector &center_2) const
 {
     double intercenter_distance = distanceBetween(center_0, center_2);
-    Eigen::Vector2d half_displacement = halfDisplacement(center_2, center_0);
-    double psi_0 = std::atan2(half_displacement.y(), half_displacement.x());
+    Vector half_displacement = halfDisplacement(center_2, center_0);
+    double psi_0 = std::atan2(half_displacement.y, half_displacement.x);
 
     if (intercenter_distance < 2 * _radius && intercenter_distance > 4 * _radius)
     {
@@ -338,11 +342,11 @@ RRTOption Dubins::lrl(const RRTPoint &start, const RRTPoint &end, const Eigen::V
     return RRTOption{total_distance, DubinsPath(beta_0, beta_2, -beta_1), false};
 }
 
-RRTOption Dubins::rlr(const RRTPoint &start, const RRTPoint &end, const Eigen::Vector2d &center_0, const Eigen::Vector2d &center_2) const
+RRTOption Dubins::rlr(const RRTPoint &start, const RRTPoint &end, const Vector &center_0, const Vector &center_2) const
 {
     double intercenter_distance = distanceBetween(center_0, center_2);
-    Eigen::Vector2d half_displacement = halfDisplacement(center_2, center_0);
-    double psi_0 = std::atan2(half_displacement.y(), half_displacement.x());
+    Vector half_displacement = halfDisplacement(center_2, center_0);
+    double psi_0 = std::atan2(half_displacement.y, half_displacement.x);
 
     if (intercenter_distance < 2 * _radius && intercenter_distance > 4 * _radius)
     {
@@ -369,10 +373,10 @@ RRTOption Dubins::rlr(const RRTPoint &start, const RRTPoint &end, const Eigen::V
 
 std::vector<RRTOption> Dubins::allOptions(const RRTPoint &start, const RRTPoint &end, bool sort) const
 {
-    Eigen::Vector2d center_0_left = findCenter(start, 'L');
-    Eigen::Vector2d center_0_right = findCenter(start, 'R');
-    Eigen::Vector2d center_2_left = findCenter(end, 'L');
-    Eigen::Vector2d center_2_right = findCenter(end, 'R');
+    Vector center_0_left = findCenter(start, 'L');
+    Vector center_0_right = findCenter(start, 'R');
+    Vector center_2_left = findCenter(end, 'L');
+    Vector center_2_right = findCenter(end, 'R');
 
     std::vector<RRTOption> options = {
         lsl(start, end, center_0_left, center_2_left),
@@ -390,7 +394,7 @@ std::vector<RRTOption> Dubins::allOptions(const RRTPoint &start, const RRTPoint 
     return options;
 }
 
-std::vector<Eigen::Vector2d> Dubins::dubinsPath(const RRTPoint &start, const RRTPoint &end) const
+std::vector<Vector> Dubins::dubinsPath(const RRTPoint &start, const RRTPoint &end) const
 {
     std::vector<RRTOption> options = allOptions(start, end);
     RRTOption optimal_option = *std::min_element(options.begin(), options.end(), compareRRTOptionLength);
