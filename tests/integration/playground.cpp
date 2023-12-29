@@ -2,7 +2,7 @@
 #include <string>
 
 // #include "ArenaApi.h"
-// #include <torch/torch.h>
+#include <torch/torch.h>
 #include <nlohmann/json.hpp>
 #include <opencv2/opencv.hpp>
 #include <matplot/matplot.h>
@@ -15,9 +15,9 @@ int main (int argc, char *argv[]) {
     // Arena::ISystem* pSystem = Arena::OpenSystem();
 
     // test torch
-    // std::cout << "Testing torch installation" << std::endl;
-    // torch::Tensor tensor = torch::eye(3);
-    // std::cout << tensor << "\n" << std::endl;
+    std::cout << "Testing torch installation" << std::endl;
+    torch::Tensor tensor = torch::eye(3);
+    std::cout << tensor << "\n" << std::endl;
 
     // test json
     std::cout << "Testing json installation" << std::endl;
