@@ -51,6 +51,8 @@ struct XYZCoord {
     */
     double norm() const;
 
+    XYZCoord normalized() const;
+
     double x;
     double y;
     double z;

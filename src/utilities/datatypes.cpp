@@ -67,6 +67,18 @@ double XYZCoord::norm() const
     );
 }
 
+XYZCoord XYZCoord::normalized() const
+{
+    double norm = this->norm();
+
+    if (norm == 0) 
+    {
+        return *this;
+    }
+
+    return (1 / this->norm()) * (*this);
+}
+
 Polygon::Polygon(matplot::color color)
 {
     this->color = color;
