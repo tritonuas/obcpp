@@ -81,7 +81,7 @@ void RRTNode::setCost(double newCost) {
 }
 
 
-RRTEdge::RRTEdge(RRTNode* from, RRTNode* to, std::vector<Eigen::Vector2d> path, double cost)
+RRTEdge::RRTEdge(RRTNode* from, RRTNode* to, std::vector<XYZCoord> path, double cost)
     : from{from}, to{to}, path{path}, cost{cost} {}
 
 bool RRTEdge::operator == (const RRTEdge &otherEdge) const {
@@ -107,15 +107,15 @@ double RRTEdge::getCost() const {
     return this->cost;
 }
 
-const std::vector<Eigen::Vector2d>& RRTEdge::getPath() {
+const std::vector<XYZCoord>& RRTEdge::getPath() {
     return this->path;
 }
 
-void RRTEdge::setPath(std::vector<Eigen::Vector2d> path) {
+void RRTEdge::setPath(std::vector<XYZCoord> path) {
     this->path = path;
 }
 
-void RRTTree::addNode(RRTNode* connectTo, RRTNode* newNode, std::vector<Eigen::Vector2d> path, double cost) {
+void RRTTree::addNode(RRTNode* connectTo, RRTNode* newNode, std::vector<XYZCoord> path, double cost) {
     if(this->nodeMap.empty()) {
         std::pair<RRTPoint, RRTNode*> insertNode(newNode->getPoint(), newNode);
         nodeMap.insert(insertNode);
@@ -131,7 +131,7 @@ void RRTTree::addNode(RRTNode* connectTo, RRTNode* newNode, std::vector<Eigen::V
     connectTo->addReachable(newNode);
 }
 
-void RRTTree::rewireEdge(RRTNode* from, RRTNode* toPrev, RRTNode* toNew, std::vector<Eigen::Vector2d> path, double cost) {
+void RRTTree::rewireEdge(RRTNode* from, RRTNode* toPrev, RRTNode* toNew, std::vector<XYZCoord> path, double cost) {
     std::pair<RRTNode*, RRTNode*> toRemove(from, toPrev);
     std::pair<RRTNode*, RRTNode*> toAdd(from, toNew);
     

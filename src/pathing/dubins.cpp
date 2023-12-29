@@ -1,6 +1,6 @@
 #include <cmath>
 #include <limits>
-
+#include <cassert>
 
 #include "utilities/datatypes.hpp"
 #include "pathing/dubins.hpp"

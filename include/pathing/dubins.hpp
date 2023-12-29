@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <limits>
+#include <cassert>
 
 #include "utilities/datatypes.hpp"
 #include "pathing/tree.hpp"
