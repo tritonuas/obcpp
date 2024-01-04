@@ -7,6 +7,21 @@
 #include <nlohmann/json.hpp>
 #include <opencv2/opencv.hpp>
 
+// class to contain all telemetry that should be tagged with an image.
+// In the future this could be in a mavlink file.
+class ImageTelemetry {
+    public:
+        ImageTelemetry(double latitude, double longitude, double altitude, 
+            double airspeed, double yaw, double pitch, double roll);
+        const double latitude;
+        const double longitude;
+        const double altitude;
+        const double airspeed;
+        const double yaw;
+        const double pitch;
+        const double roll;
+};
+
 /*
  * FYI: this is class that will standardize image data but
  * if all of our cameras have a uniform image output type
@@ -19,14 +34,17 @@
 class ImageData {
  private:
     const std::string NAME;
-    const std::string PATHS;
+    const std::string PATH;
     const cv::Mat DATA;
+    const ImageTelemetry TELEMETRY;
 
  public:
-    ImageData(std::string NAME, std::string PATH, cv::Mat DATA);
+    ImageData(std::string NAME, std::string PATH, cv::Mat DATA, 
+        ImageTelemetry TELEMETRY);
     std::string getName();
     std::string getPath();
     cv::Mat getData();
+    ImageTelemetry getTelemetry();
 };
 
 // ? possibly convert most common / important json fields to
@@ -40,7 +58,7 @@ class CameraConfiguration {
 
     void updateConfig(nlohmann::json newSetting);
 
-    void updateConfigField(std::string key, T value);
+    // void updateConfigField(std::string key, T value);
 
     nlohmann::json getConfig();
 
