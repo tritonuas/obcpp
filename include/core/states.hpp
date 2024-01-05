@@ -5,6 +5,8 @@
 #include <array>
 #include <optional>
 
+#include "cv/pipeline.hpp"
+#include "camera/interface.hpp"
 #include "utilities/datatypes.hpp"
 #include "utilities/constants.hpp"
 
@@ -47,6 +49,33 @@ class PreparationState: public MissionState {
     std::optional<Polygon> airdropBoundary;
     std::optional<Polyline> waypoints;
     std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES> bottles;
+};
+
+/*
+    State for when the plane is searching for ground targets. During this time,
+    it is actively taking photos and passing them into the CV pipeline.
+*/
+class SearchState: public MissionState {
+    public:
+        // Passing in a unique_ptr to a CameraInterface for dependency
+        // injection at runtime. This lets us provide any type of camera to
+        // be used during the search state (LUCID, GoPro, mock)
+        SearchState(std::unique_ptr<CameraInterface> camera,
+            std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES>
+            competitionObjectives) 
+            : camera(std::move(camera)), pipeline(competitionObjectives) {};
+
+~SearchState() override = default;
+        MissionState* tick() override;
+
+        std::string getName() override {
+            return "Target Search";
+        }
+
+    private:
+        std::unique_ptr<CameraInterface> camera;
+
+        Pipeline pipeline;
 };
 
 #endif  // INCLUDE_CORE_STATES_HPP_
