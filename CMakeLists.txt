@@ -124,6 +124,15 @@ target_add_httplib(mavlink_client)
 target_add_mavsdk(mavlink_client)
 target_add_matplot(mavlink_client)
 target_add_loguru(mavlink_client)
+
+# cv_pipeline 
+add_executable(cv_pipeline ${SOURCES} "tests/integration/cv_pipeline.cpp")
+target_add_json(cv_pipeline)
+target_add_matplot(cv_pipeline)
+target_add_opencv(cv_pipeline)
+target_add_loguru(cv_pipeline)
+target_add_httplib(cv_pipeline)
+target_add_protobuf(cv_pipeline)
 # =============================
 
 # =============================
