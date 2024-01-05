@@ -41,10 +41,11 @@ class ImageData {
  public:
     ImageData(std::string NAME, std::string PATH, cv::Mat DATA, 
         ImageTelemetry TELEMETRY);
-    std::string getName();
-    std::string getPath();
-    cv::Mat getData();
-    ImageTelemetry getTelemetry();
+    ImageData(const ImageData&) = default;
+    std::string getName() const;
+    std::string getPath() const;
+    cv::Mat getData() const;
+    ImageTelemetry getTelemetry() const;
 };
 
 // ? possibly convert most common / important json fields to
@@ -68,7 +69,7 @@ class CameraConfiguration {
 class CameraInterface {
  private:
     CameraConfiguration config;
-    ImageData recentPicture;  // might need to move it to public
+    std::unique_ptr<ImageData> recentPicture; // might need to move it to public
     bool doneTakingPicture;      // overengineering time
     std::string uploadPath;
     // Interpreter interp
@@ -79,19 +80,21 @@ class CameraInterface {
  public:
     explicit CameraInterface(CameraConfiguration config);
 
-    void connect();
+    virtual ~CameraInterface() = default;
 
-    bool verifyConnection();
+    virtual void connect() = 0;
 
-    void takePicture();
+    virtual bool verifyConnection() = 0;
 
-    ImageData getLastPicture();
+    virtual void takePicture() = 0;
 
-    bool takePictureForSeconds(int sec);
+    virtual ImageData getLastPicture() = 0;
 
-    void startTakingPictures(double intervalSec);
+    virtual bool takePictureForSeconds(int sec) = 0;
 
-    bool isDoneTakingPictures();
+    virtual void startTakingPictures(double intervalSec) = 0;
+
+    virtual bool isDoneTakingPictures() = 0;
 
     CameraConfiguration getConfig();
 

@@ -10,18 +10,24 @@ ImageData::ImageData(std::string NAME, std::string PATH, cv::Mat DATA,
     ImageTelemetry TELEMETRY) 
         : NAME(NAME), PATH(PATH), DATA(DATA), TELEMETRY(TELEMETRY) {};
 
-std::string ImageData::getName() {
+std::string ImageData::getName() const {
     return NAME;
 
 }
-std::string ImageData::getPath() {
+std::string ImageData::getPath() const {
     return PATH;
 }
 
-cv::Mat ImageData::getData() {
+cv::Mat ImageData::getData() const {
     return DATA;
 }
 
-ImageTelemetry ImageData::getTelemetry() {
+ImageTelemetry ImageData::getTelemetry() const {
     return TELEMETRY;
 }
+
+CameraConfiguration::CameraConfiguration(nlohmann::json config) 
+    : configJson(config) {};
+
+CameraInterface::CameraInterface(CameraConfiguration config) : config(config) 
+    {};
