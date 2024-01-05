@@ -86,9 +86,16 @@ target_add_mavsdk(mavsdk)
 target_add_matplot(mavsdk)
 
 # load_torchvision_model
-add_executable(load_torchvision_model tests/integration/load_torchvision_model.cpp)
+add_executable(load_torchvision_model "tests/integration/load_torchvision_model.cpp")
 target_add_torch(load_torchvision_model)
 target_add_torchvision(load_torchvision_model)
+
+# cv_pipeline 
+add_executable(cv_pipeline ${SOURCES} "tests/integration/cv_pipeline.cpp")
+target_add_eigen(cv_pipeline) 
+target_add_json(cv_pipeline)
+target_add_matplot(cv_pipeline)
+target_add_opencv(cv_pipeline)
 # =============================
 
 # =============================
