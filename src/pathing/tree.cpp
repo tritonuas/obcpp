@@ -1,9 +1,9 @@
 #include "pathing/tree.hpp"
 
 std::size_t PointHashFunction::operator()(const RRTPoint &point) const {
-    unsigned int h1 = std::hash<double>{}(point.xyz.x);
-    unsigned int h2 = std::hash<double>{}(point.xyz.y);
-    unsigned int h3 = std::hash<double>{}(point.xyz.z);
+    unsigned int h1 = std::hash<double>{}(point.point.x);
+    unsigned int h2 = std::hash<double>{}(point.point.y);
+    unsigned int h3 = std::hash<double>{}(point.point.z);
 
     unsigned int c1 = 0.5 * (h1 + h2) * (h1 + h2 + 1) + h2;
     unsigned int c2 = 0.5 * (c1 + h3) * (c1 + h3 + 1) + h3;
@@ -21,20 +21,20 @@ std::size_t EdgeHashFunction::operator()(const std::pair<RRTNode*, RRTNode*> &no
     return c1;
 }
 
-RRTPoint::RRTPoint(XYZCoord xyz, double psi)
-    : xyz{xyz}, psi{psi} {}
+RRTPoint::RRTPoint(XYZCoord point, double psi)
+    : point{point}, psi{psi} {}
 
 bool RRTPoint::operator== (const RRTPoint &otherPoint) const {
-    return (this->xyz.x == otherPoint.xyz.x
-            && this->xyz.y == otherPoint.xyz.y
-            && this->xyz.z == otherPoint.xyz.z
+    return (this->point.x == otherPoint.point.x
+            && this->point.y == otherPoint.point.y
+            && this->point.z == otherPoint.point.z
             && this->psi == otherPoint.psi);
 }
 
 double RRTPoint::distanceTo(const RRTPoint &otherPoint) const {
-    return std::sqrt(std::pow(this->xyz.x - otherPoint.xyz.x, 2)
-                    + std::pow(this->xyz.y - otherPoint.xyz.y, 2)
-                    + std::pow(this->xyz.z - otherPoint.xyz.z, 2));
+    return std::sqrt(std::pow(this->point.x - otherPoint.point.x, 2)
+                    + std::pow(this->point.y - otherPoint.point.y, 2)
+                    + std::pow(this->point.z - otherPoint.point.z, 2));
 }
 
 RRTNode::RRTNode(RRTPoint point, double cost)

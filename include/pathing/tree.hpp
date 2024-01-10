@@ -9,7 +9,7 @@ class RRTNode;
 typedef std::vector<RRTNode*>  RRTNodeList;
 
 struct RRTPoint {
-    RRTPoint(XYZCoord xyz, double psi);
+    RRTPoint(XYZCoord point, double psi);
     /*
     *  Equality overload method for RRTPoint
     */
@@ -17,7 +17,7 @@ struct RRTPoint {
 
     double distanceTo(const RRTPoint &otherPoint) const;
 
-    XYZCoord xyz;
+    XYZCoord point;
     double psi;
 
 };

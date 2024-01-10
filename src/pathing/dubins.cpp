@@ -29,8 +29,6 @@
  */
 
 typedef XYZCoord Vector;
-const double TWO_PI = 2 * M_PI;
-const double HALF_PI = M_PI / 2;
 
 template <typename T>
 int sign(T number)
@@ -79,8 +77,8 @@ Vector Dubins::findCenter(const RRTPoint &point, char side) const
     double angle = point.psi + (side == 'L' ? HALF_PI : -HALF_PI);
 
     // creates the vector offset from the existing position
-    return Vector{point.xyz.x+ (std::cos(angle) * _radius),
-                           point.xyz.y+ (std::sin(angle) * _radius),
+    return Vector{point.point.x+ (std::cos(angle) * _radius),
+                           point.point.y+ (std::sin(angle) * _radius),
                            0};
 }
 
@@ -115,7 +113,7 @@ std::vector<Vector> Dubins::generatePointsStraight(const RRTPoint &start, const 
     }
     else
     {
-        initial_terminal_point = Vector{start.xyz.x, start.xyz.y, start.xyz.z};
+        initial_terminal_point = Vector{start.point.x, start.point.y, start.point.z};
     }
 
     if (std::abs(path.beta_2) > 0)
@@ -126,7 +124,7 @@ std::vector<Vector> Dubins::generatePointsStraight(const RRTPoint &start, const 
     }
     else
     {
-        final_terminal_point = Vector{end.xyz.x, end.xyz.y, 0};
+        final_terminal_point = Vector{end.point.x, end.point.y, 0};
     }
 
     double distance_straight = distanceBetween(initial_terminal_point, final_terminal_point);
@@ -164,7 +162,7 @@ std::vector<Vector> Dubins::generatePointsStraight(const RRTPoint &start, const 
             points_list.emplace_back(coefficient * final_terminal_point + (1 - coefficient) * initial_terminal_point);
         }
     }
-    points_list.emplace_back(Vector{end.xyz.x, end.xyz.y, 0});
+    points_list.emplace_back(Vector{end.point.x, end.point.y, 0});
 
     return points_list;
 }
@@ -213,7 +211,7 @@ std::vector<Vector> Dubins::generatePointsCurve(const RRTPoint &start, const RRT
         }
     }
 
-    points_list.emplace_back(Vector{end.xyz.x, end.xyz.y, 0});
+    points_list.emplace_back(Vector{end.point.x, end.point.y, 0});
 
     return points_list;
 }
