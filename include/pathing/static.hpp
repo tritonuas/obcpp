@@ -64,10 +64,10 @@ public:
      * @return      ==> whether or not every point is within the bounds of the
      *                  area
      */
-    bool validPath(const std::vector<Eigen::Vector2d> &path)
+    bool validPath(const std::vector<XYCoord> &path)
     {
         // polygons dont work yet? also should the be convex?
-        for (const Eigen::Vector2d &point : path)
+        for (const XYCoord &point : path)
         {
             // [TODO], add if the point is B] not inside an obsticle C] can turn
             //          around boundaries
@@ -87,7 +87,6 @@ public:
     {
         _distance_to_goal = _root->getPoint().distanceTo(_goal);
 
-    LOOP:
         for (int _; _ < _num_iterations; _++)
         {
             if (_found_goal)
@@ -106,12 +105,12 @@ public:
             switch (validity)
             {
             case INVALID:
-                continue LOOP;
+                continue ; // test propertly
             case GOAL:
                 _found_goal = true;
                 break;
             case VALID:
-                break LOOP;
+                break ; // test properly
             }
         }
     }
@@ -128,7 +127,7 @@ public:
                 return INVALID;
             }
 
-            std::vector<Eigen::Vector2d> path = _dubins.generatePoints(_root->getPoint(), sample, option.dubins_path, option.has_straight);
+            std::vector<XYCoord> path = _dubins.generatePoints(_root->getPoint(), sample, option.dubins_path, option.has_straight);
 
             // TODO: check whats in bounds or not
             if (!validPath(path))
@@ -285,7 +284,7 @@ public:
                 break;
             }
 
-            std::vector<Eigen::Vector2d> current_path = _dubins.generatePoints(sample.getPoint(), node->getPoint(), option.dubins_path, option.has_straight);
+            std::vector<XYZCoord> current_path = _dubins.generatePoints(sample.getPoint(), node->getPoint(), option.dubins_path, option.has_straight);
             // the the path is bad, check the next one
             if (!validPath(current_path))
             {
@@ -320,7 +319,7 @@ public:
      * 
      * @return  ==> list of 2-vectors to the goal region
     */
-    std::vector<Eigen::Vector2d> getPointsGoal()
+    std::vector<XYCoord> getPointsGoal()
     {
         return getPointsForPath(getGoalPath());
     }
@@ -334,14 +333,14 @@ public:
      * @return      ==> list of points that connects the path through dubins
      *                  curves
     */
-    std::vector<Eigen::Vector2d> getPointsForPath(std::vector<RRTEdge *> path)
+    std::vector<XYCoord> getPointsForPath(std::vector<RRTEdge *> path)
     {
         // TODO, get the Points for the path
-        std::vector<Eigen::Vector2d> points;
+        std::vector<XYCoord> points;
 
         for (RRTEdge *edge : path)
         {
-            for (const Eigen::Vector2d &point : edge->getPath())
+            for (const XYCoord &point : edge->getPath())
             {
                 points.emplace_back(point);
             }
