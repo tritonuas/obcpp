@@ -6,7 +6,22 @@
 
 #include "utilities/constants.hpp"
 
-#include <Eigen>
+struct GPSCoord {
+    // (lat,lon,alt)
+    GPSCoord(double lat, double lon, double alt)
+        :lat(lat), lon(lon), alt(alt) {}
+
+    double lat;
+    double lon;
+    double alt;
+
+    // Default: (0,0,0)
+    GPSCoord(){
+        double lat = 0;
+        double lon = 0;
+        double alt = 0;
+    }
+};
 
 struct XYZCoord {
     XYZCoord(double x, double y, double z)

@@ -97,19 +97,6 @@ target_add_matplot(playground)
 target_add_protobuf(playground)
 
 # mavsdk
-<<<<<<< HEAD
-add_executable(mavsdk ${SOURCES} "tests/integration/mavsdk.cpp")
-target_include_directories(mavsdk PRIVATE ${INCLUDE_DIRECTORY} ${GEN_PROTOS_DIRECTORY})
-target_add_torch(mavsdk)
-# target_add_arena(mavsdk)
-target_add_json(mavsdk)
-target_add_eigen(mavsdk) 
-target_add_opencv(mavsdk) 
-target_add_httplib(mavsdk)
-target_add_mavsdk(mavsdk)
-target_add_matplot(mavsdk)
-target_add_protobuf(mavsdk)
-=======
 add_executable(mavsdk "tests/integration/mavsdk.cpp")
 target_include_directories(mavsdk PRIVATE ${INCLUDE_DIRECTORY})
 target_add_mavsdk(mavsdk)
@@ -119,7 +106,6 @@ target_add_matplot(mavsdk)
 add_executable(load_torchvision_model tests/integration/load_torchvision_model.cpp)
 target_add_torch(load_torchvision_model)
 target_add_torchvision(load_torchvision_model)
->>>>>>> main
 # =============================
 
 # =============================
