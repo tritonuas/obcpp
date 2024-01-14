@@ -6,6 +6,8 @@
 
 #include "utilities/constants.hpp"
 
+#include <Eigen>
+
 struct XYZCoord {
     XYZCoord(double x, double y, double z, double psi = 0)
         :x(x), y(y), z(z), psi(psi), color(matplot::color::black) {}
