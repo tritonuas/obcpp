@@ -61,7 +61,7 @@ class RRTNode {
         /*
         *  Get the cost associated with this node
         */
-        double getCost();
+        double getCost() const;
 
         /*
         *  Set the cost associated with this node
@@ -70,9 +70,9 @@ class RRTNode {
 
     private:
         RRTPoint point;
-        RRTNodeList reachable;
+        RRTNodeList reachable{};
         double cost;
-        RRTNode* parent;
+        RRTNode* parent{};
 };
 
 //Hash functions for the tree's member variables
@@ -96,7 +96,7 @@ class EdgeHashFunction {
 
 class RRTEdge {
     public:
-        RRTEdge(RRTNode* from, RRTNode* to, std::vector<RRTPoint> path, double cost);
+        RRTEdge(RRTNode* from, RRTNode* to, std::vector<XYZCoord> path, double cost);
 
         /*
         *  Equality overload method for RRTEdge comparison
@@ -111,23 +111,23 @@ class RRTEdge {
         /*
         *  Get the cost associated with this edge
         */
-        double getCost();
+        double getCost() const;
 
         /*
         *  Get the path vector associated with this edge
         */
-        const std::vector<RRTPoint>& getPath();
+        const std::vector<XYZCoord>& getPath();
 
         /*
         *  Set the path vector associated with this edge
         */
-        void setPath(std::vector<RRTPoint> path);
+        void setPath(std::vector<XYZCoord> path);
 
     private:
         RRTNode* from;
         RRTNode* to;
         double cost;
-        std::vector<RRTPoint> path;
+        std::vector<XYZCoord> path{};
 };
 
 class RRTTree {
@@ -136,13 +136,13 @@ class RRTTree {
         *  Add a node to the RRTTree. 
         *  If adding the first node to the tree, connectTo can be anything.
         */
-        void addNode(RRTNode* connectTo, RRTNode* newNode, std::vector<RRTPoint> path, double cost);
+        void addNode(RRTNode* connectTo, RRTNode* newNode, std::vector<XYZCoord> path, double cost);
 
         /*
         * Delete an edge between 'from' and 'toPrev', and create a new edge 
         * between 'from' to 'toNew'. Add 'toNew' to the nodeMap, and delete 'toPrev'.
         */
-        void rewireEdge(RRTNode* from, RRTNode* toPrev, RRTNode* toNew, std::vector<RRTPoint> path, double cost);
+        void rewireEdge(RRTNode* from, RRTNode* toPrev, RRTNode* toNew, std::vector<XYZCoord> path, double cost);
 
         /*
         *  Returns a pointer to the node in the tree corresponding to the RRTPoint.
@@ -157,8 +157,8 @@ class RRTTree {
         RRTEdge* getEdge(RRTPoint from, RRTPoint to);
 
     private:
-        std::unordered_map<RRTPoint, RRTNode*, PointHashFunction> nodeMap;
-        std::unordered_map<std::pair<RRTNode*, RRTNode*>, RRTEdge, EdgeHashFunction> edgeMap;
+        std::unordered_map<RRTPoint, RRTNode*, PointHashFunction> nodeMap{};
+        std::unordered_map<std::pair<RRTNode*, RRTNode*>, RRTEdge, EdgeHashFunction> edgeMap{};
 };
 
 #endif // PATHING_TREE_HPP_

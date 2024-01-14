@@ -72,7 +72,7 @@ const RRTNodeList& RRTNode::getReachable() {
     return  (this->reachable);
 }
 
-double RRTNode::getCost() {
+double RRTNode::getCost() const {
     return this->cost;
 }
 
@@ -81,7 +81,7 @@ void RRTNode::setCost(double newCost) {
 }
 
 
-RRTEdge::RRTEdge(RRTNode* from, RRTNode* to, std::vector<RRTPoint> path, double cost)
+RRTEdge::RRTEdge(RRTNode* from, RRTNode* to, std::vector<XYZCoord> path, double cost)
     : from{from}, to{to}, path{path}, cost{cost} {}
 
 bool RRTEdge::operator == (const RRTEdge &otherEdge) const {
@@ -103,20 +103,19 @@ void RRTEdge::setCost(double newCost) {
     this->cost = newCost;
 }
 
-double RRTEdge::getCost() {
+double RRTEdge::getCost() const {
     return this->cost;
 }
 
-const std::vector<RRTPoint>& RRTEdge::getPath() {
+const std::vector<XYZCoord>& RRTEdge::getPath() {
     return this->path;
 }
 
-void RRTEdge::setPath(std::vector<RRTPoint> path) {
+void RRTEdge::setPath(std::vector<XYZCoord> path) {
     this->path = path;
 }
 
-
-void RRTTree::addNode(RRTNode* connectTo, RRTNode* newNode, std::vector<RRTPoint> path, double cost) {
+void RRTTree::addNode(RRTNode* connectTo, RRTNode* newNode, std::vector<XYZCoord> path, double cost) {
     if(this->nodeMap.empty()) {
         std::pair<RRTPoint, RRTNode*> insertNode(newNode->getPoint(), newNode);
         nodeMap.insert(insertNode);
@@ -132,7 +131,7 @@ void RRTTree::addNode(RRTNode* connectTo, RRTNode* newNode, std::vector<RRTPoint
     connectTo->addReachable(newNode);
 }
 
-void RRTTree::rewireEdge(RRTNode* from, RRTNode* toPrev, RRTNode* toNew, std::vector<RRTPoint> path, double cost) {
+void RRTTree::rewireEdge(RRTNode* from, RRTNode* toPrev, RRTNode* toNew, std::vector<XYZCoord> path, double cost) {
     std::pair<RRTNode*, RRTNode*> toRemove(from, toPrev);
     std::pair<RRTNode*, RRTNode*> toAdd(from, toNew);
     
@@ -153,7 +152,7 @@ void RRTTree::rewireEdge(RRTNode* from, RRTNode* toPrev, RRTNode* toNew, std::ve
 }
 
 RRTNode* RRTTree::getNode(RRTPoint point) {
-    if(nodeMap.count(point)) {
+    if (nodeMap.count(point)) {
         return nodeMap.at(point);
     }
     else {

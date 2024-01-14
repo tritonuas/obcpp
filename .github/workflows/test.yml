@@ -6,32 +6,28 @@ on:
       - main
   pull_request:
 
+env:
+  # home directory of user in obcpp docker image
+  HOME_DIR: /home/tuas
+  # https://stackoverflow.com/a/71158878
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
+
 jobs:
   test:
     name: C++ Tests 
     runs-on: ubuntu-latest
-
+    container:
+      image: ghcr.io/tritonuas/obcpp:main
     steps:
-      - name: Install CMake
-        run: sudo apt install cmake
+      - name: Create directory
+        run: mkdir -p "$HOME_DIR/obcpp"
 
-      - name: Install OpenCV
-        run: sudo apt install libopencv-dev
+      - name: Clone Repo
+        run: git clone --branch $BRANCH_NAME https://oauth2:${{secrets.GITHUB_TOKEN}}@github.com/tritonuas/obcpp.git $HOME_DIR/obcpp
 
-      - name: Install MavSDK
-        run: |
-            sudo wget https://github.com/mavlink/MAVSDK/releases/download/v1.4.17/libmavsdk-dev_1.4.17_ubuntu20.04_amd64.deb
-            sudo dpkg -i  libmavsdk-dev_1.4.17_ubuntu20.04_amd64.deb
-            sudo rm libmavsdk-dev_1.4.17_ubuntu20.04_amd64.deb
-
-      - name: Checkout Repo
-        uses: actions/checkout@v4
-        with:
-          submodules: true
-          token: ${{ secrets.SSH_TOKEN }}
-
-      - name: Set up Cmake
-        run: mkdir build && cd build && cmake ..
+      - name: Set up CMake
+        # uses ${CMAKE_PREFIX_PATH} set in Dockerfile env
+        run: cd "$HOME_DIR/obcpp" && mkdir build && cd build && sudo cmake -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" ..
 
       - name: Run Tests
-        run: cd build && make test
+        run: cd "$HOME_DIR/obcpp/build" && sudo make test
