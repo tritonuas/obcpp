@@ -196,3 +196,47 @@ TEST(XYZCoordOperations, normalized)
         EXPECT_NEAR(normalized_vector.z, expected_normalized[i].z, 0.001);
     }
 }
+
+/*
+*   tests Polygon::pointInBounds
+*/
+TEST(Polygon, PointInBounds) {
+    Polygon test {FLIGHT_BOUND_COLOR};
+    test.emplace_back(XYZCoord{1, 1, 0});
+    test.emplace_back(XYZCoord{0, 1, 0});
+    test.emplace_back(XYZCoord{0, 0, 0});
+    test.emplace_back(XYZCoord{1, 0, 0});
+
+    EXPECT_EQ(true, test.pointInBounds(XYZCoord{0.5, 0.5, 0}));
+    EXPECT_EQ(true, test.pointInBounds(XYZCoord{0.5, 0.5, 99999999}));
+
+    EXPECT_EQ(false, test.pointInBounds(XYZCoord{1, 0.5, 0}));  // edge is outside
+    EXPECT_EQ(false, test.pointInBounds(XYZCoord{2, 0.5, 0}));  // right
+    EXPECT_EQ(false, test.pointInBounds(XYZCoord{0.5, 2, 0}));  // top
+    EXPECT_EQ(false, test.pointInBounds(XYZCoord{-1, 0.5, 0})); // left
+    EXPECT_EQ(false, test.pointInBounds(XYZCoord{0.5, -1, 0})); // down
+
+    Polygon point {FLIGHT_BOUND_COLOR};
+    test.emplace_back(XYZCoord{1, 1, 1});
+
+    EXPECT_EQ(false,point.pointInBounds(XYZCoord{1, 1, 1}));
+    EXPECT_EQ(false,point.pointInBounds(XYZCoord{1, 0, 1}));
+    EXPECT_EQ(false,point.pointInBounds(XYZCoord{0, 1, 1}));
+
+    // tests close to diagonals
+    Polygon quadrateral {FLIGHT_BOUND_COLOR};
+    quadrateral.emplace_back(XYZCoord{0, 0, 0});
+    quadrateral.emplace_back(XYZCoord{2, 1, 0});
+    quadrateral.emplace_back(XYZCoord{4, 4, 0});
+    quadrateral.emplace_back(XYZCoord{1, 2, 0});
+
+    EXPECT_EQ(true, quadrateral.pointInBounds(XYZCoord{1.5, 1.00, 0}));
+    EXPECT_EQ(true, quadrateral.pointInBounds(XYZCoord{0.5, 0.90, 0}));
+    EXPECT_EQ(true, quadrateral.pointInBounds(XYZCoord{2.5, 2.00, 0}));
+    EXPECT_EQ(true, quadrateral.pointInBounds(XYZCoord{1.5, 2.25, 0}));
+
+    EXPECT_EQ(false, quadrateral.pointInBounds(XYZCoord{1.5, 0.75, 0}));
+    EXPECT_EQ(false, quadrateral.pointInBounds(XYZCoord{0.5, 1.10, 0}));
+    EXPECT_EQ(false, quadrateral.pointInBounds(XYZCoord{2.5, 1.30, 0}));
+    EXPECT_EQ(false, quadrateral.pointInBounds(XYZCoord{1.5, 2.50, 0}));
+}

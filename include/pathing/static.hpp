@@ -8,8 +8,6 @@
 #include "core/states.hpp"
 #include "pathing/dubins.hpp"
 #include "pathing/tree.hpp"
-#include "utilities/tconst.hpp"
-#include "utilities/dt.hpp"
 
 enum Validity
 {
@@ -37,9 +35,27 @@ double random_01()
 class RRT
 {
 public:
-    RRT(RRTPoint start, RRTPoint goal, int num_iterations, double goal_bias, double search_radius, double tolerance_to_goal, double rewire_radius, Polygon bounds)
-        : _root{&RRTNode{start, 0}}, _goal{goal}, _num_iterations{num_iterations}, _goal_bias{goal_bias},
-          _search_radius{search_radius}, _tolerance_to_goal{tolerance_to_goal}, _rewire_radius{rewire_radius}, _dubins{TURNING_RADIUS, POINT_SEPARATION}, _found_goal{false}, _goal_node{nullptr},
+    const double DISTANCE_GUESSED = 10; // the radius that the point will generate from center, need to change to be a better system.
+
+    RRT(RRTPoint start,
+        RRTPoint goal,
+        int num_iterations,
+        double goal_bias,
+        double search_radius,
+        double tolerance_to_goal,
+        double rewire_radius,
+        Polygon bounds)
+
+        : _root{&RRTNode{start, 0}},
+          _goal{goal},
+          _num_iterations{num_iterations},
+          _goal_bias{goal_bias},
+          _search_radius{search_radius},
+          _tolerance_to_goal{tolerance_to_goal},
+          _rewire_radius{rewire_radius},
+          _dubins{TURNING_RADIUS, POINT_SEPARATION},
+          _found_goal{false},
+          _goal_node{nullptr},
           _bounds{bounds}
     {
         _tree.addNode(nullptr, _root, {}, 0);
@@ -50,7 +66,7 @@ public:
     {
         if (random_01() < _goal_bias)
         {
-            return RRTPoint{_goal.xyz, random_01() * TWO_PI};
+            return RRTPoint{_goal.point, random_01() * TWO_PI};
         }
 
         // TODO - get point from free space
@@ -59,19 +75,19 @@ public:
     /**
      * checks if the generated path of a dubins curve is valid in the flight
      * zonw.
-     * 
+     *
      * @param path  ==> list of points in a given flight path
      * @return      ==> whether or not every point is within the bounds of the
      *                  area
      */
-    bool validPath(const std::vector<XYCoord> &path)
+    bool validPath(const std::vector<XYZCoord> &path)
     {
         // polygons dont work yet? also should the be convex?
-        for (const XYCoord &point : path)
+        for (const XYZCoord &point : path)
         {
             // [TODO], add if the point is B] not inside an obsticle C] can turn
             //          around boundaries
-            if (_bounds.isPointInside(point))
+            if (!_bounds.pointInBounds(point))
             {
                 return false;
             }
@@ -82,7 +98,7 @@ public:
 
     /**
      * RRT*
-    */
+     */
     void run()
     {
         _distance_to_goal = _root->getPoint().distanceTo(_goal);
@@ -105,19 +121,19 @@ public:
             switch (validity)
             {
             case INVALID:
-                continue ; // test propertly
+                continue; // test propertly
             case GOAL:
                 _found_goal = true;
                 break;
             case VALID:
-                break ; // test properly
+                break; // test properly
             }
         }
     }
 
     /**
      * ?????????
-    */
+     */
     Validity parseOptions(std::vector<std::pair<RRTNode *, RRTOption>> &options, const RRTPoint &sample)
     {
         for (const auto &[node, option] : options)
@@ -127,7 +143,7 @@ public:
                 return INVALID;
             }
 
-            std::vector<XYCoord> path = _dubins.generatePoints(_root->getPoint(), sample, option.dubins_path, option.has_straight);
+            std::vector<XYZCoord> path = _dubins.generatePoints(_root->getPoint(), sample, option.dubins_path, option.has_straight);
 
             // TODO: check whats in bounds or not
             if (!validPath(path))
@@ -172,13 +188,13 @@ public:
     /**
      * Returns a sorted list of the paths to get from a given node to the sampled
      * node
-     * 
-     * @param end               ==> the sampled node that needs to be connected 
+     *
+     * @param end               ==> the sampled node that needs to be connected
      *                              to the tree
      * @param quantity_options  ==> the number of results to return back to the
      *                              function
      * @return                  ==> mininum sorted list of pairs of <node, path>
-    */
+     */
     std::vector<std::pair<RRTNode *, RRTOption>> pathingOptions(const RRTPoint &end, int quantity_options = 10)
     {
         std::vector<std::pair<RRTNode *, RRTOption>> options;
@@ -191,10 +207,8 @@ public:
         }
 
         // TODO, learn how to write a lambda function
-        std::sort(options.begin(), options.end(), auto a auto b
-        {
-            return compareRRTOptionLength(a.second, b.second)
-        });
+        std::sort(options.begin(), options.end(), [](auto a, auto b)
+                  { return compareRRTOptionLength(a.second, b.second) });
 
         return {options.begin(), options.begin() + quantity_options};
     }
@@ -202,10 +216,10 @@ public:
     /**
      * traverses the tree, and puts in all RRTOptions from dubins into a list
      * (DFS)
-     * 
+     *
      * @param options   ==> The list of options that is meant to be filled
      * @param node      ==> current node that will be traversed (DFS)
-    */
+     */
     void fillOptions(std::vector<std::pair<RRTNode *, RRTOption>> &options, RRTNode *node)
     {
         if (node == nullptr)
@@ -230,24 +244,24 @@ public:
      * Rewires the tree by finding paths that are more efficintly routed through
      * the sample. Only searches for nodes a specific radius around the sample
      * to reduce computational expense
-     * 
+     *
      * @param sample    ==> sampled point
-    */
+     */
     void optimizeTree(RRTNode &sample)
     {
-        optimizeTreeRecursive(_root, sample);
+        optimizeTreeRecursive(_root, nullptr, sample);
     }
 
-   /**
-    *  (RECURSIVE HELPER)
+    /**
+     *  (RECURSIVE HELPER)
      * Rewires the tree by finding paths that are more efficintly routed through
      * the sample. Only searches for nodes a specific radius around the sample
      * to reduce computational expense
-     * 
+     *
      * @param node      ==> current node (DFS)
      * @param sample    ==> sampled point
-    */ 
-    void optimizeTreeRecursive(RRTNode *node, RRTNode &sample)
+     */
+    void optimizeTreeRecursive(RRTNode *node, RRTNode *prev_node, RRTNode &sample)
     {
         if (node == nullptr)
         {
@@ -256,7 +270,13 @@ public:
 
         for (RRTNode *child : node->getReachable())
         {
-            optimizeTreeRecursive(child, sample);
+            optimizeTreeRecursive(child, node, sample);
+        }
+
+        // prevents rerouting the root (it shouldn't, but just to be safe)
+        if (prev_node == nullptr)
+        {
+            return;
         }
 
         // TODO, optimize the tree
@@ -298,17 +318,17 @@ public:
             }
 
             // else, replace the existing edge with the new one
-            _tree.rewireEdge(&sample, node->getParent(), node, current_path, sample.getCost() + option.length);
+            _tree.rewireEdge(&sample, prev_node, node, current_path, sample.getCost() + option.length);
         }
     }
 
     /**
      * Determines whether a given point is close enough to the goal region
      * (based on some arbitrary tolarance).
-     * 
+     *
      * @param sample    ==> sampled point
      * @return          ==> whether or not the point is in the goal area
-    */
+     */
     bool inGoalRegion(const RRTPoint &sample)
     {
         return _goal.distanceTo(sample) <= _tolerance_to_goal;
@@ -316,10 +336,10 @@ public:
 
     /**
      * returns a continuous path of points to the goal
-     * 
+     *
      * @return  ==> list of 2-vectors to the goal region
-    */
-    std::vector<XYCoord> getPointsGoal()
+     */
+    std::vector<XYZCoord> getPointsGoal()
     {
         return getPointsForPath(getGoalPath());
     }
@@ -327,20 +347,20 @@ public:
     /**
      * Given a list of edges in the tree, it returns the list that represents
      * the path formed by connecting each node by dubins curves.
-     * 
+     *
      * @param path  ==> list of edges from the root of the tree to the goal
      *                  node
      * @return      ==> list of points that connects the path through dubins
      *                  curves
-    */
-    std::vector<XYCoord> getPointsForPath(std::vector<RRTEdge *> path)
+     */
+    std::vector<XYZCoord> getPointsForPath(std::vector<RRTEdge *> path)
     {
         // TODO, get the Points for the path
-        std::vector<XYCoord> points;
+        std::vector<XYZCoord> points;
 
         for (RRTEdge *edge : path)
         {
-            for (const XYCoord &point : edge->getPath())
+            for (const XYZCoord &point : edge->getPath())
             {
                 points.emplace_back(point);
             }
@@ -352,9 +372,9 @@ public:
     /**
      * Finds the path from the start position to the goal area through nodes in
      * the tree.
-     * 
+     *
      * @return  ==> list of edges that connect start to goal nodes
-    */
+     */
     std::vector<RRTEdge *> getGoalPath()
     {
         std::vector<RRTEdge *> path;
@@ -366,10 +386,10 @@ public:
      * (RECURSIVE HELPER)
      * Finds the path from the start position to the goal area through nodes in
      * the tree.
-     * 
+     *
      * @param node  ==> the current node (DFS)
      * @param path  ==> the list that is filled by this recursive helper
-    */
+     */
     void getGoalPathRecursive(RRTNode *node, std::vector<RRTEdge *> &path)
     {
         if (node == nullptr)

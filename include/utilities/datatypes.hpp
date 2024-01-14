@@ -66,6 +66,20 @@ class Polygon : public std::vector<XYZCoord> {
         explicit Polygon(matplot::color color);
 
         [[nodiscard]] matplot::color getColor() const;
+
+        /**
+         * Determines whether a point ia in this polygon via raycasting. Points
+         * on the edge are counted as outside the polygon (to be more 
+         * conservative)
+         * 
+         * @param point ==> given point
+         * @return      ==> whether or not the point is in this polygon object
+         * @see         ==> https://en.wikipedia.org/wiki/Point_in_polygon
+        */
+        bool pointInBounds(XYZCoord point) const;
+
+        // [TODO] make a method to augment the polygon to get similar polygons
+        // [TODO] something that increases cost based on time in the edge
     private:
         matplot::color color{};
 };

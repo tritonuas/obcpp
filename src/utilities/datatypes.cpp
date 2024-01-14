@@ -71,7 +71,7 @@ XYZCoord XYZCoord::normalized() const
 {
     double norm = this->norm();
 
-    if (norm == 0) 
+    if (norm == 0)
     {
         return *this;
     }
@@ -87,4 +87,28 @@ Polygon::Polygon(matplot::color color)
 Polyline::Polyline(matplot::color color)
 {
     this->color = color;
+}
+
+bool Polygon::pointInBounds(XYZCoord point) const
+{
+    bool is_inside = false;
+    // Initialize with the last point
+    const XYZCoord *previous_point = &(*this)[this->size() - 1];
+
+    for (const XYZCoord &current_point : *this)
+    {
+        // divide by zero covered by the first condition
+        if ((previous_point->y > point.y) != (current_point.y > point.y) &&
+            (point.x < (current_point.x - previous_point->x) //
+                    * (point.y - previous_point->y) //
+                    / (current_point.y - previous_point->y) //
+                    + previous_point->x))
+        {
+            is_inside = !is_inside;
+        }
+
+        previous_point = &current_point;
+    }
+
+    return is_inside;
 }
