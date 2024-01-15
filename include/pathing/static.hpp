@@ -25,10 +25,6 @@ double random_01() { return static_cast<double>(std::rand()) / RAND_MAX; }
 
 class RRT {
  public:
-  const double DISTANCE_GUESSED =
-      10;  // the radius that the point will generate from center, need to
-           // change to be a better system.
-
   RRT(RRTPoint start, RRTPoint goal, int num_iterations, double goal_bias,
       double search_radius, double tolerance_to_goal, double rewire_radius,
       Polygon bounds)
@@ -63,7 +59,7 @@ class RRT {
     // TODO - use some heuristic to more efficiently generate direction
     // vector (and make it toggleable)
     return RRTPoint{
-        _root->getPoint().point + (DISTANCE_GUESSED * direction_vector),
+        _root->getPoint().point + (_search_radius * direction_vector),
         random_01() * TWO_PI};
   }
 

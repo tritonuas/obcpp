@@ -80,19 +80,24 @@ target_add_mavsdk(playground)
 target_add_matplot(playground)
 
 # mavsdk
-add_executable(mavsdk "tests/integration/mavsdk.cpp")
+add_executable(mavsdk ${SOURCES} "tests/integration/mavsdk.cpp")
 target_include_directories(mavsdk PRIVATE ${INCLUDE_DIRECTORY})
 target_add_mavsdk(mavsdk)
 target_add_matplot(mavsdk)
 
 # load_torchvision_model
-add_executable(load_torchvision_model tests/integration/load_torchvision_model.cpp)
+add_executable(load_torchvision_model  ${SOURCES} "tests/integration/load_torchvision_model.cpp")
 target_add_torch(load_torchvision_model)
 target_add_torchvision(load_torchvision_model)
 
 # static path making
-add_executable(static "tests/integration/static.cpp")
+add_executable(static ${SOURCES} "tests/integration/static.cpp")
 target_include_directories(static PRIVATE ${INCLUDE_DIRECTORY})
+target_add_torch(static)
+# target_add_arena(playground)
+target_add_json(static)
+target_add_opencv(static) 
+target_add_httplib(static)
 target_add_mavsdk(static)
 target_add_matplot(static)
 # =============================
