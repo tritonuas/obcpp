@@ -21,6 +21,7 @@ RUN apt-get update \
                            vim \
                            curl \
                            unzip \
+                           protobuf-compiler \
                            libopencv-dev
 
 RUN echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
