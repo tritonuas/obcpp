@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
 #include <nlohmann/json.hpp>
 #include <opencv2/opencv.hpp>
@@ -10,16 +11,16 @@
 // class to contain all telemetry that should be tagged with an image.
 // In the future this could be in a mavlink file.
 class ImageTelemetry {
-    public:
-        ImageTelemetry(double latitude, double longitude, double altitude, 
-            double airspeed, double yaw, double pitch, double roll);
-        const double latitude;
-        const double longitude;
-        const double altitude;
-        const double airspeed;
-        const double yaw;
-        const double pitch;
-        const double roll;
+ public:
+    ImageTelemetry(double latitude, double longitude, double altitude, double airspeed, double yaw,
+                   double pitch, double roll);
+    const double latitude;
+    const double longitude;
+    const double altitude;
+    const double airspeed;
+    const double yaw;
+    const double pitch;
+    const double roll;
 };
 
 /*
@@ -39,8 +40,7 @@ class ImageData {
     const ImageTelemetry TELEMETRY;
 
  public:
-    ImageData(std::string NAME, std::string PATH, cv::Mat DATA, 
-        ImageTelemetry TELEMETRY);
+    ImageData(std::string NAME, std::string PATH, cv::Mat DATA, ImageTelemetry TELEMETRY);
     ImageData(const ImageData&) = default;
     std::string getName() const;
     std::string getPath() const;
@@ -69,8 +69,8 @@ class CameraConfiguration {
 class CameraInterface {
  private:
     CameraConfiguration config;
-    std::unique_ptr<ImageData> recentPicture; // might need to move it to public
-    bool doneTakingPicture;      // overengineering time
+    std::unique_ptr<ImageData> recentPicture;  // might need to move it to public
+    bool doneTakingPicture;                    // overengineering time
     std::string uploadPath;
     // Interpreter interp
     // TODO: SERVER CONNECTION HERE ?

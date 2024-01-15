@@ -2,17 +2,15 @@
 #define INCLUDE_CV_CLASSIFICATION_HPP_
 
 #include <string>
-
 #include <opencv2/opencv.hpp>
 
 struct ClassificationResults {
-    // TODO: replace with protobuf structs instead of strings 
+    // TODO: replace with protobuf structs instead of strings
     std::string shape;
     std::string shapeColor;
     std::string character;
     std::string characterColor;
 };
-
 
 // Classification is responsible for predicting characteristics about
 // ground comptition targets. These characterisitcs include shape type,
@@ -25,37 +23,33 @@ struct ClassificationResults {
 // In this class we will take the pretrained models and use them to make
 // inferences.
 class Classification {
-    public:
-        // classify takes a cropped image of the target (saliency output) and
-        // two binary masks to represent which region of pixels correspond to
-        // shape and character respectivel (output of segmentation). Using this
-        // data, the shape type, character type, shape color and character color
-        // will be predicted.
-        ClassificationResults classify(
-            cv::Mat croppedImage,
-            cv::Mat shapeMask,
-            cv::Mat characterMask);
-    private:
-        // classifyShape takes a cropped image of the target (output of saliency)
-        // and a binary mask (output of segmentation). The binary mask should
-        // represent which region of pixels correspond to the shape region of
-        // the target.
-        std::string classifyShape(cv::Mat croppedImage, cv::Mat shapeMask);
+ public:
+    // classify takes a cropped image of the target (saliency output) and
+    // two binary masks to represent which region of pixels correspond to
+    // shape and character respectivel (output of segmentation). Using this
+    // data, the shape type, character type, shape color and character color
+    // will be predicted.
+    ClassificationResults classify(cv::Mat croppedImage, cv::Mat shapeMask, cv::Mat characterMask);
 
-        // classifyShape takes a cropped image of the target (output of saliency)
-        // and a binary mask (output of segmentation). The binary mask should
-        // represent which region of pixels correspond to the character region of
-        // the target.
-        std::string classifyCharacter(
-            cv::Mat croppedImage,
-            cv::Mat characterMask);
+ private:
+    // classifyShape takes a cropped image of the target (output of saliency)
+    // and a binary mask (output of segmentation). The binary mask should
+    // represent which region of pixels correspond to the shape region of
+    // the target.
+    std::string classifyShape(cv::Mat croppedImage, cv::Mat shapeMask);
 
-        // classify the primary color of a region described by a binary mask.
-        // This can be used for finding both shape and character color since
-        // we will use the same algorithm to detect the primary color in
-        // whatever region the mask describes. All that changes is the mask
-        // that's passed in.
-        std::string classifyColor(cv::Mat croppedImage, cv::Mat mask);
+    // classifyShape takes a cropped image of the target (output of saliency)
+    // and a binary mask (output of segmentation). The binary mask should
+    // represent which region of pixels correspond to the character region of
+    // the target.
+    std::string classifyCharacter(cv::Mat croppedImage, cv::Mat characterMask);
+
+    // classify the primary color of a region described by a binary mask.
+    // This can be used for finding both shape and character color since
+    // we will use the same algorithm to detect the primary color in
+    // whatever region the mask describes. All that changes is the mask
+    // that's passed in.
+    std::string classifyColor(cv::Mat croppedImage, cv::Mat mask);
 };
 
 #endif  // INCLUDE_CV_CLASSIFICATION_HPP_

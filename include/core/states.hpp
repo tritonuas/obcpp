@@ -1,14 +1,16 @@
 #ifndef INCLUDE_CORE_STATES_HPP_
 #define INCLUDE_CORE_STATES_HPP_
 
-#include <string>
 #include <array>
 #include <optional>
+#include <string>
+#include <memory>
+#include <utility>
 
-#include "cv/pipeline.hpp"
 #include "camera/interface.hpp"
-#include "utilities/datatypes.hpp"
+#include "cv/pipeline.hpp"
 #include "utilities/constants.hpp"
+#include "utilities/datatypes.hpp"
 
 /*
     Interface for an arbitrary mission state.
@@ -21,12 +23,12 @@ class MissionState {
         needed for the current phase of the mission.
 
         Returns the new MissionState if a state change needs to occur. If the optional
-        type does not have a value, then no state change needs to occur. 
+        type does not have a value, then no state change needs to occur.
     */
     virtual MissionState* tick() = 0;
 
     /*
-        Plain text name of the current state for display purposes 
+        Plain text name of the current state for display purposes
     */
     virtual std::string getName() = 0;
 };
@@ -35,14 +37,12 @@ class MissionState {
     State for when the system has just been turned on and is waiting for
     mission parameters.
 */
-class PreparationState: public MissionState {
+class PreparationState : public MissionState {
  public:
     ~PreparationState() override = default;
     MissionState* tick() override;
 
-    std::string getName() override {
-        return "Mission Preparation";
-    }
+    std::string getName() override { return "Mission Preparation"; }
 
  private:
     std::optional<Polygon> flightBoundary;
@@ -55,27 +55,24 @@ class PreparationState: public MissionState {
     State for when the plane is searching for ground targets. During this time,
     it is actively taking photos and passing them into the CV pipeline.
 */
-class SearchState: public MissionState {
-    public:
-        // Passing in a unique_ptr to a CameraInterface for dependency
-        // injection at runtime. This lets us provide any type of camera to
-        // be used during the search state (LUCID, GoPro, mock)
-        SearchState(std::unique_ptr<CameraInterface> camera,
-            std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES>
-            competitionObjectives) 
-            : camera(std::move(camera)), pipeline(competitionObjectives) {};
+class SearchState : public MissionState {
+ public:
+    // Passing in a unique_ptr to a CameraInterface for dependency
+    // injection at runtime. This lets us provide any type of camera to
+    // be used during the search state (LUCID, GoPro, mock)
+    SearchState(std::unique_ptr<CameraInterface> camera,
+                std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES> competitionObjectives)
+        : camera(std::move(camera)), pipeline(competitionObjectives) {}
 
-~SearchState() override = default;
-        MissionState* tick() override;
+    ~SearchState() override = default;
+    MissionState* tick() override;
 
-        std::string getName() override {
-            return "Target Search";
-        }
+    std::string getName() override { return "Target Search"; }
 
-    private:
-        std::unique_ptr<CameraInterface> camera;
+ private:
+    std::unique_ptr<CameraInterface> camera;
 
-        Pipeline pipeline;
+    Pipeline pipeline;
 };
 
 #endif  // INCLUDE_CORE_STATES_HPP_

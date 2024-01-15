@@ -1,6 +1,7 @@
 #ifndef INCLUDE_CV_SALIENCY_HPP_
 #define INCLUDE_CV_SALIENCY_HPP_
 
+#include <vector>
 #include <opencv2/opencv.hpp>
 
 #include "cv/utilities.hpp"
@@ -14,14 +15,14 @@
 // model. The training/testing code for the model can be found here:
 // https://github.com/tritonuas/garretts-new-lunchbox
 class Saliency {
-    public:
-        // saliency takes a full-size aerial image and detects any potential
-        // targets within the image. The full-size image can have multiple
-        // targets which is why it returns a vector of targets. For each target,
-        // it will predict the location within the full-size image (using
-        // coordinates of bounding box) and a prediction of whether or not a
-        // target is emergent (mannikin) or not.
-        std::vector<CroppedTarget> salience(cv::Mat image);
+ public:
+    // saliency takes a full-size aerial image and detects any potential
+    // targets within the image. The full-size image can have multiple
+    // targets which is why it returns a vector of targets. For each target,
+    // it will predict the location within the full-size image (using
+    // coordinates of bounding box) and a prediction of whether or not a
+    // target is emergent (mannikin) or not.
+    std::vector<CroppedTarget> salience(cv::Mat image);
 };
 
 #endif  // INCLUDE_CV_SALIENCY_HPP_

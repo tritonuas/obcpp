@@ -1,33 +1,25 @@
 #include "camera/interface.hpp"
 
-ImageTelemetry::ImageTelemetry(double latitude, double longitude,
-    double altitude, double airspeed, double yaw, double pitch, double roll) 
-        : latitude(latitude), longitude(longitude), altitude(altitude), 
-        airspeed(airspeed), yaw(yaw), pitch(pitch), roll(roll) {}
+ImageTelemetry::ImageTelemetry(double latitude, double longitude, double altitude, double airspeed,
+                               double yaw, double pitch, double roll)
+    : latitude(latitude),
+      longitude(longitude),
+      altitude(altitude),
+      airspeed(airspeed),
+      yaw(yaw),
+      pitch(pitch),
+      roll(roll) {}
 
+ImageData::ImageData(std::string NAME, std::string PATH, cv::Mat DATA, ImageTelemetry TELEMETRY)
+    : NAME(NAME), PATH(PATH), DATA(DATA), TELEMETRY(TELEMETRY) {}
 
-ImageData::ImageData(std::string NAME, std::string PATH, cv::Mat DATA, 
-    ImageTelemetry TELEMETRY) 
-        : NAME(NAME), PATH(PATH), DATA(DATA), TELEMETRY(TELEMETRY) {};
+std::string ImageData::getName() const { return NAME; }
+std::string ImageData::getPath() const { return PATH; }
 
-std::string ImageData::getName() const {
-    return NAME;
+cv::Mat ImageData::getData() const { return DATA; }
 
-}
-std::string ImageData::getPath() const {
-    return PATH;
-}
+ImageTelemetry ImageData::getTelemetry() const { return TELEMETRY; }
 
-cv::Mat ImageData::getData() const {
-    return DATA;
-}
+CameraConfiguration::CameraConfiguration(nlohmann::json config) : configJson(config) {}
 
-ImageTelemetry ImageData::getTelemetry() const {
-    return TELEMETRY;
-}
-
-CameraConfiguration::CameraConfiguration(nlohmann::json config) 
-    : configJson(config) {};
-
-CameraInterface::CameraInterface(CameraConfiguration config) : config(config) 
-    {};
+CameraInterface::CameraInterface(CameraConfiguration config) : config(config) {}

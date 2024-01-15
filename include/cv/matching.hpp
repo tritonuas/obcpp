@@ -18,28 +18,28 @@ struct MatchResult {
 // the characteristics of the ground targets that we should drop bottles on.
 // Using this information we know which targets to look for. Then, we can
 // calculate how similar the targets we capture are to the ones the competition
-// enumerates for the bottle drop. 
+// enumerates for the bottle drop.
 // This is implemented using a Siamese Neural Netowrk that takes two images as
 // input and outputs a similarity score. One of the input images will be the
 // cropped target from saliency. The other input will be an artificially
 // generated image that matches the description of one of the competition
 // objectives. We will use something similar to not-stolen-israeli-code to do
 // the generation (https://github.com/tritonuas/not-stolen-israeli-code).
-// The matching siamese model is implemented in this repo: 
+// The matching siamese model is implemented in this repo:
 // https://github.com/tritonuas/fraternal-targets
-// 
+//
 // One important note is that matching is a replacement for the segmentation
 // and classification stages of the pipeline. Instead of outright guessing
 // the properties of the targets (as with segmentation/classification) we can
 // see how close it is to known objectives.
 class Matching {
-    public:
+ public:
         Matching(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES>
             competitionObjectives, double matchThreshold);
 
         MatchResult match(const CroppedTarget& croppedTarget);
 
-    private:
+ private:
         std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES> competitionObjectives;
         double matchThreshold;
 };

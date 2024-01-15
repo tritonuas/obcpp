@@ -5,13 +5,12 @@
 
 #include <opencv2/opencv.hpp>
 
+#include "camera/interface.hpp"
+#include "cv/classification.hpp"
+#include "cv/localization.hpp"
+#include "cv/matching.hpp"
 #include "cv/saliency.hpp"
 #include "cv/segmentation.hpp"
-#include "cv/classification.hpp"
-#include "cv/matching.hpp"
-#include "cv/localization.hpp"
-
-#include "camera/interface.hpp"
 
 // Same TODO as above
 struct AirdropTarget {
@@ -28,7 +27,7 @@ struct AirdropTarget {
 struct PipelineResults {
     ImageData imageData;
     std::vector<AirdropTarget> matchedTargets;
-    // Not sure if unmatchedTargets should hold a different struct than 
+    // Not sure if unmatchedTargets should hold a different struct than
     // matchedTargets. Both have basically the same info except unmatched won't
     // have a bottle index assigned to it. We could populate bottle index to -1
     // or leave it as the bottle of the target it was closest in similarity to.
@@ -37,20 +36,20 @@ struct PipelineResults {
 
 // Pipeline handles all infrastructure within the CV pipeline
 class Pipeline {
-    public:
-        Pipeline(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES> 
-            competitionObjectives);
+ public:
+    explicit Pipeline(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES> competitionObjectives);
 
-        PipelineResults run(const ImageData& imageData);
-    private:
-        Saliency detector;
+    PipelineResults run(const ImageData& imageData);
 
-        Matching matcher;
+ private:
+    Saliency detector;
 
-        Segmentation segmentor;
-        Classification classifier; 
+    Matching matcher;
 
-        Localization localizer;
+    Segmentation segmentor;
+    Classification classifier;
+
+    Localization localizer;
 };
 
 #endif  // INCLUDE_CV_PIPELINE_HPP_

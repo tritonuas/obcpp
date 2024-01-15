@@ -20,8 +20,8 @@ struct SegmentationResults {
 // for segmentation models can be found here:
 // https://github.com/tritonuas/hutzler-571
 class Segmentation {
-    public:
-       SegmentationResults segment(const CroppedTarget &target);
+ public:
+    SegmentationResults segment(const CroppedTarget &target);
 };
 
 #endif  // INCLUDE_CV_SEGMENTATION_HPP_

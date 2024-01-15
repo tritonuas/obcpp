@@ -6,9 +6,8 @@ const double DEFAULT_MATCHING_THRESHOLD = 0.5;
 // modules of the pipeline (to customize model filepath, etc...)
 // TODO: I also want to have a way to customize if the model will use
 // matching vs segmentation/classification
-Pipeline::Pipeline(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES>
-    competitionObjectives) : 
-        matcher(competitionObjectives, DEFAULT_MATCHING_THRESHOLD) {}
+Pipeline::Pipeline(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES> competitionObjectives)
+    : matcher(competitionObjectives, DEFAULT_MATCHING_THRESHOLD) {}
 
 /*
  *  Entrypoint of CV Pipeline. At a high level, it will include the following
@@ -17,7 +16,7 @@ Pipeline::Pipeline(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES>
  *        that are detected
  *      - Cropped targets are passed into target matching where they will
  *        be compared against targets associated with each water bottle.
- *        All targets (regardless of match status) will be passed onto 
+ *        All targets (regardless of match status) will be passed onto
  *        later stages.
  *      - Bounding boxes predicted from saliency and GPS telemetry from when
  *        the photo was captured are passed into the localization algorithm.
@@ -25,10 +24,9 @@ Pipeline::Pipeline(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES>
  *        calculated.
  *      - Note, we may use a slight variation of this pipeline where the
  *        target matching stage is replaced by segmentation/classification.
-*/
+ */
 PipelineResults Pipeline::run(const ImageData &imageData) {
-    std::vector<CroppedTarget> saliencyResults =
-        detector.salience(imageData.getData());
+    std::vector<CroppedTarget> saliencyResults = detector.salience(imageData.getData());
 
     // if saliency finds no potential targets, end early with no results
     if (saliencyResults.empty()) {
@@ -40,17 +38,12 @@ PipelineResults Pipeline::run(const ImageData &imageData) {
     /// objective
     std::vector<AirdropTarget> matchedTargets;
     std::vector<AirdropTarget> unmatchedTargets;
-    for (CroppedTarget target: saliencyResults) {
-
+    for (CroppedTarget target : saliencyResults) {
         MatchResult potentialMatch = matcher.match(target);
 
-        GPSCoord targetPosition = localizer.localize(
-            imageData.getTelemetry(), target.bbox);
+        GPSCoord targetPosition = localizer.localize(imageData.getTelemetry(), target.bbox);
 
-        AirdropTarget airdropTarget = {
-            potentialMatch.bottleDropIndex,
-            targetPosition
-        };
+        AirdropTarget airdropTarget = {potentialMatch.bottleDropIndex, targetPosition};
 
         // TODO: we should have some criteria to handle duplicate targets that
         // show up in multiple images
