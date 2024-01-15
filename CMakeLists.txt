@@ -92,7 +92,6 @@ target_add_torchvision(load_torchvision_model)
 
 # cv_pipeline 
 add_executable(cv_pipeline ${SOURCES} "tests/integration/cv_pipeline.cpp")
-target_add_eigen(cv_pipeline) 
 target_add_json(cv_pipeline)
 target_add_matplot(cv_pipeline)
 target_add_opencv(cv_pipeline)
@@ -113,7 +112,8 @@ if(CPPLINT)
   # define lint target
   add_custom_target(lint
     COMMAND cpplint
-    --filter=-legal,-readability/todo
+    # Do not require licenses, TODO assignment, Google versions of C++ libs
+    --filter=-legal,-readability/todo,-build/c++11
     --linelength=100
     --recursive
     ../src
