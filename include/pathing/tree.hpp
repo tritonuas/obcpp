@@ -5,11 +5,11 @@
 #include <utility>
 #include <vector>
 
-#include "Eigen"
 #include "utilities/datatypes.hpp"
 
 class RRTNode;
 typedef std::vector<RRTNode*> RRTNodeList;
+typedef XYZCoord Vector;
 
 struct RRTPoint {
     RRTPoint(XYZCoord xyz, double psi);
@@ -97,7 +97,7 @@ class EdgeHashFunction {
 
 class RRTEdge {
  public:
-    RRTEdge(RRTNode* from, RRTNode* to, std::vector<Eigen::Vector2d> path,
+    RRTEdge(RRTNode* from, RRTNode* to, std::vector<Vector> path,
             double cost);
 
     /*
@@ -118,18 +118,18 @@ class RRTEdge {
     /*
      *  Get the path vector associated with this edge
      */
-    const std::vector<Eigen::Vector2d>& getPath();
+    const std::vector<Vector>& getPath();
 
     /*
      *  Set the path vector associated with this edge
      */
-    void setPath(std::vector<Eigen::Vector2d> path);
+    void setPath(std::vector<Vector> path);
 
  private:
     RRTNode* from;
     RRTNode* to;
     double cost;
-    std::vector<Eigen::Vector2d> path{};
+    std::vector<Vector> path{};
 };
 
 class RRTTree {
@@ -139,7 +139,7 @@ class RRTTree {
      *  If adding the first node to the tree, connectTo can be anything.
      */
     void addNode(RRTNode* connectTo, RRTNode* newNode,
-                 std::vector<Eigen::Vector2d> path, double cost);
+                 std::vector<Vector> path, double cost);
 
     /*
      * Delete an edge between 'from' and 'toPrev', and create a new edge
@@ -147,7 +147,7 @@ class RRTTree {
      * 'toPrev'.
      */
     void rewireEdge(RRTNode* from, RRTNode* toPrev, RRTNode* toNew,
-                    std::vector<Eigen::Vector2d> path, double cost);
+                    std::vector<Vector> path, double cost);
 
     /*
      *  Returns a pointer to the node in the tree corresponding to the RRTPoint.
