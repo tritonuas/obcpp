@@ -1,6 +1,8 @@
 #ifndef INCLUDE_PATHING_TREE_HPP_
 #define INCLUDE_PATHING_TREE_HPP_
 
+#include "utilities/datatypes.hpp"
+#include "Eigen"
 #include <vector>
 #include <unordered_map>
 #include <utility>
@@ -97,12 +99,8 @@ class EdgeHashFunction {
 };
 
 class RRTEdge {
- public:
-    RRTEdge(
-        RRTNode* from,
-        RRTNode* to,
-        std::vector<Eigen::Vector2d> path,
-        double cost);
+    public:
+        RRTEdge(RRTNode* from, RRTNode* to, std::vector<Eigen::Vector2d> path, double cost);
 
     /*
     *  Equality overload method for RRTEdge comparison
@@ -119,44 +117,36 @@ class RRTEdge {
     */
     double getCost() const;
 
-    /*
-    *  Get the path vector associated with this edge
-    */
-    const std::vector<Eigen::Vector2d>& getPath();
+        /*
+        *  Get the path vector associated with this edge
+        */
+        const std::vector<Eigen::Vector2d>& getPath();
 
-    /*
-    *  Set the path vector associated with this edge
-    */
-    void setPath(std::vector<Eigen::Vector2d> path);
+        /*
+        *  Set the path vector associated with this edge
+        */
+        void setPath(std::vector<Eigen::Vector2d> path);
 
- private:
-    RRTNode* from;
-    RRTNode* to;
-    double cost;
-    std::vector<Eigen::Vector2d> path{};
+    private:
+        RRTNode* from;
+        RRTNode* to;
+        double cost;
+        std::vector<Eigen::Vector2d> path{};
 };
 
 class RRTTree {
- public:
-    /*
-    *  Add a node to the RRTTree. 
-    *  If adding the first node to the tree, connectTo can be anything.
-    */
-    void addNode(
-        RRTNode* connectTo,
-        RRTNode* newNode,
-        std::vector<Eigen::Vector2d> path,
-        double cost);
+    public:
+        /*
+        *  Add a node to the RRTTree. 
+        *  If adding the first node to the tree, connectTo can be anything.
+        */
+        void addNode(RRTNode* connectTo, RRTNode* newNode, std::vector<Eigen::Vector2d> path, double cost);
 
-    /*
-    * Delete an edge between 'from' and 'toPrev', and create a new edge 
-    * between 'from' to 'toNew'. Add 'toNew' to the nodeMap, and delete 'toPrev'.
-    */
-    void rewireEdge(
-        RRTNode* from,
-        RRTNode* toPrev,
-        RRTNode* toNew,
-        std::vector<Eigen::Vector2d> path, double cost);
+        /*
+        * Delete an edge between 'from' and 'toPrev', and create a new edge 
+        * between 'from' to 'toNew'. Add 'toNew' to the nodeMap, and delete 'toPrev'.
+        */
+        void rewireEdge(RRTNode* from, RRTNode* toPrev, RRTNode* toNew, std::vector<Eigen::Vector2d> path, double cost);
 
     /*
     *  Returns a pointer to the node in the tree corresponding to the RRTPoint.
