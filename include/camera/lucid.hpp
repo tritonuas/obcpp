@@ -7,7 +7,7 @@
 #include <nlohmann/json.hpp>
 #include <string>
 #include <optional>
-
+using json = nlohmann::json;
 
 class LucidCameraConfig: public CameraConfiguration {
     private:
@@ -33,11 +33,54 @@ class LucidCameraConfig: public CameraConfiguration {
         CameraConfigMetadata<bool> Key_GammaEnable;
         CameraConfigMetadata<float> Key_Gamma;
         CameraConfigMetadata <float> Key_BlackLevel;
-        ConfigMetadata<std::string> Key_BalanceWhiteAuto
+        ConfigMetadata<std::string> Key_BalanceWhiteAuto;
+
+        void setConfig(json config);
+    public: 
+
+        CameraConfiguration(json config) override;
+
+        void updateConfig(json newSetting) override;
+
+        void updateConfigField(std::string key, T value) override;
+
+        json getConfig() override;
+
+        getConfigField(std::string name) override;
 };
 
 class LucidCamera : public CameraInterface {
-    // override all the camera connection interface functions
+    private:
+        LucidCameraConfig config;
+        ImageData* recentPicture; // might need to move it to public
+        Arena::IDevice * device;
+        Arena::ISystem * system;
+        ImageData imgConvert(Arena::IImage *pImage); 
+        void configureTrigger()
+
+    public:
+        CameraInterface(CameraConfiguration config);
+
+        void connect() override;
+
+        void verifyConnection() override;
+
+        ImageData takePicture() override;
+
+        ImageData getLastPicture() override;
+
+        // bool takePictureForSeconds(int sec) override;
+
+        // void startTakingPictures(double intervalSec) override;
+
+        // bool isDoneTakingPictures() override;
+
+        // CameraConfiguration getConfig() override;
+
+        // void updateConfig(CameraConfiguration newConfig) override;
+
+        // void updateConfig(json newJsonConfig) override;
+
 };
 
 #endif // ARENA_SDK_INSTALLED

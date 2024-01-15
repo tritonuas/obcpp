@@ -2,7 +2,10 @@
 #define CAMERA_INTERFACE_HPP_
 #include <nlohmann/json.hpp>
 #include <string>
+#include <unordered_map>
 // TODO: import OpenCV library here
+using json = nlohmann::json;
+
 template <typename T> 
 class CameraConfigMetadata {
     private:
@@ -11,15 +14,12 @@ class CameraConfigMetadata {
         const std::string valueType;
         const bool configurable;
         const bool executable;
-        const std::unordered_map<std::string, T> requirements;// key string name  - T value of dependency 
     public: 
-        LucidCameraConfigMetadata(std::name, T value, bool configurable, bool executable, std::unordered_map<std::string, T> requirements) {
+        LucidCameraConfigMetadata(std::name, T value, bool configurable, bool executable) {
             this->name = name; 
             this->value = value;
             this->valueType = typeid(this->value).name();
             this->executable = executable;
-            this->requirements = requirements;
-        }
 
         std::string getName() {
             return this->name; 
@@ -35,10 +35,6 @@ class CameraConfigMetadata {
 
         std::string getValueType() {
             return this->valueType;
-        }
-
-        std::unordered_map<std::string, T> getRequirments() {
-            return this->requirements;
         }
 };
 
@@ -75,62 +71,45 @@ private:
 public:
     explicit CameraConfiguration(nlohmann::json config);
 
-    void updateConfig(nlohmann::json newSetting);
+    virtual void updateConfig(json newSetting) = 0;
 
-    void updateConfigField(std::string key, T value);
+    virtual void updateConfigField(std::string key, T value) = 0;
 
-    nlohmann::json getConfig();
+    virtual json getConfig() = 0;
 
-    nlohmann::json getConfigField();
+    virtual json getConfigField(std::string name) = 0;
 };
 
 class CameraInterface
 {
 private:
     CameraConfiguration config;
-        ImageData recentPicture; // might need to move it to public
-    bool doneTakingPicture;      // overengineering time
-    std::string uploadPath;
-    // Interpreter interp
-    // TODO: SERVER CONNECTION HERE ?
-
-    void imgConvert();
+    ImageData recentPicture; // might need to move it to public
+    // bool doneTakingPicture;      // overengineering time
 
 public:
     explicit CameraInterface(CameraConfiguration config);
 
-    void connect();
+    virtual void connect() = 0;
 
-    bool verifyConnection();
+    virtual void verifyConnection() = 0;
 
-    void takePicture();
+    virtual ImageData takePicture() = 0;
 
-    ImageData getLastPicture();
+    virtual ImageData getLastPicture() = 0;
 
-    bool takePictureForSeconds(int sec);
+    // virtual bool takePictureForSeconds(int sec) = 0;
 
-    void startTakingPictures(double intervalSec);
+    // virtual void startTakingPictures(double intervalSec) = 0;
 
-    bool isDoneTakingPictures();
+    // virtual bool isDoneTakingPictures() = 0;
 
-    CameraConfiguration getConfig();
+    // virtual CameraConfiguration getConfig() = 0;
 
-    void updateConfig(CameraConfiguration newConfig);
+    // virtual void updateConfig(CameraConfiguration newConfig) = 0;
 
-    void updateConfig(nlohmann::json newJsonConfig);
+    // virtual void updateConfig(json newJsonConfig) = 0;
 
-    std::string getUploadPath();
-
-    void setUploadPath(std::string path);
-
-    void uploadPicture(ImageData img);
-
-    std::vector<ImageData> listPicturesFromUploadPath();
-
-    ImageData getImageByName(std::string name);
-
-    // server connection methods here
-    // virtual methods for all possible camera actions
 };
 
 #endif // CAMERA_INTERFACE_HPP_
