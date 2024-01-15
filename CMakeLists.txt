@@ -107,6 +107,7 @@ if(CPPLINT)
   add_custom_target(lint
     COMMAND cpplint
     --filter=-legal,-readability/todo
+    --linelength=100
     --recursive
     ../src
     ../include
