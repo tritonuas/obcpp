@@ -23,7 +23,7 @@ struct RRTPoint {
 };
 
 class RRTNode {
-   public:
+ public:
     RRTNode(RRTPoint point, double cost);
     RRTNode(RRTPoint point, double cost, RRTNodeList reachable);
 
@@ -69,7 +69,7 @@ class RRTNode {
      */
     void setCost(double newCost);
 
-   private:
+ private:
     RRTPoint point;
     RRTNodeList reachable{};
     double cost;
@@ -78,7 +78,7 @@ class RRTNode {
 
 // Hash functions for the tree's member variables
 class PointHashFunction {
-   public:
+ public:
     /*
      *  Hashes RRTPoint using the Cantor Pairing Function.
      *  Used to add elements to unordered_map nodeMap in RRTTree.
@@ -87,7 +87,7 @@ class PointHashFunction {
 };
 
 class EdgeHashFunction {
-   public:
+ public:
     /*
      *  Hashes RRTNode* pair using the Cantor Pairing Function and RRTPoint hash
      * function. Used to add elements to unordered_map edgeMap in RRTTree.
@@ -96,7 +96,7 @@ class EdgeHashFunction {
 };
 
 class RRTEdge {
-   public:
+ public:
     RRTEdge(RRTNode* from, RRTNode* to, std::vector<Eigen::Vector2d> path,
             double cost);
 
@@ -125,7 +125,7 @@ class RRTEdge {
      */
     void setPath(std::vector<Eigen::Vector2d> path);
 
-   private:
+ private:
     RRTNode* from;
     RRTNode* to;
     double cost;
@@ -133,7 +133,7 @@ class RRTEdge {
 };
 
 class RRTTree {
-   public:
+ public:
     /*
      *  Add a node to the RRTTree.
      *  If adding the first node to the tree, connectTo can be anything.
@@ -161,7 +161,7 @@ class RRTTree {
      */
     RRTEdge* getEdge(RRTPoint from, RRTPoint to);
 
-   private:
+ private:
     std::unordered_map<RRTPoint, RRTNode*, PointHashFunction> nodeMap{};
     std::unordered_map<std::pair<RRTNode*, RRTNode*>, RRTEdge, EdgeHashFunction>
         edgeMap{};

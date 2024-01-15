@@ -99,7 +99,7 @@ double distanceBetween(const Vector &vector1, const Vector &vector2);
 Vector halfDisplacement(const Vector &vector1, const Vector &vector2);
 
 class Dubins {
-     public:
+ public:
     Dubins(double radius, double point_separation);
 
     /**
@@ -311,7 +311,7 @@ class Dubins {
      */
     std::vector<Vector> dubinsPath(const RRTPoint &start, const RRTPoint &end) const;
 
-    private:
+ private:
     const double _radius;
     const double _point_separation;
 };

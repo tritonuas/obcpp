@@ -54,8 +54,7 @@ XYZCoord operator*(const XYZCoord &vector, double scalar) {
 double XYZCoord::norm() const {
     return sqrt(this->x * this->x    //
                 + this->y * this->y  //
-                + this->z * this->z  //
-    );
+                + this->z * this->z);
 }
 
 XYZCoord XYZCoord::normalized() const {

@@ -129,7 +129,6 @@ std::vector<Vector> Dubins::generatePointsStraight(const RRTPoint &start, const 
             points_list.emplace_back(circleArc(start, path.beta_0, center_0, current_distance));
         } else if (current_distance >
                    total_distance - std::abs(path.beta_2) * _radius) {  // Last turn
-
             // OPTION 1:
             // need to calculate new "start" point, which is the difference in end angle to turn
             // angle RRTPoint final_point_RRT{XYZCoord{final_terminal_point.x,
