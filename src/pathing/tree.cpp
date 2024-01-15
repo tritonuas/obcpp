@@ -1,6 +1,6 @@
 #include "pathing/tree.hpp"
 
-std::size_t PointHashFunction::operator()(const RRTPoint &point) const {
+std::size_t PointHashFunction::operator()(const RRTPoint& point) const {
     unsigned int h1 = std::hash<double>{}(point.xyz.x);
     unsigned int h2 = std::hash<double>{}(point.xyz.y);
     unsigned int h3 = std::hash<double>{}(point.xyz.z);
@@ -11,10 +11,7 @@ std::size_t PointHashFunction::operator()(const RRTPoint &point) const {
     return c2;
 }
 
-std::size_t EdgeHashFunction::operator()(
-    const std::pair<RRTNode*,
-    RRTNode*> &nodePair) const {
-
+std::size_t EdgeHashFunction::operator()(const std::pair<RRTNode*, RRTNode*>& nodePair) const {
     PointHashFunction p = PointHashFunction();
     unsigned int h1 = p(nodePair.first->getPoint());
     unsigned int h2 = p(nodePair.second->getPoint());
@@ -24,30 +21,23 @@ std::size_t EdgeHashFunction::operator()(
     return c1;
 }
 
-RRTPoint::RRTPoint(XYZCoord xyz, double psi)
-    : xyz{xyz}, psi{psi} {}
+RRTPoint::RRTPoint(XYZCoord xyz, double psi) : xyz{xyz}, psi{psi} {}
 
-bool RRTPoint::operator== (const RRTPoint &otherPoint) const {
-    return (this->xyz.x == otherPoint.xyz.x
-            && this->xyz.y == otherPoint.xyz.y
-            && this->xyz.z == otherPoint.xyz.z
-            && this->psi == otherPoint.psi);
+bool RRTPoint::operator==(const RRTPoint& otherPoint) const {
+    return (this->xyz.x == otherPoint.xyz.x && this->xyz.y == otherPoint.xyz.y &&
+            this->xyz.z == otherPoint.xyz.z && this->psi == otherPoint.psi);
 }
 
-RRTNode::RRTNode(RRTPoint point, double cost)
-    : point{point}, cost{cost} {}
+RRTNode::RRTNode(RRTPoint point, double cost) : point{point}, cost{cost} {}
 
 RRTNode::RRTNode(RRTPoint point, double cost, RRTNodeList reachable)
     : point{point}, cost{cost}, reachable{reachable} {}
 
-bool RRTNode::operator == (const RRTNode &otherNode) const {
-    return (this->point == otherNode.point
-            && this->cost == otherNode.cost);
+bool RRTNode::operator==(const RRTNode& otherNode) const {
+    return (this->point == otherNode.point && this->cost == otherNode.cost);
 }
 
-RRTPoint RRTNode::getPoint() {
-    return this->point;
-}
+RRTPoint RRTNode::getPoint() { return this->point; }
 
 void RRTNode::setReachable(RRTNodeList reachable) {
     this->reachable = reachable;
@@ -71,26 +61,18 @@ void RRTNode::removeReachable(RRTNode* oldNode) {
     }
 }
 
-const RRTNodeList& RRTNode::getReachable() {
-    return  (this->reachable);
-}
+const RRTNodeList& RRTNode::getReachable() { return (this->reachable); }
 
-double RRTNode::getCost() const {
-    return this->cost;
-}
+double RRTNode::getCost() const { return this->cost; }
 
-void RRTNode::setCost(double newCost) {
-    this->cost = newCost;
-}
-
+void RRTNode::setCost(double newCost) { this->cost = newCost; }
 
 RRTEdge::RRTEdge(RRTNode* from, RRTNode* to, std::vector<XYZCoord> path, double cost)
     : from{from}, to{to}, path{path}, cost{cost} {}
 
-bool RRTEdge::operator == (const RRTEdge &otherEdge) const {
-    bool equal = this->from == otherEdge.from
-                && this->to == otherEdge.to
-                && this->cost == otherEdge.cost;
+bool RRTEdge::operator==(const RRTEdge& otherEdge) const {
+    bool equal =
+        this->from == otherEdge.from && this->to == otherEdge.to && this->cost == otherEdge.cost;
     if (!equal || otherEdge.path.size() != this->path.size()) {
         return false;
     }
@@ -102,24 +84,17 @@ bool RRTEdge::operator == (const RRTEdge &otherEdge) const {
     return true;
 }
 
-void RRTEdge::setCost(double newCost) {
-    this->cost = newCost;
-}
+void RRTEdge::setCost(double newCost) { this->cost = newCost; }
 
-double RRTEdge::getCost() const {
-    return this->cost;
-}
+double RRTEdge::getCost() const { return this->cost; }
 
-const std::vector<XYZCoord>& RRTEdge::getPath() {
-    return this->path;
-}
+const std::vector<XYZCoord>& RRTEdge::getPath() { return this->path; }
 
-void RRTEdge::setPath(std::vector<XYZCoord> path) {
-    this->path = path;
-}
+void RRTEdge::setPath(std::vector<XYZCoord> path) { this->path = path; }
 
-void RRTTree::addNode(RRTNode* connectTo, RRTNode* newNode, std::vector<XYZCoord> path, double cost) {
-    if(this->nodeMap.empty()) {
+void RRTTree::addNode(RRTNode* connectTo, RRTNode* newNode, std::vector<XYZCoord> path,
+                      double cost) {
+    if (this->nodeMap.empty()) {
         std::pair<RRTPoint, RRTNode*> insertNode(newNode->getPoint(), newNode);
         nodeMap.insert(insertNode);
         return;
@@ -134,7 +109,8 @@ void RRTTree::addNode(RRTNode* connectTo, RRTNode* newNode, std::vector<XYZCoord
     connectTo->addReachable(newNode);
 }
 
-void RRTTree::rewireEdge(RRTNode* from, RRTNode* toPrev, RRTNode* toNew, std::vector<XYZCoord> path, double cost) {
+void RRTTree::rewireEdge(RRTNode* from, RRTNode* toPrev, RRTNode* toNew, std::vector<XYZCoord> path,
+                         double cost) {
     std::pair<RRTNode*, RRTNode*> toRemove(from, toPrev);
     std::pair<RRTNode*, RRTNode*> toAdd(from, toNew);
 
