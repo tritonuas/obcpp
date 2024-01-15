@@ -1,17 +1,11 @@
-#include <iostream>
-#include "core/states.hpp"
-#include "cv/hdr.hpp"
-// #include <torch/torch.h>
-
-#include <iostream>
 #include <httplib.h>
-#include "utilities/constants.hpp"
+#include <iostream>
 
 #include "core/states.hpp"
+#include "utilities/constants.hpp"
 #include "pathing/plotting.hpp"
 
-int main()
-{
+int main() {
     std::cout << "Starting HTTP server at port " << SERVER_PORT << std::endl;
 
     httplib::Server svr;
