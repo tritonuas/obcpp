@@ -2,7 +2,7 @@
 
 #include "pathing/static.hpp"
 
-int main (int argc, char *argv[]) {
+int main () {
     std::cout << "Messing with RRT*" << std::endl;
     return 0;
 }

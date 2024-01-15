@@ -89,6 +89,12 @@ target_add_matplot(mavsdk)
 add_executable(load_torchvision_model tests/integration/load_torchvision_model.cpp)
 target_add_torch(load_torchvision_model)
 target_add_torchvision(load_torchvision_model)
+
+# static path making
+add_executable(static "tests/integration/static.cpp")
+target_include_directories(static PRIVATE ${INCLUDE_DIRECTORY})
+target_add_mavsdk(static)
+target_add_matplot(static)
 # =============================
 
 # =============================
