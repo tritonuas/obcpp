@@ -25,7 +25,7 @@ jobs:
         run: mkdir -p "$HOME_DIR/obcpp"
 
       - name: Clone Repo
-        run: git clone --branch $BRANCH_NAME https://oauth2:${{secrets.GITHUB_TOKEN}}@github.com/tritonuas/obcpp.git $HOME_DIR/obcpp
+        run: git clone --recurse-submodules --branch $BRANCH_NAME https://oauth2:${{secrets.GITHUB_TOKEN}}@github.com/tritonuas/obcpp.git $HOME_DIR/obcpp
 
       - name: Pull Submodules
         run: cd protos && git pull
