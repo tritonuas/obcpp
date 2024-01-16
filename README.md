@@ -2,8 +2,6 @@
 
 The `obcpp` is the repository for our `Onboard Computer`, which is currently a Jetson Orin Nano. This is the device that will actually be running software inside of the plane during flight, so it is essential that it works efficiently and without error.
 
-(Thankfully the pixhawk is a completely separate piece of hardware, so if this code crashes the plane will not immediately crash, but let's try not to do that!)
-
 ## Quick Setup
 
 See [full setup](https://github.com/tritonuas/obcpp#setup) below.
