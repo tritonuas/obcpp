@@ -1,5 +1,5 @@
-#ifndef UTILITIES_DATATYPES_HPP_
-#define UTILITIES_DATATYPES_HPP_
+#ifndef INCLUDE_UTILITIES_DATATYPES_HPP_
+#define INCLUDE_UTILITIES_DATATYPES_HPP_
 
 #include <matplot/matplot.h>
 
@@ -94,8 +94,8 @@ class Polyline : public std::vector<XYZCoord> {
   matplot::color color{};
 };
 
-// TODO: these will eventually be redefined in a protobuf, so once the generated
-// protobuf code exists we remove these
+// TODO: these will eventually be redefined in a protobuf,
+// so once the generated protobuf code exists we remove these
 enum class ODLCShape {
   Circle,
   Semicircle,
@@ -118,4 +118,4 @@ struct CompetitionBottle {
 
 typedef std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES> BottleArray;
 
-#endif  // UTILITIES_DATATYPES_HPP_
+#endif  // INCLUDE_UTILITIES_DATATYPES_HPP_

@@ -1,5 +1,5 @@
-#ifndef UTILITIES_CONSTANT_HPP_
-#define UTILITIES_CONSTANT_HPP_
+#ifndef INCLUDE_UTILITIES_CONSTANTS_HPP_
+#define INCLUDE_UTILITIES_CONSTANTS_HPP_
 
 #include <string>
 #include <chrono>
@@ -30,4 +30,4 @@ const int NUM_AIRDROP_BOTTLES = 5;
 // Server
 const int SERVER_PORT = 8080;
 
-#endif // UTILITIES_CONSTANT_HPP_
+#endif  // INCLUDE_UTILITIES_CONSTANTS_HPP_

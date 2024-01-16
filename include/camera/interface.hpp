@@ -1,5 +1,9 @@
-#ifndef CAMERA_INTERFACE_HPP_
-#define CAMERA_INTERFACE_HPP_
+#ifndef INCLUDE_CAMERA_INTERFACE_HPP_
+#define INCLUDE_CAMERA_INTERFACE_HPP_
+
+#include <string>
+#include <vector>
+
 #include <nlohmann/json.hpp>
 #include <opencv2/opencv.hpp>
 
@@ -12,14 +16,13 @@
  * We will also need to develop a custom converter
  *                                      - Boris (10/11)
  */
-class ImageData
-{
-private:
+class ImageData {
+ private:
     const std::string NAME;
     const std::string PATHS;
     const cv::Mat DATA;
 
-public:
+ public:
     ImageData(std::string NAME, std::string PATH, cv::Mat DATA);
     std::string getName();
     std::string getPath();
@@ -28,12 +31,11 @@ public:
 
 // ? possibly convert most common / important json fields to
 // ? data fields
-class CameraConfiguration
-{
-private:
+class CameraConfiguration {
+ private:
     nlohmann::json configJson;
 
-public:
+ public:
     explicit CameraConfiguration(nlohmann::json config);
 
     void updateConfig(nlohmann::json newSetting);
@@ -45,11 +47,10 @@ public:
     nlohmann::json getConfigField();
 };
 
-class CameraInterface
-{
-private:
+class CameraInterface {
+ private:
     CameraConfiguration config;
-        ImageData recentPicture; // might need to move it to public
+    ImageData recentPicture;  // might need to move it to public
     bool doneTakingPicture;      // overengineering time
     std::string uploadPath;
     // Interpreter interp
@@ -57,7 +58,7 @@ private:
 
     void imgConvert();
 
-public:
+ public:
     explicit CameraInterface(CameraConfiguration config);
 
     void connect();
@@ -94,4 +95,4 @@ public:
     // virtual methods for all possible camera actions
 };
 
-#endif // CAMERA_INTERFACE_HPP_
+#endif  // INCLUDE_CAMERA_INTERFACE_HPP_

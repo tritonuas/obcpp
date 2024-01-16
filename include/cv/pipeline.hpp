@@ -1,5 +1,5 @@
-#ifndef CV_PIPELINE_HPP_ 
-#define CV_PIPELINE_HPP_ 
+#ifndef INCLUDE_CV_PIPELINE_HPP_
+#define INCLUDE_CV_PIPELINE_HPP_
 
 
-#endif // CV_PIPELINE_HPP_ 
+#endif  // INCLUDE_CV_PIPELINE_HPP_

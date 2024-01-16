@@ -1,5 +1,5 @@
-#ifndef PATHING_STATIC_HPP_
-#define PATHING_STATIC_HPP_
+#ifndef INCLUDE_PATHING_STATIC_HPP_
+#define INCLUDE_PATHING_STATIC_HPP_
 
 #include <cmath>
 #include <utility>

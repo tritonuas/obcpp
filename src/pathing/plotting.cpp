@@ -1,7 +1,8 @@
+#include <vector>
+#include <string>
+
 #include "pathing/plotting.hpp"
 #include "utilities/datatypes.hpp"
-
-#include <vector>
 
 void PathingPlot::addPoints(std::vector<XYZCoord> pts) {
     for (auto pt : pts) {
@@ -39,7 +40,7 @@ void AnimationPathingPlot::addPoint(XYZCoord pt) {
 }
 
 void AnimationPathingPlot::addPolygon(Polygon polygon) {
-    // TODO: add polygon 
+    // TODO: add polygon
 }
 
 void AnimationPathingPlot::addPolyline(Polyline polyline) {
@@ -69,7 +70,7 @@ void StaticPathingPlot::addPoint(XYZCoord pt) {
 }
 
 void StaticPathingPlot::addPolygon(Polygon polygon) {
-    // TODO: add polygon 
+    // TODO: add polygon
 }
 
 void StaticPathingPlot::addPolyline(Polyline polyline) {

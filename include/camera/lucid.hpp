@@ -1,14 +1,14 @@
-#ifndef CAMERA_LUCID_HPP_
-#define CAMERA_LUCID_HPP_
+#ifndef INCLUDE_CAMERA_LUCID_HPP_
+#define INCLUDE_CAMERA_LUCID_HPP_
 
 #ifdef ARENA_SDK_INSTALLED
 
-#include "interface.hpp"
+#include "camera/interface.hpp"
 
 class LucidCamera : public CameraInterface {
     // override all the camera connection interface functions
 };
 
-#endif // ARENA_SDK_INSTALLED
+#endif  // ARENA_SDK_INSTALLED
 
-#endif // CAMERA_LUCID_HPP_
+#endif  // INCLUDE_CAMERA_LUCID_HPP_

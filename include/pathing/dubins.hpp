@@ -1,40 +1,41 @@
-#ifndef PATHING_DUBINS_HPP_
-#define PATHING_DUBINS_HPP_
+#ifndef INCLUDE_PATHING_DUBINS_HPP_
+#define INCLUDE_PATHING_DUBINS_HPP_
 
+#include <cassert>
 #include <cmath>
 #include <limits>
-#include <cassert>
+#include <vector>
 
-#include "utilities/datatypes.hpp"
 #include "pathing/tree.hpp"
+#include "utilities/datatypes.hpp"
 
 typedef XYZCoord Vector;
 
-struct DubinsPath
-{
+struct DubinsPath {
     DubinsPath(double beta_0, double beta_2, double straight_dist)
         : beta_0(beta_0), beta_2(beta_2), straight_dist(straight_dist) {}
 
-    double beta_0;        // total angle turned in first_turn     radians
-    double beta_2;        // total angle turned in last_turn    radians
-    double straight_dist; // distance that the path moves in a straightaway
-                          // IF [LRL, RLR], beta_1 ==> angle for middle_turn
-                          //                !!! beta_1 only used for total_distance, see Dubins::lrl() or Dubins::rlr()
+    double beta_0;         // total angle turned in first_turn     radians
+    double beta_2;         // total angle turned in last_turn    radians
+    double straight_dist;  // distance that the path moves in a straightaway
+                           // IF [LRL, RLR], beta_1 ==> angle for middle_turn
+                           // !!! beta_1 only used for total_distance,
+                           // see Dubins::lrl() or Dubins::rlr()
 };
 
-struct RRTOption
-{
+struct RRTOption {
     RRTOption(double length, DubinsPath dubins_path, bool has_straight)
         : length(length), dubins_path(dubins_path), has_straight(has_straight) {}
 
-    double length;          // the total length of the path
-    DubinsPath dubins_path; // parameters of DubinsPath
-    bool has_straight;      // if this option has a straight path or not
+    double length;           // the total length of the path
+    DubinsPath dubins_path;  // parameters of DubinsPath
+    bool has_straight;       // if this option has a straight path or not
 };
 
 /**
  *  Reproduction of np.sign() function as used in the older obc
- *  from https://stackoverflow.com/questions/1903954/is-there-a-standard-sign-function-signum-sgn-in-c-c
+ *  from
+ * https://stackoverflow.com/questions/1903954/is-there-a-standard-sign-function-signum-sgn-in-c-c
  *
  *  @param number   ==> any double
  *  @return         ==> -1 IF number < 0
@@ -51,10 +52,10 @@ int sign(T number);
  * @param dividend    ==> the dividend
  * @param divisor    ==> the divisor
  * @returns    ==> positive number reflecting the remainder
- * @see / from ==> https://stackoverflow.com/questions/1907565/c-and-python-different-behaviour-of-the-modulo-operation
+ * @see / from ==>
+ * https://stackoverflow.com/questions/1907565/c-and-python-different-behaviour-of-the-modulo-operation
  */
 double mod(double dividend, double divisor);
-
 
 /**
  *  For sorting function, a min sort bsed on path length
@@ -66,12 +67,12 @@ double mod(double dividend, double divisor);
  */
 bool compareRRTOptionLength(const RRTOption &first, const RRTOption &second);
 
-
 /**
  *  Finds a orthogonal 2-vector to the 2-vector inputted
  *
  *  @param vector   ==> 2-vector
- *  @return         ==> orthogonal 2-vector to @param vector (always a 90 degree rotation counter-clockwise)
+ *  @return         ==> orthogonal 2-vector to @param vector (always a 90 degree rotation
+ * counter-clockwise)
  *  @see    https://mathworld.wolfram.com/PerpendicularVector.html
  */
 Vector findOrthogonalVector2D(const Vector &vector);
@@ -81,7 +82,8 @@ Vector findOrthogonalVector2D(const Vector &vector);
  *
  *   @param vector1  ==> 2-vector
  *   @param vector2  ==> 2-vector
- *   @return         ==> the magnitude of the displacement vector between the two vectors
+ *   @return         ==> the magnitude of the displacement vector between
+ *                          the two vectors
  */
 double distanceBetween(const Vector &vector1, const Vector &vector2);
 
@@ -90,15 +92,14 @@ double distanceBetween(const Vector &vector1, const Vector &vector2);
  *
  *  @param  vector1 ==> 2-vector
  *  @param  vector2 ==> 2-vector
- *  @return         ==> the displacment vector from @param vector2 to @param vector1 that
- *                      terminates half way (i.e. half the magnitude)
+ *  @return         ==> the displacment vector from @param vector2 to
+ *                      @param vector1 that terminates half way
+ *                      (i.e. half the magnitude)
  */
 Vector halfDisplacement(const Vector &vector1, const Vector &vector2);
 
-
-class Dubins
-{
-public:
+class Dubins {
+ public:
     Dubins(double radius, double point_separation);
 
     /**
@@ -112,15 +113,18 @@ public:
     Vector findCenter(const RRTPoint &point, char side) const;
 
     /**
-     *   Finds a point (vector) along a curved path given a distance already traveled
+     *   Finds a point (vector) along a curved path given a distance
+     *      already traveled
      *
-     *   @param starting_point   ==> position vector of the plane (only psi is used to ascertain direction)
+     *   @param starting_point   ==> position vector of the plane (only psi is
+     *                                  used to ascertain direction)
      *   @param beta             ==> angle of the turn (positive is left/ccw)
      *   @param center           ==> center of the circle
      *   @param path_length      ==> the arc-length along the circle
      *   @returns                ==> point along circle path
      */
-    Vector circleArc(const RRTPoint &starting_point, double beta, const Vector &center, double path_length) const;
+    Vector circleArc(const RRTPoint &starting_point, double beta, const Vector &center,
+                     double path_length) const;
     /**
      *  Generates points for the paths that contain a straight section
      *  [LSL, LSR, RSR, RSL]
@@ -130,7 +134,8 @@ public:
      *  @param path     ==> Some given dubins's path parameters
      *  @return         ==> a list of vectors along the entire path
      */
-    std::vector<Vector> generatePointsStraight(const RRTPoint &start, const RRTPoint &end, const DubinsPath &path) const;
+    std::vector<Vector> generatePointsStraight(const RRTPoint &start, const RRTPoint &end,
+                                               const DubinsPath &path) const;
 
     /**
      *  Generates points for the paths that only contain curved sections
@@ -141,7 +146,8 @@ public:
      *  @param path     ==> Some given dubins's path parameters
      *  @return         ==> a list of vectors along the entire path
      */
-    std::vector<Vector> generatePointsCurve(const RRTPoint &start, const RRTPoint &end, const DubinsPath &path) const;
+    std::vector<Vector> generatePointsCurve(const RRTPoint &start, const RRTPoint &end,
+                                            const DubinsPath &path) const;
 
     /**
      *  Abstraction for generating points (curved/straight)
@@ -150,14 +156,17 @@ public:
      *  @param end          ==> vector at end position
      *  @param path         ==> DubinsPath encoding turning and straight information
      *  @param has_straigt  ==> whether the given DubinsPath has a straight section or not
-     *  @return             ==> a list of points that represent the shortest dubin's path from start to end
+     *  @return             ==> a list of points that represent the shortest
+     *                          dubin's path from start to end
      */
-    std::vector<Vector> generatePoints(const RRTPoint &start, const RRTPoint &end, const DubinsPath &path, bool has_straight) const; 
+    std::vector<Vector> generatePoints(const RRTPoint &start, const RRTPoint &end,
+                                       const DubinsPath &path, bool has_straight) const;
 
     /**
      *  First, the straight distance (it turns out) is equal to the
      *  distance between the two centers
-     *  Next it calculates the turning angle (positive [CCW] turn from start to end vector)
+     *  Next it calculates the turning angle (positive [CCW] turn from start to
+     *  end vector)
      *
      *  @param start    ==> vector at start position
      *  @param end      ==> vector at end position
@@ -171,7 +180,8 @@ public:
      *                          - straight_distance
      *                      - if the path has a straight section
      */
-    RRTOption lsl(const RRTPoint &start, const RRTPoint &end, const Vector &center_0, const Vector &center_2) const;
+    RRTOption lsl(const RRTPoint &start, const RRTPoint &end, const Vector &center_0,
+                  const Vector &center_2) const;
 
     /**
      *  First, the straight distance (it turns out) is equal to the
@@ -190,7 +200,8 @@ public:
      *                          - straight_distance
      *                      - if the path has a straight section
      */
-    RRTOption rsr(const RRTPoint &start, const RRTPoint &end, const Vector &center_0, const Vector &center_2) const;
+    RRTOption rsr(const RRTPoint &start, const RRTPoint &end, const Vector &center_0,
+                  const Vector &center_2) const;
 
     /**
      *  Because of the change in turn direction, it is a little more complex to
@@ -212,7 +223,8 @@ public:
      *                          - straight_distance
      *                      - if the path has a straight section
      */
-    RRTOption lsr(const RRTPoint &start, const RRTPoint &end, const Vector &center_0, const Vector &center_2) const;
+    RRTOption lsr(const RRTPoint &start, const RRTPoint &end, const Vector &center_0,
+                  const Vector &center_2) const;
 
     /**
      *  Because of the change in turn direction, it is a little more complex to
@@ -234,7 +246,8 @@ public:
      *                          - straight_distance
      *                      - if the path has a straight section
      */
-    RRTOption rsl(const RRTPoint &start, const RRTPoint &end, const Vector &center_0, const Vector &center_2) const;
+    RRTOption rsl(const RRTPoint &start, const RRTPoint &end, const Vector &center_0,
+                  const Vector &center_2) const;
 
     /**
      *  Using the isoceles triangle made by the centers of the three circles,
@@ -252,7 +265,8 @@ public:
      *                          - straight_distance
      *                      - if the path has a straight section
      */
-    RRTOption lrl(const RRTPoint &start, const RRTPoint &end, const Vector &center_0, const Vector &center_2) const;
+    RRTOption lrl(const RRTPoint &start, const RRTPoint &end, const Vector &center_0,
+                  const Vector &center_2) const;
 
     /**
      *  Using the isoceles triangle made by the centers of the three circles,
@@ -270,7 +284,8 @@ public:
      *                          - straight_distance
      *                      - if the path has a straight section
      */
-    RRTOption rlr(const RRTPoint &start, const RRTPoint &end, const Vector &center_0, const Vector &center_2) const;
+    RRTOption rlr(const RRTPoint &start, const RRTPoint &end, const Vector &center_0,
+                  const Vector &center_2) const;
 
     /**
      * Compute all the possible Dubin's path and returns a list
@@ -278,10 +293,13 @@ public:
      *
      *  @param start    ==> vector at start position
      *  @param end      ==> vector at end position
-     *  @param sort     ==> whether the method sorts the resulting vector DEFALT-->FALSE (searching is faster)
-     *  @return         ==> list containing all the RRTOptions from the path generation
+     *  @param sort     ==> whether the method sorts the resulting vector
+     *                      DEFALT-->FALSE (searching is faster)
+     *  @return         ==> list containing all the RRTOptions from the path
+     *                      generation
      */
-    std::vector<RRTOption> allOptions(const RRTPoint &start, const RRTPoint &end, bool sort = false) const;
+    std::vector<RRTOption> allOptions(const RRTPoint &start, const RRTPoint &end,
+                                      bool sort = false) const;
 
     /**
      * Compute all the possible Dubin's path(s) and
@@ -293,9 +311,9 @@ public:
      */
     std::vector<Vector> dubinsPath(const RRTPoint &start, const RRTPoint &end) const;
 
-private:
+ private:
     const double _radius;
     const double _point_separation;
 };
 
-#endif // PATHING_DUBINS_HPP_
+#endif  // INCLUDE_PATHING_DUBINS_HPP_

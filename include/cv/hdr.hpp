@@ -1,5 +1,5 @@
-#ifndef CV_HDR_HPP_
-#define CV_HDR_HPP_
+#ifndef INCLUDE_CV_HDR_HPP_
+#define INCLUDE_CV_HDR_HPP_
 
 #include <iostream>
 #include <vector>
@@ -29,4 +29,4 @@ int compute_hdr(std::vector<cv::Mat> img_list, const cv::Mat& exposure_times);
 */
 cv::Mat get_image_exposure_times();
 
-#endif
+#endif  // INCLUDE_CV_HDR_HPP_
