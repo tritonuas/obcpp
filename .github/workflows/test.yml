@@ -19,7 +19,7 @@ jobs:
     container:
       image: ghcr.io/tritonuas/obcpp:main
       env:
-        GITHUB_ACTION: "true"
+        GITHUB_ACTIONS: "true"
     steps:
       - name: Create directory
         run: mkdir -p "$HOME_DIR/obcpp"
