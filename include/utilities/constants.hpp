@@ -1,5 +1,5 @@
-#ifndef UTILITIES_CONSTANT_HPP_
-#define UTILITIES_CONSTANT_HPP_
+#ifndef INCLUDE_UTILITIES_CONSTANTS_HPP_
+#define INCLUDE_UTILITIES_CONSTANTS_HPP_
 
 #include <string>
 #include <chrono>
@@ -19,4 +19,4 @@ const matplot::color WAYPOINTS_COLOR = matplot::color::yellow;
 const std::chrono::milliseconds MISSION_PREP_TICK_WAIT = std::chrono::milliseconds(1000);
 const std::chrono::milliseconds PATH_GEN_TICK_WAIT = std::chrono::milliseconds(1000);
 
-#endif // UTILITIES_CONSTANT_HPP_
+#endif  // INCLUDE_UTILITIES_CONSTANTS_HPP_

@@ -1,8 +1,8 @@
-#ifndef UTILITIES_DATATYPES_HPP_
-#define UTILITIES_DATATYPES_HPP_
+#ifndef INCLUDE_UTILITIES_DATATYPES_HPP_
+#define INCLUDE_UTILITIES_DATATYPES_HPP_
 
-#include <vector>
 #include <matplot/matplot.h>
+#include <vector>
 
 #include "utilities/constants.hpp"
 
@@ -51,23 +51,23 @@ struct XYZCoord {
     double z;
     matplot::color color;
 };
- 
-class Polygon : public std::vector<XYZCoord> {
-    public:
-        explicit Polygon(matplot::color color);
 
-        [[nodiscard]] matplot::color getColor() const;
-    private:
-        matplot::color color{};
+class Polygon : public std::vector<XYZCoord> {
+ public:
+    explicit Polygon(matplot::color color);
+
+    [[nodiscard]] matplot::color getColor() const;
+ private:
+    matplot::color color{};
 };
 
 class Polyline: public std::vector<XYZCoord> {
-    public:
-        explicit Polyline(matplot::color color);
+ public:
+    explicit Polyline(matplot::color color);
 
-        [[nodiscard]] matplot::color getColor() const;
-    private:
-        matplot::color color{};
+    [[nodiscard]] matplot::color getColor() const;
+ private:
+    matplot::color color{};
 };
 
 #endif // UTILITIES_DATATYPES_HPP_

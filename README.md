@@ -21,7 +21,7 @@ Now you can use our Make targets.
 - `make obcpp`: Makes the binary which you can run using `./bin/obcpp`
 - `make test`: Run the tests in `tests/unit`
 - `make playground`: Runs the `tests/integration/playground.cpp` test which makes sure all dependencies work correctly
-- `make lint`: Check code for problems using `clang-tidy`
+- `make lint`: Check code for problems using `cpplint`
 
 ## Modules
 
@@ -160,19 +160,30 @@ Note: you may need to clear you CMake cache if things get messed up.
 
 ### Linting
 
-[`clang-tidy`](https://clang.llvm.org/extra/clang-tidy/) is the linter that statically analyzes the code for style issues and other errors.
+[`cpplint`](https://github.com/cpplint/cpplint) is the linter that statically analyzes the code for style issues and other errors. It follows [Google's C++ style guide](http://google.github.io/styleguide/cppguide.html).
 
 #### Setup
-If you're using the Devcontainer, `clang-tidy` will already be installed.
+If you're using the Devcontainer, `cpplint` will already be installed.
 
 If you're working outside the container, install it on your host system.
 
 For Ubuntu/Debian Linux distributions:
 ```sh
-sudo apt-get install clang-tidy
+sudo apt-get install python3-pip
+pip install cpplint
 ```
 
-For macOS, try the proposed solution on this post: https://stackoverflow.com/questions/53111082/how-to-install-clang-tidy-on-macos. If anyone on macOS has an easier solution, feel free to replace this section in a PR.
+For macOS, ensure you have `pip` installed or download it using one of the methods [here](https://pip.pypa.io/en/stable/installation/).
+
+Then, run:
+```sh
+pip install cpplint
+```
+
+Or with brew:
+```sh
+brew install cpplint
+```
 
 #### Usage
 To run the linter locally:
