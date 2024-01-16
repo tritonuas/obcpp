@@ -2,7 +2,7 @@
 
 # This script will be run from inside the build directory because it is executed from 
 # CMake, which we run from inside the build directory
-if [ "$GITHUB_ACTIONS" == "true" ]
+if [ "$GITHUB_ACTIONS" != "true" ]
     git submodule update --init --remote
 fi
 
