@@ -9,7 +9,7 @@
 #include "core/config.hpp"
 #include "core/states.hpp"
 #include "utilities/locks.hpp"
-#include "obc.pb.h"
+#include "protos/obc.pb.h"
 
 GCSServer::GCSServer(uint16_t port, std::shared_ptr<MissionState> state)
     :port{port}, state{state}

@@ -9,7 +9,7 @@
 #include "utilities/datatypes.hpp"
 #include "utilities/constants.hpp"
 
-#include "obc.pb.h"
+#include "protos/obc.pb.h"
 
 /*
  *  Thread-safe wrapper around the Mission Configuration options.

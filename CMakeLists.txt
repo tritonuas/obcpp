@@ -123,7 +123,7 @@ if(CPPLINT)
   # define lint target
   add_custom_target(lint
     COMMAND cpplint
-    --filter=-legal,-readability/todo
+    --filter=-legal,-readability/todo,-build/c++11
     --linelength=100
     --recursive
     ../src

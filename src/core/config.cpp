@@ -11,7 +11,7 @@
 #include "utilities/datatypes.hpp"
 #include "utilities/locks.hpp"
 
-#include "obc.pb.h"
+#include "protos/obc.pb.h"
 
 MissionConfig::MissionConfig():
     flightBoundary(FLIGHT_BOUND_COLOR),

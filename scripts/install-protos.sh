@@ -8,4 +8,7 @@ fi
 
 # Compile both of the protobuf files into the build directory
 mkdir gen_protos
-protoc -I=../protos --cpp_out=./gen_protos ../protos/obc.proto
+cd gen_protos
+mkdir protos
+cd ..
+protoc -I=../protos --cpp_out=./gen_protos/protos ../protos/obc.proto

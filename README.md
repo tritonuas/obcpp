@@ -192,6 +192,14 @@ To run the linter locally:
 make lint
 ```
 
+#### Best Practices
+
+Normally we want to fix every lint error that comes up, but in some cases it doesn't make sense to fix them all. To ignore linting for a specific line, add the following nolint comment as shown:
+
+```cpp
+int x = 0; // NOLINT
+```
+
 ### Formatting
 
 No formatter has been added yet. Formatting will be enforced once one is set up.
