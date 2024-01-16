@@ -60,7 +60,7 @@ std::chrono::milliseconds PathGenerationTick::getWait() const {
 Tick* PathGenerationTick::tick() {
     if (state->isInitPathValidated()) {
         // Path already validated, so move onto next state
-        return nullptr; // TODO: move onto next state
+        return nullptr;  // TODO: move onto next state
     }
 
     auto status = path_future.wait_for(std::chrono::milliseconds(0));

@@ -70,4 +70,4 @@ class Polyline: public std::vector<XYZCoord> {
     matplot::color color{};
 };
 
-#endif // UTILITIES_DATATYPES_HPP_
+#endif  // INCLUDE_UTILITIES_DATATYPES_HPP_

@@ -16,16 +16,12 @@
 MissionConfig::MissionConfig():
     flightBoundary(FLIGHT_BOUND_COLOR),
     airdropBoundary(AIRDROP_BOUND_COLOR),
-    waypoints(WAYPOINTS_COLOR) 
-{
-        
-}
+    waypoints(WAYPOINTS_COLOR) {}
 
 MissionConfig::MissionConfig(std::string filename):
     flightBoundary(FLIGHT_BOUND_COLOR),
     airdropBoundary(AIRDROP_BOUND_COLOR),
-    waypoints(WAYPOINTS_COLOR) 
-{
+    waypoints(WAYPOINTS_COLOR) {
     // TODO: load from file
 }
 
@@ -51,12 +47,13 @@ const std::vector<Bottle>& MissionConfig::getAirdropBottles() {
     ReadLock lock(this->mut);
 
     return this->bottles;
-} 
+}
 
 std::tuple<Polygon, Polygon, Polyline, std::vector<Bottle>> MissionConfig::getConfig() {
     ReadLock lock(this->mut);
 
-    return std::make_tuple(this->flightBoundary, this->airdropBoundary, this->waypoints, this->bottles);
+    return std::make_tuple(
+        this->flightBoundary, this->airdropBoundary, this->waypoints, this->bottles);
 }
 
 void MissionConfig::setFlightBoundary(Polygon bound) {
