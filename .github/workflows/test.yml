@@ -13,12 +13,6 @@ env:
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
 
 jobs:
-  protoc_check:
-    name: ProtoC check
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check version
-        run: echo | protoc --version
   test:
     name: C++ Tests 
     runs-on: ubuntu-latest
@@ -36,18 +30,12 @@ jobs:
       - name: Pull Submodules
         run: cd "$HOME_DIR/obcpp" && git rm protos && git submodule add https://oauth2:${{secrets.GITHUB_TOKEN}}@github.com/tritonuas/protos.git && cd protos && git pull
 
-      - name: Test1
-        run: echo | protoc --version
-
-      - name: Test7
-        run: echo | head -n 140 /usr/include/google/protobuf/stubs/common.h
-
       - name: Set up CMake
         # uses ${CMAKE_PREFIX_PATH} set in Dockerfile env
         run: cd "$HOME_DIR/obcpp" && mkdir build && cd build && sudo cmake -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" ..
 
-      - name: Test4
-        run: cd "$HOME_DIR/obcpp" && echo | head -n 20 build/gen_protos/protos/obc.pb.h
+      - name: Check PROTOC systemwide
+        run: grep --recursive 'PROTOBUF_VERSION\|PROTOBUF_MIN_PROTOC_VERSION' --include *.h --include *.hpp /
 
       - name: Run Tests
         run: cd "$HOME_DIR/obcpp/build" && sudo make test
