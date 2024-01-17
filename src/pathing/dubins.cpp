@@ -104,9 +104,7 @@ std::vector<Vector> Dubins::generatePointsStraight(const RRTPoint &start, const 
         //  * -1 if the plane is turning right)
         double angle = start.psi + (std::abs(path.beta_0) - HALF_PI) * sign(path.beta_0);
         initial_terminal_point = center_0 + _radius * Vector{std::cos(angle), std::sin(angle), 0};
-    }
-    else
-    {
+    } else {
         initial_terminal_point = Vector{start.point.x, start.point.y, start.point.z};
     }
 
@@ -115,8 +113,7 @@ std::vector<Vector> Dubins::generatePointsStraight(const RRTPoint &start, const 
         // vector
         double angle = end.psi + (-std::abs(path.beta_2) - HALF_PI) * sign(path.beta_2);
         final_terminal_point = center_2 + _radius * Vector{std::cos(angle), std::sin(angle), 0};
-    }
-    else {
+    } else {
         final_terminal_point = Vector{end.point.x, end.point.y, 0};
     }
 
