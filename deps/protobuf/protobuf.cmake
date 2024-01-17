@@ -8,4 +8,6 @@ function(target_add_protobuf target_name)
         ${PROTOBUF_LIBRARY}
     )
 
+    message(FATAL_ERROR ${Protobuf_VERSION})
+
 endfunction()
