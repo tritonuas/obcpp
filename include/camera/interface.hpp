@@ -1,7 +1,27 @@
-#ifndef CAMERA_INTERFACE_HPP_
-#define CAMERA_INTERFACE_HPP_
+#ifndef INCLUDE_CAMERA_INTERFACE_HPP_
+#define INCLUDE_CAMERA_INTERFACE_HPP_
+
+#include <string>
+#include <vector>
+#include <memory>
+
 #include <nlohmann/json.hpp>
 #include <opencv2/opencv.hpp>
+
+// class to contain all telemetry that should be tagged with an image.
+// In the future this could be in a mavlink file.
+class ImageTelemetry {
+ public:
+    ImageTelemetry(double latitude, double longitude, double altitude, double airspeed, double yaw,
+                   double pitch, double roll);
+    const double latitude;
+    const double longitude;
+    const double altitude;
+    const double airspeed;
+    const double yaw;
+    const double pitch;
+    const double roll;
+};
 
 /*
  * FYI: this is class that will standardize image data but
@@ -12,67 +32,69 @@
  * We will also need to develop a custom converter
  *                                      - Boris (10/11)
  */
-class ImageData
-{
-private:
+class ImageData {
+ private:
     const std::string NAME;
-    const std::string PATHS;
+    const std::string PATH;
     const cv::Mat DATA;
+    const ImageTelemetry TELEMETRY;
 
-public:
-    ImageData(std::string NAME, std::string PATH, cv::Mat DATA);
-    std::string getName();
-    std::string getPath();
-    cv::Mat getData();
+ public:
+    ImageData(std::string NAME, std::string PATH, cv::Mat DATA, ImageTelemetry TELEMETRY);
+    ImageData(const ImageData&) = default;
+    std::string getName() const;
+    std::string getPath() const;
+    cv::Mat getData() const;
+    ImageTelemetry getTelemetry() const;
 };
 
 // ? possibly convert most common / important json fields to
 // ? data fields
-class CameraConfiguration
-{
-private:
+class CameraConfiguration {
+ private:
     nlohmann::json configJson;
 
-public:
+ public:
     explicit CameraConfiguration(nlohmann::json config);
 
     void updateConfig(nlohmann::json newSetting);
 
-    void updateConfigField(std::string key, T value);
+    // void updateConfigField(std::string key, T value);
 
     nlohmann::json getConfig();
 
     nlohmann::json getConfigField();
 };
 
-class CameraInterface
-{
-private:
+class CameraInterface {
+ private:
     CameraConfiguration config;
-        ImageData recentPicture; // might need to move it to public
-    bool doneTakingPicture;      // overengineering time
+    std::unique_ptr<ImageData> recentPicture;  // might need to move it to public
+    bool doneTakingPicture;                    // overengineering time
     std::string uploadPath;
     // Interpreter interp
     // TODO: SERVER CONNECTION HERE ?
 
     void imgConvert();
 
-public:
+ public:
     explicit CameraInterface(CameraConfiguration config);
 
-    void connect();
+    virtual ~CameraInterface() = default;
 
-    bool verifyConnection();
+    virtual void connect() = 0;
 
-    void takePicture();
+    virtual bool verifyConnection() = 0;
 
-    ImageData getLastPicture();
+    virtual void takePicture() = 0;
 
-    bool takePictureForSeconds(int sec);
+    virtual ImageData getLastPicture() = 0;
 
-    void startTakingPictures(double intervalSec);
+    virtual bool takePictureForSeconds(int sec) = 0;
 
-    bool isDoneTakingPictures();
+    virtual void startTakingPictures(double intervalSec) = 0;
+
+    virtual bool isDoneTakingPictures() = 0;
 
     CameraConfiguration getConfig();
 
@@ -94,4 +116,4 @@ public:
     // virtual methods for all possible camera actions
 };
 
-#endif // CAMERA_INTERFACE_HPP_
+#endif  // INCLUDE_CAMERA_INTERFACE_HPP_

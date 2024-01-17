@@ -40,7 +40,6 @@ include(${DEPS_DIRECTORY}/torch/torch.cmake)
 include(${DEPS_DIRECTORY}/torchvision/torchvision.cmake)
 include(${DEPS_DIRECTORY}/arena-sdk/arena.cmake)
 include(${DEPS_DIRECTORY}/json/json.cmake)
-include(${DEPS_DIRECTORY}/eigen/eigen.cmake)
 include(${DEPS_DIRECTORY}/opencv/opencv.cmake)
 include(${DEPS_DIRECTORY}/httplib/httplib.cmake)
 include(${DEPS_DIRECTORY}/mavsdk/mavsdk.cmake)
@@ -60,7 +59,6 @@ target_add_torch(${PROJECT_NAME})
 # target_add_arena(${PROJECT_NAME}) # Tyler: currently broken, so we had to comment this out
 target_add_torchvision(${PROJECT_NAME})
 target_add_json(${PROJECT_NAME})
-target_add_eigen(${PROJECT_NAME})
 target_add_opencv(${PROJECT_NAME})
 target_add_httplib(${PROJECT_NAME})
 target_add_mavsdk(${PROJECT_NAME})
@@ -74,9 +72,8 @@ target_add_matplot(${PROJECT_NAME})
 add_executable(playground ${SOURCES} "tests/integration/playground.cpp")
 target_include_directories(playground PRIVATE ${INCLUDE_DIRECTORY})
 target_add_torch(playground)
-target_add_arena(playground)
+# target_add_arena(playground)
 target_add_json(playground)
-target_add_eigen(playground) 
 target_add_opencv(playground) 
 target_add_httplib(playground)
 target_add_mavsdk(playground)
@@ -89,7 +86,7 @@ target_add_mavsdk(mavsdk)
 target_add_matplot(mavsdk)
 
 # load_torchvision_model
-add_executable(load_torchvision_model tests/integration/load_torchvision_model.cpp)
+add_executable(load_torchvision_model "tests/integration/load_torchvision_model.cpp")
 target_add_torch(load_torchvision_model)
 target_add_torchvision(load_torchvision_model)
 
@@ -100,6 +97,11 @@ target_add_torch(saliency)
 target_add_opencv(saliency) 
 target_add_torchvision(saliency)
 
+# cv_pipeline 
+add_executable(cv_pipeline ${SOURCES} "tests/integration/cv_pipeline.cpp")
+target_add_json(cv_pipeline)
+target_add_matplot(cv_pipeline)
+target_add_opencv(cv_pipeline)
 # =============================
 
 # =============================
@@ -110,67 +112,21 @@ add_subdirectory(${DEPS_DIRECTORY}/google-test)
 
 # =============================
 # Linting 
-get_target_property(PROJECT_LIBS_INCLUDE_DIRS ${PROJECT_NAME} INCLUDE_DIRECTORIES)
 
-foreach(dir ${PROJECT_LIBS_INCLUDE_DIRS})
-    string(APPEND LIB_INCLUDE_CLANG_TIDY_STRING "-I${dir};")
-endforeach()
-
-# Add caching to clang-tidy using
-# https://github.com/matus-chochlik/ctcache (doesn't work)
-# stolen from https://stackoverflow.com/questions/53597508/is-it-possible-to-accelerate-clang-tidy-using-ccache-or-similar
-find_program (CLANG_TIDY_CACHE_PATH NAMES "clang-tidy-cache")
-if (CLANG_TIDY_CACHE_PATH)
-    find_program (_CLANG_TIDY_PATH NAMES "clang-tidy" "clang-tidy-15" "clang-tidy-14" "clang-tidy-13" "clang-tidy-12")
-
-    # Why do we use ';' here?
-    # It's a cmake black magic: https://cmake.org/cmake/help/latest/prop_tgt/LANG_CLANG_TIDY.html#prop_tgt:%3CLANG%3E_CLANG_TIDY
-    # The CLANG_TIDY_PATH is passed to CMAKE_CXX_CLANG_TIDY, which follows CXX_CLANG_TIDY syntax.
-    set (CLANG_TIDY_PATH "${CLANG_TIDY_CACHE_PATH};${_CLANG_TIDY_PATH}" CACHE STRING "A combined command to run clang-tidy with caching wrapper")
-else ()
-    find_program (CLANG_TIDY_PATH NAMES "clang-tidy" "clang-tidy-15" "clang-tidy-14" "clang-tidy-13" "clang-tidy-12")
-endif ()
-
-# set(CTCACHE_DIR "/home/tuas/mycache") # testing
-set (CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_PATH}")
-
-# Adding lint target if clang-tidy executable is found
-find_program(CLANG_TIDY "clang-tidy")
-if(CLANG_TIDY)
+# Adding lint target if cpplint executable is found
+find_program(CPPLINT "cpplint")
+if(CPPLINT)
   # define lint target
   add_custom_target(lint
-    COMMAND ${CMAKE_CXX_CLANG_TIDY} 
-    ${SOURCES}
-    ${HEADERS}
-    --use-color
-    --
-    -std=c++${CMAKE_CXX_STANDARD}
-    -I${INCLUDE_DIRECTORY}
-    # NOTE:might need to add include directory if library's 
-    # include directory is not in LIB_INCLUDE_CLANG_TIDY_STRING
-    -I${CMAKE_BINARY_DIR}/_deps/json-src/single_include
-    ${LIB_INCLUDE_CLANG_TIDY_STRING}
-  )
-
-  # run formatting using clang-tidy
-  add_custom_target(format
-    COMMAND ${CMAKE_CXX_CLANG_TIDY} 
-    ${SOURCES}
-    ${HEADERS}
-    --use-color
-    --fix
-    --fix-errors
-    --fix-notes
-    --format-style=file
-    -extra-arg=-std=c++${CMAKE_CXX_STANDARD}
-    --
-    -I${INCLUDE_DIRECTORY}
-    # NOTE:might need to add include directory if library's 
-    # include directory is not in LIB_INCLUDE_CLANG_TIDY_STRING
-    -I${CMAKE_BINARY_DIR}/_deps/json-src/single_include
-    ${LIB_INCLUDE_CLANG_TIDY_STRING}
+    COMMAND cpplint
+    # Do not require licenses, TODO assignment, Google versions of C++ libs
+    --filter=-legal,-readability/todo,-build/c++11
+    --linelength=100
+    --recursive
+    ../src
+    ../include
   )
 else()
-   message(FATAL_ERROR "clang-tidy executable not found. Check the README for steps to install it on your system")
+  message(FATAL_ERROR "cpplint executable not found. Check the README for steps to install it on your system")
 endif()
 # =============================

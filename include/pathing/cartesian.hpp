@@ -1,5 +1,5 @@
-#ifndef UTILITIES_CARTESIAN_HPP_
-#define UTILITIES_CARTESIAN_HPP_
+#ifndef INCLUDE_PATHING_CARTESIAN_HPP_
+#define INCLUDE_PATHING_CARTESIAN_HPP_
 
 class CartesianConverter {
     /*
@@ -11,4 +11,4 @@ class CartesianConverter {
     */
 };
 
-#endif // UTILITIES_CARTESIAN_HPP_
+#endif  // INCLUDE_PATHING_CARTESIAN_HPP_

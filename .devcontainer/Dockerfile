@@ -11,15 +11,21 @@ RUN groupadd --gid $USER_GID $USERNAME \
 RUN apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y build-essential \
+                           sudo \
                            gdb \
                            git \
-                           clang-tidy \
+                           python3 \
+                           python3-pip \
                            wget \
                            ccache \
                            vim \
                            curl \
                            unzip \
+                           protobuf-compiler \
                            libopencv-dev
+
+RUN echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
+    && chmod 0440 /etc/sudoers.d/$USERNAME
 
 # Download latest CMake from their repositories
 RUN apt-get update \
@@ -44,12 +50,6 @@ RUN wget https://github.com/mavlink/MAVSDK/releases/download/v1.4.17/libmavsdk-d
 # cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev
 # python-dev python-numpy libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libjasper-dev libdc1394-22-dev
 
-# Add clang-tidy-cache (doesn't work)
-ARG CLANG_TIDY_SHA1=c191254ea00d47ade11d7170ef82fe038c213774
-RUN curl -Lo /usr/bin/clang-tidy-cache \
-        "https://raw.githubusercontent.com/matus-chochlik/ctcache/$CLANG_TIDY_SHA1/clang-tidy-cache" \
-    && chmod +x /usr/bin/clang-tidy-cache
-
 # pull pre-built libtorch
 ARG LIBTORCH_VERSION=2.1.0
 ARG LIBTORCH_INSTALL_DIR=/libtorch-tmp
@@ -71,6 +71,8 @@ RUN wget "https://github.com/pytorch/vision/archive/refs/tags/v${TORCHVISION_VER
     && cmake -DWITH_CUDA=off -D_GLIBCXX_USE_CXX11_ABI=1 -DCMAKE_BUILD_TYPE=Release .. \
     && make -j2 \
     && make install
+
+RUN pip3 install cpplint
 
 # login as non-root user
 USER $USERNAME
