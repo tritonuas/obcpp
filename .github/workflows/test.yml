@@ -13,6 +13,12 @@ env:
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
 
 jobs:
+  protoc_check:
+    name: ProtoC check
+    runs-on: ubuntu-latest
+    steps:
+      name: Check version
+      run: echo | protoc --version
   test:
     name: C++ Tests 
     runs-on: ubuntu-latest
