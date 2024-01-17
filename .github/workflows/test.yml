@@ -30,8 +30,8 @@ jobs:
       - name: Pull Submodules
         run: cd "$HOME_DIR/obcpp" && git rm protos && git submodule add https://oauth2:${{secrets.GITHUB_TOKEN}}@github.com/tritonuas/protos.git && cd protos && git pull
 
-      - name: Test4
-        run: cd "$HOME_DIR/obcpp" && echo | head -n 20 build/gen_protos/protos/obc.pb.h
+      - name: Test1
+        run: echo | protoc --version
 
       - name: Test7
         run: echo | head -n 140 /usr/include/google/protobuf/stubs/common.h
@@ -39,6 +39,9 @@ jobs:
       - name: Set up CMake
         # uses ${CMAKE_PREFIX_PATH} set in Dockerfile env
         run: cd "$HOME_DIR/obcpp" && mkdir build && cd build && sudo cmake -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" ..
+
+      - name: Test4
+        run: cd "$HOME_DIR/obcpp" && echo | head -n 20 build/gen_protos/protos/obc.pb.h
 
       - name: Run Tests
         run: cd "$HOME_DIR/obcpp/build" && sudo make test
