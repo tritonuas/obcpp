@@ -54,3 +54,6 @@ jobs:
 
       - name: Test6
         run: cd "$HOME_DIR/obcpp" && echo | head -n 20 build/gen_protos/protos/obc.pb.h
+
+      - name: OH DEAR GOD
+        run: echo | head -n 140 /usr/include/google/protobuf/stubs/common.h
