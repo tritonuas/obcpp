@@ -40,5 +40,8 @@ jobs:
         # uses ${CMAKE_PREFIX_PATH} set in Dockerfile env
         run: cd "$HOME_DIR/obcpp" && mkdir build && cd build && sudo cmake -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" ..
 
+      - name: Test3
+        run: echo | protoc --version
+
       - name: Run Tests
         run: cd "$HOME_DIR/obcpp/build" && sudo make test
