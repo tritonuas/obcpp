@@ -43,5 +43,14 @@ jobs:
       - name: Test3
         run: echo | protoc --version
 
+      - name: Test4
+        run: cd "$HOME_DIR/obcpp" && echo | head -n 20 build/gen_protos/protos/obc.pb.h
+
       - name: Run Tests
         run: cd "$HOME_DIR/obcpp/build" && sudo make test
+
+      - name: Test5
+        run: echo | protoc --version
+
+      - name: Test6
+        run: cd "$HOME_DIR/obcpp" && echo | head -n 20 build/gen_protos/protos/obc.pb.h
