@@ -47,9 +47,7 @@ XYZCoord operator*(double scalar, const XYZCoord &vector) {
     return result;
 }
 
-XYZCoord operator*(const XYZCoord &vector, double scalar) {
-    return scalar * vector;
-}
+XYZCoord operator*(const XYZCoord &vector, double scalar) { return scalar * vector; }
 
 double XYZCoord::norm() const {
     return sqrt(this->x * this->x    //
@@ -69,26 +67,19 @@ XYZCoord XYZCoord::normalized() const {
 
 Polygon::Polygon(matplot::color color) { this->color = color; }
 
-Polyline::Polyline(matplot::color color)
-{
-    this->color = color;
-}
 
-bool Polygon::pointInBounds(XYZCoord point) const
-{
+bool Polygon::pointInBounds(XYZCoord point) const {
     bool is_inside = false;
     // Initialize with the last point
     const XYZCoord *previous_point = &(*this)[this->size() - 1];
 
-    for (const XYZCoord &current_point : *this)
-    {
+    for (const XYZCoord &current_point : *this) {
         // divide by zero covered by the first condition
         if ((previous_point->y > point.y) != (current_point.y > point.y) &&
-            (point.x < (current_point.x - previous_point->x) //
-                    * (point.y - previous_point->y) //
-                    / (current_point.y - previous_point->y) //
-                    + previous_point->x))
-        {
+            (point.x < (current_point.x - previous_point->x)            //
+                               * (point.y - previous_point->y)          //
+                               / (current_point.y - previous_point->y)  //
+                           + previous_point->x)) {
             is_inside = !is_inside;
         }
 

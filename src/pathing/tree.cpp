@@ -1,9 +1,9 @@
 #include "pathing/tree.hpp"
 
 std::size_t PointHashFunction::operator()(const RRTPoint& point) const {
-    unsigned int h1 = std::hash<double>{}(point.xyz.x);
-    unsigned int h2 = std::hash<double>{}(point.xyz.y);
-    unsigned int h3 = std::hash<double>{}(point.xyz.z);
+    unsigned int h1 = std::hash<double>{}(point.point.x);
+    unsigned int h2 = std::hash<double>{}(point.point.y);
+    unsigned int h3 = std::hash<double>{}(point.point.z);
 
     unsigned int c1 = 0.5 * (h1 + h2) * (h1 + h2 + 1) + h2;
     unsigned int c2 = 0.5 * (c1 + h3) * (c1 + h3 + 1) + h3;
