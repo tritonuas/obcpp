@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "utilities/constants.hpp"
+#include "protos/obc.pb.h"
 
 struct XYZCoord {
     XYZCoord(double x, double y, double z)
@@ -51,6 +52,10 @@ struct XYZCoord {
     double z;
     matplot::color color;
 };
+
+// Because this is a protos class, mildly inconvenient to construct it
+// so we have our own "constructor" here
+GPSCoord makeGPSCoord(double lat, double lng, double alt);
 
 class Polygon : public std::vector<XYZCoord> {
  public:

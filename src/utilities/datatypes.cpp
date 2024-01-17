@@ -1,4 +1,5 @@
 #include "utilities/datatypes.hpp"
+#include "protos/obc.pb.h"
 
 #include <cmath>
 /*
@@ -65,6 +66,14 @@ XYZCoord XYZCoord::normalized() const {
     }
 
     return (1 / this->norm()) * (*this);
+}
+
+GPSCoord makeGPSCoord(double lat, double lng, double alt) {
+    GPSCoord coord;
+    coord.set_latitude(lat);
+    coord.set_longitude(lng);
+    coord.set_altitude(alt);
+    return coord;
 }
 
 Polygon::Polygon(matplot::color color) { this->color = color; }
