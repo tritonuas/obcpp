@@ -17,8 +17,8 @@ jobs:
     name: ProtoC check
     runs-on: ubuntu-latest
     steps:
-      name: Check version
-      run: echo | protoc --version
+      - name: Check version
+        run: echo | protoc --version
   test:
     name: C++ Tests 
     runs-on: ubuntu-latest
