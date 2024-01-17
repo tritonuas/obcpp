@@ -1,4 +1,4 @@
-FROM amd64/ubuntu:22.04
+FROM amd64/ubuntu:23.10
 
 ARG USERNAME=tuas USER_UID=1000 USER_GID=1000 DEBIAN_FRONTEND=noninteractive
 
