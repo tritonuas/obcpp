@@ -20,7 +20,6 @@ RUN apt-get update \
                            ccache \
                            vim \
                            curl \
-                           protobuf-compiler \
                            unzip \
                            protobuf-compiler \
                            libopencv-dev
