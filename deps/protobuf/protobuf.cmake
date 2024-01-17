@@ -8,7 +8,7 @@ function(target_add_protobuf target_name)
         ${PROTOBUF_LIBRARY}
     )
 
-    message("At least it's not... Freddy Fazbear")
-    message(${Protobuf_VERSION})
+    message(STATUS "At least it's not... Freddy Fazbear")
+    message(STATUS ${Protobuf_VERSION})
 
 endfunction()
