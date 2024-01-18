@@ -1,16 +1,18 @@
-FROM amd64/ubuntu:22.04
+FROM amd64/ubuntu:23.10
 
 ARG USERNAME=tuas USER_UID=1000 USER_GID=1000 DEBIAN_FRONTEND=noninteractive
 
 # Create a non-root user
-RUN groupadd --gid $USER_GID $USERNAME \
-    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
+RUN groupadd -f --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME; exit 0
+# exit 0 ensures that it won't prematurely stop if for some reason the user already exists
 
 # https://gist.github.com/SSARCandy/fc960d8905330ac695e71e3f3807ce3d
 # OpenCV dependencies from above
 RUN apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y build-essential \
+                           software-properties-common \
                            sudo \
                            gdb \
                            git \
@@ -23,6 +25,9 @@ RUN apt-get update \
                            unzip \
                            protobuf-compiler \
                            libopencv-dev
+
+RUN apt-add-repository universe
+RUN apt-get install -y cpplint
 
 RUN echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME
@@ -71,8 +76,6 @@ RUN wget "https://github.com/pytorch/vision/archive/refs/tags/v${TORCHVISION_VER
     && cmake -DWITH_CUDA=off -D_GLIBCXX_USE_CXX11_ABI=1 -DCMAKE_BUILD_TYPE=Release .. \
     && make -j2 \
     && make install
-
-RUN pip3 install cpplint
 
 # login as non-root user
 USER $USERNAME
