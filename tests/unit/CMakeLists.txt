@@ -16,10 +16,6 @@ target_add_httplib(${BINARY})
 target_add_json(${BINARY})
 target_add_mavsdk(${BINARY})
 target_add_matplot(${BINARY})
-<<<<<<< Updated upstream
-=======
-target_add_httplib(${BINARY})
->>>>>>> Stashed changes
 
 add_test(NAME ${BINARY} COMMAND ${BINARY})
 
