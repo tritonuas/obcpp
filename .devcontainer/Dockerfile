@@ -2,8 +2,6 @@ FROM amd64/ubuntu:23.10
 
 ARG USERNAME=tuas USER_UID=1000 USER_GID=1000 DEBIAN_FRONTEND=noninteractive
 
-RUN userdel
-
 # Create a non-root user
 RUN groupadd -f --gid $USER_GID $USERNAME \
     && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME; exit 0
