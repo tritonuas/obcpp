@@ -44,6 +44,7 @@ include(${DEPS_DIRECTORY}/opencv/opencv.cmake)
 include(${DEPS_DIRECTORY}/httplib/httplib.cmake)
 include(${DEPS_DIRECTORY}/mavsdk/mavsdk.cmake)
 include(${DEPS_DIRECTORY}/matplot/matplot.cmake)
+include(${DEPS_DIRECTORY}/protobuf/protobuf.cmake)
 # =============================
 
 # =============================
