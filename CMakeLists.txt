@@ -54,12 +54,8 @@ file(GLOB_RECURSE HEADERS "include/*.hpp")
 
 set(INCLUDE_DIRECTORY ${PROJECT_SOURCE_DIR}/include)
 add_executable(${PROJECT_NAME} ${SOURCES} "src/main.cpp")
-<<<<<<< Updated upstream
-include_directories(${INCLUDE_DIRECTORY})
-=======
 include_directories(${INCLUDE_DIRECTORY} ${GEN_PROTOS_DIRECTORY})
 target_add_protobuf(${PROJECT_NAME})
->>>>>>> Stashed changes
 target_add_torch(${PROJECT_NAME})
 # target_add_arena(${PROJECT_NAME}) # Tyler: currently broken, so we had to comment this out
 target_add_torchvision(${PROJECT_NAME})
