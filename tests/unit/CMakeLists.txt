@@ -9,6 +9,7 @@ set(INCLUDE_DIRECTORY ${PROJECT_SOURCE_DIR}/include)
 include_directories(${INCLUDE_DIRECTORY})
 
 target_link_libraries(${BINARY} PUBLIC gtest_main)
+target_add_protobuf(${BINARY})
 target_add_matplot(${BINARY})
 target_add_opencv(${BINARY}) 
 target_add_httplib(${BINARY})

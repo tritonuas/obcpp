@@ -24,7 +24,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ./bin)
 
 SET(GCC_COMPILE_FLAGS "")
-SET(GCC_LINK_FLAGS    "-lopencv_core -lopencv_highgui -lopencv_features2d -lopencv_flann -lopencv_imgcodecs -lopencv_dnn -lopencv_videoio -lopencv_imgproc -lopencv_ml -lopencv_photo")
+SET(GCC_LINK_FLAGS    "-lprotobuf -lopencv_core -lopencv_highgui -lopencv_features2d -lopencv_flann -lopencv_imgcodecs -lopencv_dnn -lopencv_videoio -lopencv_imgproc -lopencv_ml -lopencv_photo -lprotobuf")
 
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COMPILE_FLAGS}")
 SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${GCC_LINK_FLAGS}")
@@ -44,6 +44,7 @@ include(${DEPS_DIRECTORY}/opencv/opencv.cmake)
 include(${DEPS_DIRECTORY}/httplib/httplib.cmake)
 include(${DEPS_DIRECTORY}/mavsdk/mavsdk.cmake)
 include(${DEPS_DIRECTORY}/matplot/matplot.cmake)
+include(${DEPS_DIRECTORY}/protobuf/protobuf.cmake)
 # =============================
 
 # =============================
@@ -54,7 +55,8 @@ file(GLOB_RECURSE HEADERS "include/*.hpp")
 
 set(INCLUDE_DIRECTORY ${PROJECT_SOURCE_DIR}/include)
 add_executable(${PROJECT_NAME} ${SOURCES} "src/main.cpp")
-include_directories(${INCLUDE_DIRECTORY})
+include_directories(${INCLUDE_DIRECTORY} ${GEN_PROTOS_DIRECTORY})
+target_add_protobuf(${PROJECT_NAME})
 target_add_torch(${PROJECT_NAME})
 # target_add_arena(${PROJECT_NAME}) # Tyler: currently broken, so we had to comment this out
 target_add_torchvision(${PROJECT_NAME})
