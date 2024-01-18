@@ -1,10 +1,10 @@
 FROM amd64/ubuntu:23.10
 
-ARG USERNAME=tuas USER_UID=1000 USER_GID=1000 DEBIAN_FRONTEND=noninteractive
+ARG USERNAME=tuas USER_UID=1007 USER_GID=1000 DEBIAN_FRONTEND=noninteractive
 
 # Create a non-root user
 RUN groupadd -f --gid $USER_GID $USERNAME \
-    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME; exit 0
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
 # exit 0 ensures that it won't prematurely stop if for some reason the user already exists
 
 # https://gist.github.com/SSARCandy/fc960d8905330ac695e71e3f3807ce3d
