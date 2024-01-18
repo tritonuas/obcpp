@@ -12,6 +12,7 @@ RUN groupadd -f --gid $USER_GID $USERNAME \
 RUN apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y build-essential \
+                           software-properties-common \
                            sudo \
                            gdb \
                            git \
@@ -24,6 +25,9 @@ RUN apt-get update \
                            unzip \
                            protobuf-compiler \
                            libopencv-dev
+
+RUN apt-add-repository universe
+RUN apt-get install -y cpplint
 
 RUN echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME
@@ -72,8 +76,6 @@ RUN wget "https://github.com/pytorch/vision/archive/refs/tags/v${TORCHVISION_VER
     && cmake -DWITH_CUDA=off -D_GLIBCXX_USE_CXX11_ABI=1 -DCMAKE_BUILD_TYPE=Release .. \
     && make -j2 \
     && make install
-
-RUN pip3 install cpplint
 
 # login as non-root user
 USER $USERNAME
