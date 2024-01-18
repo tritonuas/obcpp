@@ -1,6 +1,10 @@
-FROM amd64/ubuntu:23.10
+FROM amd64/ubuntu:22.04
 
+<<<<<<< Updated upstream
 ARG USERNAME=tuas USER_UID=1007 USER_GID=1000 DEBIAN_FRONTEND=noninteractive
+=======
+ARG USERNAME=tuas USER_UID=1000 USER_GID=1000 DEBIAN_FRONTEND=noninteractive
+>>>>>>> Stashed changes
 
 # Create a non-root user
 RUN groupadd -f --gid $USER_GID $USERNAME \
