@@ -1,6 +1,6 @@
 FROM amd64/ubuntu:23.10
 
-ARG USERNAME=tuas USER_UID=1007 USER_GID=1000 DEBIAN_FRONTEND=noninteractive
+ARG USERNAME=tuas USER_UID=1007 USER_GID=1007 DEBIAN_FRONTEND=noninteractive
 
 # Create a non-root user
 RUN groupadd -f --gid $USER_GID $USERNAME \

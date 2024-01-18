@@ -34,9 +34,6 @@ jobs:
         # uses ${CMAKE_PREFIX_PATH} set in Dockerfile env
         run: cd "$HOME_DIR/obcpp" && mkdir build && cd build && sudo cmake -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" ..
 
-      - name: Check PROTOC systemwide
-        run: grep --recursive 'PROTOBUF_VERSION\|PROTOBUF_MIN_PROTOC_VERSION' --include *.h --include *.hpp /
-
       - name: Run Tests
         run: cd "$HOME_DIR/obcpp/build" && sudo make test
 
