@@ -10,6 +10,7 @@ set(GEN_PROTOS_DIRECTORY ${PROJECT_SOURCE_DIR}/build/gen_protos)
 include_directories(${INCLUDE_DIRECTORY} ${GEN_PROTOS_DIRECTORY})
 
 target_link_libraries(${BINARY} PUBLIC gtest_main)
+target_add_protobuf(${BINARY})
 target_add_matplot(${BINARY})
 target_add_opencv(${BINARY}) 
 target_add_httplib(${BINARY})
@@ -17,7 +18,6 @@ target_add_json(${BINARY})
 target_add_mavsdk(${BINARY})
 target_add_matplot(${BINARY})
 target_add_httplib(${BINARY})
-target_add_protobuf(${BINARY})
 
 add_test(NAME ${BINARY} COMMAND ${BINARY})
 

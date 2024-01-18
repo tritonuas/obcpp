@@ -24,7 +24,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ./bin)
 
 SET(GCC_COMPILE_FLAGS "")
-SET(GCC_LINK_FLAGS    "-lopencv_core -lopencv_highgui -lopencv_features2d -lopencv_flann -lopencv_imgcodecs -lopencv_dnn -lopencv_videoio -lopencv_imgproc -lopencv_ml -lopencv_photo")
+SET(GCC_LINK_FLAGS    "-lprotobuf -lopencv_core -lopencv_highgui -lopencv_features2d -lopencv_flann -lopencv_imgcodecs -lopencv_dnn -lopencv_videoio -lopencv_imgproc -lopencv_ml -lopencv_photo -lprotobuf")
 
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COMPILE_FLAGS}")
 SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${GCC_LINK_FLAGS}")
@@ -70,6 +70,7 @@ set(INCLUDE_DIRECTORY ${PROJECT_SOURCE_DIR}/include)
 set(GEN_PROTOS_DIRECTORY ${PROJECT_SOURCE_DIR}/build/gen_protos)
 add_executable(${PROJECT_NAME} ${SOURCES} "src/main.cpp")
 include_directories(${INCLUDE_DIRECTORY} ${GEN_PROTOS_DIRECTORY})
+target_add_protobuf(${PROJECT_NAME})
 target_add_torch(${PROJECT_NAME})
 # target_add_arena(${PROJECT_NAME}) # Tyler: currently broken, so we had to comment this out
 target_add_torchvision(${PROJECT_NAME})
@@ -78,7 +79,6 @@ target_add_opencv(${PROJECT_NAME})
 target_add_httplib(${PROJECT_NAME})
 target_add_mavsdk(${PROJECT_NAME})
 target_add_matplot(${PROJECT_NAME})
-target_add_protobuf(${PROJECT_NAME})
 # =============================
 
 # =============================
