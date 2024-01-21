@@ -133,6 +133,12 @@ target_add_opencv(cv_pipeline)
 target_add_loguru(cv_pipeline)
 target_add_httplib(cv_pipeline)
 target_add_protobuf(cv_pipeline)
+
+# cv_matching
+add_executable(cv_matching ${SOURCES} "tests/integration/cv_matching.cpp")
+target_add_json(cv_matching)
+target_add_matplot(cv_matching)
+target_add_opencv(cv_matching)
 # =============================
 
 # =============================

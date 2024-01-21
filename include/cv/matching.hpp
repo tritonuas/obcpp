@@ -2,6 +2,7 @@
 #define INCLUDE_CV_MATCHING_HPP_
 
 #include <opencv2/opencv.hpp>
+#include <torch/torch.h>
 
 #include "cv/utilities.hpp"
 #include "utilities/constants.hpp"
@@ -35,13 +36,16 @@ struct MatchResult {
 class Matching {
  public:
         Matching(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES>
-            competitionObjectives, double matchThreshold);
+            competitionObjectives, double matchThreshold, 
+            std::vector<CroppedTarget> referenceImages);
 
         MatchResult match(const CroppedTarget& croppedTarget);
 
  private:
         std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES> competitionObjectives;
         double matchThreshold;
+        std::vector<at::Tensor> referenceFeatures;
+        torch::jit::script::Module module;
 };
 
 #endif  // INCLUDE_CV_MATCHING_HPP_
