@@ -113,7 +113,7 @@ Now that everything is installed, here is the process to build and run the appli
 
     11. In the same terminal, enter 
         ```sh
-        sudo echo $CR_PAT | docker login ghcr.io -u USERNAME --password-stdin.
+        sudo echo $CR_PAT | docker login ghcr.io -u USERNAME --password-stdin
         ```
         replacing USERNAME with your Github username.
 
