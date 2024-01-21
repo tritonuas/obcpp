@@ -1,11 +1,12 @@
 #ifndef INCLUDE_PATHING_CARTESIAN_HPP_
 #define INCLUDE_PATHING_CARTESIAN_HPP_
 
+#include <vector>
+#include <tuple>
+
 #include "protos/obc.pb.h"
 #include "utilities/datatypes.hpp"
 
-#include <vector>
-#include <tuple>
 
 class CartesianConverter {
  public:

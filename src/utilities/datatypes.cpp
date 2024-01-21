@@ -1,7 +1,9 @@
 #include "utilities/datatypes.hpp"
-#include "protos/obc.pb.h"
 
 #include <cmath>
+
+#include "protos/obc.pb.h"
+
 /*
  *   Empty in-line comments prevent VSCode auto-formatter screrw with my
  *   preffered way of formatting.

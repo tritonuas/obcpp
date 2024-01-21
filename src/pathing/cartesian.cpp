@@ -1,10 +1,11 @@
 #include "pathing/cartesian.hpp"
-#include "protos/obc.pb.h"
 
+#include <numbers>
 #include <vector>
 #include <limits>
 #include <cmath>
-#include <numbers>
+
+#include "protos/obc.pb.h"
 
 CartesianConverter::CartesianConverter(std::vector<GPSCoord> boundaries) {
     double min_lat = std::numeric_limits<double>::infinity();
@@ -33,10 +34,6 @@ CartesianConverter::CartesianConverter(std::vector<GPSCoord> boundaries) {
     // "Standard Parallels"
     this->phi_0 = (min_lat - 1) * std::numbers::pi / 180.0;
     this->phi_1 = (max_lat + 1) * std::numbers::pi / 180.0;
-
-    std::cout << center.latitude() << ", " << center.longitude() << ", " << center.altitude() << std::endl;
-    std::cout << "phi_0=" << this->phi_0 << "\n";
-    std::cout << "phi_1=" << this->phi_1 << std::endl;
 }
 
 GPSCoord CartesianConverter::toLatLng(XYZCoord coord) const {
