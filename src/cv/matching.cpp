@@ -6,7 +6,8 @@ auto toInput(cv::Mat img, bool show_output=false, bool unsqueeze=false, int unsq
     cv::Mat img_dst;
     // scale the image and turn into Tensor, then inputs
     cv::resize(img, img_dst, cv::Size(128, 128), 0, 0, cv::INTER_AREA);
-    at::Tensor tensor_image = torch::from_blob(img_dst.data, { img_dst.rows, img_dst.cols, 3 }, at::kByte);
+    at::Tensor tensor_image = torch::from_blob(img_dst.data, { 3, img_dst.rows, img_dst.cols }, at::kByte);
+    // convert back to CV image and display to verify fidelity of image.
     if (unsqueeze)
         tensor_image.unsqueeze_(unsqueeze_dim);
     
@@ -16,21 +17,20 @@ auto toInput(cv::Mat img, bool show_output=false, bool unsqueeze=false, int unsq
     return std::vector<torch::jit::IValue>{tensor_image};
 }
 
-// NOTE: Assumes index in referenceImages == index of bottle == index in referenceFeatures
-// Further, assumes size of referenceImages == NUM_AIRDROP_BOTTLES
 Matching::Matching(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES>
                        competitionObjectives,
                    double matchThreshold,
-                   std::vector<CroppedTarget> referenceImages)
+                   std::vector<CroppedTarget> referenceImages,
+                   std::string modelPath)
     : competitionObjectives(competitionObjectives),
       matchThreshold(matchThreshold) {
 
         try {
-            this->module = torch::jit::load("../bin/target_siamese_1.pt");
+            this->module = torch::jit::load(modelPath);
         }
         catch (const c10::Error& e) {
             std::cerr << "error loading the model\n";
-            return -1;
+            throw;
         }
 
         for(int i = 0; i < referenceImages.size(); i++) {
@@ -43,7 +43,8 @@ Matching::Matching(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES>
     
     }
 
-
+// NOTE: Assumes index in referenceImages == index of bottle == index in referenceFeatures
+// Further, assumes size of referenceImages == NUM_AIRDROP_BOTTLES
 MatchResult Matching::match(const CroppedTarget& croppedTarget) {
     std::vector<torch::jit::IValue> input = toInput(croppedTarget.croppedImage);
     at::Tensor output = this->module.forward(input).toTensor();

@@ -37,7 +37,8 @@ class Matching {
  public:
         Matching(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES>
             competitionObjectives, double matchThreshold, 
-            std::vector<CroppedTarget> referenceImages);
+            std::vector<CroppedTarget> referenceImages,
+            std::string modelPath);
 
         MatchResult match(const CroppedTarget& croppedTarget);
 
