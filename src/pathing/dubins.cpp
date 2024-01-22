@@ -4,7 +4,6 @@
 #include <cmath>
 #include <limits>
 
-#include "pathing/tree.hpp"
 #include "utilities/datatypes.hpp"
 
 /**

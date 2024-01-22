@@ -6,7 +6,6 @@
 #include <limits>
 #include <vector>
 
-#include "pathing/tree.hpp"
 #include "utilities/datatypes.hpp"
 
 typedef XYZCoord Vector;

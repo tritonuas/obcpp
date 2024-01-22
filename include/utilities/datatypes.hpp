@@ -61,6 +61,20 @@ struct XYZCoord {
   matplot::color color;
 };
 
+
+struct RRTPoint {
+    RRTPoint(XYZCoord point, double psi);
+    /*
+     *  Equality overload method for RRTPoint
+     */
+    bool operator==(const RRTPoint& otherPoint) const;
+
+    double distanceTo(const RRTPoint& otherPoint) const;
+
+    XYZCoord point;
+    double psi;
+};
+
 class Polygon : public std::vector<XYZCoord> {
  public:
   explicit Polygon(matplot::color color);

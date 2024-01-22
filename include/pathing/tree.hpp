@@ -5,24 +5,13 @@
 #include <utility>
 #include <vector>
 
+#include "pathing/dubins.hpp"
 #include "utilities/datatypes.hpp"
 
 class RRTNode;
 typedef std::vector<RRTNode*> RRTNodeList;
 typedef XYZCoord Vector;
 
-struct RRTPoint {
-    RRTPoint(XYZCoord point, double psi);
-    /*
-     *  Equality overload method for RRTPoint
-     */
-    bool operator==(const RRTPoint& otherPoint) const;
-
-    double distanceTo(const RRTPoint &otherPoint) const;
-
-    XYZCoord point;
-    double psi;
-};
 
 class RRTNode {
  public:
@@ -99,8 +88,7 @@ class EdgeHashFunction {
 
 class RRTEdge {
  public:
-    RRTEdge(RRTNode* from, RRTNode* to, std::vector<Vector> path,
-            double cost);
+    RRTEdge(RRTNode* from, RRTNode* to, std::vector<Vector> path, double cost);
 
     /*
      *  Equality overload method for RRTEdge comparison
@@ -136,20 +124,21 @@ class RRTEdge {
 
 class RRTTree {
  public:
+    RRTTree(RRTPoint rootPoint, RRTPoint goalPoint);
+    ~RRTTree();
     /*
      *  Add a node to the RRTTree.
      *  If adding the first node to the tree, connectTo can be anything.
      */
-    void addNode(RRTNode* connectTo, RRTNode* newNode,
-                 std::vector<Vector> path, double cost);
+    void addNode(RRTNode* connectTo, RRTNode* newNode, std::vector<Vector> path, double cost);
 
     /*
      * Delete an edge between 'from' and 'toPrev', and create a new edge
      * between 'from' to 'toNew'. Add 'toNew' to the nodeMap, and delete
      * 'toPrev'.
      */
-    void rewireEdge(RRTNode* from, RRTNode* toPrev, RRTNode* toNew,
-                    std::vector<Vector> path, double cost);
+    void rewireEdge(RRTNode* from, RRTNode* toPrev, RRTNode* toNew, std::vector<Vector> path,
+                    double cost);
 
     /*
      *  Returns a pointer to the node in the tree corresponding to the RRTPoint.
@@ -164,9 +153,19 @@ class RRTTree {
     RRTEdge* getEdge(RRTPoint from, RRTPoint to);
 
  private:
+    RRTNode* root;
+    RRTPoint goalPoint;
     std::unordered_map<RRTPoint, RRTNode*, PointHashFunction> nodeMap{};
-    std::unordered_map<std::pair<RRTNode*, RRTNode*>, RRTEdge, EdgeHashFunction>
-        edgeMap{};
+    std::unordered_map<std::pair<RRTNode*, RRTNode*>, RRTEdge, EdgeHashFunction> edgeMap{};
+
+    Polygon bounds;
+
+    Dubins dubins;
+
+    double tolerance_to_goal;
+    double distance_to_goal;
+
+    bool found_goal;
 };
 
 #endif  // INCLUDE_PATHING_TREE_HPP_
