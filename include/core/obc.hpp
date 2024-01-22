@@ -1,5 +1,5 @@
-#ifndef CORE_OBC_HPP
-#define CORE_OBC_HPP
+#ifndef INCLUDE_CORE_OBC_HPP_
+#define INCLUDE_CORE_OBC_HPP_
 
 #include <string>
 #include <memory>
@@ -7,7 +7,6 @@
 
 #include "core/config.hpp"
 #include "core/states.hpp"
-
 #include "network/gcs.hpp"
 
 /*
@@ -15,15 +14,15 @@
  *  This contains all of the mission state, mission config, etc...
  */
 class OBC {
-    public:
-        OBC(uint16_t gcs_port);
+ public:
+    explicit OBC(uint16_t gcs_port);
 
-        void run();
+    void run();
 
-    private:
-        std::shared_ptr<MissionState> state;
+ private:
+    std::shared_ptr<MissionState> state;
 
-        std::unique_ptr<GCSServer> gcs_server;
+    std::unique_ptr<GCSServer> gcs_server;
 };
 
-#endif // CORE_OBC_HPP
+#endif  // INCLUDE_CORE_OBC_HPP_

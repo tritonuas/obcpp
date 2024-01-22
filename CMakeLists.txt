@@ -48,12 +48,26 @@ include(${DEPS_DIRECTORY}/protobuf/protobuf.cmake)
 # =============================
 
 # =============================
+# Set up protos
+
+execute_process(
+    COMMAND sh ${PROJECT_SOURCE_DIR}/scripts/install-protos.sh
+    RESULT_VARIABLE ret
+)
+if(NOT (ret EQUAL "0"))
+    message(FATAL_ERROR "Unable to install protos. Script exited with code ${ret}.")
+endif()
+
+# =============================
+
+# =============================
 # obcpp executable
-file(GLOB_RECURSE SOURCES "src/*.cpp")
+file(GLOB_RECURSE SOURCES "src/*.cpp" "build/gen_protos/*.pb.cc")
 list(REMOVE_ITEM SOURCES "${CMAKE_SOURCE_DIR}/src/main.cpp")
-file(GLOB_RECURSE HEADERS "include/*.hpp")
+file(GLOB_RECURSE HEADERS "include/*.hpp" "build/gen_protos/*.pb.h")
 
 set(INCLUDE_DIRECTORY ${PROJECT_SOURCE_DIR}/include)
+set(GEN_PROTOS_DIRECTORY ${PROJECT_SOURCE_DIR}/build/gen_protos)
 add_executable(${PROJECT_NAME} ${SOURCES} "src/main.cpp")
 include_directories(${INCLUDE_DIRECTORY} ${GEN_PROTOS_DIRECTORY})
 target_add_protobuf(${PROJECT_NAME})
@@ -72,7 +86,7 @@ target_add_matplot(${PROJECT_NAME})
 
 # playground
 add_executable(playground ${SOURCES} "tests/integration/playground.cpp")
-target_include_directories(playground PRIVATE ${INCLUDE_DIRECTORY})
+target_include_directories(playground PRIVATE ${INCLUDE_DIRECTORY} ${GEN_PROTOS_DIRECTORY})
 target_add_torch(playground)
 # target_add_arena(playground)
 target_add_json(playground)
@@ -80,6 +94,7 @@ target_add_opencv(playground)
 target_add_httplib(playground)
 target_add_mavsdk(playground)
 target_add_matplot(playground)
+target_add_protobuf(playground)
 
 # mavsdk
 add_executable(mavsdk ${SOURCES} "tests/integration/mavsdk.cpp")
@@ -119,7 +134,7 @@ if(CPPLINT)
   # define lint target
   add_custom_target(lint
     COMMAND cpplint
-    --filter=-legal,-readability/todo
+    --filter=-legal,-readability/todo,-build/c++11
     --linelength=100
     --recursive
     ../src

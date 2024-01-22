@@ -1,10 +1,7 @@
 // See this page for reference of options: https://containers.dev/implementors/json_reference
 {
 	"name": "Existing Dockerfile",
-	"build": {
-		"context": "..",
-		"dockerfile": "Dockerfile"
-	},
+	"image": "ghcr.io/tritonuas/obcpp:main",
 
 	"customizations": {
 		"vscode": {

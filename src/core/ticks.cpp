@@ -32,7 +32,12 @@ std::vector<GPSCoord> tempGenPath(std::shared_ptr<MissionState> state) {
     // For now , just returns a path with 1 coord, which is technically
     // "valid" because it has more than 0 coords
     std::this_thread::sleep_for(std::chrono::seconds(10));
-    return {GPSCoord(0.0, 0.0, 100.0)};
+
+    GPSCoord coord;
+    coord.set_altitude(0.0);
+    coord.set_latitude(1.1);
+    coord.set_longitude(2.2);
+    return {coord};
 }
 
 PathGenerationTick::PathGenerationTick(std::shared_ptr<MissionState> state)
@@ -55,7 +60,7 @@ std::chrono::milliseconds PathGenerationTick::getWait() const {
 Tick* PathGenerationTick::tick() {
     if (state->isInitPathValidated()) {
         // Path already validated, so move onto next state
-        return nullptr; // TODO: move onto next state
+        return nullptr;  // TODO: move onto next state
     }
 
     auto status = path_future.wait_for(std::chrono::milliseconds(0));

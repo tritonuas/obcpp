@@ -8,22 +8,20 @@
 
 #include "core/config.hpp"
 #include "utilities/constants.hpp"
+#include "utilities/datatypes.hpp"
 #include "utilities/locks.hpp"
 
+#include "protos/obc.pb.h"
 
 MissionConfig::MissionConfig():
     flightBoundary(FLIGHT_BOUND_COLOR),
     airdropBoundary(AIRDROP_BOUND_COLOR),
-    waypoints(WAYPOINTS_COLOR) 
-{
-        
-}
+    waypoints(WAYPOINTS_COLOR) {}
 
 MissionConfig::MissionConfig(std::string filename):
     flightBoundary(FLIGHT_BOUND_COLOR),
     airdropBoundary(AIRDROP_BOUND_COLOR),
-    waypoints(WAYPOINTS_COLOR) 
-{
+    waypoints(WAYPOINTS_COLOR) {
     // TODO: load from file
 }
 
@@ -45,16 +43,17 @@ Polyline MissionConfig::getWaypoints() {
     return this->waypoints;
 }
 
-BottleArray MissionConfig::getAirdropBottles() {
+const std::vector<Bottle>& MissionConfig::getAirdropBottles() {
     ReadLock lock(this->mut);
 
     return this->bottles;
-} 
+}
 
-std::tuple<Polygon, Polygon, Polyline, BottleArray> MissionConfig::getConfig() {
+std::tuple<Polygon, Polygon, Polyline, std::vector<Bottle>> MissionConfig::getConfig() {
     ReadLock lock(this->mut);
 
-    return std::make_tuple(this->flightBoundary, this->airdropBoundary, this->waypoints, this->bottles);
+    return std::make_tuple(
+        this->flightBoundary, this->airdropBoundary, this->waypoints, this->bottles);
 }
 
 void MissionConfig::setFlightBoundary(Polygon bound) {
@@ -75,26 +74,27 @@ void MissionConfig::setWaypoints(Polyline wpts) {
     this->waypoints = wpts;
 }
 
-void MissionConfig::_setBottle(char label, CompetitionBottle bottle) {
-    label = std::toupper(label);
-    if (label < 'A' || label > 'F') {
-        std::cerr << "Invalid bottle character " << label << " passed to MissionConfig::setBottle" << std::endl;
+void MissionConfig::_setBottle(Bottle bottle) {
+    // Go until you find the bottle that has the same index, and replace all values
+    for (auto& curr_bottle : this->bottles) {
+        if (curr_bottle.index() == bottle.index()) {
+            curr_bottle = Bottle(bottle);
+            break;
+        }
     }
-
-    this->bottles[label - 'A'] = bottle;
 }
 
-void MissionConfig::setBottle(char label, CompetitionBottle bottle) {
+void MissionConfig::setBottle(Bottle bottle) {
     WriteLock lock(this->mut);
 
-    this->_setBottle(label, bottle);
+    this->_setBottle(bottle);
 }
 
-void MissionConfig::setBottles(const std::unordered_map<char, CompetitionBottle>& updates) {
+void MissionConfig::setBottles(const std::vector<Bottle>& updates) {
     WriteLock lock(this->mut);
 
-    for (auto [label, bottle] : updates) {
-        this->_setBottle(label, bottle);
+    for (auto bottle : updates) {
+        this->_setBottle(bottle);
     }
 }
 
@@ -102,7 +102,7 @@ void MissionConfig::batchUpdate(
     std::optional<Polygon> flight,
     std::optional<Polygon> airdrop,
     std::optional<Polyline> waypoints,
-    std::unordered_map<char, CompetitionBottle> bottleUpdates
+    std::vector<Bottle> bottleUpdates
 ) {
     WriteLock lock(this->mut);
 
@@ -118,8 +118,8 @@ void MissionConfig::batchUpdate(
         this->waypoints = waypoints.value();
     }
 
-    for (auto [label, bottle] : bottleUpdates) {
-        this->_setBottle(label, bottle);
+    for (auto bottle : bottleUpdates) {
+        this->_setBottle(bottle);
     }
 }
 

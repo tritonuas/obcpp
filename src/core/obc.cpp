@@ -10,8 +10,7 @@
 #include "network/gcs.hpp"
 
 // TODO: allow specifying config filename
-OBC::OBC(uint16_t gcs_port) 
-{
+OBC::OBC(uint16_t gcs_port) {
     this->state = std::make_shared<MissionState>();
     this->state->setTick(new MissionPreparationTick(this->state));
 

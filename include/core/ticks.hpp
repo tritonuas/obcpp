@@ -1,30 +1,31 @@
-#ifndef CORE_TICKS_HPP
-#define CORE_TICKS_HPP
+#ifndef INCLUDE_CORE_TICKS_HPP_
+#define INCLUDE_CORE_TICKS_HPP_
 
 #include <memory>
 #include <chrono>
 #include <future>
+#include <vector>
 
 #include "core/states.hpp"
 
-// When writing tick functions... Absolutely do not do not do not 
-// delete the pointer that is being passed in. 
+// When writing tick functions... Absolutely do not do not do not
+// delete the pointer that is being passed in.
 
 class Tick {
-    public:
-        Tick(std::shared_ptr<MissionState> state);
-        virtual ~Tick();
+ public:
+    explicit Tick(std::shared_ptr<MissionState> state);
+    virtual ~Tick();
 
-        // how long to wait between running each tick function
-        virtual std::chrono::milliseconds getWait() const = 0;
+    // how long to wait between running each tick function
+    virtual std::chrono::milliseconds getWait() const = 0;
 
-        // function that is called every getWaitTimeMS() miliseconds
-        // return nullptr if no state change should happen
-        // return new implementation of Tick if state change should happen
-        virtual Tick* tick() = 0;
+    // function that is called every getWaitTimeMS() miliseconds
+    // return nullptr if no state change should happen
+    // return new implementation of Tick if state change should happen
+    virtual Tick* tick() = 0;
 
-    protected:
-        std::shared_ptr<MissionState> state;
+ protected:
+    std::shared_ptr<MissionState> state;
 };
 
 /*
@@ -32,12 +33,12 @@ class Tick {
  * Transitions to PathGenerationTick once it has been generated.
  */
 class MissionPreparationTick : public Tick {
-    public:
-        MissionPreparationTick(std::shared_ptr<MissionState> state);
+ public:
+    explicit MissionPreparationTick(std::shared_ptr<MissionState> state);
 
-        std::chrono::milliseconds getWait() const override;
+    std::chrono::milliseconds getWait() const override;
 
-        Tick* tick() override;
+    Tick* tick() override;
 };
 
 /*
@@ -45,14 +46,14 @@ class MissionPreparationTick : public Tick {
  * then waits for it to be validated.
  */
 class PathGenerationTick : public Tick {
-    public:
-        PathGenerationTick(std::shared_ptr<MissionState> state);
+ public:
+    explicit PathGenerationTick(std::shared_ptr<MissionState> state);
 
-        std::chrono::milliseconds getWait() const override;
+    std::chrono::milliseconds getWait() const override;
 
-        Tick* tick() override;
-    private:
-        std::future<std::vector<GPSCoord>> path_future;
+    Tick* tick() override;
+ private:
+    std::future<std::vector<GPSCoord>> path_future;
 };
 
-#endif // CORE_TICKS_HPP
+#endif  // INCLUDE_CORE_TICKS_HPP_

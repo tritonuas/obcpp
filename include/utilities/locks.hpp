@@ -1,5 +1,5 @@
-#ifndef UTILITIES_LOCKS_HPP
-#define UTILITIES_LOCKS_HPP
+#ifndef INCLUDE_UTILITIES_LOCKS_HPP_
+#define INCLUDE_UTILITIES_LOCKS_HPP_
 
 #include <mutex>
 #include <shared_mutex>
@@ -11,4 +11,4 @@ using Lock = std::unique_lock<std::mutex>;
 using ReadLock = std::shared_lock<std::shared_mutex>;
 using WriteLock = std::unique_lock<std::shared_mutex>;
 
-#endif // UTILITIES_LOCKS_HPP
+#endif  // INCLUDE_UTILITIES_LOCKS_HPP_

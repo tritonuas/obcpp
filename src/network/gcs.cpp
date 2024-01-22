@@ -1,19 +1,23 @@
+#include "network/gcs.hpp"
+
+#include <google/protobuf/util/json_util.h>
+#include <httplib.h>
+
 #include <memory>
 #include <cstdint>
 #include <functional>
 
-#include <httplib.h>
-
-#include "network/gcs.hpp"
 #include "core/config.hpp"
 #include "core/states.hpp"
 #include "utilities/locks.hpp"
+#include "protos/obc.pb.h"
 
 GCSServer::GCSServer(uint16_t port, std::shared_ptr<MissionState> state)
     :port{port}, state{state}
 {
     if (port < 1024) {
-        std::cerr << "Ports 0-1023 are reserved. Using port " << DEFAULT_GCS_PORT << " as a fallback..." << std::endl;
+        std::cerr << "Ports 0-1023 are reserved. Using port " << DEFAULT_GCS_PORT
+            << " as a fallback..." << std::endl;
         port = DEFAULT_GCS_PORT;
     }
 
@@ -38,8 +42,7 @@ void GCSServer::_bindHandlers() {
 
     server.Get("/mission", HANDLE(_getMission));
     server.Post("/mission", HANDLE(_postMission));
-    server.Post("/waypoints/airdrop", HANDLE(_postWaypointsAirdrop));
-    server.Post("/waypoints/initial", HANDLE(_postWaypointsInitial));
+    server.Post("/airdrop", HANDLE(_postAirdropTargets));
     server.Get("/path/initial", HANDLE(_getPathInitial));
     server.Get("/path/initial/new", HANDLE(_getPathInitialNew));
     server.Get("/camera/status", HANDLE(_getCameraStatus));
@@ -58,30 +61,34 @@ void GCSServer::_getMission(const httplib::Request& request, httplib::Response& 
 }
 
 void GCSServer::_postMission(const httplib::Request& request, httplib::Response& response) {
+    Mission mission;
+    google::protobuf::util::JsonStringToMessage(request.body, &mission);
+
+    // TODO: need the cartesian converstion code so that we can convert to XYZ coords from mission
+    // and store in this->state.getConfig()
     response.set_content("TODO: upload mission config!", "text/plain");
     response.status = HTTPStatus::NOT_IMPLEMENTED;
 }
 
-void GCSServer::_postWaypointsAirdrop(const httplib::Request& request, httplib::Response& response) {
-    response.set_content("TODO: upload airdrop waypoints!", "text/plain");
+void GCSServer::_postAirdropTargets(const httplib::Request& request, httplib::Response& response) {
+    response.set_content("TODO: upload airdrop targets!", "text/plain");
     response.status = HTTPStatus::NOT_IMPLEMENTED;
 }
 
-void GCSServer::_postWaypointsInitial(const httplib::Request& request, httplib::Response& response) {
-    response.set_content("TODO: upload initial (competition) waypoints!", "text/plain");
-    response.status = HTTPStatus::NOT_IMPLEMENTED;
-}
 void GCSServer::_getPathInitial(const httplib::Request& request, httplib::Response& response) {
     response.set_content("TODO: get cached path and return back!", "text/plain");
     response.status = HTTPStatus::NOT_IMPLEMENTED;
 }
 
 void GCSServer::_getPathInitialNew(const httplib::Request& request, httplib::Response& response) {
-    response.set_content("TODO: calculate path using RRT, replace cached path, and return back!", "text/plain");
+    response.set_content(
+        "TODO: calculate path using RRT, replace cached path, and return back!", "text/plain");
     response.status = HTTPStatus::NOT_IMPLEMENTED;
 }
 
-void GCSServer::_postPathInitialValidate(const httplib::Request& request, httplib::Response& response) {
+void GCSServer::_postPathInitialValidate(
+    const httplib::Request& request, httplib::Response& response
+) {
     if (state->getInitPath().empty()) {
         response.set_content("Error: No initial path generated.", "text/plain");
         response.status = HTTPStatus::BAD_REQUEST;
@@ -117,7 +124,8 @@ void GCSServer::_postCameraMockStop(const httplib::Request& request, httplib::Re
 }
 
 void GCSServer::_getCameraCapture(const httplib::Request& request, httplib::Response& response) {
-    response.set_content("TODO: take a singular image with the camera and return as jpeg!", "text/plain");
+    response.set_content(
+        "TODO: take a singular image with the camera and return as jpeg!", "text/plain");
     response.status = HTTPStatus::NOT_IMPLEMENTED;
 }
 

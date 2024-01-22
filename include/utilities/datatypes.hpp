@@ -6,14 +6,7 @@
 #include <vector>
 
 #include "utilities/constants.hpp"
-
-struct GPSCoord {
-    GPSCoord(double lat, double lon, double alt) : lat(lat), lon(lon), alt(alt) {}
-
-    double lat;
-    double lon;
-    double alt;
-};
+#include "protos/obc.pb.h"
 
 struct XYZCoord {
     XYZCoord(double x, double y, double z) : x(x), y(y), z(z), color(matplot::color::black) {}
@@ -72,7 +65,6 @@ struct RRTPoint {
     double psi;
 };
 
-
 // Hash functions for the tree's member variables
 class PointHashFunction {
  public:
@@ -83,6 +75,9 @@ class PointHashFunction {
     std::size_t operator()(const RRTPoint &point) const;
 };
 
+// Because this is a protos class, mildly inconvenient to construct it
+// so we have our own "constructor" here
+GPSCoord makeGPSCoord(double lat, double lng, double alt);
 
 class Polygon : public std::vector<XYZCoord> {
  public:
@@ -116,29 +111,5 @@ class Polyline : public std::vector<XYZCoord> {
  private:
     matplot::color color{};
 };
-
-// TODO: these will eventually be redefined in a protobuf,
-// so once the generated protobuf code exists we remove these
-enum class ODLCShape {
-    Circle,
-    Semicircle,
-    QuarterCircle,
-    Triangle,
-    Rectangle,
-    Pentagon,
-    Star,
-    Cross
-};
-
-enum class ODLCColor { White, Black, Red, Blue, Green, Purple, Brown, Orange };
-
-struct CompetitionBottle {
-    ODLCColor shapeColor;
-    ODLCShape shape;
-    ODLCColor alphaColor;
-    char alphanumeric;
-};
-
-typedef std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES> BottleArray;
 
 #endif  // INCLUDE_UTILITIES_DATATYPES_HPP_
