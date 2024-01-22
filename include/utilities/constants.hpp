@@ -18,8 +18,6 @@ const int DEFAULT_GCS_PORT = 5010;
 
 const int NUM_AIRDROP_BOTTLES = 5;
 
-const int DEFAULT_GCS_PORT = 5010;
-
 const char MISSION_CONFIG_PATH[] = "./mission-config.json";
 
 const matplot::color FLIGHT_BOUND_COLOR = matplot::color::red;
