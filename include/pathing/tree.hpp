@@ -67,15 +67,6 @@ class RRTNode {
     RRTNode* parent{};
 };
 
-// Hash functions for the tree's member variables
-class PointHashFunction {
- public:
-    /*
-     *  Hashes RRTPoint using the Cantor Pairing Function.
-     *  Used to add elements to unordered_map nodeMap in RRTTree.
-     */
-    std::size_t operator()(const RRTPoint& point) const;
-};
 
 class EdgeHashFunction {
  public:
