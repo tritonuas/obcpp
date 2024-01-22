@@ -6,21 +6,25 @@
 #include <string>
 #include <memory>
 #include <utility>
+#include <memory>
+#include <mutex>
+#include <functional>
+#include <chrono>
+#include <vector>
 
+#include "core/config.hpp"
 #include "camera/interface.hpp"
 #include "cv/pipeline.hpp"
-#include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
+#include "utilities/constants.hpp"
+#include "protos/obc.pb.h"
 
-/*
-    Interface for an arbitrary mission state.
-*/
+class Tick;
+
 class MissionState {
  public:
-    virtual ~MissionState() = default;
-    /*
-        Function that runs approx 1 time per second, doing the calculations/checks
-        needed for the current phase of the mission.
+    MissionState();
+    ~MissionState();
 
         Returns the new MissionState if a state change needs to occur. If the optional
         type does not have a value, then no state change needs to occur.
@@ -45,10 +49,14 @@ class PreparationState : public MissionState {
     std::string getName() override { return "Mission Preparation"; }
 
  private:
-    std::optional<Polygon> flightBoundary;
-    std::optional<Polygon> airdropBoundary;
-    std::optional<Polyline> waypoints;
-    std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES> bottles;
+    MissionConfig config;  // has its own mutex
+
+    std::mutex tick_mut;  // for reading/writing tick
+    std::unique_ptr<Tick> tick;
+
+    std::mutex init_path_mut;  // for reading/writing the initial path
+    std::vector<GPSCoord> init_path;
+    bool init_path_validated = false;  // true when the operator has validated the initial path
 };
 
 /*

@@ -2,8 +2,6 @@
 
 The `obcpp` is the repository for our `Onboard Computer`, which is currently a Jetson Orin Nano. This is the device that will actually be running software inside of the plane during flight, so it is essential that it works efficiently and without error.
 
-(Thankfully the pixhawk is a completely separate piece of hardware, so if this code crashes the plane will not immediately crash, but let's try not to do that!)
-
 ## Quick Setup
 
 See [full setup](https://github.com/tritonuas/obcpp#setup) below.
@@ -97,44 +95,70 @@ Now that everything is installed, here is the process to build and run the appli
     4. [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
     5. [C/C++](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools)
 
-6. Build the Docker Container:
-    1. In the bottom left of the screen, click on the remote window icon. It should look like two angle brackets next to each other.
-    2. Select reopen in container.
-    3. Select "From Dockerfile"
-    4. Select Skip Features
-    5. Wait for several minutes while the container builds. You will only need to do this once.
+6. Authenticate Docker
+    1. Go to Github
+    2. Click on your profile icon in the top right
+    3. Select "Settings"
+    4. Select "Developer Settings" (At the moment of writing this, it is the bottom-most option on the left sidebar).
+    5. Select "Personal access tokens"
+    6. Select "Tokens (classic)"
+    7. Select "Generate new token", then select classic again.
+    8. Give it a name, expiration date, and then select "read:packages"
+    9. Generate the token and save it to your clipboard
+    10. Go to a terminal and enter 
+        ```sh
+        export CR_PAT=YOUR_TOKEN
+        ``` 
+        replacing YOUR_TOKEN with your token.
 
-    _Note: you will probably want to enable some of your extensions, especially the C/C++ one, to be available inside of the container.
-    To do this, just navigate back to the extensions page, search for whichever extension you want to use inside of the container,
-    and click the button that says "Install in dev container"._
+    11. In the same terminal, enter 
+        ```sh
+        sudo echo $CR_PAT | docker login ghcr.io -u USERNAME --password-stdin
+        ```
+        replacing USERNAME with your Github username.
 
-7. If the container was successfully loaded, then in the terminal you should see something along the lines of 
+    12. If you get an error along the lines of "Error Saving Credentials", you may need to run these commands:
+        ```sh
+        service docker stop
+        rm ~/.docker/config.json
+        ```
+        And then you can rerun the command from step 11. On a Windows system the filepath may be different.
+
+    13. This should authenticate your Docker so that you can now pull containers from the github container registry. You may receive a warning saying that your token is being stored unencrypted in the `~/.docker/config.json` file. If this concerns you, you can follow the link provided and fix this.
+
+
+7. Pull the Docker Container:
+    1. In the bottom left of the screen, click on the remote window icon. It should look like two angle brackets next to each other. Also, you can instead press "Ctrl+Shift+P"
+    2. Select (or type) reopen in container.
+
+
+8. If the container was successfully loaded, then in the terminal you should see something along the lines of 
     ```sh
-    root@d26aba74c8cd:/workspaces/obcpp# 
+    tuas@6178f65ec6e2:/workspaces/obcpp$ 
     ```
 
-8. Create a build directory and enter it (All the following commands should be run from inside the build directory)
+9. Create a build directory and enter it (All the following commands should be run from inside the build directory)
     ```sh
     mkdir build
     cd build
     ```
 
-8. Build CMake files with the following command:
+10. Build CMake files with the following command:
     ```sh
     cmake ..
     ```
 
-9. Build executable with the following command. (You will need to do this anytime you edit code.)
+11. Build executable with the following command. (You will need to do this anytime you edit code.)
     ```sh
     make
     ```
 
-10. Run the generated executable to verify it was created correctly.
+12. Run the generated executable to verify it was created correctly.
     ```sh
     bin/obcpp
     ```
 
-11. Verify that the testing framework is set up correctly
+13. Verify that the testing framework is set up correctly
     ```sh
     make test
     ```
@@ -192,6 +216,14 @@ To run the linter locally:
 
 ```sh
 make lint
+```
+
+#### Best Practices
+
+Normally we want to fix every lint error that comes up, but in some cases it doesn't make sense to fix them all. To ignore linting for a specific line, add the following nolint comment as shown:
+
+```cpp
+int x = 0; // NOLINT
 ```
 
 ### Formatting

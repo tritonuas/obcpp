@@ -4,14 +4,8 @@
 #include <matplot/matplot.h>
 #include <vector>
 
-struct GPSCoord {
-    GPSCoord(double lat, double lon, double alt)
-        :lat(lat), lon(lon), alt(alt) {}
-
-    double lat;
-    double lon;
-    double alt;
-};
+#include "utilities/constants.hpp"
+#include "protos/obc.pb.h"
 
 struct XYZCoord {
     XYZCoord(double x, double y, double z)
@@ -59,6 +53,10 @@ struct XYZCoord {
     matplot::color color;
 };
 
+// Because this is a protos class, mildly inconvenient to construct it
+// so we have our own "constructor" here
+GPSCoord makeGPSCoord(double lat, double lng, double alt);
+
 class Polygon : public std::vector<XYZCoord> {
  public:
     explicit Polygon(matplot::color color);
@@ -75,37 +73,6 @@ class Polyline: public std::vector<XYZCoord> {
     [[nodiscard]] matplot::color getColor() const;
  private:
     matplot::color color{};
-};
-
-// TODO: these will eventually be redefined in a protobuf,
-// so once the generated protobuf code exists we remove these
-enum class ODLCShape {
-    Circle,
-    Semicircle,
-    QuarterCircle,
-    Triangle,
-    Rectangle,
-    Pentagon,
-    Star,
-    Cross
-};
-
-enum class ODLCColor {
-    White,
-    Black,
-    Red,
-    Blue,
-    Green,
-    Purple,
-    Brown,
-    Orange
-};
-
-struct CompetitionBottle {
-    ODLCColor shapeColor;
-    ODLCShape shape;
-    ODLCColor alphaColor;
-    char alphanumeric;
 };
 
 #endif  // INCLUDE_UTILITIES_DATATYPES_HPP_
