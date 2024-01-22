@@ -33,7 +33,7 @@ class ObstacleEvasionState: public MissionState {
         // the location of the obstacle
         ObstacleEvasionState() override = delete;
         // List of obstacles to avoid
-        ObstacleEvasionState(std::vector<GPSCoord> obstacles);
+        explicit ObstacleEvasionState(std::vector<GPSCoord> obstacles);
         ~ObstacleEvasionState() override = default;
 
         MissionState* tick() override;
@@ -51,3 +51,16 @@ class ObstacleEvasionState: public MissionState {
         */
         void evade(void);
 };
+
+
+    // Wait until health is OK and vehicle is ready to arm
+    // while (telemetry.health_all_ok() != true) {
+        // std::cout << "Vehicle not ready to arm ..." << '\n';
+        // std::this_thread::sleep_for(std::chrono::seconds(1));
+        // return nullptr;
+    // }
+
+    // return nullptr;
+
+
+    
