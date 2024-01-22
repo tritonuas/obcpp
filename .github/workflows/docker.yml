@@ -10,7 +10,22 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      dockerfile: ${{ steps.changes.outputs.dockerfile }}
+    steps:
+    - uses: actions/checkout@v3
+    - uses: dorny/paths-filter@v2
+      id: changes
+      with:
+        filters: |
+          dockerfile:
+            - '.devcontainer/Dockerfile'
+
   build-and-push-image:
+    needs: changes
+    if: ${{ needs.changes.outputs.dockerfile == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -18,14 +33,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Filter out non devcontainer changes
-        uses: dorny/paths-filter@v2
-        id: changes
-        with:
-          filters: |
-            src:
-              - '.devcontainer/Dockerfile'
 
       - name: Log in to the Container registry
         uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
