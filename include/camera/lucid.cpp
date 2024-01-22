@@ -128,9 +128,13 @@ json LucidCameraConfig::getConfigField(std::string name)
     return json;
 }
 
-LucidCamera::CameraInterface(CameraConfiguration config)
+LucidCamera::CameraInterface(CameraConfiguration * config)
 {
-    this->config = LucidCameraConfig(config);
+    if (config != nullptr) {
+        this->config = LucidCameraConfig(config); // huh?
+    } else {
+        this->config = nullptr;
+    }
     this->uploadPath = uploadPath;
     this->system = Arena::OpenSystem();
     this->device = nullptr;
@@ -139,7 +143,7 @@ LucidCamera::CameraInterface(CameraConfiguration config)
 
 }
 
-void LucidCamera::connect() 
+int LucidCamera::connect() 
 {
     try
     {
@@ -149,7 +153,7 @@ void LucidCamera::connect()
         {
             std::cout << "\nNo camera connected\nPress enter to complete\n";
             std::getchar();
-            return 0;
+            return -1;
         }
         this->device = this->system(deviceInfos[0]);
 
@@ -165,14 +169,17 @@ void LucidCamera::connect()
     catch (GenICam::GenericException &ge)
     {
         std::cout << "\nGenICam exception thrown: " << ge.what() << "\n";
+        return -1;
     }
     catch (std::exception &ex)
     {
         std::cout << "Standard exception thrown: " << ex.what() << "\n";
+        return -1;
     }
     catch (...)
     {
         std::cout << "Unexpected exception thrown\n";
+        return -1;
     }
 }
 

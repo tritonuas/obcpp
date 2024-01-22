@@ -73,6 +73,18 @@ target_add_httplib(playground)
 # target_add_mavsdk(playground)
 target_add_matplot(playground)
 
+# lucid
+add_executable(lucid ${SOURCES} "tests/integration/lucid.cpp")
+target_include_directories(lucid PRIVATE ${INCLUDE_DIRECTORY})
+# target_add_torch(lucid)
+target_add_arena(lucid)
+target_add_json(lucid)
+target_add_eigen(lucid) 
+target_add_opencv(lucid) 
+target_add_httplib(lucid)
+# target_add_mavsdk(lucid)
+target_add_matplot(lucid)
+
 # mavsdk
 add_executable(mavsdk ${SOURCES} "tests/integration/mavsdk.cpp")
 target_include_directories(mavsdk PRIVATE ${INCLUDE_DIRECTORY})
@@ -88,7 +100,6 @@ target_add_matplot(mavsdk)
 
 # =============================
 # Unit tests
-add_subdirectory(tests/unit)
 add_subdirectory(tests/unit)
 add_subdirectory(${DEPS_DIRECTORY}/google-test)
 # =============================
