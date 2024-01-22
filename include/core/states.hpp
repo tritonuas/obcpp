@@ -1,52 +1,45 @@
 #ifndef INCLUDE_CORE_STATES_HPP_
 #define INCLUDE_CORE_STATES_HPP_
 
-#include <string>
-#include <array>
-#include <optional>
+#include <memory>
+#include <mutex>
+#include <functional>
+#include <chrono>
+#include <vector>
 
+#include "core/config.hpp"
 #include "utilities/datatypes.hpp"
 #include "utilities/constants.hpp"
+#include "protos/obc.pb.h"
 
-/*
-    Interface for an arbitrary mission state.
-*/
+class Tick;
+
 class MissionState {
  public:
-    virtual ~MissionState() = default;
-    /*
-        Function that runs approx 1 time per second, doing the calculations/checks
-        needed for the current phase of the mission.
+    MissionState();
+    ~MissionState();
 
-        Returns the new MissionState if a state change needs to occur. If the optional
-        type does not have a value, then no state change needs to occur. 
-    */
-    virtual MissionState* tick() = 0;
+    void init();
 
-    /*
-        Plain text name of the current state for display purposes 
-    */
-    virtual std::string getName() = 0;
-};
+    const MissionConfig& getConfig();
 
-/*
-    State for when the system has just been turned on and is waiting for
-    mission parameters.
-*/
-class PreparationState: public MissionState {
- public:
-    ~PreparationState() override = default;
-    MissionState* tick() override;
+    std::chrono::milliseconds doTick();
+    void setTick(Tick* newTick);
 
-    std::string getName() override {
-        return "Mission Preparation";
-    }
+    void setInitPath(std::vector<GPSCoord> init_path);
+    const std::vector<GPSCoord>& getInitPath();
+    bool isInitPathValidated();
 
  private:
-    std::optional<Polygon> flightBoundary;
-    std::optional<Polygon> airdropBoundary;
-    std::optional<Polyline> waypoints;
-    std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES> bottles;
+    MissionConfig config;  // has its own mutex
+
+    std::mutex tick_mut;  // for reading/writing tick
+    std::unique_ptr<Tick> tick;
+
+    std::mutex init_path_mut;  // for reading/writing the initial path
+    std::vector<GPSCoord> init_path;
+    bool init_path_validated = false;  // true when the operator has validated the initial path
 };
+
 
 #endif  // INCLUDE_CORE_STATES_HPP_

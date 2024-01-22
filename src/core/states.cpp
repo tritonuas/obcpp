@@ -1,12 +1,50 @@
-#include <iostream>
+#include <memory>
+#include <mutex>
 
+#include "core/config.hpp"
 #include "core/states.hpp"
+#include "core/ticks.hpp"
+#include "utilities/locks.hpp"
 
-MissionState* PreparationState::tick() {
-    // TODO: logic to check for takeoff signal, and double check to
-    // make sure that all the mission parameters are valid
+// in future might add to this
+MissionState::MissionState() = default;
 
-    std::cout << "tick\n";
+// Need to explicitly define now that Tick is no longer an incomplete class
+// See: https://stackoverflow.com/questions/9954518/stdunique-ptr-with-an-incomplete-type-wont-compile
+MissionState::~MissionState() = default;
 
-    return nullptr;
+const MissionConfig& MissionState::getConfig() {
+    return this->config;
+}
+
+std::chrono::milliseconds MissionState::doTick() {
+    Lock lock(this->tick_mut);
+
+    Tick* newTick = tick->tick();
+    if (newTick != nullptr) {
+        tick.reset(newTick);
+    }
+
+    return tick->getWait();
+}
+
+void MissionState::setTick(Tick* newTick) {
+    Lock lock(this->tick_mut);
+
+    tick.reset(newTick);
+}
+
+void MissionState::setInitPath(std::vector<GPSCoord> init_path) {
+    Lock lock(this->init_path_mut);
+    this->init_path = init_path;
+}
+
+const std::vector<GPSCoord>& MissionState::getInitPath() {
+    Lock lock(this->init_path_mut);
+    return this->init_path;
+}
+
+bool MissionState::isInitPathValidated() {
+    Lock lock(this->init_path_mut);
+    return this->init_path_validated;
 }
