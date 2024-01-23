@@ -11,34 +11,36 @@
 #include "utilities/datatypes.hpp"
 #include "utilities/constants.hpp"
 #include "protos/obc.pb.h"
+#include "pathing/cartesian.hpp"
 
 class Tick;
 
 class MissionState {
  public:
-    MissionState();
-    ~MissionState();
+   MissionState();
+   ~MissionState();
 
-    void init();
+   const std::optional<CartesianConverter>& getCartesianConverter();
+   void setCartesianConverter(CartesianConverter);
 
-    const MissionConfig& getConfig();
+   std::chrono::milliseconds doTick();
+   void setTick(Tick* newTick);
 
-    std::chrono::milliseconds doTick();
-    void setTick(Tick* newTick);
+   void setInitPath(std::vector<GPSCoord> init_path);
+   const std::vector<GPSCoord>& getInitPath();
+   bool isInitPathValidated();
 
-    void setInitPath(std::vector<GPSCoord> init_path);
-    const std::vector<GPSCoord>& getInitPath();
-    bool isInitPathValidated();
-
+   MissionConfig config;  // has its own mutex
  private:
-    MissionConfig config;  // has its own mutex
+   std::mutex converter_mut;
+   std::optional<CartesianConverter> converter;
 
-    std::mutex tick_mut;  // for reading/writing tick
-    std::unique_ptr<Tick> tick;
+   std::mutex tick_mut;  // for reading/writing tick
+   std::unique_ptr<Tick> tick;
 
-    std::mutex init_path_mut;  // for reading/writing the initial path
-    std::vector<GPSCoord> init_path;
-    bool init_path_validated = false;  // true when the operator has validated the initial path
+   std::mutex init_path_mut;  // for reading/writing the initial path
+   std::vector<GPSCoord> init_path;
+   bool init_path_validated = false;  // true when the operator has validated the initial path
 };
 
 

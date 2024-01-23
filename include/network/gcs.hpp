@@ -7,9 +7,11 @@
 #include <memory>
 #include <mutex>
 #include <cstdint>
+#include <optional>
 
 #include "core/config.hpp"
 #include "core/states.hpp"
+#include "obc.pb.h"
 
 enum HTTPStatus {
     OK = 200,
@@ -34,6 +36,11 @@ class GCSServer {
     uint16_t port;
 
     std::shared_ptr<MissionState> state;
+
+    // Cached version of the mission that is uploaded to the server,
+    // so that we have a copy of the mission parameters before they
+    // were translated to be in XYZ Coords
+    std::optional<Mission> uploaded_mission {std::nullopt};
 
     // Handler Functions
     void _bindHandlers();  // bind all the handlers to the server object

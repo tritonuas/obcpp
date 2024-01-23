@@ -20,4 +20,6 @@ const matplot::color WAYPOINTS_COLOR = matplot::color::yellow;
 const std::chrono::milliseconds MISSION_PREP_TICK_WAIT = std::chrono::milliseconds(1000);
 const std::chrono::milliseconds PATH_GEN_TICK_WAIT = std::chrono::milliseconds(1000);
 
+const double EARTH_RADIUS = 6378137.0;
+
 #endif  // INCLUDE_UTILITIES_CONSTANTS_HPP_

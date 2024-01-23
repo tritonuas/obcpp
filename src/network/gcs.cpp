@@ -56,6 +56,11 @@ void GCSServer::_bindHandlers() {
 }
 
 void GCSServer::_getMission(const httplib::Request& request, httplib::Response& response) {
+    if (this->uploaded_mission) {
+        std::string output;
+        google::protobuf::util::MessageToJsonString(this->uploaded_mission.value(), &output);
+    }
+
     response.set_content("TODO: return back mission config!", "text/plain");
     response.status = HTTPStatus::NOT_IMPLEMENTED;
 }
@@ -64,8 +69,21 @@ void GCSServer::_postMission(const httplib::Request& request, httplib::Response&
     Mission mission;
     google::protobuf::util::JsonStringToMessage(request.body, &mission);
 
-    // TODO: need the cartesian converstion code so that we can convert to XYZ coords from mission
-    // and store in this->state.getConfig()
+    // Update the cartesian converter to be centered around the new flight boundary
+    this->state->setCartesianConverter(CartesianConverter(mission.flightboundary()));
+    // Create the cartesian polygons for this new mission
+    // and store in the mission state
+    auto converter = state->getCartesianConverter().value();
+    this->state->config.batchUpdate(
+        converter.toXYZ(mission.flightboundary()),
+        converter.toXYZ(mission.airdropboundary()),
+        converter.toXYZ(mission.waypoints()),
+        std::vector<Bottle>(mission.bottleassignments().begin(),
+            mission.bottleassignments().end())
+    );
+
+    this->uploaded_mission = mission;
+
     response.set_content("TODO: upload mission config!", "text/plain");
     response.status = HTTPStatus::NOT_IMPLEMENTED;
 }

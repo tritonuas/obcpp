@@ -4,10 +4,14 @@
 #include <vector>
 #include <limits>
 #include <cmath>
+#include <algorithm>
 
 #include "protos/obc.pb.h"
+#include "utilities/constants.hpp"
 
-CartesianConverter::CartesianConverter(std::vector<GPSCoord> boundaries) {
+CartesianConverter::CartesianConverter(
+    google::protobuf::RepeatedPtrField<GPSCoord> boundaries
+) {
     double min_lat = std::numeric_limits<double>::infinity();
     double max_lat = -min_lat;
 
@@ -62,6 +66,16 @@ XYZCoord CartesianConverter::toXYZ(GPSCoord coord) const {
     double x = rho * std::sin(theta);
     double y = rho0 - rho * std::cos(theta);
     return XYZCoord(x, y, coord.altitude());
+}
+
+std::vector<XYZCoord> CartesianConverter::toXYZ(
+    google::protobuf::RepeatedPtrField<GPSCoord> coords
+) const {
+    std::vector<XYZCoord> result(coords.size());
+    for (auto coord : coords) {
+        result.push_back(this->toXYZ(coord));
+    }
+    return result;
 }
 
 GPSCoord CartesianConverter::getCenter() const {

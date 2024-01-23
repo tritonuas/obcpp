@@ -7,18 +7,17 @@
 #include "protos/obc.pb.h"
 #include "utilities/datatypes.hpp"
 
-
 class CartesianConverter {
  public:
-    explicit CartesianConverter(std::vector<GPSCoord> boundaries);
+    explicit CartesianConverter(google::protobuf::RepeatedPtrField<GPSCoord> boundaries);
 
     GPSCoord toLatLng(XYZCoord coord) const;
     XYZCoord toXYZ(GPSCoord coord) const;
+    std::vector<XYZCoord> toXYZ(google::protobuf::RepeatedPtrField<GPSCoord> coords) const;
 
     GPSCoord getCenter() const;
 
  private:
-    const double EARTH_RADIUS = 6378137.0;
 
     // Geometric center of the boundaries passed into the constructor,
     GPSCoord center;

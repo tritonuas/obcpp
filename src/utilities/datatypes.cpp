@@ -2,6 +2,7 @@
 
 #include <cmath>
 
+#include "pathing/cartesian.hpp"
 #include "protos/obc.pb.h"
 
 /*
@@ -77,7 +78,3 @@ GPSCoord makeGPSCoord(double lat, double lng, double alt) {
     coord.set_altitude(alt);
     return coord;
 }
-
-Polygon::Polygon(matplot::color color) { this->color = color; }
-
-Polyline::Polyline(matplot::color color) { this->color = color; }

@@ -13,8 +13,16 @@ MissionState::MissionState() = default;
 // See: https://stackoverflow.com/questions/9954518/stdunique-ptr-with-an-incomplete-type-wont-compile
 MissionState::~MissionState() = default;
 
-const MissionConfig& MissionState::getConfig() {
-    return this->config;
+const std::optional<CartesianConverter>& MissionState::getCartesianConverter() {
+    Lock lock(this->converter_mut);
+    
+    return this->converter;
+}
+
+void MissionState::setCartesianConverter(CartesianConverter new_converter) {
+    Lock lock(this->converter_mut);
+
+    this->converter = new_converter;
 }
 
 std::chrono::milliseconds MissionState::doTick() {
