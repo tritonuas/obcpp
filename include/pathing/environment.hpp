@@ -46,7 +46,12 @@ class Environment {
      * @param point the point to check
      * @return true if the point is in the goal region, false otherwise
      */
-    bool isPointInGoal(XYZCoord point) const { return (point - goal.coord).norm() <= goal_radius; }
+    bool isPointInGoal(XYZCoord point) const {
+        double x = point.x - goal.coord.x;
+        double y = point.y - goal.coord.y;
+        double norm = sqrt(x * x + y * y);
+        return norm <= goal_radius;
+    }
 
  private:
     const Polygon valid_region;  // boundary of the valid map

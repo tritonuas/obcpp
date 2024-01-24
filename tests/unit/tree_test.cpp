@@ -1,6 +1,8 @@
 #include "pathing/tree.hpp"
-#include "utilities/datatypes.hpp"
+
 #include <gtest/gtest.h>
+
+#include "utilities/datatypes.hpp"
 
 // TEST(SimpleTreeTest, addNodeTest) {
 //     RRTPoint point1 = RRTPoint(XYZCoord(1, 2, 0), 0);
@@ -16,7 +18,7 @@
 //     simpleTree.addNode(&a, &b, path, edgeCost);
 
 //     EXPECT_TRUE(a.getReachable().size() > 0);
-    
+
 //     EXPECT_TRUE(a.getReachable().back() == &b);
 
 //     EXPECT_TRUE(simpleTree.getNode(point1) != nullptr);
