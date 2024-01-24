@@ -33,7 +33,7 @@ struct XYZCoord {
      * Performs scalar multiplication
      * @see https://mathworld.wolfram.com/ScalarMultiplication.html
      *
-     * > the scalar being allowed on the right may be unsaafr
+     * > the scalar being allowed on the right may be unsafe
      */
     friend XYZCoord operator*(double scalar, const XYZCoord &vector);
     friend XYZCoord operator*(const XYZCoord &vector, double scalar);
@@ -61,7 +61,7 @@ struct RRTPoint {
 
     double distanceTo(const RRTPoint &otherPoint) const;
 
-    XYZCoord point;
+    XYZCoord coord;
     double psi;
 };
 
@@ -94,7 +94,7 @@ class Polygon : public std::vector<XYZCoord> {
      * @return      ==> whether or not the point is in this polygon object
      * @see         ==> https://en.wikipedia.org/wiki/Point_in_polygon
      */
-    bool pointInBounds(XYZCoord point) const;
+    bool isPointInBounds(XYZCoord point) const;
 
     // [TODO] make a method to augment the polygon to get similar polygons
     // [TODO] something that increases cost based on time in the edge

@@ -30,7 +30,8 @@ double random_01() { return static_cast<double>(std::rand()) / RAND_MAX; }
 
 class RRT {
  public:
-    // RRT(RRTPoint start, RRTPoint goal, int num_iterations, double goal_bias, double search_radius,
+    // RRT(RRTPoint start, RRTPoint goal, int num_iterations, double goal_bias, double
+    // search_radius,
     //     double tolerance_to_goal, double rewire_radius, Polygon bounds)
 
     //     : _goal{goal},
@@ -283,7 +284,8 @@ class RRT {
     //         }
 
     //         // if the node is uncompetitive, discard it
-    //         if (node->getCost() + option.length >= _tree.getNode(sample->getPoint())->getCost()) {
+    //         if (node->getCost() + option.length >= _tree.getNode(sample->getPoint())->getCost())
+    //         {
     //             continue;
     //         }
 
@@ -372,7 +374,6 @@ class RRT {
     //  private:
 
     RRTTree tree;
-
 
     int num_iterations;
     double goal_bias;

@@ -1,5 +1,12 @@
 #include "pathing/tree.hpp"
 
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
+#include "pathing/dubins.hpp"
+#include "pathing/environment.hpp"
+#include "utilities/datatypes.hpp"
 
 std::size_t EdgeHashFunction::operator()(const std::pair<RRTNode*, RRTNode*>& nodePair) const {
     PointHashFunction p = PointHashFunction();
@@ -11,8 +18,7 @@ std::size_t EdgeHashFunction::operator()(const std::pair<RRTNode*, RRTNode*>& no
     return c1;
 }
 
-RRTNode::RRTNode(RRTPoint point, double cost)
-    : point{point}, cost{cost} {}
+RRTNode::RRTNode(RRTPoint point, double cost) : point{point}, cost{cost} {}
 
 RRTNode::RRTNode(RRTPoint point, double cost, RRTNodeList reachable)
     : point{point}, cost{cost}, reachable{reachable} {}
@@ -76,16 +82,61 @@ const std::vector<XYZCoord>& RRTEdge::getPath() { return this->path; }
 
 void RRTEdge::setPath(std::vector<XYZCoord> path) { this->path = path; }
 
-
 /** RRTTree */
+RRTTree::RRTTree(RRTPoint rootPoint, Environment airspace, Dubins dubins)
+    : airspace{airspace}, dubins{dubins} {
+    RRTNode* newNode = new RRTNode(rootPoint, LARGE_COST);
+    nodeMap.insert(std::make_pair(rootPoint, newNode));
+}
 
-void RRTTree::addNode(RRTNode* connectTo, RRTNode* newNode, std::vector<XYZCoord> path,
-                      double cost) {
+// TODO - seems a bit sketchy
+RRTTree::~RRTTree() {
+    for (std::pair<RRTPoint, RRTNode*> node : nodeMap) {
+        delete node.second;
+    }
+}
+
+// TODO - convert from old to new
+bool RRTTree::addNode(RRTNode* connectTo, RRTPoint newPoint) {
+    RRTNode* newNode = new RRTNode(newPoint, LARGE_COST);
+
     if (this->nodeMap.empty()) {
         std::pair<RRTPoint, RRTNode*> insertNode(newNode->getPoint(), newNode);
         nodeMap.insert(insertNode);
-        return;
+        return true;
     }
+
+    // checking if path is valid
+    const std::vector<RRTOption> dubins_options =
+        dubins.allOptions(connectTo->getPoint(), newNode->getPoint(), true);
+    double cost = LARGE_COST;
+    std::vector<XYZCoord> path{};
+
+    // find the best valid path
+    for (const RRTOption& option : dubins_options) {
+        if (option.length == std::numeric_limits<double>::infinity()) {
+            return false;
+        }
+
+        // generate the path
+        std::vector<XYZCoord> current_path = dubins.generatePoints(
+            connectTo->getPoint(), newNode->getPoint(), option.dubins_path, option.has_straight);
+
+        // check if given path is inbounds
+        if (airspace.isPathInBounds(current_path)) {
+            if (option.length < cost) {
+                cost = option.length;
+                path = current_path;
+                break;
+            }
+        }
+    }
+
+    if (cost == LARGE_COST) {
+        std::cout << "PANIC PANIC TREE.CPP:131" << std::endl;
+        return false;
+    }
+
     std::pair<RRTNode*, RRTNode*> edgePair(connectTo, newNode);
     RRTEdge newEdge = RRTEdge(connectTo, newNode, path, cost);
 
@@ -94,6 +145,8 @@ void RRTTree::addNode(RRTNode* connectTo, RRTNode* newNode, std::vector<XYZCoord
     nodeMap.insert(insertNode);
 
     connectTo->addReachable(newNode);
+
+    return true;
 }
 
 void RRTTree::rewireEdge(RRTNode* from, RRTNode* toPrev, RRTNode* toNew, std::vector<XYZCoord> path,

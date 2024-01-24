@@ -69,8 +69,8 @@ Vector Dubins::findCenter(const RRTPoint &point, char side) const {
     double angle = point.psi + (side == 'L' ? HALF_PI : -HALF_PI);
 
     // creates the vector offset from the existing position
-    return Vector{point.point.x + (std::cos(angle) * _radius),
-                  point.point.y + (std::sin(angle) * _radius), 0};
+    return Vector{point.coord.x + (std::cos(angle) * _radius),
+                  point.coord.y + (std::sin(angle) * _radius), 0};
 }
 
 Vector Dubins::circleArc(const RRTPoint &starting_point, double beta, const Vector &center,
@@ -104,7 +104,7 @@ std::vector<Vector> Dubins::generatePointsStraight(const RRTPoint &start, const 
         double angle = start.psi + (std::abs(path.beta_0) - HALF_PI) * sign(path.beta_0);
         initial_terminal_point = center_0 + _radius * Vector{std::cos(angle), std::sin(angle), 0};
     } else {
-        initial_terminal_point = Vector{start.point.x, start.point.y, start.point.z};
+        initial_terminal_point = Vector{start.coord.x, start.coord.y, start.coord.z};
     }
 
     if (std::abs(path.beta_2) > 0) {
@@ -113,7 +113,7 @@ std::vector<Vector> Dubins::generatePointsStraight(const RRTPoint &start, const 
         double angle = end.psi + (-std::abs(path.beta_2) - HALF_PI) * sign(path.beta_2);
         final_terminal_point = center_2 + _radius * Vector{std::cos(angle), std::sin(angle), 0};
     } else {
-        final_terminal_point = Vector{end.point.x, end.point.y, 0};
+        final_terminal_point = Vector{end.coord.x, end.coord.y, 0};
     }
 
     double distance_straight = distanceBetween(initial_terminal_point, final_terminal_point);
@@ -154,7 +154,7 @@ std::vector<Vector> Dubins::generatePointsStraight(const RRTPoint &start, const 
                                      (1 - coefficient) * initial_terminal_point);
         }
     }
-    points_list.emplace_back(Vector{end.point.x, end.point.y, 0});
+    points_list.emplace_back(Vector{end.coord.x, end.coord.y, 0});
 
     return points_list;
 }
@@ -207,7 +207,7 @@ std::vector<Vector> Dubins::generatePointsCurve(const RRTPoint &start, const RRT
         }
     }
 
-    points_list.emplace_back(Vector{end.point.x, end.point.y, 0});
+    points_list.emplace_back(Vector{end.coord.x, end.coord.y, 0});
 
     return points_list;
 }

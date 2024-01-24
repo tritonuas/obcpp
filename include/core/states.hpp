@@ -1,16 +1,16 @@
 #ifndef CORE_STATES_HPP_
 #define CORE_STATES_HPP_
 
+#include <chrono>
+#include <functional>
 #include <memory>
 #include <mutex>
-#include <functional>
-#include <chrono>
 #include <vector>
 
 #include "core/config.hpp"
-#include "utilities/datatypes.hpp"
-#include "utilities/constants.hpp"
 #include "protos/obc.pb.h"
+#include "utilities/constants.hpp"
+#include "utilities/datatypes.hpp"
 
 class Tick;
 
@@ -40,6 +40,5 @@ class MissionState {
     std::vector<GPSCoord> init_path;
     bool init_path_validated = false;  // true when the operator has validated the initial path
 };
-
 
 #endif  // INCLUDE_CORE_STATES_HPP_

@@ -1,10 +1,10 @@
 #ifndef INCLUDE_UTILITIES_CONSTANTS_HPP_
 #define INCLUDE_UTILITIES_CONSTANTS_HPP_
 
-#include <string>
-#include <chrono>
-
 #include <matplot/matplot.h>
+
+#include <chrono>
+#include <string>
 
 // common ratios of pi
 const double TWO_PI = 2 * M_PI;
@@ -13,6 +13,8 @@ const double HALF_PI = M_PI / 2;
 // FOR TEST, VALUES DONT MAKE SENSE
 const double TURNING_RADIUS = 5;
 const double POINT_SEPARATION = 1;
+
+const double LARGE_COST = 999999999999.0;
 
 const int DEFAULT_GCS_PORT = 5010;
 

@@ -7,6 +7,7 @@
 
 #include "pathing/dubins.hpp"
 #include "utilities/datatypes.hpp"
+#include "pathing/environment.hpp"
 
 class RRTNode;
 typedef std::vector<RRTNode*> RRTNodeList;
@@ -115,13 +116,14 @@ class RRTEdge {
 
 class RRTTree {
  public:
-    RRTTree(RRTPoint rootPoint, RRTPoint goalPoint);
+    RRTTree(RRTPoint rootPoint, Environment airspace, Dubins dubins);
     ~RRTTree();
+
     /*
      *  Add a node to the RRTTree.
      *  If adding the first node to the tree, connectTo can be anything.
      */
-    void addNode(RRTNode* connectTo, RRTNode* newNode, std::vector<Vector> path, double cost);
+    bool addNode(RRTNode* connectTo, RRTPoint newPoint);
 
     /*
      * Delete an edge between 'from' and 'toPrev', and create a new edge
@@ -145,18 +147,13 @@ class RRTTree {
 
  private:
     RRTNode* root;
-    RRTPoint goalPoint;
     std::unordered_map<RRTPoint, RRTNode*, PointHashFunction> nodeMap{};
     std::unordered_map<std::pair<RRTNode*, RRTNode*>, RRTEdge, EdgeHashFunction> edgeMap{};
 
-    Polygon bounds;
-
+    Environment airspace;
     Dubins dubins;
 
-    double tolerance_to_goal;
     double distance_to_goal;
-
-    bool found_goal;
 };
 
 #endif  // INCLUDE_PATHING_TREE_HPP_

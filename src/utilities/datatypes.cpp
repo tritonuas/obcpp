@@ -5,8 +5,8 @@
 #include "protos/obc.pb.h"
 
 /*
- *   Empty in-line comments prevent VSCode auto-formatter screrw with my
- *   preffered way of formatting.
+ *   Empty in-line comments prevent VSCode auto-formatter from moving all the
+ *   segmented code to inline.
  */
 
 bool XYZCoord::operator==(const XYZCoord &other_point) const {
@@ -68,32 +68,28 @@ XYZCoord XYZCoord::normalized() const {
     return (1 / this->norm()) * (*this);
 }
 
-std::size_t PointHashFunction::operator()(const RRTPoint& point) const {
-    unsigned int h1 = std::hash<double>{}(point.point.x);
-    unsigned int h2 = std::hash<double>{}(point.point.y);
-    unsigned int h3 = std::hash<double>{}(point.point.z);
+std::size_t PointHashFunction::operator()(const RRTPoint &point) const {
+    unsigned int h1 = std::hash<double>{}(point.coord.x);
+    unsigned int h2 = std::hash<double>{}(point.coord.y);
+    unsigned int h3 = std::hash<double>{}(point.coord.z);
 
     unsigned int c1 = 0.5 * (h1 + h2) * (h1 + h2 + 1) + h2;
     unsigned int c2 = 0.5 * (c1 + h3) * (c1 + h3 + 1) + h3;
 
     return c2;
 }
-RRTPoint::RRTPoint(XYZCoord point, double psi)
-    : point{point}, psi{psi} {}
+RRTPoint::RRTPoint(XYZCoord point, double psi) : coord{point}, psi{psi} {}
 
-bool RRTPoint::operator== (const RRTPoint &otherPoint) const {
-    return (this->point.x == otherPoint.point.x
-            && this->point.y == otherPoint.point.y
-            && this->point.z == otherPoint.point.z
-            && this->psi == otherPoint.psi);
+bool RRTPoint::operator==(const RRTPoint &otherPoint) const {
+    return (this->coord.x == otherPoint.coord.x && this->coord.y == otherPoint.coord.y &&
+            this->coord.z == otherPoint.coord.z && this->psi == otherPoint.psi);
 }
 
 double RRTPoint::distanceTo(const RRTPoint &otherPoint) const {
-    return std::sqrt(std::pow(this->point.x - otherPoint.point.x, 2)
-                    + std::pow(this->point.y - otherPoint.point.y, 2)
-                    + std::pow(this->point.z - otherPoint.point.z, 2));
+    return std::sqrt(std::pow(this->coord.x - otherPoint.coord.x, 2) +
+                     std::pow(this->coord.y - otherPoint.coord.y, 2) +
+                     std::pow(this->coord.z - otherPoint.coord.z, 2));
 }
-
 
 GPSCoord makeGPSCoord(double lat, double lng, double alt) {
     GPSCoord coord;
@@ -105,8 +101,7 @@ GPSCoord makeGPSCoord(double lat, double lng, double alt) {
 
 Polygon::Polygon(matplot::color color) { this->color = color; }
 
-
-bool Polygon::pointInBounds(XYZCoord point) const {
+bool Polygon::isPointInBounds(XYZCoord point) const {
     bool is_inside = false;
     // Initialize with the last point
     const XYZCoord *previous_point = &(*this)[this->size() - 1];
