@@ -45,6 +45,11 @@ class ObstacleEvasionState: public MissionState {
         void updateObstaclesList(std::vector<GPSCoord> obstacles);
 
     private:
+        // Evasion state will exit after not seeing obstacle for 15 seconds
+        // or after it determines it has reached safety. Tick will decrement this
+        // and exit state when this reaches 0.
+        int evasionTimeRemaining;
+        // List of obstacle locations.
         std::vector<GPSCoord> obstacles;
         /*
             Do the evasion logic and send mavlink commands.

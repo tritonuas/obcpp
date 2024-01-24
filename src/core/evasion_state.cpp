@@ -1,16 +1,24 @@
 /* ObstacleEvasionState*/
 
 ObstacleEvasionState::ObstacleEvasionState(std::vector<GPSCoord> obstacles) {
+    // TODO: Dear reviewer, I want this to take ownership of the obstacles vector.
+    // How do I make that happen?
     ObstacleEvasionState::obstacles = obstacles;
 }
 
 MissionState* ObstacleEvasionState::tick() {
-    // TODO: Return state change when done evading
-    // 
+    // Return state change when done evading
+    if (ObstacleEvasionState::evasionTimeRemaining <= 0) {
+        return nullptr; // TODO: return the next state
+    } else {
+        // decrement the time remaining to evade
+        ObstacleEvasionState::evasionTimeRemaining -= 1;
+    }
+    
     return nullptr;
 }
 
-MissionState* ObstacleEvasionState::evade() {
+MissionState* ObstacleEvasionState::evade(void) {
     // There are 3 good options for doing avoidance. 
     // - Overwrite the next waypoint
     // - Continue along path but edit next altitude (immediately start climbing/descending)
@@ -24,40 +32,7 @@ MissionState* ObstacleEvasionState::evade() {
 }
 
 void ObstacleEvasionState::updateObstaclesList(std::vector<GPSCoord> obstacles) {
-    // TODO:
-    return 0;
-}
-
-
-// to manually send a command which is not implemented by mavsdk
-// You need to use `mavlink_passthrough` which has has a few send_command functions
-int sendCustomMavlinkCommand() {
-    // https://mavsdk.mavlink.io/main/en/cpp/api_reference/structmavsdk_1_1_mavlink_passthrough_1_1_command_long.html
-
-    // These two can probably be gotten from the mavlink object
-        uint8_t target_sysid = 0;
-
-    uint8_t target_compid = 0;
-
-    // Hard coded values for MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT
-    uint16_t command = 30; // MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT
-
-    // Climb or Descend (0 = Neutral, command completes when within 5m of this command's altitude,
-    // 1 = Climbing, command completes when at or above this command's altitude, 2 = Descending,
-    // command completes when at or below this command's altitude.
-    float param1 = 1;
-
-    // These are all unused.
-    float param2 = 0.0f;
-    float param3 = 0.0f;
-    float param4 = 0.0f;
-    float param5 = 0.0f;
-    float param6 = 0.0f;
-    float param7 = 0.0f;
-
-    mavsdk::MavlinkPassthrough::CommandLong command = mavsdk::MavlinkPassthrough::CommandLong(
-    target_sysid, target_compid, command, param1, param2, param3, param4, param5, param6, param7, 
-    );
-    // Result mavsdk::MavlinkPassthrough::send_command_long(const CommandLong &command)
-    mavsdk::MavlinkPassthrough::send_command_long(command);
+    // TODO: Question for reviewers. Is this the best way to access class vars?
+    // https://stackoverflow.com/questions/10198046/c-member-variables
+    ObstacleEvasionState::obstacles = obstacles;
 }
