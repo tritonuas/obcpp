@@ -6,7 +6,6 @@
 #include <string>
 #include <chrono>
 
-
 const int NUM_AIRDROP_BOTTLES = 5;
 
 const int DEFAULT_GCS_PORT = 5010;
@@ -21,5 +20,20 @@ const std::chrono::milliseconds MISSION_PREP_TICK_WAIT = std::chrono::millisecon
 const std::chrono::milliseconds PATH_GEN_TICK_WAIT = std::chrono::milliseconds(1000);
 
 const double EARTH_RADIUS = 6378137.0;
+
+enum HTTPStatus {
+    OK = 200,
+
+    BAD_REQUEST = 400,
+    NOT_FOUND = 404,
+
+    INTERNAL_SERVER_ERROR = 500,
+    NOT_IMPLEMENTED = 501,
+};
+
+namespace mime {
+    const char json[] = "application/json";
+    const char plaintext[] = "text/plain";
+}
 
 #endif  // INCLUDE_UTILITIES_CONSTANTS_HPP_

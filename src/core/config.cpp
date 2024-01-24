@@ -13,15 +13,9 @@
 
 #include "protos/obc.pb.h"
 
-MissionConfig::MissionConfig():
-    flightBoundary(FLIGHT_BOUND_COLOR),
-    airdropBoundary(AIRDROP_BOUND_COLOR),
-    waypoints(WAYPOINTS_COLOR) {}
+MissionConfig::MissionConfig() = default;
 
-MissionConfig::MissionConfig(std::string filename):
-    flightBoundary(FLIGHT_BOUND_COLOR),
-    airdropBoundary(AIRDROP_BOUND_COLOR),
-    waypoints(WAYPOINTS_COLOR) {
+MissionConfig::MissionConfig(std::string filename) {
     // TODO: load from file
 }
 

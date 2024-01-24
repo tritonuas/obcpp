@@ -59,15 +59,20 @@ void GCSServer::_getMission(const httplib::Request& request, httplib::Response& 
     if (this->uploaded_mission) {
         std::string output;
         google::protobuf::util::MessageToJsonString(this->uploaded_mission.value(), &output);
-    }
 
-    response.set_content("TODO: return back mission config!", "text/plain");
-    response.status = HTTPStatus::NOT_IMPLEMENTED;
+        response.set_content(output, mime::json);
+        response.status = HTTPStatus::OK;
+    } else {
+        response.set_content("No uploaded mission", mime::plaintext);
+        response.status = HTTPStatus::BAD_REQUEST;
+    }
 }
 
 void GCSServer::_postMission(const httplib::Request& request, httplib::Response& response) {
     Mission mission;
     google::protobuf::util::JsonStringToMessage(request.body, &mission);
+
+    // TODO: add checks for the mission
 
     // Update the cartesian converter to be centered around the new flight boundary
     this->state->setCartesianConverter(CartesianConverter(mission.flightboundary()));
@@ -84,8 +89,8 @@ void GCSServer::_postMission(const httplib::Request& request, httplib::Response&
 
     this->uploaded_mission = mission;
 
-    response.set_content("TODO: upload mission config!", "text/plain");
-    response.status = HTTPStatus::NOT_IMPLEMENTED;
+    response.set_content("Mission Uploaded", mime::plaintext);
+    response.status = HTTPStatus::OK;
 }
 
 void GCSServer::_postAirdropTargets(const httplib::Request& request, httplib::Response& response) {

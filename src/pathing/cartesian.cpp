@@ -71,7 +71,8 @@ XYZCoord CartesianConverter::toXYZ(GPSCoord coord) const {
 std::vector<XYZCoord> CartesianConverter::toXYZ(
     google::protobuf::RepeatedPtrField<GPSCoord> coords
 ) const {
-    std::vector<XYZCoord> result(coords.size());
+    std::vector<XYZCoord> result;
+    result.reserve(coords.size());
     for (auto coord : coords) {
         result.push_back(this->toXYZ(coord));
     }
