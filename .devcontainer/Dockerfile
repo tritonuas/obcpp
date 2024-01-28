@@ -36,7 +36,8 @@ RUN apt-get update \
                         #    libxm12-dev \
                            libxmlsec1-dev \
                            libffi-dev \
-                           liblzma-dev
+                           liblzma-dev \
+                           gnuplot # needed for matplotplus
 
 RUN apt-add-repository universe
 RUN apt-get install -y cpplint
