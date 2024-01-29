@@ -1,7 +1,10 @@
 #ifndef INCLUDE_PATHING_ENVIRONMENT_HPP_
 #define INCLUDE_PATHING_ENVIRONMENT_HPP_
 
+#include <vector>
+
 #include "utilities/datatypes.hpp"
+#include "utilities/rng.cpp"
 
 /*
  *  Abstracction of the environment, which is a polygon
@@ -51,6 +54,38 @@ class Environment {
         double y = point.y - goal.coord.y;
         double norm = sqrt(x * x + y * y);
         return norm <= goal_radius;
+    }
+
+    /**
+     * Get the goal point
+     *
+     * @return the goal point
+     */
+    RRTPoint getGoal() const { return goal; }
+
+    /**
+     * Generate a random point in the valid region
+     *
+     * @param start_point the startpoint used to generate a random point
+     * @param search_radius the radius of the search region
+     * @return a random RRTPoint in the valid region
+     */
+    RRTPoint getRandomPoint(const RRTPoint& start_point, double search_radius) const {
+        const double angle = random(0, 1) * TWO_PI;
+        const XYZCoord direction_vector{sin(angle), cos(angle), 0};
+
+        // TODO - use some heuristic to more efficiently generate direction
+        // vector (and make it toggleable)
+        for (int i = 0; i < 15; i++) {
+            RRTPoint generated_point{start_point.coord + (search_radius * direction_vector),
+                                     random(0, 1) * TWO_PI};
+
+            if (isPointInBounds(generated_point.coord)) {
+                return generated_point;
+            }
+        }
+
+        return goal;
     }
 
  private:

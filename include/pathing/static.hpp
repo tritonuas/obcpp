@@ -12,7 +12,10 @@
 
 #include "core/states.hpp"
 #include "pathing/dubins.hpp"
+#include "pathing/environment.hpp"
 #include "pathing/tree.hpp"
+#include "utilities/datatypes.hpp"
+#include "utilities/rng.cpp"
 
 enum Validity { VALID, INVALID, GOAL };
 
@@ -21,72 +24,26 @@ std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
     return {};
 }
 
-/**
- * Generates a random_01 number between 0 and 1
- *
- * @return  ==> double [0,1]
- */
-double random_01() { return static_cast<double>(std::rand()) / RAND_MAX; }
-
 class RRT {
  public:
-    // RRT(RRTPoint start, RRTPoint goal, int num_iterations, double goal_bias, double
-    // search_radius,
-    //     double tolerance_to_goal, double rewire_radius, Polygon bounds)
+    RRT(RRTPoint start, RRTPoint goal, int num_iterations, double goal_bias, double search_radius,
+        double tolerance_to_goal, double rewire_radius, Polygon bounds)
 
-    //     : _goal{goal},
-    //       _num_iterations{num_iterations},
-    //       _goal_bias{goal_bias},
-    //       _search_radius{search_radius},
-    //       _tolerance_to_goal{tolerance_to_goal},
-    //       _rewire_radius{rewire_radius},
-    //       _dubins{TURNING_RADIUS, POINT_SEPARATION},
-    //       _found_goal{false},
-    //       _goal_node{std::nullopt},
-    //       _bounds{bounds} {
-    //     _root = RRTNode{start, 0};
-    //     // print out root x coord
-    //     _tree.addNode(nullptr, &_root, {}, 0);
-    //     // print out root from tree
-    //     // print out root
-    //     std::cout << this->_root->getPoint().point.x << std::endl;
-    // }
+        : num_iterations{num_iterations},
+          goal_bias{goal_bias},
+          search_radius{search_radius},
+          rewire_radius{rewire_radius},
+          tree{start, Environment{bounds, goal, tolerance_to_goal},
+               Dubins{TURNING_RADIUS, POINT_SEPARATION}} {}
 
-    // // choose a random point from free space, not nessisarily this
-    // RRTPoint generateSamplePoint(const RRTPoint &from) {
-    //     if (random_01() < _goal_bias) {
-    //         return RRTPoint{_goal.point, random_01() * TWO_PI};
-    //     }
+    // choose a random point from free space, not nessisarily this
+    RRTPoint generateSamplePoint(const RRTPoint &from) {
+        if (random(0, 1) < goal_bias) {
+            return RRTPoint{tree.getGoal().coord, random(0, TWO_PI)};
+        }
 
-    //     const double angle = random_01() * TWO_PI;
-    //     const XYZCoord direction_vector{sin(angle), cos(angle), 0};
-
-    //     // TODO - use some heuristic to more efficiently generate direction
-    //     // vector (and make it toggleable)
-    //     return RRTPoint{_root->getPoint().point + (_search_radius * direction_vector),
-    //                     random_01() * TWO_PI};
-    // }
-
-    // /**
-    //  * checks if the generated path of a dubins curve is valid in the flight
-    //  * zonw.
-    //  *
-    //  * @param path  ==> list of points in a given flight path
-    //  * @return      ==> whether or not every point is within the bounds of the
-    //  *                  area
-    //  */
-    // bool validPath(const std::vector<XYZCoord> &path) {
-    //     // polygons dont work yet? also should the be convex?
-    //     for (const XYZCoord &point : path) {
-    //         // [TODO], add if the point is B] not inside an obsticle C] can turn
-    //         //          around boundaries
-    //         if (!_bounds.pointInBounds(point)) {
-    //             return false;
-    //         }
-    //     }
-
-    //     return true;
-    // }
+        return tree.getRandomPoint(search_radius);
+    }
 
     // /**
     //  * RRT*
@@ -371,8 +328,7 @@ class RRT {
     //     path->pop_back();
     // }
 
-    //  private:
-
+ private:
     RRTTree tree;
 
     int num_iterations;

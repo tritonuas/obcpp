@@ -23,5 +23,7 @@ int main() {
     bounds.emplace_back(XYZCoord{500, 800, 0});
     bounds.emplace_back(XYZCoord{0, 800, 0});
 
+    RRT rrt = RRT(start, goal, num_iterations, goal_bias, search_radius, tolerance_to_goal, rewire_radius, bounds);
+
     return 0;
 }

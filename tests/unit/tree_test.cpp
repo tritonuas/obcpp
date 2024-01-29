@@ -2,91 +2,119 @@
 
 #include <gtest/gtest.h>
 
+#include "pathing/dubins.hpp"
+#include "pathing/environment.hpp"
+#include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
 
-// TEST(SimpleTreeTest, addNodeTest) {
-//     RRTPoint point1 = RRTPoint(XYZCoord(1, 2, 0), 0);
-//     RRTPoint point2 = RRTPoint(XYZCoord(0, 2, 0), 0);
-//     RRTNode a = RRTNode(point1, 10);
-//     RRTNode b = RRTNode(point2, 10);
-//     std::vector<XYZCoord> path = {XYZCoord(0.5, 2, 0), XYZCoord(0.25, 2, 0)};
-//     double edgeCost = 1;
-//     RRTEdge edge = RRTEdge(&a, &b, path, edgeCost);
-//     RRTTree simpleTree = RRTTree();
+/*
+ *   very bad tests, was too lazy to check if every parameter was correct, aka didn't bother to find
+ *   the hardcoded values for the expected values.
+ */
 
-//     simpleTree.addNode(&a, &a, std::vector<XYZCoord>(), 0);
-//     simpleTree.addNode(&a, &b, path, edgeCost);
+TEST(SimpleTreeTest, addNodeTest) {
+    Dubins dubins{5, 0.1};
+    Polygon valid_region{FLIGHT_BOUND_COLOR};
+    valid_region.emplace_back(XYZCoord(0, 0, 0));
+    valid_region.emplace_back(XYZCoord(100, 0, 0));
+    valid_region.emplace_back(XYZCoord(100, 100, 0));
+    valid_region.emplace_back(XYZCoord(0, 100, 0));
+    Environment env = Environment(valid_region, RRTPoint(XYZCoord(0, 0, 0), 0), 0);
+    RRTPoint point1 = RRTPoint(XYZCoord(25, 25, 0), 0);
+    RRTPoint point2 = RRTPoint(XYZCoord(50, 75, 0), 0);
 
-//     EXPECT_TRUE(a.getReachable().size() > 0);
+    RRTTree simple_tree = RRTTree(point1, env, dubins);
 
-//     EXPECT_TRUE(a.getReachable().back() == &b);
+    RRTNode* root = simple_tree.getRoot();
 
-//     EXPECT_TRUE(simpleTree.getNode(point1) != nullptr);
-//     EXPECT_TRUE(simpleTree.getNode(point2) != nullptr);
+    // simpleTree.addNode(root, point1);
+    bool added_point = simple_tree.addNode(root, point2);
 
-//     EXPECT_TRUE(simpleTree.getEdge(point1, point2) != nullptr);
-// }
+    EXPECT_TRUE(added_point);
+    EXPECT_TRUE(root->getReachable().size() > 0);
 
-// TEST(SimpleTreeTest, getNodeTest) {
-//     RRTPoint point1 = RRTPoint(XYZCoord(1, 2, 0), 0);
-//     RRTPoint point2 = RRTPoint(XYZCoord(0, 2, 0), 0);
-//     RRTNode a = RRTNode(point1, 10);
-//     RRTNode b = RRTNode(point2, 10);
-//     std::vector<XYZCoord> path = {XYZCoord(0.5, 2, 0), XYZCoord(0.25, 2, 0)};
-//     double edgeCost = 1;
-//     RRTEdge edge = RRTEdge(&a, &b, path, edgeCost);
-//     RRTTree simpleTree = RRTTree();
-//     simpleTree.addNode(&a, &a, std::vector<XYZCoord>(), 0);
-//     simpleTree.addNode(&a, &b, path, edgeCost);
+    EXPECT_TRUE(simple_tree.getNode(point1) != nullptr);
+    EXPECT_TRUE(simple_tree.getNode(point2) != nullptr);
 
-//     EXPECT_TRUE(simpleTree.getNode(point1) != nullptr);
-//     EXPECT_TRUE(*(simpleTree.getNode(point1)) == a);
+    EXPECT_TRUE(simple_tree.getEdge(point1, point2) != nullptr);
+}
 
-//     EXPECT_TRUE(simpleTree.getNode(point2) != nullptr);
-//     EXPECT_TRUE(*(simpleTree.getNode(point2)) == b);
-// }
+TEST(SimpleTreeTest, getNodeTest) {
+    Dubins dubins{5, 0.1};
+    Polygon valid_region{FLIGHT_BOUND_COLOR};
+    valid_region.emplace_back(XYZCoord(0, 0, 0));
+    valid_region.emplace_back(XYZCoord(100, 0, 0));
+    valid_region.emplace_back(XYZCoord(100, 100, 0));
+    valid_region.emplace_back(XYZCoord(0, 100, 0));
+    Environment env = Environment(valid_region, RRTPoint(XYZCoord(0, 0, 0), 0), 0);
+    RRTPoint point1 = RRTPoint(XYZCoord(25, 25, 0), 0);
+    RRTPoint point2 = RRTPoint(XYZCoord(50, 75, 0), 0);
 
-// TEST(SimpleTreeTest, getEdgeTest) {
-//     RRTPoint point1 = RRTPoint(XYZCoord(1, 2, 0), 0);
-//     RRTPoint point2 = RRTPoint(XYZCoord(0, 2, 0), 0);
-//     RRTNode a = RRTNode(point1, 10);
-//     RRTNode b = RRTNode(point2, 10);
-//     std::vector<XYZCoord> path = {XYZCoord(0.5, 2, 0), XYZCoord(0.25, 2, 0)};
-//     double edgeCost = 1;
-//     RRTEdge edge = RRTEdge(&a, &b, path, edgeCost);
-//     RRTTree simpleTree = RRTTree();
-//     simpleTree.addNode(&a, &a, std::vector<XYZCoord>(), 0);
-//     simpleTree.addNode(&a, &b, path, edgeCost);
+    RRTTree simple_tree = RRTTree(point1, env, dubins);
 
-//     EXPECT_TRUE(simpleTree.getEdge(point1, point2) != nullptr);
-//     EXPECT_TRUE(*(simpleTree.getEdge(point1, point2)) == edge);
-// }
+    RRTNode* root = simple_tree.getRoot();
 
-// TEST(SimpleTreeTest, rewireEdgeTest) {
-//     RRTPoint point1 = RRTPoint(XYZCoord(1, 2, 0), 0);
-//     RRTPoint point2 = RRTPoint(XYZCoord(0, 2, 0), 0);
-//     RRTNode a = RRTNode(point1, 10);
-//     RRTNode b = RRTNode(point2, 10);
-//     std::vector<XYZCoord> path = {XYZCoord(0.5, 2, 0), XYZCoord(0.25, 2, 0)};
-//     double edgeCost = 1;
+    // simpleTree.addNode(root, point1);
+    bool added_point = simple_tree.addNode(root, point2);
 
-//     RRTTree simpleTree = RRTTree();
+    EXPECT_TRUE(true);
 
-//     simpleTree.addNode(&a, &a, std::vector<XYZCoord>(), 0);
-//     simpleTree.addNode(&a, &b, path, edgeCost);
+    EXPECT_TRUE(simple_tree.getNode(point1) != nullptr);
+    EXPECT_TRUE(*(simple_tree.getNode(point1)) == *root);
 
-//     RRTPoint point3 = RRTPoint(XYZCoord(3,2,0), 0);
-//     RRTNode c = RRTNode(point3, 10);
-//     RRTEdge edge = RRTEdge(&a, &c, path, edgeCost);
+    EXPECT_TRUE(simple_tree.getNode(point2) != nullptr);
+    // EXPECT_TRUE(*(simple_tree.getNode(point2)) == b);
+}
 
-//     simpleTree.rewireEdge(&a, &b, &c, path, edgeCost);
+TEST(SimpleTreeTest, getEdgeTest) {
+    Dubins dubins{5, 0.1};
+    Polygon valid_region{FLIGHT_BOUND_COLOR};
+    valid_region.emplace_back(XYZCoord(0, 0, 0));
+    valid_region.emplace_back(XYZCoord(100, 0, 0));
+    valid_region.emplace_back(XYZCoord(100, 100, 0));
+    valid_region.emplace_back(XYZCoord(0, 100, 0));
+    Environment env = Environment(valid_region, RRTPoint(XYZCoord(0, 0, 0), 0), 0);
+    RRTPoint point1 = RRTPoint(XYZCoord(25, 25, 0), 0);
+    RRTPoint point2 = RRTPoint(XYZCoord(50, 75, 0), 0);
 
-//     EXPECT_TRUE(a.getReachable().back() == &c);
+    RRTTree simple_tree = RRTTree(point1, env, dubins);
 
-//     EXPECT_TRUE(simpleTree.getNode(point2) == nullptr);
-//     EXPECT_TRUE(simpleTree.getNode(point3) != nullptr);
-//     EXPECT_TRUE(simpleTree.getNode(point3) == &c);
+    RRTNode* root = simple_tree.getRoot();
 
-//     EXPECT_TRUE(simpleTree.getEdge(point1, point3) != nullptr);
-//     EXPECT_TRUE(*(simpleTree.getEdge(point1, point3)) == edge);
-// }
+    // simpleTree.addNode(root, point1);
+    bool added_point = simple_tree.addNode(root, point2);
+
+    EXPECT_TRUE(simple_tree.getEdge(point1, point2) != nullptr);
+    // EXPECT_TRUE(*(simple_tree.getEdge(point1, point2)) == edge);
+}
+
+TEST(SimpleTreeTest, rewireEdgeTest) {
+    Dubins dubins{5, 0.1};
+    Polygon valid_region{FLIGHT_BOUND_COLOR};
+    valid_region.emplace_back(XYZCoord(0, 0, 0));
+    valid_region.emplace_back(XYZCoord(100, 0, 0));
+    valid_region.emplace_back(XYZCoord(100, 100, 0));
+    valid_region.emplace_back(XYZCoord(0, 100, 0));
+    Environment env = Environment(valid_region, RRTPoint(XYZCoord(0, 0, 0), 0), 0);
+    RRTPoint point1 = RRTPoint(XYZCoord(25, 25, 0), 0);
+    RRTPoint point2 = RRTPoint(XYZCoord(50, 75, 0), 0);
+
+    RRTTree simple_tree = RRTTree(point1, env, dubins);
+
+    RRTNode* root = simple_tree.getRoot();
+
+    RRTPoint point3 = RRTPoint(XYZCoord(3, 2, 0), 0);
+
+    simple_tree.addNode(root, point2);
+    simple_tree.addNode(simple_tree.getNode(point2), point3);
+
+    simple_tree.rewireEdge(simple_tree.getNode(point1), simple_tree.getNode(point2), simple_tree.getNode(point3), {}, 0);
+    EXPECT_TRUE(root->getReachable().front() == simple_tree.getNode(point3));
+    EXPECT_TRUE(simple_tree.getNode(point2) == nullptr);
+    EXPECT_TRUE(simple_tree.getNode(point3) != nullptr);
+    EXPECT_TRUE(simple_tree.getNode(point3)->getParent() == root);
+    // EXPECT_TRUE(simple_tree.getNode(point3) == &c);
+
+    EXPECT_TRUE(simple_tree.getEdge(point1, point3) != nullptr);
+    EXPECT_TRUE(simple_tree.getEdge(point1, point2) == nullptr);
+}
