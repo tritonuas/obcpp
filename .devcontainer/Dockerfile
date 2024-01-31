@@ -2,7 +2,8 @@ FROM amd64/ubuntu:22.04
 
 ARG USERNAME=tuas USER_UID=1000 USER_GID=1000 DEBIAN_FRONTEND=noninteractive
 
-ENV QT_QPA_PLATFORM="vnc" # Needed to spawn up a GUI in headless mode for matplotplus to work
+# Needed to spawn up a GUI in headless mode for matplotplus to work
+ENV QT_QPA_PLATFORM="vnc"
 
 # Create a non-root user
 RUN groupadd -f --gid $USER_GID $USERNAME \
