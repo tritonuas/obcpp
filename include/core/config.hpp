@@ -24,6 +24,9 @@ class MissionConfig {
     MissionConfig();  // Load default values
     explicit MissionConfig(std::string filename);  // Load from filename
 
+    // Check to see if the config has been initialized yet
+    bool isValid() const;
+
     // Getters for singular value
     // Use when only need to read one value
     Polygon getFlightBoundary();

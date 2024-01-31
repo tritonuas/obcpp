@@ -13,10 +13,22 @@
 
 #include "protos/obc.pb.h"
 
+// TODO: Log out mission config after it has been set
+
 MissionConfig::MissionConfig() = default;
 
 MissionConfig::MissionConfig(std::string filename) {
     // TODO: load from file
+}
+
+bool MissionConfig::isValid() const {
+    // 3 is minimum points that make sense for
+    // a polygon to have
+    return (
+        this->airdropBoundary.size() >= 3 &&
+        this->flightBoundary.size() >= 3 &&
+        this->waypoints.size() > 0
+    );
 }
 
 Polygon MissionConfig::getFlightBoundary() {

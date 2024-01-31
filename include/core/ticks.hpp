@@ -24,6 +24,7 @@ class Tick {
     // return new implementation of Tick if state change should happen
     virtual Tick* tick() = 0;
 
+    virtual std::string getName() const = 0;
  protected:
     std::shared_ptr<MissionState> state;
 };
@@ -39,6 +40,8 @@ class MissionPreparationTick : public Tick {
     std::chrono::milliseconds getWait() const override;
 
     Tick* tick() override;
+
+    std::string getName() const override;
 };
 
 /*
@@ -52,6 +55,8 @@ class PathGenerationTick : public Tick {
     std::chrono::milliseconds getWait() const override;
 
     Tick* tick() override;
+
+    std::string getName() const override;
  private:
     std::future<std::vector<GPSCoord>> path_future;
 };

@@ -1,6 +1,8 @@
 #include <memory>
 #include <iostream>
 
+#include <loguru.hpp>
+
 #include "core/ticks.hpp"
 #include "core/states.hpp"
 #include "utilities/constants.hpp"
@@ -20,11 +22,17 @@ std::chrono::milliseconds MissionPreparationTick::getWait() const {
     return MISSION_PREP_TICK_WAIT;
 }
 
+std::string MissionPreparationTick::getName() const {
+    return "Mission Preparation";
+}
+
 Tick* MissionPreparationTick::tick() {
-    // TODO: check to see if the mission config is full of valid information
-    // if so, transition to Path Generation Tick
-    // if not, return nullptr
-    return nullptr;
+    if (this->state->config.isValid()) {
+        LOG_F(INFO, "Valid mission configuration detected");
+        return new PathGenerationTick(this->state);
+    } else {
+        return nullptr;
+    }
 }
 
 std::vector<GPSCoord> tempGenPath(std::shared_ptr<MissionState> state) {
@@ -71,4 +79,8 @@ Tick* PathGenerationTick::tick() {
     }
 
     return nullptr;
+}
+
+std::string PathGenerationTick::getName() const {
+    return "Path Generation";
 }

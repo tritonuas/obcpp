@@ -1,6 +1,8 @@
 #include <memory>
 #include <mutex>
 
+#include <loguru.hpp>
+
 #include "core/config.hpp"
 #include "core/states.hpp"
 #include "core/ticks.hpp"
@@ -38,6 +40,16 @@ std::chrono::milliseconds MissionState::doTick() {
 
 void MissionState::setTick(Tick* newTick) {
     Lock lock(this->tick_mut);
+
+    std::string old_tick_name = "Null";
+    if (tick != nullptr) {
+        old_tick_name = tick->getName();
+    }
+    std::string new_tick_name = "Null";
+    if (newTick != nullptr) {
+        new_tick_name = newTick->getName();
+    }
+    LOG_F(INFO, "%s -> %s", old_tick_name.c_str(), new_tick_name.c_str());
 
     tick.reset(newTick);
 }
