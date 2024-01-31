@@ -7,10 +7,14 @@
 #include <memory>
 #include <cstdint>
 #include <functional>
+#include <iostream>
+#include <string>
 
 #include "core/config.hpp"
 #include "core/states.hpp"
+#include "core/ticks.hpp"
 #include "utilities/locks.hpp"
+#include "utilities/serialize.hpp"
 #include "protos/obc.pb.h"
 #include "pathing/cartesian.hpp"
 
@@ -102,7 +106,7 @@ void GCSServer::_postMission(const httplib::Request& request, httplib::Response&
     // TODO: add checks for the mission
 
     // Update the cartesian converter to be centered around the new flight boundary
-    this->state->setCartesianConverter(CartesianConverterProto(mission.flightboundary()));
+    this->state->setCartesianConverter(CartesianConverter(mission.flightboundary()));
     // Create the cartesian polygons for this new mission
     // and store in the mission state
     auto converter = state->getCartesianConverter().value();
@@ -126,15 +130,24 @@ void GCSServer::_postAirdropTargets(const httplib::Request& request, httplib::Re
 }
 
 void GCSServer::_getPathInitial(const httplib::Request& request, httplib::Response& response) {
-    LOG_REQUEST("POST", "/path/initial");
+    LOG_REQUEST("GET", "/path/initial");
 
-    LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
+    auto init_path = this->state->getInitPath();
+    if (init_path.empty()) {
+        LOG_RESPONSE(WARNING, "No initial path generated", BAD_REQUEST);
+    } else {
+        auto init_path = this->state->getInitPath();
+        std::string json = messagesToJson(init_path.begin(), init_path.end());
+        LOG_RESPONSE(INFO, "Got initial path", OK, json.c_str(), mime::json);
+    }
 }
 
 void GCSServer::_getPathInitialNew(const httplib::Request& request, httplib::Response& response) {
     LOG_REQUEST("GET", "/path/initial/new");
 
-    LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
+    this->state->setTick(new PathGenerationTick(this->state));
+
+    LOG_RESPONSE(INFO, "Started generating new initial path", OK);
 }
 
 void GCSServer::_postPathInitialValidate(
@@ -145,7 +158,6 @@ void GCSServer::_postPathInitialValidate(
     if (state->getInitPath().empty()) {
         LOG_RESPONSE(WARNING, "No initial path generated", BAD_REQUEST); 
     } else {
-        // TODO: mark as valid
         LOG_RESPONSE(INFO, "Initial path validated", OK);
     }
 }

@@ -36,6 +36,4 @@ class CartesianConverter {
     double phi_1;
 };
 
-using CartesianConverterProto = CartesianConverter<google::protobuf::RepeatedPtrField<GPSCoord>>;
-
 #endif  // INCLUDE_PATHING_CARTESIAN_HPP_

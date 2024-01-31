@@ -15,13 +15,13 @@ MissionState::MissionState() = default;
 // See: https://stackoverflow.com/questions/9954518/stdunique-ptr-with-an-incomplete-type-wont-compile
 MissionState::~MissionState() = default;
 
-const std::optional<CartesianConverterProto>& MissionState::getCartesianConverter() {
+const std::optional<CartesianConverter<GPSProtoVec>>& MissionState::getCartesianConverter() {
     Lock lock(this->converter_mut);
     
     return this->converter;
 }
 
-void MissionState::setCartesianConverter(CartesianConverterProto new_converter) {
+void MissionState::setCartesianConverter(CartesianConverter<GPSProtoVec> new_converter) {
     Lock lock(this->converter_mut);
 
     this->converter = new_converter;
@@ -66,4 +66,9 @@ const std::vector<GPSCoord>& MissionState::getInitPath() {
 bool MissionState::isInitPathValidated() {
     Lock lock(this->init_path_mut);
     return this->init_path_validated;
+}
+
+void MissionState::validateInitPath() {
+    Lock lock(this->init_path_mut);
+    this->init_path_validated = true;
 }

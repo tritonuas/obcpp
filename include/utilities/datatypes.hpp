@@ -60,5 +60,6 @@ GPSCoord makeGPSCoord(double lat, double lng, double alt);
 using Polygon = std::vector<XYZCoord>;
 using Polyline = std::vector<XYZCoord>;
 
+using GPSProtoVec = google::protobuf::RepeatedPtrField<GPSCoord>;
 
 #endif  // INCLUDE_UTILITIES_DATATYPES_HPP_

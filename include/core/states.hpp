@@ -20,8 +20,8 @@ class MissionState {
    MissionState();
    ~MissionState();
 
-   const std::optional<CartesianConverterProto>& getCartesianConverter();
-   void setCartesianConverter(CartesianConverterProto);
+   const std::optional<CartesianConverter<GPSProtoVec>>& getCartesianConverter();
+   void setCartesianConverter(CartesianConverter<GPSProtoVec>);
 
    std::chrono::milliseconds doTick();
    // For external use, acquires the tick mutex
@@ -34,11 +34,12 @@ class MissionState {
    void setInitPath(std::vector<GPSCoord> init_path);
    const std::vector<GPSCoord>& getInitPath();
    bool isInitPathValidated();
+   void validateInitPath();
 
    MissionConfig config;  // has its own mutex
  private:
    std::mutex converter_mut;
-   std::optional<CartesianConverterProto> converter;
+   std::optional<CartesianConverter<GPSProtoVec>> converter;
 
    std::mutex tick_mut;  // for reading/writing tick
    std::unique_ptr<Tick> tick;

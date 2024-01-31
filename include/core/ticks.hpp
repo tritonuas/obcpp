@@ -6,6 +6,7 @@
 #include <future>
 #include <vector>
 
+#include "protos/obc.pb.h"
 #include "core/states.hpp"
 
 // When writing tick functions... Absolutely do not do not do not

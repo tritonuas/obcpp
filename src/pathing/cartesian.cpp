@@ -8,6 +8,7 @@
 
 #include "protos/obc.pb.h"
 #include "utilities/constants.hpp"
+#include "utilities/datatypes.hpp"
 
 template<typename GPSCoords>
 CartesianConverter<GPSCoords>::CartesianConverter(GPSCoords boundaries) {
@@ -87,5 +88,5 @@ GPSCoord CartesianConverter<GPSCoords>::getCenter() const {
 
 // Force it to make template instances since this will be compiled separately from
 // the rest of the code
-template class CartesianConverter<google::protobuf::RepeatedPtrField<GPSCoord>>;
+template class CartesianConverter<GPSProtoVec>;
 template class CartesianConverter<std::vector<GPSCoord>>;

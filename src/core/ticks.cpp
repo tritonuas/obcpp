@@ -7,6 +7,7 @@
 #include "core/ticks.hpp"
 #include "core/states.hpp"
 #include "utilities/constants.hpp"
+#include "utilities/datatypes.hpp"
 
 Tick::Tick(std::shared_ptr<MissionState> state) {
     this->state = state;
