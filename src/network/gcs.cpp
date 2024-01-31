@@ -14,24 +14,29 @@
 #include "protos/obc.pb.h"
 #include "pathing/cartesian.hpp"
 
-#define LOG_REQUEST(method, route, request) \
+// Should be called at the beginning of every handler function so we can
+// log out all of the relevant information
+#define LOG_REQUEST(method, route) \
     LOG_SCOPE_F(INFO, "%s %s", method, route); \
-    LOG_F(INFO, "User-Agent: %s", request.get_header_value("User-Agent").c_str());
+    LOG_F(INFO, "User-Agent: %s", request.get_header_value("User-Agent").c_str())
 
-// TODO: macro to overload the macros
-
-#define LOG_RESPONSE(LOG_LEVEL, msg, response_code) \
-    LOG_F(LOG_LEVEL, "%s", msg); \
+// One of the LOG_RESPONSE logging functions should be used to both log and
+// set the HTTP response 
+#define LOG_RESPONSE_5(LOG_LEVEL, msg, response_code, body, mime) \
+    if (msg != body) LOG_F(LOG_LEVEL, "%s", msg); \
     LOG_F(LOG_LEVEL, "HTTP %d: %s", response_code, HTTP_STATUS_TO_STRING.at(response_code)); \
-    response.set_content(msg, mime); \
-    response.status = response_code;
+    LOG_F(LOG_LEVEL, "%s", body); \
+    response.set_content(body, mime); \
+    response.status = response_code
 
-#define LOG_RESPONSE(LOG_LEVEL, msg, response_code, body, mime) \
-    LOG_F(LOG_LEVEL, "%s", msg); \
-    LOG_F(LOG_LEVEL, "HTTP %d: %s", response_code, HTTP_STATUS_TO_STRING.at(response_code)); \
-    if (msg != body) LOG_F(LOG_LEVEL, "%s", body); \
-    response.set_content(body, mime::plaintext); \
-    response.status = response_code;
+// Essentially a special case of the 5 param log function, where
+// the message body is in plaintext and is also what you want to log
+#define LOG_RESPONSE_3(LOG_LEVEL, msg, response_code) \
+    LOG_RESPONSE_5(LOG_LEVEL, msg, response_code, msg, mime::plaintext)
+
+// Mechanism to overload the 2 different logging macros
+#define GET_MACRO(_1,_2,_3,_4,_5,NAME,...) NAME
+#define LOG_RESPONSE(...) GET_MACRO(__VA_ARGS__, LOG_RESPONSE_5, _4, LOG_RESPONSE_3)(__VA_ARGS__)
 
 GCSServer::GCSServer(uint16_t port, std::shared_ptr<MissionState> state)
     :port{port}, state{state}
@@ -76,21 +81,20 @@ void GCSServer::_bindHandlers() {
 }
 
 void GCSServer::_getMission(const httplib::Request& request, httplib::Response& response) {
-    LOG_REQUEST("GET", "/mission", request);
+    LOG_REQUEST("GET", "/mission");
 
     if (this->uploaded_mission) {
         std::string output;
         google::protobuf::util::MessageToJsonString(this->uploaded_mission.value(), &output);
 
-
-        LOG_RESPONSE(INFO, "Returning valid mission", HTTPStatus::OK, output.c_str(), mime::json);
+        LOG_RESPONSE(INFO, "Returning valid mission", OK, output.c_str(), mime::json);
     } else {
-        LOG_RESPONSE(WARNING, "No mission uploaded", HTTPStatus::BAD_REQUEST);
+        LOG_RESPONSE(WARNING, "No mission uploaded", BAD_REQUEST);
     }
 }
 
 void GCSServer::_postMission(const httplib::Request& request, httplib::Response& response) {
-    LOG_REQUEST("POST", "/mission", request);
+    LOG_REQUEST("POST", "/mission");
     
     Mission mission;
     google::protobuf::util::JsonStringToMessage(request.body, &mission);
@@ -112,76 +116,84 @@ void GCSServer::_postMission(const httplib::Request& request, httplib::Response&
 
     this->uploaded_mission = mission;
 
-
-    const char* msg = "Mission uploaded";
-    LOG_RESPONSE(INFO, msg, HTTPStatus::OK, msg, mime::plaintext);
+    LOG_RESPONSE(INFO, "Mission uploaded", OK);
 }
 
 void GCSServer::_postAirdropTargets(const httplib::Request& request, httplib::Response& response) {
-    response.set_content("TODO: upload airdrop targets!", "text/plain");
-    response.status = HTTPStatus::NOT_IMPLEMENTED;
+    LOG_REQUEST("POST", "/airdrop");
+
+    LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
 }
 
 void GCSServer::_getPathInitial(const httplib::Request& request, httplib::Response& response) {
-    response.set_content("TODO: get cached path and return back!", "text/plain");
-    response.status = HTTPStatus::NOT_IMPLEMENTED;
+    LOG_REQUEST("POST", "/path/initial");
+
+    LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
 }
 
 void GCSServer::_getPathInitialNew(const httplib::Request& request, httplib::Response& response) {
-    response.set_content(
-        "TODO: calculate path using RRT, replace cached path, and return back!", "text/plain");
-    response.status = HTTPStatus::NOT_IMPLEMENTED;
+    LOG_REQUEST("GET", "/path/initial/new");
+
+    LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
 }
 
 void GCSServer::_postPathInitialValidate(
     const httplib::Request& request, httplib::Response& response
 ) {
+    LOG_REQUEST("POST", "/path/initial/validate");
+
     if (state->getInitPath().empty()) {
-        response.set_content("Error: No initial path generated.", "text/plain");
-        response.status = HTTPStatus::BAD_REQUEST;
+        LOG_RESPONSE(WARNING, "No initial path generated", BAD_REQUEST); 
     } else {
-        response.set_content("Current initial path validated.", "text/plain");
-        response.status = HTTPStatus::OK;
+        // TODO: mark as valid
+        LOG_RESPONSE(INFO, "Initial path validated", OK);
     }
 }
 
 void GCSServer::_getCameraStatus(const httplib::Request& request, httplib::Response& response) {
-    response.set_content("TODO: get camera status and return back!", "text/plain");
-    response.status = HTTPStatus::NOT_IMPLEMENTED;
+    LOG_REQUEST("GET", "/camera/status");
+
+    LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
 }
 
 void GCSServer::_postCameraStart(const httplib::Request& request, httplib::Response& response) {
-    response.set_content("TODO: start taking real images with camera!", "text/plain");
-    response.status = HTTPStatus::NOT_IMPLEMENTED;
+    LOG_REQUEST("POST", "/camera/start");
+
+    LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
 }
 
 void GCSServer::_postCameraMockStart(const httplib::Request& request, httplib::Response& response) {
-    response.set_content("TODO: start taking mock images with mock camera!", "text/plain");
-    response.status = HTTPStatus::NOT_IMPLEMENTED;
+    LOG_REQUEST("POST", "/camera/mock/start");
+
+    LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
 }
 
 void GCSServer::_postCameraStop(const httplib::Request& request, httplib::Response& response) {
-    response.set_content("TODO: stop taking real images with camera!", "text/plain");
-    response.status = HTTPStatus::NOT_IMPLEMENTED;
+    LOG_REQUEST("POST", "/camera/stop");
+
+    LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
 }
 
 void GCSServer::_postCameraMockStop(const httplib::Request& request, httplib::Response& response) {
-    response.set_content("TODO: stop taking mock images with mock camera!", "text/plain");
-    response.status = HTTPStatus::NOT_IMPLEMENTED;
+    LOG_REQUEST("POST", "/camera/mock/stop");
+
+    LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
 }
 
 void GCSServer::_getCameraCapture(const httplib::Request& request, httplib::Response& response) {
-    response.set_content(
-        "TODO: take a singular image with the camera and return as jpeg!", "text/plain");
-    response.status = HTTPStatus::NOT_IMPLEMENTED;
+    LOG_REQUEST("GET", "/camera/capture");
+
+    LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
 }
 
 void GCSServer::_getCameraConfig(const httplib::Request& request, httplib::Response& response) {
-    response.set_content("TODO: get camera config and return back!", "text/plain");
-    response.status = HTTPStatus::NOT_IMPLEMENTED;
+    LOG_REQUEST("GET", "/camera/config");
+
+    LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
 }
 
 void GCSServer::_postCameraConfig(const httplib::Request& request, httplib::Response& response) {
-    response.set_content("TODO: upload camera config and return back status!", "text/plain");
-    response.status = HTTPStatus::NOT_IMPLEMENTED;
+    LOG_REQUEST("POST", "/camera/config");
+
+    LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
 }
