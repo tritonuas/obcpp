@@ -24,7 +24,12 @@ class MissionState {
    void setCartesianConverter(CartesianConverterProto);
 
    std::chrono::milliseconds doTick();
-   void setTick(Tick* newTick);
+   // For external use, acquires the tick mutex
+   // In contrast to the private version of the function, 
+   // which is for internal use and does not acquire
+   // the mutex. This version should not be called from
+   // within another function that already acquires the tick_mut
+   void setTick(Tick* newTick); 
 
    void setInitPath(std::vector<GPSCoord> init_path);
    const std::vector<GPSCoord>& getInitPath();
@@ -41,6 +46,8 @@ class MissionState {
    std::mutex init_path_mut;  // for reading/writing the initial path
    std::vector<GPSCoord> init_path;
    bool init_path_validated = false;  // true when the operator has validated the initial path
+
+   void _setTick(Tick* newTick); // does not acquire the tick_mut
 };
 
 

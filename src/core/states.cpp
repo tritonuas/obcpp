@@ -30,26 +30,25 @@ void MissionState::setCartesianConverter(CartesianConverterProto new_converter) 
 std::chrono::milliseconds MissionState::doTick() {
     Lock lock(this->tick_mut);
 
-    Tick* newTick = tick->tick();
-    if (newTick != nullptr) {
-        tick.reset(newTick);
+    Tick* newTick = this->tick->tick();
+    if (newTick) {
+        this->_setTick(newTick);
     }
 
-    return tick->getWait();
+    return this->tick->getWait();
 }
 
 void MissionState::setTick(Tick* newTick) {
     Lock lock(this->tick_mut);
 
-    std::string old_tick_name = "Null";
-    if (tick != nullptr) {
-        old_tick_name = tick->getName();
-    }
-    std::string new_tick_name = "Null";
-    if (newTick != nullptr) {
-        new_tick_name = newTick->getName();
-    }
-    LOG_F(INFO, "%s -> %s", old_tick_name.c_str(), new_tick_name.c_str());
+    this->_setTick(newTick);
+}
+
+void MissionState::_setTick(Tick* newTick) {
+    std::string old_tick_name = (this->tick) ? this->tick->getName() : "Null";
+    std::string new_tick_name = (newTick) ? newTick->getName() : "Null";
+
+    LOG_F(INFO, "\%s -> %s", old_tick_name.c_str(), new_tick_name.c_str());
 
     tick.reset(newTick);
 }

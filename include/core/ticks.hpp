@@ -58,7 +58,10 @@ class PathGenerationTick : public Tick {
 
     std::string getName() const override;
  private:
-    std::future<std::vector<GPSCoord>> path_future;
+    std::future<std::vector<GPSCoord>> path;
+    bool path_generated;
+
+    void startPathGeneration();
 };
 
 #endif  // INCLUDE_CORE_TICKS_HPP_
