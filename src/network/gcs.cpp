@@ -2,6 +2,7 @@
 
 #include <google/protobuf/util/json_util.h>
 #include <httplib.h>
+#include <loguru.hpp>
 
 #include <memory>
 #include <cstdint>
@@ -11,22 +12,41 @@
 #include "core/states.hpp"
 #include "utilities/locks.hpp"
 #include "protos/obc.pb.h"
+#include "pathing/cartesian.hpp"
+
+#define LOG_REQUEST(method, route, request) \
+    LOG_SCOPE_F(INFO, "%s %s", method, route); \
+    LOG_F(INFO, "User-Agent: %s", request.get_header_value("User-Agent").c_str());
+
+// TODO: macro to overload the macros
+
+#define LOG_RESPONSE(LOG_LEVEL, msg, response_code) \
+    LOG_F(LOG_LEVEL, "%s", msg); \
+    LOG_F(LOG_LEVEL, "HTTP %d: %s", response_code, HTTP_STATUS_TO_STRING.at(response_code)); \
+    response.set_content(msg, mime); \
+    response.status = response_code;
+
+#define LOG_RESPONSE(LOG_LEVEL, msg, response_code, body, mime) \
+    LOG_F(LOG_LEVEL, "%s", msg); \
+    LOG_F(LOG_LEVEL, "HTTP %d: %s", response_code, HTTP_STATUS_TO_STRING.at(response_code)); \
+    if (msg != body) LOG_F(LOG_LEVEL, "%s", body); \
+    response.set_content(body, mime::plaintext); \
+    response.status = response_code;
 
 GCSServer::GCSServer(uint16_t port, std::shared_ptr<MissionState> state)
     :port{port}, state{state}
 {
     if (port < 1024) {
-        std::cerr << "Ports 0-1023 are reserved. Using port " << DEFAULT_GCS_PORT
-            << " as a fallback..." << std::endl;
+        LOG_F(ERROR, "Ports 0-1023 are reserved. Using port %d as a fallback...", DEFAULT_GCS_PORT);
         port = DEFAULT_GCS_PORT;
     }
 
     this->_bindHandlers();
 
     this->server_thread = std::thread([this, port]() {
-        std::cout << "Starting GCS Server on port " << port << std::endl;
+        LOG_F(INFO, "Starting GCS HTTP server on port %d", port);
         this->server.listen("0.0.0.0", port);
-        std::cout << "GCS Server stopped on port " << port << std::endl;
+        LOG_F(INFO, "GCS Server stopped on port %d", port);
     });
 }
 
@@ -56,26 +76,29 @@ void GCSServer::_bindHandlers() {
 }
 
 void GCSServer::_getMission(const httplib::Request& request, httplib::Response& response) {
+    LOG_REQUEST("GET", "/mission", request);
+
     if (this->uploaded_mission) {
         std::string output;
         google::protobuf::util::MessageToJsonString(this->uploaded_mission.value(), &output);
 
-        response.set_content(output, mime::json);
-        response.status = HTTPStatus::OK;
+
+        LOG_RESPONSE(INFO, "Returning valid mission", HTTPStatus::OK, output.c_str(), mime::json);
     } else {
-        response.set_content("No uploaded mission", mime::plaintext);
-        response.status = HTTPStatus::BAD_REQUEST;
+        LOG_RESPONSE(WARNING, "No mission uploaded", HTTPStatus::BAD_REQUEST);
     }
 }
 
 void GCSServer::_postMission(const httplib::Request& request, httplib::Response& response) {
+    LOG_REQUEST("POST", "/mission", request);
+    
     Mission mission;
     google::protobuf::util::JsonStringToMessage(request.body, &mission);
 
     // TODO: add checks for the mission
 
     // Update the cartesian converter to be centered around the new flight boundary
-    this->state->setCartesianConverter(CartesianConverter(mission.flightboundary()));
+    this->state->setCartesianConverter(CartesianConverterProto(mission.flightboundary()));
     // Create the cartesian polygons for this new mission
     // and store in the mission state
     auto converter = state->getCartesianConverter().value();
@@ -89,8 +112,9 @@ void GCSServer::_postMission(const httplib::Request& request, httplib::Response&
 
     this->uploaded_mission = mission;
 
-    response.set_content("Mission Uploaded", mime::plaintext);
-    response.status = HTTPStatus::OK;
+
+    const char* msg = "Mission uploaded";
+    LOG_RESPONSE(INFO, msg, HTTPStatus::OK, msg, mime::plaintext);
 }
 
 void GCSServer::_postAirdropTargets(const httplib::Request& request, httplib::Response& response) {

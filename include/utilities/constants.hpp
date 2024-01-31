@@ -5,6 +5,7 @@
 
 #include <string>
 #include <chrono>
+#include <unordered_map>
 
 const int NUM_AIRDROP_BOTTLES = 5;
 
@@ -29,6 +30,13 @@ enum HTTPStatus {
 
     INTERNAL_SERVER_ERROR = 500,
     NOT_IMPLEMENTED = 501,
+};
+
+#define SET(msg) {HTTPStatus::msg, #msg}
+const std::unordered_map<HTTPStatus, const char*> HTTP_STATUS_TO_STRING = {
+    SET(OK), 
+    SET(BAD_REQUEST), SET(NOT_FOUND), 
+    SET(INTERNAL_SERVER_ERROR), SET(NOT_IMPLEMENTED)
 };
 
 namespace mime {

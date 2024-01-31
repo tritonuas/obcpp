@@ -9,9 +9,8 @@
 #include "protos/obc.pb.h"
 #include "utilities/constants.hpp"
 
-CartesianConverter::CartesianConverter(
-    google::protobuf::RepeatedPtrField<GPSCoord> boundaries
-) {
+template<typename GPSCoords>
+CartesianConverter<GPSCoords>::CartesianConverter(GPSCoords boundaries) {
     double min_lat = std::numeric_limits<double>::infinity();
     double max_lat = -min_lat;
 
@@ -40,7 +39,8 @@ CartesianConverter::CartesianConverter(
     this->phi_1 = (max_lat + 1) * std::numbers::pi / 180.0;
 }
 
-GPSCoord CartesianConverter::toLatLng(XYZCoord coord) const {
+template <typename GPSCoords>
+GPSCoord CartesianConverter<GPSCoords>::toLatLng(XYZCoord coord) const {
     double n = 0.5 * (std::sin(this->phi_0) + std::sin(this->phi_1));
     double c = std::pow(std::cos(this->phi_0), 2.0) + 2 * n * std::sin(this->phi_0);
     double rho0 = EARTH_RADIUS / n * std::sqrt(c - 2 * n * std::sin(this->latlng_0.latitude()));
@@ -53,7 +53,8 @@ GPSCoord CartesianConverter::toLatLng(XYZCoord coord) const {
     return makeGPSCoord(lat, lng, coord.z);
 }
 
-XYZCoord CartesianConverter::toXYZ(GPSCoord coord) const {
+template <typename GPSCoords>
+XYZCoord CartesianConverter<GPSCoords>::toXYZ(GPSCoord coord) const {
     double lat = coord.latitude() * std::numbers::pi / 180.0;
     double lng = coord.longitude() * std::numbers::pi / 180.0;
 
@@ -68,9 +69,8 @@ XYZCoord CartesianConverter::toXYZ(GPSCoord coord) const {
     return XYZCoord(x, y, coord.altitude());
 }
 
-std::vector<XYZCoord> CartesianConverter::toXYZ(
-    google::protobuf::RepeatedPtrField<GPSCoord> coords
-) const {
+template <typename GPSCoords>
+std::vector<XYZCoord> CartesianConverter<GPSCoords>::toXYZ(GPSCoords coords) const {
     std::vector<XYZCoord> result;
     result.reserve(coords.size());
     for (auto coord : coords) {
@@ -79,6 +79,13 @@ std::vector<XYZCoord> CartesianConverter::toXYZ(
     return result;
 }
 
-GPSCoord CartesianConverter::getCenter() const {
+template <typename GPSCoords>
+GPSCoord CartesianConverter<GPSCoords>::getCenter() const {
     return this->center;
 }
+
+
+// Force it to make template instances since this will be compiled separately from
+// the rest of the code
+template class CartesianConverter<google::protobuf::RepeatedPtrField<GPSCoord>>;
+template class CartesianConverter<std::vector<GPSCoord>>;

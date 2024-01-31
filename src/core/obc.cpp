@@ -3,10 +3,11 @@
 #include <chrono>
 #include <cstdint>
 
+#include <loguru.hpp>
+
 #include "core/obc.hpp"
 #include "core/states.hpp"
 #include "core/ticks.hpp"
-
 #include "network/gcs.hpp"
 
 // TODO: allow specifying config filename

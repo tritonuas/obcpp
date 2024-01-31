@@ -13,7 +13,7 @@ const std::vector<GPSCoord> BOUNDS = {
     makeGPSCoord(51.022601441548915, 10.033330587165663, 0)
 };
 
-CartesianConverter c(BOUNDS);
+CartesianConverter<std::vector<GPSCoord>> c(BOUNDS);
 
 // Make sure conversions are inverses of eachother
 TEST(CartesianTest, IdentityMaps) {

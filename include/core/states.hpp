@@ -20,8 +20,8 @@ class MissionState {
    MissionState();
    ~MissionState();
 
-   const std::optional<CartesianConverter>& getCartesianConverter();
-   void setCartesianConverter(CartesianConverter);
+   const std::optional<CartesianConverterProto>& getCartesianConverter();
+   void setCartesianConverter(CartesianConverterProto);
 
    std::chrono::milliseconds doTick();
    void setTick(Tick* newTick);
@@ -33,7 +33,7 @@ class MissionState {
    MissionConfig config;  // has its own mutex
  private:
    std::mutex converter_mut;
-   std::optional<CartesianConverter> converter;
+   std::optional<CartesianConverterProto> converter;
 
    std::mutex tick_mut;  // for reading/writing tick
    std::unique_ptr<Tick> tick;
