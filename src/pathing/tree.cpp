@@ -112,41 +112,20 @@ RRTTree::~RRTTree() {
 }
 
 // TODO - convert from old to new
-bool RRTTree::addNode(RRTNode* anchor_node, RRTPoint& new_point) {
+bool RRTTree::addNode(RRTNode* anchor_node, RRTPoint& new_point, const RRTOption& option) {
     // checking if path is valid
-    std::vector<RRTOption> dubins_options =
-        dubins.allOptions(anchor_node->getPoint(), new_point, true);
-    double cost = std::numeric_limits<double>::infinity();
-    std::vector<XYZCoord> path{};
+    std::vector<XYZCoord> path = dubins.generatePoints(anchor_node->getPoint(), new_point,
+                                                       option.dubins_path, option.has_straight);
 
-    // find the best valid path
-    for (const RRTOption& option : dubins_options) {
-        if (option.length == std::numeric_limits<double>::infinity()) {
-            return false;
-        }
-
-        // generate the path
-        std::vector<XYZCoord> current_path = dubins.generatePoints(
-            anchor_node->getPoint(), new_point, option.dubins_path, option.has_straight);
-
-        // check if given path is inbounds
-        if (airspace.isPathInBounds(current_path)) {
-            cost = option.length;
-            path = current_path;
-            break;
-        }
-    }
-
-    if (cost == std::numeric_limits<double>::infinity()) {
+    if (!airspace.isPathInBounds(path)) {
         return false;
     }
-
     // if a valid path was found, it will add the node to the tree
 
     RRTNode* newNode = new RRTNode(new_point, LARGE_COST);
 
     std::pair<RRTNode*, RRTNode*> edgePair(anchor_node, newNode);
-    RRTEdge new_edge = RRTEdge(anchor_node, newNode, path, cost);
+    RRTEdge new_edge = RRTEdge(anchor_node, newNode, path, option.length);
     edge_map.insert(std::make_pair(edgePair, new_edge));
 
     std::pair<RRTPoint, RRTNode*> insertNode(newNode->getPoint(), newNode);
@@ -160,7 +139,6 @@ bool RRTTree::addNode(RRTNode* anchor_node, RRTPoint& new_point) {
 void RRTTree::rewireEdge(RRTNode* current_node, RRTNode* previous_connection,
                          RRTNode* new_connection, std::vector<XYZCoord> path, double cost) {
     // if the new_node doesn't have a parent, then this code will crash
-
     std::pair<RRTNode*, RRTNode*> previous_pair(current_node, previous_connection);
     std::pair<RRTNode*, RRTNode*> new_pair(current_node, new_connection);
 
@@ -208,6 +186,8 @@ RRTEdge* RRTTree::getEdge(RRTPoint from, RRTPoint to) {
 RRTNode* RRTTree::getRoot() const { return this->root; }
 
 RRTPoint RRTTree::getGoal() const { return this->airspace.getGoal(); }
+
+Environment RRTTree::getAirspace() const { return this->airspace; }
 
 RRTPoint RRTTree::getRandomPoint(double search_radius) const {
     return airspace.getRandomPoint(root->getPoint(), search_radius);

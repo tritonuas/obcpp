@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "utilities/datatypes.hpp"
-#include "utilities/rng.cpp"
+#include "utilities/rng.hpp"
 
 /*
  *  Abstracction of the environment, which is a polygon
@@ -87,6 +87,13 @@ class Environment {
 
         return goal;
     }
+
+    /**
+     * returns whether or not the goal has been found
+     *
+     * @return true if the goal has been found, false otherwise
+     */
+    bool isGoalFound() const { return found_goal; }
 
  private:
     const Polygon valid_region;  // boundary of the valid map

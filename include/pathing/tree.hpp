@@ -129,7 +129,7 @@ class RRTTree {
      *  Add a node to the RRTTree.
      *  If adding the first node to the tree, connectTo can be anything.
      */
-    bool addNode(RRTNode* anchor_node, RRTPoint& new_point);  // NOLINT
+    bool addNode(RRTNode* anchor_node, RRTPoint& new_point, const RRTOption &option);  // NOLINT
 
     /*
      * Delete an edge between 'from' and 'toPrev', and create a new edge
@@ -166,12 +166,77 @@ class RRTTree {
     RRTPoint getGoal() const;
 
     /**
+     * returns the Environment object
+     *
+     * @return Environment object
+     */
+    Environment getAirspace() const;
+
+    /**
      * Gets a random point in the environment
      *
      * @param search_radius radius to search for point
      * @return RRTPoint random point in environment
      */
     RRTPoint getRandomPoint(double search_radius) const;
+
+    /**
+     * Returns a sorted list of the paths to get from a given node to the sampled
+     * node
+     *
+     * @param end               ==> the sampled node that needs to be connected
+     *                              to the tree
+     * @param quantity_options  ==> the number of results to return back to the
+     *                              function
+     * @return                  ==> mininum sorted list of pairs of <node, path>
+     */
+    std::vector<std::pair<RRTNode*, RRTOption>> pathingOptions(const RRTPoint& end,
+                                                               int quantity_options = 10) {
+        std::vector<std::pair<RRTNode*, RRTOption>> options;
+
+        fillOptions(&options, root);
+
+        if (options.size() < quantity_options) {
+            return options;
+        }
+
+        std::sort(options.begin(), options.end(),
+                  [](auto a, auto b) { return compareRRTOptionLength(a.second, b.second); });
+
+        // erases everythin after the last wanted element
+        options.erase(options.begin() + quantity_options, options.end());
+
+        return options;
+    }
+
+    /**
+     * traverses the tree, and puts in all RRTOptions from dubins into a list
+     * (DFS)
+     *
+     * @param options   ==> The list of options that is meant to be filled
+     * @param node      ==> current node that will be traversed (DFS)
+     */
+    void fillOptions(std::vector<std::pair<RRTNode*, RRTOption>>* options, RRTNode* node) {
+        /*
+           TODO - try to limit the scope of the search to prevent too many calls to dubins
+        */
+        if (node == nullptr) {
+            return;
+        }
+
+        std::vector<RRTOption> local_options =
+            dubins.allOptions(node->getPoint(), airspace.getGoal());
+
+        for (const RRTOption& option : local_options) {
+            if (option.length != std::numeric_limits<double>::infinity()) {
+                options->emplace_back(std::pair<RRTNode*, RRTOption>{node, option});
+            }
+        }
+
+        for (RRTNode* child : node->getReachable()) {
+            fillOptions(options, child);
+        }
+    }
 
  private:
     RRTNode* root;

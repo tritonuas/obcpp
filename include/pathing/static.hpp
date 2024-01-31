@@ -15,9 +15,7 @@
 #include "pathing/environment.hpp"
 #include "pathing/tree.hpp"
 #include "utilities/datatypes.hpp"
-#include "utilities/rng.cpp"
-
-enum Validity { VALID, INVALID, GOAL };
+#include "utilities/rng.hpp"
 
 std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
     // do pathing here
@@ -37,7 +35,7 @@ class RRT {
                Dubins{TURNING_RADIUS, POINT_SEPARATION}} {}
 
     // choose a random point from free space, not nessisarily this
-    RRTPoint generateSamplePoint(const RRTPoint &from) {
+    RRTPoint generateSamplePoint() {
         if (random(0, 1) < goal_bias) {
             return RRTPoint{tree.getGoal().coord, random(0, TWO_PI)};
         }
@@ -49,18 +47,14 @@ class RRT {
     //  * RRT*
     //  */
     // void run() {
-    //     _distance_to_goal = _root->getPoint().distanceTo(_goal);
-
-    //     for (int _; _ < _num_iterations; _++) {
-    //         if (_found_goal) {
-    //             return;
+    //     for (int _; _ < num_iterations; _++) {
+    //         if (tree.getAirspace().isGoalFound()) {
+    //             break;
     //         }
 
-    //         // NEEDS TO CHANGE but what lol (these two comments were written by the
-    //         // same person)
-    //         RRTPoint sample = generateSamplePoint(_root->getPoint());
+    //         RRTPoint sample = generateSamplePoint();
 
-    //         std::vector<std::pair<RRTNode *, RRTOption>> options = pathingOptions(sample);
+    //         std::vector<std::pair<RRTNode *, RRTOption>> options = tree.pathingOptions(sample);
 
     //         // [TODO] add rest of function
     //         Validity validity = parseOptions(&options, sample);
@@ -80,39 +74,16 @@ class RRT {
     // /**
     //  * ?????????
     //  */
-    // Validity parseOptions(std::vector<std::pair<RRTNode *, RRTOption>> *options,
-    //                       const RRTPoint &sample) {
+    // bool parseOptions(std::vector<std::pair<RRTNode *, RRTOption>> *options,
+    //                   RRTPoint &sample) {
     //     for (const auto &[node, option] : *options) {
-    //         if (option.length == std::numeric_limits<double>::infinity()) {
-    //             return INVALID;
-    //         }
-
-    //         std::vector<XYZCoord> path = _dubins.generatePoints(
-    //             _root->getPoint(), sample, option.dubins_path, option.has_straight);
-
-    //         // check whats in bounds or not
-    //         if (!validPath(path)) {
-    //             continue;
-    //         }
-
     //         // if the node is the sample, return (preventes loops)
     //         if (node->getPoint() == sample) {
-    //             return INVALID;
-    //         }
-
-    //         RRTNode new_node{sample, node->getCost() + option.length};
-
-    //         // If node is uncompetitive, discard it
-    //         if (_tree.getNode(sample) != nullptr &&
-    //             new_node.getCost() >= _tree.getNode(sample)->getCost()) {
-    //             continue;
+    //             return false;  // invalid
     //         }
 
     //         // else, add the node to the
-    //         _tree.addNode(node, &new_node,
-    //                       _dubins.generatePoints(node->getPoint(), sample, option.dubins_path,
-    //                                              option.has_straight),
-    //                       new_node.getCost());
+    //         bool sucessful_addition = tree.addNode(node, sample);
 
     //         // for clarity, sample is not used beyond this point. It is now the
     //         // new_node
@@ -126,55 +97,6 @@ class RRT {
     //         }
 
     //         return VALID;
-    //     }
-    // }
-
-    // /**
-    //  * Returns a sorted list of the paths to get from a given node to the sampled
-    //  * node
-    //  *
-    //  * @param end               ==> the sampled node that needs to be connected
-    //  *                              to the tree
-    //  * @param quantity_options  ==> the number of results to return back to the
-    //  *                              function
-    //  * @return                  ==> mininum sorted list of pairs of <node, path>
-    //  */
-    // std::vector<std::pair<RRTNode *, RRTOption>> pathingOptions(const RRTPoint &end,
-    //                                                             int quantity_options = 10) {
-    //     std::vector<std::pair<RRTNode *, RRTOption>> options;
-
-    //     fillOptions(&options, _root);
-
-    //     if (options.size() < quantity_options) {
-    //         return options;
-    //     }
-
-    //     std::sort(options.begin(), options.end(),
-    //               [](auto a, auto b) { return compareRRTOptionLength(a.second, b.second); });
-
-    //     return {options.begin(), options.begin() + quantity_options};
-    // }
-
-    // /**
-    //  * traverses the tree, and puts in all RRTOptions from dubins into a list
-    //  * (DFS)
-    //  *
-    //  * @param options   ==> The list of options that is meant to be filled
-    //  * @param node      ==> current node that will be traversed (DFS)
-    //  */
-    // void fillOptions(std::vector<std::pair<RRTNode *, RRTOption>> *options, RRTNode *node) {
-    //     if (node == nullptr) {
-    //         return;
-    //     }
-
-    //     std::vector<RRTOption> local_options = _dubins.allOptions(node->getPoint(), _goal);
-
-    //     for (const RRTOption &option : local_options) {
-    //         options->emplace_back(std::pair<RRTNode *, RRTOption>{node, option});
-    //     }
-
-    //     for (RRTNode *child : node->getReachable()) {
-    //         fillOptions(options, child);
     //     }
     // }
 
