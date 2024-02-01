@@ -158,6 +158,7 @@ void GCSServer::_postPathInitialValidate(
     if (state->getInitPath().empty()) {
         LOG_RESPONSE(WARNING, "No initial path generated", BAD_REQUEST); 
     } else {
+        this->state->validateInitPath();
         LOG_RESPONSE(INFO, "Initial path validated", OK);
     }
 }
