@@ -32,6 +32,7 @@ TEST(GCSServerTest, GetMissionNoMission) {
     EXPECT_EQ(state->config.getCachedMission(), std::nullopt);
 }
 
+// TODO: can probably cut down on the amount of code copy/paste that is going on here
 TEST(GCSServerTest, PostMissionThenGetMission) {
     DECLARE_HANDLER_PARAMS;
     req.body = resources::mission_json_good_1;
@@ -41,6 +42,7 @@ TEST(GCSServerTest, PostMissionThenGetMission) {
 
     // ========================================================================
     // Verify all of the internal state is correct
+
     EXPECT_EQ(OK, resp.status);
     auto cartesian = state->getCartesianConverter().value();
 
@@ -120,19 +122,35 @@ TEST(GCSServerTest, PostMissionThenGetMission) {
 
     auto response_mission = nlohmann::json::parse(resp.body);
 
-    EXPECT_EQ(response_mission.at("Waypoints"), request_waypoints.at("Waypoints"));
-    EXPECT_EQ(response_mission.at("AirdropBoundary"), request_waypoints.at("AirdropBoundary"));
-    EXPECT_EQ(response_mission.at("FlightBoundary"), request_waypoints.at("FlightBoundary"));
+    EXPECT_EQ(response_mission.at("Waypoints"), request_mission.at("Waypoints"));
+    EXPECT_EQ(response_mission.at("AirdropBoundary"), request_mission.at("AirdropBoundary"));
+    EXPECT_EQ(response_mission.at("FlightBoundary"), request_mission.at("FlightBoundary"));
 
     // Have to compare these specifically because the translation alters how some of the fields
     // look. E.g. on the request we specify indices with letters, but after protobuf parses
     // it, it then stores the index as an integer.
-    auto request_bottles = request_mission.at("BottleAssignments");
     auto response_bottles = response_mission.at("BottleAssignments");
+    // already made request_bottles above, so can reuse it here
     EXPECT_EQ(request_bottles.size(), response_bottles.size());
+    // already made indexToRequest above, so can reuse it here
     std::unordered_map<BottleDropIndex, Bottle> indexToResponse;
-    // already made indexToRequest above, so can reuse
     for (int i = 0; i < response_bottles.size(); i++) {
-        
+        Bottle response;
+        google::protobuf::util::JsonStringToMessage(response_bottles[i].dump(), &response);
+        indexToResponse.insert({response.index(), response});
+    }
+    for (int i = BottleDropIndex::A; i <= BottleDropIndex::E; i++) {
+        auto index = static_cast<BottleDropIndex>(i);
+        Bottle response = indexToResponse.at(index);
+        Bottle request = indexToRequest.at(index);
+        EXPECT_EQ(response.ismannikin(), request.ismannikin());
+        if (response.ismannikin()) {
+            // only check the other parameters if they are relevant,
+            // i.e. this is not the emergent (mannequin) target
+            EXPECT_EQ(response.alphanumeric(), request.alphanumeric());
+            EXPECT_EQ(response.alphanumericcolor(), request.alphanumericcolor());
+            EXPECT_EQ(response.shape(), request.shape());
+            EXPECT_EQ(response.shapecolor(), request.shapecolor());
+        }
     }
 }
