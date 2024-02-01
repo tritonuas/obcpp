@@ -37,7 +37,8 @@ struct PipelineResults {
 // Pipeline handles all infrastructure within the CV pipeline
 class Pipeline {
  public:
-    explicit Pipeline(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES> competitionObjectives);
+    explicit Pipeline(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES> competitionObjectives,
+        std::vector<cv::Mat> referenceImages);
 
     PipelineResults run(const ImageData& imageData);
 

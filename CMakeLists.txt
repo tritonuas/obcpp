@@ -139,6 +139,8 @@ add_executable(cv_matching ${SOURCES} "tests/integration/cv_matching.cpp")
 target_add_json(cv_matching)
 target_add_matplot(cv_matching)
 target_add_opencv(cv_matching)
+target_add_torch(cv_matching)
+target_add_torchvision(cv_matching)
 # =============================
 
 # =============================

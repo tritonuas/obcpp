@@ -2,11 +2,12 @@
 #define INCLUDE_CV_MATCHING_HPP_
 
 #include <opencv2/opencv.hpp>
-#include <torch/torch.h>
-
 #include "cv/utilities.hpp"
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
+#include <torch/torch.h>
+#include <torch/script.h>
+#include <torchvision/vision.h>
 
 struct MatchResult {
     uint8_t bottleDropIndex;
@@ -37,8 +38,8 @@ class Matching {
  public:
         Matching(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES>
             competitionObjectives, double matchThreshold, 
-            std::vector<CroppedTarget> referenceImages,
-            std::string modelPath);
+            std::vector<cv::Mat> referenceImages,
+            const std::string &modelPath);
 
         MatchResult match(const CroppedTarget& croppedTarget);
 

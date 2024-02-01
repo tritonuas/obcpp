@@ -20,8 +20,8 @@ auto toInput(cv::Mat img, bool show_output=false, bool unsqueeze=false, int unsq
 Matching::Matching(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES>
                        competitionObjectives,
                    double matchThreshold,
-                   std::vector<CroppedTarget> referenceImages,
-                   std::string modelPath)
+                   std::vector<cv::Mat> referenceImages,
+                   const std::string &modelPath)
     : competitionObjectives(competitionObjectives),
       matchThreshold(matchThreshold) {
 
@@ -34,7 +34,8 @@ Matching::Matching(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES>
         }
 
         for(int i = 0; i < referenceImages.size(); i++) {
-            cv::Mat image = referenceImages.at(i).croppedImage;
+            //cv::Mat image = referenceImages.at(i).croppedImage;
+            cv::Mat image = referenceImages.at(i);
             std::vector<torch::jit::IValue> input = toInput(image);
 
             at::Tensor output = this->module.forward(input).toTensor();
@@ -48,11 +49,11 @@ Matching::Matching(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES>
 MatchResult Matching::match(const CroppedTarget& croppedTarget) {
     std::vector<torch::jit::IValue> input = toInput(croppedTarget.croppedImage);
     at::Tensor output = this->module.forward(input).toTensor();
-    double minDist = this->matchTreshold + 1;
+    double minDist = this->matchThreshold + 1;
     int minIndex = 0;
     for(int i = 0; i < referenceFeatures.size(); i++) {
-        double tmp = torch::nn::functional::pairwise_distance(output, 
-                                            referenceFeatures.at(i));
+        at::Tensor dist = at::pairwise_distance(output, referenceFeatures.at(i));
+        double tmp = dist.item().to<double>();
         if(tmp < minDist) {
             minDist = tmp;
             minIndex = i;
