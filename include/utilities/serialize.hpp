@@ -1,9 +1,11 @@
 #ifndef INCLUDE_UTILITIES_SERIALIZE_HPP_
 #define INCLUDE_UTILITIES_SERIALIZE_HPP_
 
-#include <nlohmann/json.hpp>
 #include <google/protobuf/util/json_util.h>
 
+#include <string>
+
+#include <nlohmann/json.hpp>
 #include "protos/obc.pb.h"
 
 /*
@@ -28,7 +30,7 @@ std::string messagesToJson(Iterator begin, Iterator end) {
         ++it;
     }
 
-    json.pop_back(); // remove final comma
+    json.pop_back();  // remove final comma
     json += ']';
 
     return json;

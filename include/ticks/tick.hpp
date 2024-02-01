@@ -1,8 +1,9 @@
-#ifndef INCLUDE_CORE_TICKS_TICK_HPP_
-#define INCLUDE_CORE_TICKS_TICK_HPP_
+#ifndef INCLUDE_TICKS_TICK_HPP_
+#define INCLUDE_TICKS_TICK_HPP_
 
 #include <memory>
 #include <chrono>
+#include <string>
 
 #include "core/mission_state.hpp"
 
@@ -29,4 +30,4 @@ class Tick {
 
 
 
-#endif  // INCLUDE_CORE_TICKS_TICK_HPP_
+#endif  // INCLUDE_TICKS_TICK_HPP_

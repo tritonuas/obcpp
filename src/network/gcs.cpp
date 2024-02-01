@@ -2,13 +2,14 @@
 
 #include <google/protobuf/util/json_util.h>
 #include <httplib.h>
-#include <loguru.hpp>
 
 #include <memory>
 #include <cstdint>
 #include <functional>
 #include <iostream>
 #include <string>
+
+#include <loguru.hpp>
 
 #include "core/config.hpp"
 #include "core/mission_state.hpp"
@@ -26,7 +27,7 @@
     LOG_F(INFO, "User-Agent: %s", request.get_header_value("User-Agent").c_str())
 
 // One of the LOG_RESPONSE logging functions should be used to both log and
-// set the HTTP response 
+// set the HTTP response
 #define LOG_RESPONSE_5(LOG_LEVEL, msg, response_code, body, mime) \
     if (msg != body) LOG_F(LOG_LEVEL, "%s", msg); \
     LOG_F(LOG_LEVEL, "HTTP %d: %s", response_code, HTTP_STATUS_TO_STRING.at(response_code)); \
@@ -40,7 +41,7 @@
     LOG_RESPONSE_5(LOG_LEVEL, msg, response_code, msg, mime::plaintext)
 
 // Mechanism to overload the 2 different logging macros
-#define GET_MACRO(_1,_2,_3,_4,_5,NAME,...) NAME
+#define GET_MACRO(_1, _2, _3, _4, _5, NAME, ...) NAME
 #define LOG_RESPONSE(...) GET_MACRO(__VA_ARGS__, LOG_RESPONSE_5, _4, LOG_RESPONSE_3)(__VA_ARGS__)
 
 GCSServer::GCSServer(uint16_t port, std::shared_ptr<MissionState> state)
@@ -100,7 +101,7 @@ void GCSServer::_getMission(const httplib::Request& request, httplib::Response& 
 
 void GCSServer::_postMission(const httplib::Request& request, httplib::Response& response) {
     LOG_REQUEST("POST", "/mission");
-    
+
     Mission mission;
     google::protobuf::util::JsonStringToMessage(request.body, &mission);
 
@@ -116,8 +117,7 @@ void GCSServer::_postMission(const httplib::Request& request, httplib::Response&
         converter.toXYZ(mission.airdropboundary()),
         converter.toXYZ(mission.waypoints()),
         std::vector<Bottle>(mission.bottleassignments().begin(),
-            mission.bottleassignments().end())
-    );
+            mission.bottleassignments().end()));
 
     this->uploaded_mission = mission;
 
@@ -157,7 +157,7 @@ void GCSServer::_postPathInitialValidate(
     LOG_REQUEST("POST", "/path/initial/validate");
 
     if (state->getInitPath().empty()) {
-        LOG_RESPONSE(WARNING, "No initial path generated", BAD_REQUEST); 
+        LOG_RESPONSE(WARNING, "No initial path generated", BAD_REQUEST);
     } else {
         this->state->validateInitPath();
         LOG_RESPONSE(INFO, "Initial path validated", OK);

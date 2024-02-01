@@ -24,11 +24,9 @@ MissionConfig::MissionConfig(std::string filename) {
 bool MissionConfig::isValid() const {
     // 3 is minimum points that make sense for
     // a polygon to have
-    return (
-        this->airdropBoundary.size() >= 3 &&
-        this->flightBoundary.size() >= 3 &&
-        this->waypoints.size() > 0
-    );
+    return (this->airdropBoundary.size() >= 3 &&
+            this->flightBoundary.size() >= 3 &&
+            this->waypoints.size() > 0);
 }
 
 Polygon MissionConfig::getFlightBoundary() {

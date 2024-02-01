@@ -7,10 +7,8 @@
 #include <filesystem>
 
 time_t getUnixTime() {
-    using namespace std::chrono;
-
-    const auto now = system_clock::now();
-    return duration_cast<seconds>(now.time_since_epoch()).count();
+    const auto now = std::chrono::system_clock::now();
+    return std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
 }
 
 /*

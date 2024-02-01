@@ -1,15 +1,15 @@
-#ifndef INCLUDE_CORE_TICKS_PATH_GEN_HPP_
-#define INCLUDE_CORE_TICKS_PATH_GEN_HPP_
-
-#include "ticks/tick.hpp"
-#include "core/mission_state.hpp"
-#include "protos/obc.pb.h"
+#ifndef INCLUDE_TICKS_PATH_GEN_HPP_
+#define INCLUDE_TICKS_PATH_GEN_HPP_
 
 #include <memory>
 #include <chrono>
 #include <string>
 #include <vector>
 #include <future>
+
+#include "ticks/tick.hpp"
+#include "core/mission_state.hpp"
+#include "protos/obc.pb.h"
 
 /*
  * Generates a path, caches the path in the mission state,
@@ -31,4 +31,4 @@ class PathGenerationTick : public Tick {
     void startPathGeneration();
 };
 
-#endif
+#endif  // INCLUDE_TICKS_PATH_GEN_HPP_

@@ -34,8 +34,8 @@ enum HTTPStatus {
 
 #define SET(msg) {HTTPStatus::msg, #msg}
 const std::unordered_map<HTTPStatus, const char*> HTTP_STATUS_TO_STRING = {
-    SET(OK), 
-    SET(BAD_REQUEST), SET(NOT_FOUND), 
+    SET(OK),
+    SET(BAD_REQUEST), SET(NOT_FOUND),
     SET(INTERNAL_SERVER_ERROR), SET(NOT_IMPLEMENTED)
 };
 

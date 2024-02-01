@@ -1,11 +1,11 @@
-#ifndef INCLUDE_CORE_TICKS_MISSION_PREP_HPP_
-#define INCLUDE_CORE_TICKS_MISSION_PREP_HPP_
-
-#include "ticks/tick.hpp"
+#ifndef INCLUDE_TICKS_MISSION_PREP_HPP_
+#define INCLUDE_TICKS_MISSION_PREP_HPP_
 
 #include <memory>
 #include <chrono>
 #include <string>
+
+#include "ticks/tick.hpp"
 
 /*
  * Checks every second whether or not a valid mission has been uploaded.
@@ -22,4 +22,4 @@ class MissionPreparationTick : public Tick {
     std::string getName() const override;
 };
 
-#endif
+#endif  // INCLUDE_TICKS_MISSION_PREP_HPP_

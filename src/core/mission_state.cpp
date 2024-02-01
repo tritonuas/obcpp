@@ -17,7 +17,7 @@ MissionState::~MissionState() = default;
 
 const std::optional<CartesianConverter<GPSProtoVec>>& MissionState::getCartesianConverter() {
     Lock lock(this->converter_mut);
-    
+
     return this->converter;
 }
 
@@ -48,7 +48,7 @@ void MissionState::_setTick(Tick* newTick) {
     std::string old_tick_name = (this->tick) ? this->tick->getName() : "Null";
     std::string new_tick_name = (newTick) ? newTick->getName() : "Null";
 
-    LOG_F(INFO, "\%s -> %s", old_tick_name.c_str(), new_tick_name.c_str());
+    LOG_F(INFO, "\\%s -> %s", old_tick_name.c_str(), new_tick_name.c_str());
 
     tick.reset(newTick);
 }

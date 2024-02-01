@@ -7,4 +7,4 @@ time_t getUnixTime();
 
 std::string getLoggingFilename(int argc, char* argv[]);
 
-#endif
+#endif  // INCLUDE_UTILITIES_LOGGING_HPP_

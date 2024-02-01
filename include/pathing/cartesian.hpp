@@ -3,8 +3,6 @@
 
 #include <vector>
 #include <tuple>
-// TODO: figure out what include only gives RepeatedPtrField
-#include <google/protobuf/util/json_util.h>
 
 #include "protos/obc.pb.h"
 #include "utilities/datatypes.hpp"
@@ -23,7 +21,6 @@ class CartesianConverter {
     GPSCoord getCenter() const;
 
  private:
-
     // Geometric center of the boundaries passed into the constructor,
     GPSCoord center;
     // center but multiplied by pi/180, because this is commonly used in
