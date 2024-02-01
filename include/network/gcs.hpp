@@ -30,7 +30,6 @@ class GCSServer {
 
     // Handler Functions
     void _bindHandlers();  // bind all the handlers to the server object
-
 };
 
 #endif  // INCLUDE_NETWORK_GCS_HPP_

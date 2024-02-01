@@ -1,12 +1,15 @@
 #ifndef INCLUDE_NETWORK_GCS_ROUTES_HPP_
 #define INCLUDE_NETWORK_GCS_ROUTES_HPP_
 
-#include <httplib.h>
-#include <loguru.hpp>
 #include <google/protobuf/util/json_util.h>
+#include <httplib.h>
 
+#include <vector>
 #include <memory>
+#include <string>
 #include <optional>
+
+#include <loguru.hpp>
 
 #include "core/mission_state.hpp"
 #include "protos/obc.pb.h"
