@@ -1,41 +1,13 @@
+#include "ticks/path_gen.hpp"
+
 #include <memory>
-#include <iostream>
+#include <vector>
 #include <future>
+#include <chrono>
 
 #include <loguru.hpp>
 
-#include "core/ticks.hpp"
-#include "core/states.hpp"
-#include "utilities/constants.hpp"
-#include "utilities/datatypes.hpp"
-
-Tick::Tick(std::shared_ptr<MissionState> state) {
-    this->state = state;
-}
-
-// Need to explicitly define now that Tick is no longer an incomplete class
-// See: https://stackoverflow.com/questions/9954518/stdunique-ptr-with-an-incomplete-type-wont-compile
-Tick::~Tick() = default;
-
-MissionPreparationTick::MissionPreparationTick(std::shared_ptr<MissionState> state)
-    :Tick(state) {}
-
-std::chrono::milliseconds MissionPreparationTick::getWait() const {
-    return MISSION_PREP_TICK_WAIT;
-}
-
-std::string MissionPreparationTick::getName() const {
-    return "Mission Preparation";
-}
-
-Tick* MissionPreparationTick::tick() {
-    if (this->state->config.isValid()) {
-        LOG_F(INFO, "Valid mission configuration detected");
-        return new PathGenerationTick(this->state);
-    } else {
-        return nullptr;
-    }
-}
+#include "protos/obc.pb.h"
 
 std::vector<GPSCoord> tempGenPath(std::shared_ptr<MissionState> state) {
     // TODO: replace this with the actual path generation function

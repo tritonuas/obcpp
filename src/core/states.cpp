@@ -5,7 +5,7 @@
 
 #include "core/config.hpp"
 #include "core/states.hpp"
-#include "core/ticks.hpp"
+#include "ticks/tick.hpp"
 #include "utilities/locks.hpp"
 
 // in future might add to this

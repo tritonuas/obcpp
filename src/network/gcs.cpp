@@ -12,7 +12,8 @@
 
 #include "core/config.hpp"
 #include "core/states.hpp"
-#include "core/ticks.hpp"
+#include "ticks/tick.hpp"
+#include "ticks/path_gen.hpp"
 #include "utilities/locks.hpp"
 #include "utilities/serialize.hpp"
 #include "protos/obc.pb.h"

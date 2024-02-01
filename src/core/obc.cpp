@@ -7,7 +7,8 @@
 
 #include "core/obc.hpp"
 #include "core/states.hpp"
-#include "core/ticks.hpp"
+#include "ticks/tick.hpp"
+#include "ticks/mission_prep.hpp"
 #include "network/gcs.hpp"
 
 // TODO: allow specifying config filename
