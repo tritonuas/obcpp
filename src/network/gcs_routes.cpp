@@ -74,6 +74,7 @@ DEF_GCS_HANDLE(Post, mission) {
 DEF_GCS_HANDLE(Post, airdrop) {
     LOG_REQUEST("POST", "/airdrop");
 
+
     LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
 }
 

@@ -15,7 +15,26 @@
 
 // TODO: Log out mission config after it has been set
 
-MissionConfig::MissionConfig() = default;
+MissionConfig::MissionConfig() {
+    // Bottle updates work by finding the bottle already in the list
+    // by index and setting its values to the updated values, so we
+    // need to initialize placeholder values in the bottles vector
+    Bottle bottleA;
+    bottleA.set_index(BottleDropIndex::A);
+    Bottle bottleB;
+    bottleB.set_index(BottleDropIndex::B);
+    Bottle bottleC;
+    bottleC.set_index(BottleDropIndex::C);
+    Bottle bottleD;
+    bottleD.set_index(BottleDropIndex::D);
+    Bottle bottleE;
+    bottleE.set_index(BottleDropIndex::E);
+    this->bottles.push_back(bottleA);
+    this->bottles.push_back(bottleB);
+    this->bottles.push_back(bottleC);
+    this->bottles.push_back(bottleD);
+    this->bottles.push_back(bottleE);
+}
 
 MissionConfig::MissionConfig(std::string filename) {
     // TODO: load from file
