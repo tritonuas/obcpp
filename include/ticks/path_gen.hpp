@@ -2,7 +2,7 @@
 #define INCLUDE_CORE_TICKS_PATH_GEN_HPP_
 
 #include "ticks/tick.hpp"
-#include "core/states.hpp"
+#include "core/mission_state.hpp"
 #include "protos/obc.pb.h"
 
 #include <memory>

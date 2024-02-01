@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CORE_STATES_HPP_
-#define INCLUDE_CORE_STATES_HPP_
+#ifndef INCLUDE_CORE_MISSION_STATE_HPP_
+#define INCLUDE_CORE_MISSION_STATE_HPP_
 
 #include <memory>
 #include <mutex>
@@ -52,4 +52,4 @@ class MissionState {
 };
 
 
-#endif  // INCLUDE_CORE_STATES_HPP_
+#endif  // INCLUDE_CORE_MISSION_STATE_HPP_

@@ -6,7 +6,7 @@
 #include <loguru.hpp>
 
 #include "core/obc.hpp"
-#include "core/states.hpp"
+#include "core/mission_state.hpp"
 #include "ticks/tick.hpp"
 #include "ticks/mission_prep.hpp"
 #include "network/gcs.hpp"

@@ -11,7 +11,7 @@
 #include <string>
 
 #include "core/config.hpp"
-#include "core/states.hpp"
+#include "core/mission_state.hpp"
 #include "ticks/tick.hpp"
 #include "ticks/path_gen.hpp"
 #include "utilities/locks.hpp"

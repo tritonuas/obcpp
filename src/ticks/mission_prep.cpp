@@ -5,7 +5,7 @@
 
 #include <loguru.hpp>
 
-#include "core/states.hpp"
+#include "core/mission_state.hpp"
 #include "ticks/path_gen.hpp"
 
 MissionPreparationTick::MissionPreparationTick(std::shared_ptr<MissionState> state)
