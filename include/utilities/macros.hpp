@@ -104,7 +104,8 @@
 //     where both arguments are c-strings
 #define LOG_REQUEST(method, route) \
     LOG_SCOPE_F(INFO, "%s %s", method, route); \
-    LOG_F(INFO, "User-Agent: %s", request.get_header_value("User-Agent").c_str())
+    if (request.has_header("User-Agent")) \
+        LOG_F(INFO, "User-Agent: %s", request.get_header_value("User-Agent").c_str());
 
 // One of the LOG_RESPONSE logging functions should be used to both log and
 // set the HTTP response
