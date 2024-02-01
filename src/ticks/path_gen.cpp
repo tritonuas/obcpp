@@ -8,6 +8,7 @@
 #include <loguru.hpp>
 
 #include "protos/obc.pb.h"
+#include "ticks/takeoff_prep.hpp"
 
 std::vector<GPSCoord> tempGenPath(std::shared_ptr<MissionState> state) {
     // TODO: replace this with the actual path generation function
@@ -51,7 +52,7 @@ std::chrono::milliseconds PathGenerationTick::getWait() const {
 Tick* PathGenerationTick::tick() {
     if (this->state->isInitPathValidated()) {
         // Path already validated, so move onto next state
-        return nullptr;  // TODO: move onto next state
+        return new TakeoffPrepTick(this->state);
     }
 
     if (this->path_generated) {

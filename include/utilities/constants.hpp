@@ -19,6 +19,7 @@ const matplot::color WAYPOINTS_COLOR = matplot::color::yellow;
 
 const std::chrono::milliseconds MISSION_PREP_TICK_WAIT = std::chrono::milliseconds(1000);
 const std::chrono::milliseconds PATH_GEN_TICK_WAIT = std::chrono::milliseconds(1000);
+const std::chrono::milliseconds TAKEOFF_PREP_TICK_WAIT = std::chrono::milliseconds(1000);
 
 const double EARTH_RADIUS = 6378137.0;
 
@@ -32,11 +33,11 @@ enum HTTPStatus {
     NOT_IMPLEMENTED = 501,
 };
 
-#define SET(msg) {HTTPStatus::msg, #msg}
+#define _SET_HTTP_MAPPING(msg) {HTTPStatus::msg, #msg}
 const std::unordered_map<HTTPStatus, const char*> HTTP_STATUS_TO_STRING = {
-    SET(OK),
-    SET(BAD_REQUEST), SET(NOT_FOUND),
-    SET(INTERNAL_SERVER_ERROR), SET(NOT_IMPLEMENTED)
+    _SET_HTTP_MAPPING(OK),
+    _SET_HTTP_MAPPING(BAD_REQUEST), _SET_HTTP_MAPPING(NOT_FOUND),
+    _SET_HTTP_MAPPING(INTERNAL_SERVER_ERROR), _SET_HTTP_MAPPING(NOT_IMPLEMENTED)
 };
 
 namespace mime {
