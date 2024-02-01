@@ -55,9 +55,12 @@ class MissionConfig {
         std::optional<Polygon> flight,
         std::optional<Polygon> airdrop,
         std::optional<Polyline> waypoints,
-        std::vector<Bottle> bottleUpdates);
+        std::vector<Bottle> bottleUpdates,
+        Mission cached_mission);
 
     void saveToFile(std::string filename);
+
+    std::optional<Mission> getCachedMission();
 
  private:
     std::shared_mutex mut;
@@ -66,6 +69,8 @@ class MissionConfig {
     Polygon airdropBoundary;
     Polyline waypoints;
     std::vector<Bottle> bottles;
+
+    std::optional<Mission> cached_mission {};
 
     // internal function which doesn't apply the mutex
     void _setBottle(Bottle bottle);

@@ -106,9 +106,12 @@ void MissionConfig::batchUpdate(
     std::optional<Polygon> flight,
     std::optional<Polygon> airdrop,
     std::optional<Polyline> waypoints,
-    std::vector<Bottle> bottleUpdates
+    std::vector<Bottle> bottleUpdates,
+    Mission cached_mission
 ) {
     WriteLock lock(this->mut);
+
+    this->cached_mission = cached_mission;
 
     if (flight.has_value()) {
         this->flightBoundary = flight.value();
@@ -131,4 +134,10 @@ void MissionConfig::saveToFile(std::string filename) {
     ReadLock lock(this->mut);
 
     // TODO: implement
+}
+
+std::optional<Mission> MissionConfig::getCachedMission() {
+    ReadLock lock(this->mut);
+
+    return this->cached_mission;
 }

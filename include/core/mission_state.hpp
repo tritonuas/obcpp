@@ -6,6 +6,7 @@
 #include <functional>
 #include <chrono>
 #include <vector>
+#include <optional>
 
 #include "core/config.hpp"
 #include "utilities/datatypes.hpp"
@@ -48,6 +49,7 @@ class MissionState {
     std::mutex init_path_mut;  // for reading/writing the initial path
     std::vector<GPSCoord> init_path;
     bool init_path_validated = false;  // true when the operator has validated the initial path
+
 
     void _setTick(Tick* newTick);  // does not acquire the tick_mut
 };
