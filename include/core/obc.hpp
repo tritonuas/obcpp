@@ -5,7 +5,7 @@
 #include <memory>
 #include <cstdint>
 
-#include "core/config.hpp"
+#include "core/mission_config.hpp"
 #include "core/mission_state.hpp"
 #include "network/gcs.hpp"
 

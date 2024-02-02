@@ -21,5 +21,4 @@ constexpr const char* TICK_ID_TO_STR(TickID id) {
     }
 }
 
-
-#endif
+#endif  // INCLUDE_TICKS_IDS_HPP_

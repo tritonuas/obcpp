@@ -54,22 +54,15 @@ DEF_GCS_HANDLE(Post, mission) {
     Mission mission;
     google::protobuf::util::JsonStringToMessage(request.body, &mission);
 
-    // TODO: add checks for the mission
-
     // Update the cartesian converter to be centered around the new flight boundary
     state->setCartesianConverter(CartesianConverter(mission.flightboundary()));
-    // Create the cartesian polygons for this new mission
-    // and store in the mission state
-    auto converter = state->getCartesianConverter().value();
-    state->config.batchUpdate(
-        converter.toXYZ(mission.flightboundary()),
-        converter.toXYZ(mission.airdropboundary()),
-        converter.toXYZ(mission.waypoints()),
-        std::vector<Bottle>(mission.bottleassignments().begin(),
-            mission.bottleassignments().end()),
-        mission);
 
-    LOG_RESPONSE(INFO, "Mission uploaded", OK);
+    auto err = state->config.setMission(mission, state->getCartesianConverter().value());
+    if (err.has_value()) {
+        LOG_RESPONSE(WARNING, err.value().c_str(), BAD_REQUEST);
+    } else {
+        LOG_RESPONSE(INFO, "Mission uploaded", OK);
+    }
 }
 
 DEF_GCS_HANDLE(Post, airdrop) {

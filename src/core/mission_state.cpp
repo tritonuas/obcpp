@@ -3,7 +3,7 @@
 
 #include <loguru.hpp>
 
-#include "core/config.hpp"
+#include "core/mission_config.hpp"
 #include "core/mission_state.hpp"
 #include "ticks/tick.hpp"
 #include "utilities/locks.hpp"

@@ -6,10 +6,11 @@
 #include <unordered_map>
 #include <optional>
 
-#include "core/config.hpp"
+#include "core/mission_config.hpp"
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
 #include "utilities/locks.hpp"
+#include "pathing/cartesian.hpp"
 
 #include "protos/obc.pb.h"
 
@@ -38,14 +39,6 @@ MissionConfig::MissionConfig() {
 
 MissionConfig::MissionConfig(std::string filename) {
     // TODO: load from file
-}
-
-bool MissionConfig::isValid() const {
-    // 3 is minimum points that make sense for
-    // a polygon to have
-    return (this->airdropBoundary.size() >= 3 &&
-            this->flightBoundary.size() >= 3 &&
-            this->waypoints.size() > 0);
 }
 
 Polygon MissionConfig::getFlightBoundary() {
@@ -79,24 +72,6 @@ std::tuple<Polygon, Polygon, Polyline, std::vector<Bottle>> MissionConfig::getCo
         this->flightBoundary, this->airdropBoundary, this->waypoints, this->bottles);
 }
 
-void MissionConfig::setFlightBoundary(Polygon bound) {
-    WriteLock lock(this->mut);
-
-    this->flightBoundary = bound;
-}
-
-void MissionConfig::setAirdropBoundary(Polygon bound) {
-    WriteLock lock(this->mut);
-
-    this->airdropBoundary = bound;
-}
-
-void MissionConfig::setWaypoints(Polyline wpts) {
-    WriteLock lock(this->mut);
-
-    this->waypoints = wpts;
-}
-
 void MissionConfig::_setBottle(Bottle bottle) {
     // Go until you find the bottle that has the same index, and replace all values
     for (auto& curr_bottle : this->bottles) {
@@ -107,46 +82,37 @@ void MissionConfig::_setBottle(Bottle bottle) {
     }
 }
 
-void MissionConfig::setBottle(Bottle bottle) {
-    WriteLock lock(this->mut);
 
-    this->_setBottle(bottle);
-}
-
-void MissionConfig::setBottles(const std::vector<Bottle>& updates) {
-    WriteLock lock(this->mut);
-
-    for (auto bottle : updates) {
-        this->_setBottle(bottle);
-    }
-}
-
-void MissionConfig::batchUpdate(
-    std::optional<Polygon> flight,
-    std::optional<Polygon> airdrop,
-    std::optional<Polyline> waypoints,
-    std::vector<Bottle> bottleUpdates,
-    Mission cached_mission
+std::optional<std::string> MissionConfig::setMission(
+    Mission mission, CartesianConverter<GPSProtoVec> cconverter
 ) {
     WriteLock lock(this->mut);
 
-    this->cached_mission = cached_mission;
-
-    if (flight.has_value()) {
-        this->flightBoundary = flight.value();
+    std::string err;
+    if (mission.waypoints().empty()) {
+        err += "Waypoints must have at least 1 waypoint. ";
     }
 
-    if (airdrop.has_value()) {
-        this->airdropBoundary = airdrop.value();
+    if (mission.flightboundary().size() < 3) {
+        err += "Flight boundary must have at least 3 coordinates. ";
     }
 
-    if (waypoints.has_value()) {
-        this->waypoints = waypoints.value();
+    if (mission.airdropboundary().size() < 3) {
+        err += "Airdrop boundary must have at least 3 coordinates.";
+    }
+    if (!err.empty()) {
+        return err;
     }
 
-    for (auto bottle : bottleUpdates) {
+    this->cached_mission = mission;
+    this->flightBoundary = cconverter.toXYZ(mission.flightboundary());
+    this->airdropBoundary = cconverter.toXYZ(mission.airdropboundary());
+    this->waypoints = cconverter.toXYZ(mission.waypoints());
+    for (auto bottle : mission.bottleassignments()) {
         this->_setBottle(bottle);
     }
+
+    return {};
 }
 
 void MissionConfig::saveToFile(std::string filename) {

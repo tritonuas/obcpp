@@ -8,7 +8,7 @@
 #include <vector>
 #include <optional>
 
-#include "core/config.hpp"
+#include "core/mission_config.hpp"
 #include "utilities/datatypes.hpp"
 #include "utilities/constants.hpp"
 #include "protos/obc.pb.h"

@@ -2,6 +2,7 @@
 #define INCLUDE_UTILITIES_HTTP_HPP_
 
 #include <unordered_map>
+#include <string>
 
 enum HTTPStatus {
     OK = 200,
@@ -13,12 +14,23 @@ enum HTTPStatus {
     NOT_IMPLEMENTED = 501,
 };
 
-#define _SET_HTTP_MAPPING(msg) {HTTPStatus::msg, #msg}
-const std::unordered_map<HTTPStatus, const char*> HTTP_STATUS_TO_STRING = {
-    _SET_HTTP_MAPPING(OK),
-    _SET_HTTP_MAPPING(BAD_REQUEST), _SET_HTTP_MAPPING(NOT_FOUND),
-    _SET_HTTP_MAPPING(INTERNAL_SERVER_ERROR), _SET_HTTP_MAPPING(NOT_IMPLEMENTED)
-};
+#define _SET_HTTP_MAPPING(msg) case HTTPStatus::msg: return #msg
+constexpr const char* HTTP_STATUS_TO_STRING(HTTPStatus status) {
+    switch (status) {
+        // 2xx
+        _SET_HTTP_MAPPING(OK);
+
+        // 4xx
+        _SET_HTTP_MAPPING(BAD_REQUEST);
+        _SET_HTTP_MAPPING(NOT_FOUND);
+
+        // 5xx
+        _SET_HTTP_MAPPING(INTERNAL_SERVER_ERROR);
+        _SET_HTTP_MAPPING(NOT_IMPLEMENTED);
+
+        default: return std::to_string(status).c_str();  // just return the straight number code
+    }
+}
 
 namespace mime {
     const char json[] = "application/json";

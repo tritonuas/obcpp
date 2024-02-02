@@ -111,7 +111,7 @@
 // set the HTTP response
 #define LOG_RESPONSE_5(LOG_LEVEL, msg, response_code, body, mime) \
     if (msg != body) LOG_F(LOG_LEVEL, "%s", msg); \
-    LOG_F(LOG_LEVEL, "HTTP %d: %s", response_code, HTTP_STATUS_TO_STRING.at(response_code)); \
+    LOG_F(LOG_LEVEL, "HTTP %d: %s", response_code, HTTP_STATUS_TO_STRING(response_code)); \
     LOG_F(LOG_LEVEL, "%s", body); \
     response.set_content(body, mime); \
     response.status = response_code

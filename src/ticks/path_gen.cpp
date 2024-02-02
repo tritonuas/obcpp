@@ -36,8 +36,7 @@ std::vector<GPSCoord> tempGenPath(std::shared_ptr<MissionState> state) {
 }
 
 PathGenTick::PathGenTick(std::shared_ptr<MissionState> state)
-    :Tick(state, TickID::PathGen)
-{
+    :Tick(state, TickID::PathGen) {
     startPathGeneration();
 }
 

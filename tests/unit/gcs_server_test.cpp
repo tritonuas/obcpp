@@ -4,14 +4,20 @@
 #include <memory>
 #include <fstream>
 #include <unordered_map>
+#include <thread>
 
 #include <nlohmann/json.hpp>
 
 #include "network/gcs.hpp"
 #include "network/gcs_routes.hpp"
+#include "network/gcs_macros.hpp"
 #include "core/mission_state.hpp"
-#include "utilities/macros.hpp"
 #include "resources/json_snippets.hpp"
+#include "utilities/http.hpp"
+#include "ticks/mission_prep.hpp"
+#include "ticks/path_gen.hpp"
+#include "ticks/takeoff_prep.hpp"
+#include "ticks/tick.hpp"
 
 #define DECLARE_HANDLER_PARAMS(STATE, REQ, RESP) \
     std::shared_ptr<MissionState> STATE = std::make_shared<MissionState>(); \
@@ -23,10 +29,20 @@
 TEST(GCSServerTest, GetMissionNoMission) {
     DECLARE_HANDLER_PARAMS(state, req, resp);
 
-    RUN_HANDLER(Get, mission);
+    GCS_HANDLE(Get, mission)(state, req, resp);
 
     EXPECT_EQ(BAD_REQUEST, resp.status);
     EXPECT_EQ(state->config.getCachedMission(), std::nullopt);
+}
+
+TEST(GCSServerTest, PostBadMission) {
+    DECLARE_HANDLER_PARAMS(state, req, resp);
+    req.body = resources::mission_json_bad_1;
+
+    GCS_HANDLE(Post, mission)(state, req, resp);
+    EXPECT_EQ(resp.status, BAD_REQUEST);
+    GCS_HANDLE(Get, mission)(state, req, resp);
+    EXPECT_EQ(resp.status, BAD_REQUEST);
 }
 
 // TODO: can probably cut down on the amount of code copy/paste that is going on here
@@ -163,15 +179,30 @@ TEST(GCSServerTest, GetInitialPathNoPath) {
     EXPECT_EQ(state->getInitPath().size(), 0);
 }
 
-TEST(GCSServerTest, PostMissionTransitionState) {
+TEST(GCSServerTest, SetupStateTransitions) {
+    // First upload a mission so that we generate a path
     DECLARE_HANDLER_PARAMS(state, req, resp);
     req.body = resources::mission_json_good_1;
-
-    EXPECT_EQ(state->get, "");
+    state->setTick(new MissionPrepTick(state));
 
     GCS_HANDLE(Post, mission)(state, req, resp);
 
-    // state->
+    state->doTick();
+    EXPECT_EQ(state->getTickID(), TickID::PathGen);
+    do { // wait for path to generate
+        auto wait = state->doTick();
+        std::this_thread::sleep_for(wait);
+    } while (state->getInitPath().empty());
+    // have an initial path, but waiting for validation
+    EXPECT_FALSE(state->getInitPath().empty());
+    EXPECT_EQ(state->getTickID(), TickID::PathGen); 
 
-    GCS_HANDLE(Get, path, initial)(state, req, resp);
+    // Now try and validate the path
+    DECLARE_HANDLER_PARAMS(_, req2, resp2);
+
+    GCS_HANDLE(Post, path, initial, validate)(state, req2, resp2);
+
+    EXPECT_EQ(resp2.status, OK);
+    state->doTick();
+    EXPECT_EQ(state->getTickID(), TickID::TakeoffPrep);
 }

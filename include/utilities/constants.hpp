@@ -23,5 +23,4 @@ const std::chrono::milliseconds TAKEOFF_PREP_TICK_WAIT = std::chrono::millisecon
 
 const double EARTH_RADIUS = 6378137.0;
 
-
 #endif  // INCLUDE_UTILITIES_CONSTANTS_HPP_
