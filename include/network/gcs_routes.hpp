@@ -14,7 +14,7 @@
 #include "core/mission_state.hpp"
 #include "protos/obc.pb.h"
 #include "utilities/serialize.hpp"
-#include "utilities/macros.hpp"
+#include "network/gcs_macros.hpp"
 #include "ticks/tick.hpp"
 #include "ticks/path_gen.hpp"
 
@@ -95,7 +95,7 @@ DEF_GCS_HANDLE(Get, path, initial, new);
  * 
  * ---
  * Specifies that the operator is happy with the current generated/cached initial path.
- * Progresses beyond the PathGenerationTick step by setting a "initial_path_validated"
+ * Progresses beyond the PathGenTick step by setting a "initial_path_validated"
  * flag in the Mission State
  * 
  * 200 OK: The initial path was generated, and is now validated 

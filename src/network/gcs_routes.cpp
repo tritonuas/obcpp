@@ -11,7 +11,8 @@
 #include "core/mission_state.hpp"
 #include "protos/obc.pb.h"
 #include "utilities/serialize.hpp"
-#include "utilities/macros.hpp"
+#include "network/gcs_macros.hpp"
+#include "utilities/http.hpp"
 #include "ticks/tick.hpp"
 #include "ticks/path_gen.hpp"
 
@@ -94,7 +95,7 @@ DEF_GCS_HANDLE(Get, path, initial) {
 DEF_GCS_HANDLE(Get, path, initial, new) {
     LOG_REQUEST("GET", "/path/initial/new");
 
-    state->setTick(new PathGenerationTick(state));
+    state->setTick(new PathGenTick(state));
 
     LOG_RESPONSE(INFO, "Started generating new initial path", OK);
 }

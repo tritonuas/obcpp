@@ -9,7 +9,7 @@
 
 /*
  * Checks every second whether or not a valid mission has been uploaded.
- * Transitions to PathGenerationTick once it has been generated.
+ * Transitions to PathGenTick once it has been generated.
  */
 class TakeoffPrepTick: public Tick {
  public:
@@ -18,8 +18,6 @@ class TakeoffPrepTick: public Tick {
     std::chrono::milliseconds getWait() const override;
 
     Tick* tick() override;
-
-    std::string getName() const override;
 };
 
 #endif  // INCLUDE_TICKS_TAKEOFF_PREP_HPP_

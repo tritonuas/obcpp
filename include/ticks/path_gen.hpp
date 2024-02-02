@@ -15,15 +15,13 @@
  * Generates a path, caches the path in the mission state,
  * then waits for it to be validated.
  */
-class PathGenerationTick : public Tick {
+class PathGenTick : public Tick {
  public:
-    explicit PathGenerationTick(std::shared_ptr<MissionState> state);
+    explicit PathGenTick(std::shared_ptr<MissionState> state);
 
     std::chrono::milliseconds getWait() const override;
 
     Tick* tick() override;
-
-    std::string getName() const override;
  private:
     std::future<std::vector<GPSCoord>> path;
     bool path_generated;

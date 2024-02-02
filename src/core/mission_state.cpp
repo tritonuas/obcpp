@@ -53,6 +53,10 @@ void MissionState::_setTick(Tick* newTick) {
     tick.reset(newTick);
 }
 
+TickID MissionState::getTickID() {
+    return this->tick->getID();
+}
+
 void MissionState::setInitPath(std::vector<GPSCoord> init_path) {
     Lock lock(this->init_path_mut);
     this->init_path = init_path;

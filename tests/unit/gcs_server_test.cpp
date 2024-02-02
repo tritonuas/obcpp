@@ -13,18 +13,15 @@
 #include "utilities/macros.hpp"
 #include "resources/json_snippets.hpp"
 
-#define DECLARE_HANDLER_PARAMS \
-    std::shared_ptr<MissionState> state = std::make_shared<MissionState>(); \
-    httplib::Request req; \
-    httplib::Response resp
-
-#define RUN_HANDLER(...) \
-    GCS_HANDLE(__VA_ARGS__)(state, req, resp)
+#define DECLARE_HANDLER_PARAMS(STATE, REQ, RESP) \
+    std::shared_ptr<MissionState> STATE = std::make_shared<MissionState>(); \
+    httplib::Request REQ; \
+    httplib::Response RESP 
 
 // Might have to change this later on if we preload
 // mission from file
 TEST(GCSServerTest, GetMissionNoMission) {
-    DECLARE_HANDLER_PARAMS;
+    DECLARE_HANDLER_PARAMS(state, req, resp);
 
     RUN_HANDLER(Get, mission);
 
@@ -34,11 +31,11 @@ TEST(GCSServerTest, GetMissionNoMission) {
 
 // TODO: can probably cut down on the amount of code copy/paste that is going on here
 TEST(GCSServerTest, PostMissionThenGetMission) {
-    DECLARE_HANDLER_PARAMS;
+    DECLARE_HANDLER_PARAMS(state, req, resp);
     req.body = resources::mission_json_good_1;
     nlohmann::json request_mission = nlohmann::json::parse(req.body);
 
-    RUN_HANDLER(Post, mission);
+    GCS_HANDLE(Post, mission)(state, req, resp);
 
     // ========================================================================
     // Verify all of the internal state is correct
@@ -118,7 +115,7 @@ TEST(GCSServerTest, PostMissionThenGetMission) {
     req = httplib::Request();
     resp = httplib::Response();
 
-    RUN_HANDLER(Get, mission);
+    GCS_HANDLE(Get, mission)(state, req, resp);
 
     auto response_mission = nlohmann::json::parse(resp.body);
 
@@ -153,4 +150,28 @@ TEST(GCSServerTest, PostMissionThenGetMission) {
             EXPECT_EQ(response.shapecolor(), request.shapecolor());
         }
     }
+}
+
+TEST(GCSServerTest, GetInitialPathNoPath) {
+    DECLARE_HANDLER_PARAMS(state, req, resp);
+
+    EXPECT_EQ(state->getInitPath().size(), 0);
+
+    GCS_HANDLE(Get, path, initial)(state, req, resp);
+
+    EXPECT_EQ(resp.status, BAD_REQUEST);
+    EXPECT_EQ(state->getInitPath().size(), 0);
+}
+
+TEST(GCSServerTest, PostMissionTransitionState) {
+    DECLARE_HANDLER_PARAMS(state, req, resp);
+    req.body = resources::mission_json_good_1;
+
+    EXPECT_EQ(state->get, "");
+
+    GCS_HANDLE(Post, mission)(state, req, resp);
+
+    // state->
+
+    GCS_HANDLE(Get, path, initial)(state, req, resp);
 }

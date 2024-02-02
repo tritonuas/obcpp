@@ -9,17 +9,15 @@
 
 /*
  * Checks every second whether or not a valid mission has been uploaded.
- * Transitions to PathGenerationTick once it has been generated.
+ * Transitions to PathGenTick once it has been generated.
  */
-class MissionPreparationTick : public Tick {
+class MissionPrepTick : public Tick {
  public:
-    explicit MissionPreparationTick(std::shared_ptr<MissionState> state);
+    explicit MissionPrepTick(std::shared_ptr<MissionState> state);
 
     std::chrono::milliseconds getWait() const override;
 
     Tick* tick() override;
-
-    std::string getName() const override;
 };
 
 #endif  // INCLUDE_TICKS_MISSION_PREP_HPP_

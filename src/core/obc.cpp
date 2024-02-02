@@ -14,7 +14,7 @@
 // TODO: allow specifying config filename
 OBC::OBC(uint16_t gcs_port) {
     this->state = std::make_shared<MissionState>();
-    this->state->setTick(new MissionPreparationTick(this->state));
+    this->state->setTick(new MissionPrepTick(this->state));
 
     this->gcs_server = std::make_unique<GCSServer>(gcs_port, this->state);
 }

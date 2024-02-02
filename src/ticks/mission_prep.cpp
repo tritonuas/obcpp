@@ -7,22 +7,19 @@
 
 #include "core/mission_state.hpp"
 #include "ticks/path_gen.hpp"
+#include "ticks/ids.hpp"
 
-MissionPreparationTick::MissionPreparationTick(std::shared_ptr<MissionState> state)
-    :Tick(state) {}
+MissionPrepTick::MissionPrepTick(std::shared_ptr<MissionState> state)
+    :Tick(state, TickID::MissionPrep) {}
 
-std::chrono::milliseconds MissionPreparationTick::getWait() const {
+std::chrono::milliseconds MissionPrepTick::getWait() const {
     return MISSION_PREP_TICK_WAIT;
 }
 
-std::string MissionPreparationTick::getName() const {
-    return "Mission Preparation";
-}
-
-Tick* MissionPreparationTick::tick() {
+Tick* MissionPrepTick::tick() {
     if (this->state->config.isValid()) {
         LOG_F(INFO, "Valid mission configuration detected");
-        return new PathGenerationTick(this->state);
+        return new PathGenTick(this->state);
     } else {
         return nullptr;
     }

@@ -13,6 +13,7 @@
 #include "utilities/constants.hpp"
 #include "protos/obc.pb.h"
 #include "pathing/cartesian.hpp"
+#include "ticks/ids.hpp"
 
 class Tick;
 
@@ -31,6 +32,7 @@ class MissionState {
     // the mutex. This version should not be called from
     // within another function that already acquires the tick_mut
     void setTick(Tick* newTick);
+    TickID getTickID();
 
     void setInitPath(std::vector<GPSCoord> init_path);
     const std::vector<GPSCoord>& getInitPath();
@@ -49,7 +51,6 @@ class MissionState {
     std::mutex init_path_mut;  // for reading/writing the initial path
     std::vector<GPSCoord> init_path;
     bool init_path_validated = false;  // true when the operator has validated the initial path
-
 
     void _setTick(Tick* newTick);  // does not acquire the tick_mut
 };

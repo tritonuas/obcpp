@@ -9,6 +9,7 @@
 
 #include "protos/obc.pb.h"
 #include "ticks/takeoff_prep.hpp"
+#include "ticks/ids.hpp"
 
 std::vector<GPSCoord> tempGenPath(std::shared_ptr<MissionState> state) {
     // TODO: replace this with the actual path generation function
@@ -34,22 +35,22 @@ std::vector<GPSCoord> tempGenPath(std::shared_ptr<MissionState> state) {
     return output_coords;
 }
 
-PathGenerationTick::PathGenerationTick(std::shared_ptr<MissionState> state)
-    :Tick{state}
+PathGenTick::PathGenTick(std::shared_ptr<MissionState> state)
+    :Tick(state, TickID::PathGen)
 {
     startPathGeneration();
 }
 
-void PathGenerationTick::startPathGeneration() {
+void PathGenTick::startPathGeneration() {
     this->path = std::async(std::launch::async, tempGenPath, this->state);
     this->path_generated = false;
 }
 
-std::chrono::milliseconds PathGenerationTick::getWait() const {
+std::chrono::milliseconds PathGenTick::getWait() const {
     return PATH_GEN_TICK_WAIT;
 }
 
-Tick* PathGenerationTick::tick() {
+Tick* PathGenTick::tick() {
     if (this->state->isInitPathValidated()) {
         // Path already validated, so move onto next state
         return new TakeoffPrepTick(this->state);
@@ -68,8 +69,4 @@ Tick* PathGenerationTick::tick() {
     }
 
     return nullptr;
-}
-
-std::string PathGenerationTick::getName() const {
-    return "Path Generation";
 }

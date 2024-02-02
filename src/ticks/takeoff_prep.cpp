@@ -6,16 +6,13 @@
 #include <loguru.hpp>
 
 #include "core/mission_state.hpp"
+#include "ticks/ids.hpp"
 
 TakeoffPrepTick::TakeoffPrepTick(std::shared_ptr<MissionState> state)
-    :Tick(state) {}
+    :Tick(state, TickID::TakeoffPrep) {}
 
 std::chrono::milliseconds TakeoffPrepTick::getWait() const {
     return TAKEOFF_PREP_TICK_WAIT;
-}
-
-std::string TakeoffPrepTick::getName() const {
-    return "Takeoff Preparation";
 }
 
 Tick* TakeoffPrepTick::tick() {
