@@ -15,12 +15,7 @@ std::vector<GPSCoord> tempGenPath(std::shared_ptr<MissionState> state) {
     // TODO: replace this with the actual path generation function
     // For now , just returns a path with 1 coord, which is technically
     // "valid" because it has more than 0 coords
-    LOG_F(INFO, "Dummy path generation step 1...");
-    std::this_thread::sleep_for(std::chrono::seconds(3));
-    LOG_F(INFO, "Dummy path generation step 2...");
-    std::this_thread::sleep_for(std::chrono::seconds(3));
-    LOG_F(INFO, "Dummy path generation step 3...");
-    std::this_thread::sleep_for(std::chrono::seconds(3));
+    LOG_F(INFO, "Dummy path generation...");
 
     auto cartesian = state->getCartesianConverter().value();
     auto waypoints = state->config.getWaypoints();
