@@ -27,12 +27,12 @@ class RRT {
     RRT(RRTPoint start, RRTPoint goal, int num_iterations, double goal_bias, double search_radius,
         double tolerance_to_goal, double rewire_radius, Polygon bounds)
 
-        : num_iterations{num_iterations},
-          goal_bias{goal_bias},
-          search_radius{search_radius},
-          rewire_radius{rewire_radius},
-          tree{start, Environment{bounds, goal, tolerance_to_goal},
-               Dubins{TURNING_RADIUS, POINT_SEPARATION}} {}
+        : num_iterations(num_iterations),
+          goal_bias(goal_bias),
+          search_radius(search_radius),
+          rewire_radius(rewire_radius),
+          tree(start, Environment(bounds, goal, tolerance_to_goal),
+               Dubins(TURNING_RADIUS, POINT_SEPARATION)) {}
 
     // choose a random point from free space, not nessisarily this
     RRTPoint generateSamplePoint() {
@@ -43,62 +43,48 @@ class RRT {
         return tree.getRandomPoint(search_radius);
     }
 
-    // /**
-    //  * RRT*
-    //  */
-    // void run() {
-    //     for (int _; _ < num_iterations; _++) {
-    //         if (tree.getAirspace().isGoalFound()) {
-    //             break;
-    //         }
+    /**
+     * RRT*
+     */
+    void run() {
+        for (int _ = 0; _ < num_iterations; _++) {
+            if (tree.getAirspace().isGoalFound()) {
+                break;
+            }
+            RRTPoint sample = generateSamplePoint();
 
-    //         RRTPoint sample = generateSamplePoint();
+            std::vector<std::pair<RRTNode *, RRTOption>> options = tree.pathingOptions(sample);
 
-    //         std::vector<std::pair<RRTNode *, RRTOption>> options = tree.pathingOptions(sample);
+            // [TODO] add rest of function
+            bool validity = parseOptions(&options, sample);
+        }
+    }
 
-    //         // [TODO] add rest of function
-    //         Validity validity = parseOptions(&options, sample);
+    /**
+     * ?????????
+     */
+    bool parseOptions(std::vector<std::pair<RRTNode *, RRTOption>> *options, RRTPoint &sample) {
+        for (const auto &[node, option] : *options) {
+            // if the node is the sample, return (preventes loops)
+            if (node == nullptr || node->getPoint() == sample) {
+                return false;  // invalid
+            }
 
-    //         switch (validity) {
-    //             case INVALID:
-    //                 continue;  // test propertly
-    //             case GOAL:
-    //                 _found_goal = true;
-    //                 break;
-    //             case VALID:
-    //                 break;  // test properly
-    //         }
-    //     }
-    // }
+            // else, add the node to the
+            
+            bool sucessful_addition = tree.addNode(node, sample, option);
 
-    // /**
-    //  * ?????????
-    //  */
-    // bool parseOptions(std::vector<std::pair<RRTNode *, RRTOption>> *options,
-    //                   RRTPoint &sample) {
-    //     for (const auto &[node, option] : *options) {
-    //         // if the node is the sample, return (preventes loops)
-    //         if (node->getPoint() == sample) {
-    //             return false;  // invalid
-    //         }
+            // for clarity, sample is not used beyond this point. It is now the
+            // new_node
+            // optimizeTree(&new_node);
 
-    //         // else, add the node to the
-    //         bool sucessful_addition = tree.addNode(node, sample);
+            // if the new node is within the tolerance of the goal, return ???
 
-    //         // for clarity, sample is not used beyond this point. It is now the
-    //         // new_node
-    //         optimizeTree(&new_node);
+            return sucessful_addition;
+        }
 
-    //         // if the new node is within the tolerance of the goal, return ???
-    //         if (inGoalRegion(new_node.getPoint())) {
-    //             _found_goal = true;
-    //             _goal_node = &new_node;
-    //             return GOAL;
-    //         }
-
-    //         return VALID;
-    //     }
-    // }
+        return false;
+    }
 
     // /**
     //  * Rewires the tree by finding paths that are more efficintly routed through
@@ -185,12 +171,12 @@ class RRT {
     //     return _goal.distanceTo(sample) <= _tolerance_to_goal;
     // }
 
-    // /**
-    //  * returns a continuous path of points to the goal
-    //  *
-    //  * @return  ==> list of 2-vectors to the goal region
-    //  */
-    // std::vector<XYZCoord> getPointsGoal() { return getPointsForPath(getGoalPath()); }
+    /**
+     * returns a continuous path of points to the goal
+     *
+     * @return  ==> list of 2-vectors to the goal region
+     */
+    std::vector<XYZCoord> getPointsGoal() { return tree.getPathToGoal(); }
 
     // /**
     //  * Given a list of edges in the tree, it returns the list that represents
@@ -250,7 +236,7 @@ class RRT {
     //     path->pop_back();
     // }
 
- private:
+//  private:
     RRTTree tree;
 
     int num_iterations;

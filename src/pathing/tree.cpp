@@ -23,19 +23,6 @@ RRTNode::RRTNode(RRTPoint point, double cost) : point{point}, cost{cost} {}
 RRTNode::RRTNode(RRTPoint point, double cost, RRTNodeList reachable)
     : point{point}, cost{cost}, reachable{reachable} {}
 
-// RRTNode::~RRTNode() {
-//     for (RRTNode* node : reachable) {
-//         delete node;
-//     }
-
-//     if (parent != nullptr) {
-//         parent->removeReachable(this);
-//     }
-
-//     reachable.clear();
-//     delete this;
-// }
-
 bool RRTNode::operator==(const RRTNode& other_node) const {
     return this->point == other_node.point && this->cost == other_node.cost;
 }
@@ -114,6 +101,7 @@ RRTTree::~RRTTree() {
 // TODO - convert from old to new
 bool RRTTree::addNode(RRTNode* anchor_node, RRTPoint& new_point, const RRTOption& option) {
     // checking if path is valid
+
     std::vector<XYZCoord> path = dubins.generatePoints(anchor_node->getPoint(), new_point,
                                                        option.dubins_path, option.has_straight);
 
@@ -122,16 +110,20 @@ bool RRTTree::addNode(RRTNode* anchor_node, RRTPoint& new_point, const RRTOption
     }
     // if a valid path was found, it will add the node to the tree
 
-    RRTNode* newNode = new RRTNode(new_point, LARGE_COST);
+    RRTNode* new_node = new RRTNode(new_point, LARGE_COST);
 
-    std::pair<RRTNode*, RRTNode*> edgePair(anchor_node, newNode);
-    RRTEdge new_edge = RRTEdge(anchor_node, newNode, path, option.length);
+    std::pair<RRTNode*, RRTNode*> edgePair(anchor_node, new_node);
+    RRTEdge new_edge = RRTEdge(anchor_node, new_node, path, option.length);
     edge_map.insert(std::make_pair(edgePair, new_edge));
 
-    std::pair<RRTPoint, RRTNode*> insertNode(newNode->getPoint(), newNode);
+    std::pair<RRTPoint, RRTNode*> insertNode(new_node->getPoint(), new_node);
     node_map.insert(insertNode);
 
-    anchor_node->addReachable(newNode);
+    anchor_node->addReachable(new_node);
+    if (airspace.isPointInGoal(new_point.coord)) {
+        airspace.setGoalfound();
+        retreivePathByNode(new_node, new_node->getParent());
+    }
 
     return true;
 }
@@ -191,4 +183,16 @@ Environment RRTTree::getAirspace() const { return this->airspace; }
 
 RRTPoint RRTTree::getRandomPoint(double search_radius) const {
     return airspace.getRandomPoint(root->getPoint(), search_radius);
+}
+
+void RRTTree::retreivePathByNode(RRTNode* node, RRTNode* parent) {
+    if (parent == nullptr || node == nullptr) {
+        return;
+    }
+
+    retreivePathByNode(parent, parent->getParent());
+
+    std::vector<XYZCoord> edge = getEdge(parent->getPoint(), node->getPoint())->getPath();
+
+    path_to_goal.insert(path_to_goal.end(), edge.begin(), edge.end());
 }

@@ -18,7 +18,7 @@
 class Environment {
  public:
     Environment(const Polygon valid_region, const RRTPoint goal, const double goal_radius)
-        : valid_region(valid_region), goal(goal), goal_radius(goal_radius) {}
+        : valid_region(valid_region), goal(goal), goal_radius(goal_radius), found_goal(false) {}
 
     /**
      * Check if a point is in the valid region
@@ -71,12 +71,14 @@ class Environment {
      * @return a random RRTPoint in the valid region
      */
     RRTPoint getRandomPoint(const RRTPoint& start_point, double search_radius) const {
-        const double angle = random(0, 1) * TWO_PI;
-        const XYZCoord direction_vector{sin(angle), cos(angle), 0};
-
         // TODO - use some heuristic to more efficiently generate direction
         // vector (and make it toggleable)
+
+        // TODO - get rid of magic number
         for (int i = 0; i < 15; i++) {
+            double angle = random(0, 1) * TWO_PI;
+            XYZCoord direction_vector{sin(angle), cos(angle), 0};
+
             RRTPoint generated_point{start_point.coord + (search_radius * direction_vector),
                                      random(0, 1) * TWO_PI};
 
@@ -94,6 +96,11 @@ class Environment {
      * @return true if the goal has been found, false otherwise
      */
     bool isGoalFound() const { return found_goal; }
+
+    /**
+     * Sets found_goal to true
+     */
+    void setGoalfound() { found_goal = true; }
 
  private:
     const Polygon valid_region;  // boundary of the valid map

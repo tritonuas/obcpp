@@ -129,7 +129,7 @@ class RRTTree {
      *  Add a node to the RRTTree.
      *  If adding the first node to the tree, connectTo can be anything.
      */
-    bool addNode(RRTNode* anchor_node, RRTPoint& new_point, const RRTOption &option);  // NOLINT
+    bool addNode(RRTNode* anchor_node, RRTPoint& new_point, const RRTOption& option);  // NOLINT
 
     /*
      * Delete an edge between 'from' and 'toPrev', and create a new edge
@@ -192,17 +192,19 @@ class RRTTree {
      */
     std::vector<std::pair<RRTNode*, RRTOption>> pathingOptions(const RRTPoint& end,
                                                                int quantity_options = 10) {
+        // fills the options list with valid values
         std::vector<std::pair<RRTNode*, RRTOption>> options;
+        fillOptions(&options, root, end);
 
-        fillOptions(&options, root);
-
-        if (options.size() < quantity_options) {
-            return options;
-        }
-
+        // sorts the list
         std::sort(options.begin(), options.end(),
                   [](auto a, auto b) { return compareRRTOptionLength(a.second, b.second); });
 
+        // if there are less options than needed amount, then just reurn the xisting list, else,
+        // return a truncated list.
+        if (options.size() < quantity_options) {
+            return options;
+        }
         // erases everythin after the last wanted element
         options.erase(options.begin() + quantity_options, options.end());
 
@@ -216,7 +218,8 @@ class RRTTree {
      * @param options   ==> The list of options that is meant to be filled
      * @param node      ==> current node that will be traversed (DFS)
      */
-    void fillOptions(std::vector<std::pair<RRTNode*, RRTOption>>* options, RRTNode* node) {
+    void fillOptions(std::vector<std::pair<RRTNode*, RRTOption>>* options, RRTNode* node,
+                     const RRTPoint& end) {
         /*
            TODO - try to limit the scope of the search to prevent too many calls to dubins
         */
@@ -224,8 +227,7 @@ class RRTTree {
             return;
         }
 
-        std::vector<RRTOption> local_options =
-            dubins.allOptions(node->getPoint(), airspace.getGoal());
+        std::vector<RRTOption> local_options = dubins.allOptions(node->getPoint(), end);
 
         for (const RRTOption& option : local_options) {
             if (option.length != std::numeric_limits<double>::infinity()) {
@@ -234,19 +236,43 @@ class RRTTree {
         }
 
         for (RRTNode* child : node->getReachable()) {
-            fillOptions(options, child);
+            fillOptions(options, child, end);
         }
     }
 
- private:
+    /**
+     * Retreives the path to goal after the goal has been found
+     *
+     * TODO - find the goal without cache
+     *
+     */
+    std::vector<XYZCoord> getPathToGoal(bool without_cache = false) {
+        if (without_cache) {
+            return {};  // TODO
+        }
+
+        if (!airspace.isGoalFound() || path_to_goal.size() == 0) {
+            return {};  // should probably throw an error
+        }
+
+        return path_to_goal;
+    }
+
+    //  private:
     RRTNode* root;
     std::unordered_map<RRTPoint, RRTNode*, PointHashFunction> node_map{};
     std::unordered_map<std::pair<RRTNode*, RRTNode*>, RRTEdge, EdgeHashFunction> edge_map{};
+    std::vector<XYZCoord> path_to_goal = {};
 
     Environment airspace;
     Dubins dubins;
 
     double distance_to_goal;
+
+    /**
+     * When the goal is found, recursively add the path constructed
+     */
+    void retreivePathByNode(RRTNode* node, RRTNode* parent);
 };
 
 #endif  // INCLUDE_PATHING_TREE_HPP_
