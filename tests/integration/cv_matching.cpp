@@ -70,7 +70,7 @@ int main(int argc, char* argv[]) {
     };
 
     MatchResult result = matcher.match(cropped);
-    std::cout << "Found a match with bottle character " << result.bottleDropIndex << std::endl;
+    std::cout << "Found a match with bottle at index " << result.bottleDropIndex << std::endl;
     std::cout << "foundMatch is " << result.foundMatch << std::endl;
     std::cout << "The similarity is " << result.similarity << std::endl;
 

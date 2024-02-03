@@ -63,6 +63,5 @@ MatchResult Matching::match(const CroppedTarget& croppedTarget) {
         }
     }
     bool isMatch = minDist < this->matchThreshold;
-    uint8_t character = competitionObjectives[minIndex];
-    return MatchResult{character, isMatch, minDist};
+    return MatchResult{minIndex, isMatch, minDist};
 }
