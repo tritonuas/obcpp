@@ -6,7 +6,10 @@ auto toInput(cv::Mat img, bool show_output=false, bool unsqueeze=false, int unsq
     cv::Mat img_dst;
     // scale the image and turn into Tensor, then inputs
     cv::resize(img, img_dst, cv::Size(128, 128), 0, 0, cv::INTER_AREA);
-    at::Tensor tensor_image = torch::from_blob(img_dst.data, { 3, img_dst.rows, img_dst.cols }, at::kByte);
+    img_dst.convertTo(img_dst, CV_32FC3);
+    auto options = torch::TensorOptions().dtype(torch::kFloat32);
+    torch::Tensor tensor_image = torch::from_blob(img_dst.data, {1, 3, img_dst.rows, img_dst.cols}, options);
+    
     // convert back to CV image and display to verify fidelity of image.
     if (unsqueeze)
         tensor_image.unsqueeze_(unsqueeze_dim);
@@ -16,7 +19,8 @@ auto toInput(cv::Mat img, bool show_output=false, bool unsqueeze=false, int unsq
 
     return std::vector<torch::jit::IValue>{tensor_image};
 }
-
+// change referenceImages to a vector of pairs. In each pair: cv::Mat image, uint8_t bottleIndex
+// So each reference image also comes with the bottle index it corresponds to.
 Matching::Matching(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES>
                        competitionObjectives,
                    double matchThreshold,
@@ -34,11 +38,10 @@ Matching::Matching(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES>
         }
 
         for(int i = 0; i < referenceImages.size(); i++) {
-            //cv::Mat image = referenceImages.at(i).croppedImage;
             cv::Mat image = referenceImages.at(i);
             std::vector<torch::jit::IValue> input = toInput(image);
 
-            at::Tensor output = this->module.forward(input).toTensor();
+            torch::Tensor output = this->module.forward(input).toTensor();
             this->referenceFeatures.push_back(output);
         }
     
@@ -48,11 +51,11 @@ Matching::Matching(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES>
 // Further, assumes size of referenceImages == NUM_AIRDROP_BOTTLES
 MatchResult Matching::match(const CroppedTarget& croppedTarget) {
     std::vector<torch::jit::IValue> input = toInput(croppedTarget.croppedImage);
-    at::Tensor output = this->module.forward(input).toTensor();
+    torch::Tensor output = this->module.forward(input).toTensor();
     double minDist = this->matchThreshold + 1;
-    int minIndex = 0;
-    for(int i = 0; i < referenceFeatures.size(); i++) {
-        at::Tensor dist = at::pairwise_distance(output, referenceFeatures.at(i));
+    uint8_t minIndex = 0;
+    for(uint8_t i = 0; i < referenceFeatures.size(); i++) {
+        torch::Tensor dist = torch::pairwise_distance(output, referenceFeatures.at(i));
         double tmp = dist.item().to<double>();
         if(tmp < minDist) {
             minDist = tmp;
@@ -60,5 +63,6 @@ MatchResult Matching::match(const CroppedTarget& croppedTarget) {
         }
     }
     bool isMatch = minDist < this->matchThreshold;
-    return MatchResult{minIndex, isMatch, minDist};
+    uint8_t character = competitionObjectives[minIndex];
+    return MatchResult{character, isMatch, minDist};
 }
