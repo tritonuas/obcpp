@@ -2,6 +2,9 @@ FROM amd64/ubuntu:22.04
 
 ARG USERNAME=tuas USER_UID=1000 USER_GID=1000 DEBIAN_FRONTEND=noninteractive
 
+# Needed to spawn up a GUI in headless mode for matplotplus to work
+ENV QT_QPA_PLATFORM="vnc"
+
 # Create a non-root user
 RUN groupadd -f --gid $USER_GID $USERNAME \
     && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
@@ -36,7 +39,8 @@ RUN apt-get update \
                         #    libxm12-dev \
                            libxmlsec1-dev \
                            libffi-dev \
-                           liblzma-dev
+                           liblzma-dev \
+                           gnuplot # needed for matplotplus
 
 RUN apt-add-repository universe
 RUN apt-get install -y cpplint

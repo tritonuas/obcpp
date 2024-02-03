@@ -95,6 +95,9 @@ Now that everything is installed, here is the process to build and run the appli
     4. [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
     5. [C/C++](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools)
 
+<details>
+  <summary>6. Optional steps. Only needed if you get auth issues pulling devcontainer.</summary>
+            
 6. Authenticate Docker
     1. Go to Github
     2. Click on your profile icon in the top right
@@ -125,7 +128,7 @@ Now that everything is installed, here is the process to build and run the appli
         And then you can rerun the command from step 11. On a Windows system the filepath may be different.
 
     13. This should authenticate your Docker so that you can now pull containers from the github container registry. You may receive a warning saying that your token is being stored unencrypted in the `~/.docker/config.json` file. If this concerns you, you can follow the link provided and fix this.
-
+</details>
 
 7. Pull the Docker Container:
     1. In the bottom left of the screen, click on the remote window icon. It should look like two angle brackets next to each other. Also, you can instead press "Ctrl+Shift+P"
