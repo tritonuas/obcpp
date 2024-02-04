@@ -34,8 +34,13 @@ class RRT {
           tree(start, Environment(bounds, goal, tolerance_to_goal),
                Dubins(TURNING_RADIUS, POINT_SEPARATION)) {}
 
-    // choose a random point from free space, not nessisarily this
+    /**
+     * Generates a random point in the airspace, with a bias towards the goal
+     * if the random number is less than the goal bias, it just returns the goal to see if we can
+     * directly connect to it
+     */
     RRTPoint generateSamplePoint() {
+        // TODO - try for goal directly, or just move towards it
         if (random(0.0, 1.0) < goal_bias) {
             return RRTPoint{tree.getGoal().coord, random(0.0, TWO_PI)};
         }
@@ -44,47 +49,61 @@ class RRT {
     }
 
     /**
-     * RRT*
+     * RRT algorithm
+     *
+     * TODO - do all iterations to try to find the most efficient path?
      */
     void run() {
         for (int _ = 0; _ < num_iterations; _++) {
-            std::cout << _ << std::endl;
+            // base case ==> if the goal is found, stop
             if (tree.getAirspace().isGoalFound()) {
                 break;
             }
+
+            // generate a sample point
             RRTPoint sample = generateSamplePoint();
 
+            // returns all dubins options from the tree to the sample
             std::vector<std::pair<RRTNode *, RRTOption>> options = tree.pathingOptions(sample);
-            std::cout << "options: " << options.size() << std::endl;
-            // [TODO] add rest of function
+
+            // returns true if the node is successfully added to the tree
             bool validity = parseOptions(&options, sample);
-            std::cout << "validity: " << validity << std::endl;
+
+            // [TODO] add rest of function
         }
     }
 
     /**
-     * ?????????
+     * Goes through generated options to try to connect the sample to the tree
+     *
+     * @param options   ==> list of options to connect the sample to the tree
+     * @param sample    ==> sampled point
+     * @return          ==> whether or not the sample was successfully added to the tree
      */
     bool parseOptions(std::vector<std::pair<RRTNode *, RRTOption>> *options, RRTPoint &sample) {
         for (const auto &[node, option] : *options) {
-            // if the node is the sample, return (preventes loops)
+            /*
+             *  stop if
+             *  1. the node is null
+             *  2. the node is the same as the sample
+             *  3. the option length is not a number
+             *
+             *  The idea is that any further options will have the same if not more issues
+             *  [TODO] - how is it possible that option.length is not a number??
+             *
+             */
             if (node == nullptr || node->getPoint() == sample || std::isnan(option.length)) {
-                return false;  // invalid
+                return false;
             }
 
             // else, add the node to the
-            
-            std::cout << "adding node" << std::endl;
             bool sucessful_addition = tree.addNode(node, sample, option);
-            std::cout << "sucessful addition: " << sucessful_addition << std::endl;
 
-            // for clarity, sample is not used beyond this point. It is now the
-            // new_node
+            if (sucessful_addition) {
+                return true;
+            }
+
             // optimizeTree(&new_node);
-
-            // if the new node is within the tolerance of the goal, return ???
-
-            return sucessful_addition;
         }
 
         return false;
@@ -240,7 +259,7 @@ class RRT {
     //     path->pop_back();
     // }
 
-//  private:
+    //  private:
     RRTTree tree;
 
     int num_iterations;

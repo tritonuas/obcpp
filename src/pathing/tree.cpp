@@ -90,7 +90,6 @@ RRTTree::RRTTree(RRTPoint root_point, Environment airspace, Dubins dubins)
     RRTNode* new_node = new RRTNode(root_point, LARGE_COST);
     root = new_node;
     node_map.insert(std::make_pair(root_point, new_node));
-    leaf_nodes.insert(new_node);
 }
 
 // TODO - seems a bit sketchy
@@ -103,14 +102,17 @@ RRTTree::~RRTTree() {
 // TODO - convert from old to new
 bool RRTTree::addNode(RRTNode* anchor_node, RRTPoint& new_point, const RRTOption& option) {
     // checking if path is valid
-    std::cout << "Anchor: " << anchor_node << std::endl;
-    std::cout << "Anchor: (" << anchor_node->getPoint().coord.x << ", "
-              << anchor_node->getPoint().coord.y << ", " << anchor_node->getPoint().coord.z << ")"
-              << "psi: " << anchor_node->getPoint().psi << std::endl;
-    std::cout << "New: (" << new_point.coord.x << ", " << new_point.coord.y << ", "
-              << new_point.coord.z << ")"
-              << "psi: " << new_point.psi << std::endl;
-    std::cout << "Option length: " << option.length << std::endl;
+
+    // debussing text
+    // std::cout << "Anchor: " << anchor_node << std::endl;
+    // std::cout << "Anchor: (" << anchor_node->getPoint().coord.x << ", "
+    //           << anchor_node->getPoint().coord.y << ", " << anchor_node->getPoint().coord.z <<
+    //           ")"
+    //           << "psi: " << anchor_node->getPoint().psi << std::endl;
+    // std::cout << "New: (" << new_point.coord.x << ", " << new_point.coord.y << ", "
+    //           << new_point.coord.z << ")"
+    //           << "psi: " << new_point.psi << std::endl;
+    // std::cout << "Option length: " << option.length << std::endl;
 
     std::vector<XYZCoord> path = dubins.generatePoints(anchor_node->getPoint(), new_point,
                                                        option.dubins_path, option.has_straight);
@@ -118,21 +120,23 @@ bool RRTTree::addNode(RRTNode* anchor_node, RRTPoint& new_point, const RRTOption
     if (!airspace.isPathInBounds(path)) {
         return false;
     }
-    // if a valid path was found, it will add the node to the tree
 
+    // if a valid path was found, it will add the node to the tree
     RRTNode* new_node = new RRTNode(new_point, LARGE_COST);
 
+    // creating new edge
     std::pair<RRTNode*, RRTNode*> edgePair(anchor_node, new_node);
     RRTEdge new_edge = RRTEdge(anchor_node, new_node, path, option.length);
     edge_map.insert(std::make_pair(edgePair, new_edge));
 
+    // inserting the node into the tree
     std::pair<RRTPoint, RRTNode*> insertNode(new_node->getPoint(), new_node);
     node_map.insert(insertNode);
 
-    leaf_nodes.erase(anchor_node);
-    leaf_nodes.insert(new_node);
-
+    // changing state of its parent
     anchor_node->addReachable(new_node);
+
+    // if goal is found, then it will retrieve a naive path
     if (airspace.isPointInGoal(new_point.coord)) {
         airspace.setGoalfound();
         retreivePathByNode(new_node, new_node->getParent());
@@ -194,13 +198,92 @@ RRTPoint RRTTree::getGoal() const { return this->airspace.getGoal(); }
 
 Environment RRTTree::getAirspace() const { return this->airspace; }
 
-RRTPoint RRTTree::getRandomPoint(double search_radius) const {
-    // todo - randomly select from the leaf nodes
-    // int rand_int = randomInt(0, leaf_nodes.size() - 1);
+RRTPoint RRTTree::getRandomPoint(double search_radius) {
+    const RRTPoint sample = airspace.getRandomPoint();
 
-    // RRTNode* node = *std::next(leaf_nodes.begin(), rand_int);
+    // picks the nearest node to the sample, and then returns a point `search_radius` distance away
+    // from tat point in the direction of the sample
+    RRTNode* nearest_node = getNearestNode(sample);
 
-    return airspace.getRandomPoint();
+    // shouldn't happen, it is here for memory safety
+    if (nearest_node == nullptr) {
+        return sample;
+    }
+
+    const RRTPoint& nearest_point = nearest_node->getPoint();
+
+    const XYZCoord displacement_vector = sample.coord - nearest_point.coord;
+
+    // distance between the vectors, if it is less than the search radius, then it will return the
+    // sample point, otherwise, it will return a point `search_radius` away from the nearest point
+    const double distance = displacement_vector.norm();
+
+    if (distance < search_radius) {
+        return sample;
+    }
+
+    RRTPoint new_point(nearest_point.coord + (search_radius / distance) * displacement_vector,
+                       sample.psi);
+
+    return new_point;
+}
+
+std::vector<std::pair<RRTNode*, RRTOption>> RRTTree::pathingOptions(const RRTPoint& end,
+                                                                    int quantity_options) {
+    // fills the options list with valid values
+    std::vector<std::pair<RRTNode*, RRTOption>> options;
+    fillOptions(&options, root, end);
+
+    // sorts the list
+    std::sort(options.begin(), options.end(),
+              [](auto a, auto b) { return compareRRTOptionLength(a.second, b.second); });
+
+    // if there are less options than needed amount, then just reurn the xisting list, else,
+    // return a truncated list.
+    if (options.size() < quantity_options) {
+        return options;
+    }
+    // erases everythin after the last wanted element
+    options.erase(options.begin() + quantity_options, options.end());
+
+    return options;
+}
+
+void RRTTree::fillOptions(std::vector<std::pair<RRTNode*, RRTOption>>* options, RRTNode* node,
+                          const RRTPoint& end) {
+    /*
+       TODO - try to limit the scope of the search to prevent too many calls to dubins
+    */
+    if (node == nullptr) {
+        return;
+    }
+
+    // gets all dubins curves from the current node to the end point
+    std::vector<RRTOption> local_options = dubins.allOptions(node->getPoint(), end);
+
+    // filters out the options that are not valid
+    for (const RRTOption& option : local_options) {
+        if (option.length != std::numeric_limits<double>::infinity()) {
+            options->emplace_back(std::pair<RRTNode*, RRTOption>{node, option});
+        }
+    }
+
+    // recursively calls the function for all reachable nodes
+    for (RRTNode* child : node->getReachable()) {
+        fillOptions(options, child, end);
+    }
+}
+
+std::vector<XYZCoord> RRTTree::getPathToGoal(bool without_cache) {
+    if (without_cache) {
+        return {};  // TODO
+    }
+
+    if (!airspace.isGoalFound() || path_to_goal.size() == 0) {
+        return {};  // should probably throw an error
+    }
+
+    return path_to_goal;
 }
 
 void RRTTree::retreivePathByNode(RRTNode* node, RRTNode* parent) {
@@ -210,7 +293,24 @@ void RRTTree::retreivePathByNode(RRTNode* node, RRTNode* parent) {
 
     retreivePathByNode(parent, parent->getParent());
 
+    // retreive's path from the edge_map
     std::vector<XYZCoord> edge_path = getEdge(parent->getPoint(), node->getPoint())->getPath();
 
+    // since this is at the end of the recuraive chain, it adds to the end of the path_to_goal
     path_to_goal.insert(path_to_goal.end(), edge_path.begin(), edge_path.end());
+}
+
+RRTNode* RRTTree::getNearestNode(const RRTPoint& point) {
+    RRTNode* nearest = nullptr;
+    double min_distance = std::numeric_limits<double>::infinity();
+
+    for (auto& [key, value] : node_map) {
+        double distance = point.distanceTo(key);
+        if (distance < min_distance) {
+            min_distance = distance;
+            nearest = value;
+        }
+    }
+
+    return nearest;
 }

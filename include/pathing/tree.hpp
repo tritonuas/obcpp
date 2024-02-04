@@ -176,10 +176,9 @@ class RRTTree {
     /**
      * Gets a random point in the environment
      *
-     * @param search_radius radius to search for point
      * @return RRTPoint random point in environment
      */
-    RRTPoint getRandomPoint(double search_radius) const;
+    RRTPoint getRandomPoint(double search_radius);
 
     /**
      * Returns a sorted list of the paths to get from a given node to the sampled
@@ -192,25 +191,7 @@ class RRTTree {
      * @return                  ==> mininum sorted list of pairs of <node, path>
      */
     std::vector<std::pair<RRTNode*, RRTOption>> pathingOptions(const RRTPoint& end,
-                                                               int quantity_options = 10) {
-        // fills the options list with valid values
-        std::vector<std::pair<RRTNode*, RRTOption>> options;
-        fillOptions(&options, root, end);
-
-        // sorts the list
-        std::sort(options.begin(), options.end(),
-                  [](auto a, auto b) { return compareRRTOptionLength(a.second, b.second); });
-
-        // if there are less options than needed amount, then just reurn the xisting list, else,
-        // return a truncated list.
-        if (options.size() < quantity_options) {
-            return options;
-        }
-        // erases everythin after the last wanted element
-        options.erase(options.begin() + quantity_options, options.end());
-
-        return options;
-    }
+                                                               int quantity_options = 10);
 
     /**
      * traverses the tree, and puts in all RRTOptions from dubins into a list
@@ -220,61 +201,41 @@ class RRTTree {
      * @param node      ==> current node that will be traversed (DFS)
      */
     void fillOptions(std::vector<std::pair<RRTNode*, RRTOption>>* options, RRTNode* node,
-                     const RRTPoint& end) {
-        /*
-           TODO - try to limit the scope of the search to prevent too many calls to dubins
-        */
-        if (node == nullptr) {
-            return;
-        }
-
-        std::vector<RRTOption> local_options = dubins.allOptions(node->getPoint(), end);
-
-        for (const RRTOption& option : local_options) {
-            if (option.length != std::numeric_limits<double>::infinity()) {
-                options->emplace_back(std::pair<RRTNode*, RRTOption>{node, option});
-            }
-        }
-
-        for (RRTNode* child : node->getReachable()) {
-            fillOptions(options, child, end);
-        }
-    }
+                     const RRTPoint& end);
 
     /**
      * Retreives the path to goal after the goal has been found
      *
      * TODO - find the goal without cache
      *
+     * @param without_cache ==> whether or not to use the first generated path when goal is found
+     * @return              ==> the path to the goal
      */
-    std::vector<XYZCoord> getPathToGoal(bool without_cache = false) {
-        if (without_cache) {
-            return {};  // TODO
-        }
+    std::vector<XYZCoord> getPathToGoal(bool without_cache = false);
 
-        if (!airspace.isGoalFound() || path_to_goal.size() == 0) {
-            return {};  // should probably throw an error
-        }
-
-        return path_to_goal;
-    }
-
-    //  private:
+ private:
     RRTNode* root;
     std::unordered_map<RRTPoint, RRTNode*, PointHashFunction> node_map{};
     std::unordered_map<std::pair<RRTNode*, RRTNode*>, RRTEdge, EdgeHashFunction> edge_map{};
-    std::unordered_set<RRTNode*> leaf_nodes{};
     std::vector<XYZCoord> path_to_goal = {};
 
     Environment airspace;
     Dubins dubins;
 
-    double distance_to_goal;
+    double distance_to_goal;  // not used at the moment
 
     /**
      * When the goal is found, recursively add the path constructed
      */
     void retreivePathByNode(RRTNode* node, RRTNode* parent);
+
+    /**
+     * Gets the nearest node to a given RRTPoint
+     *
+     * @param point     ==> the point to find the nearest node to
+     * @return          ==> the nearest node to the point
+     */
+    RRTNode* getNearestNode(const RRTPoint& point);
 };
 
 #endif  // INCLUDE_PATHING_TREE_HPP_

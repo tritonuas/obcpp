@@ -70,6 +70,9 @@ class Environment {
     /**
      * Generate a random point in the valid region
      *
+     * The function uniformly selects a point in the valid region, but the probaiblity it actually
+     * selects a point depends on how large it is compared to the valid region.
+     *
      * @param start_point the startpoint used to generate a random point
      * @param search_radius the radius of the search region
      * @return a random RRTPoint in the valid region
@@ -80,6 +83,7 @@ class Environment {
 
         // TODO - get rid of magic number
         for (int i = 0; i < 9999; i++) {
+            // generates a random point in the rectangle contianing the valid region
             XYZCoord generated_point = {random(bounds.first.first, bounds.first.second),
                                         random(bounds.second.first, bounds.second.second), 0};
 
@@ -102,14 +106,20 @@ class Environment {
      * Sets found_goal to true
      */
     void setGoalfound() { found_goal = true; }
+
  private:
     const Polygon valid_region;  // boundary of the valid map
     const RRTPoint goal;         // goal point
     const double goal_radius;    // radius (tolarance) of the goal region centerd at goal
 
-    bool found_goal;
+    bool found_goal;  // whether or not the goal has been found, once it becomes ture, it will never
+                      // be false again
 
-    std::pair<std::pair<double, double>, std::pair<double, double>> bounds;
+    std::pair<std::pair<double, double>, std::pair<double, double>> bounds;  // bounds of the valid
+                                                                             // region, first pair
+                                                                             // is (min x, max x),
+                                                                             // second pair is
+                                                                             // (min y, max y)
 
     /**
      * Find the bounds of the valid region (i.e. the max/min x and y values).
@@ -120,19 +130,32 @@ class Environment {
      * min/max y values
      */
     std::pair<std::pair<double, double>, std::pair<double, double>> findBounds() {
+        // if the region doesn't exist, return a default pair
+        // memory safety reasons
         if (valid_region.size() == 0) {
             return std::make_pair(std::make_pair(0, 0), std::make_pair(0, 0));
         }
 
+        // initialize the bounds as the first point
         const XYZCoord* first_point = &valid_region[0];
         std::pair<double, double> x_bounds = {first_point->x, first_point->x};
         std::pair<double, double> y_bounds = {first_point->y, first_point->y};
 
+        // iterate through the rest of the points and update the bounds
         for (const XYZCoord& point : valid_region) {
-            x_bounds.first = std::min(x_bounds.first, point.x);
-            x_bounds.second = std::max(x_bounds.second, point.x);
-            y_bounds.first = std::min(y_bounds.first, point.y);
-            y_bounds.second = std::max(y_bounds.second, point.y);
+            // update x bounds
+            if (point.x < x_bounds.first) {
+                x_bounds.first = point.x;
+            } else if (point.x > x_bounds.second) {
+                x_bounds.second = point.x;
+            }
+
+            // update y bounds
+            if (point.y < y_bounds.first) {
+                y_bounds.first = point.y;
+            } else if (point.y > y_bounds.second) {
+                y_bounds.second = point.y;
+            }
         }
 
         return std::make_pair(x_bounds, y_bounds);

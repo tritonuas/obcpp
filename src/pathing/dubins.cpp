@@ -9,6 +9,9 @@
 /**
  *  Notes from Christopher:
  *
+ * TODO - be able to calculate more efficient paths using a turning radius that is larger than the
+ * minimum turning radius
+ *
  *  The reason everythin is named '0' and '2' instead of 01 or 12
  *  is because
  *      0 - first turn
