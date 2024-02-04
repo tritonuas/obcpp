@@ -36,8 +36,8 @@ class RRT {
 
     // choose a random point from free space, not nessisarily this
     RRTPoint generateSamplePoint() {
-        if (random(0, 1) < goal_bias) {
-            return RRTPoint{tree.getGoal().coord, random(0, TWO_PI)};
+        if (random(0.0, 1.0) < goal_bias) {
+            return RRTPoint{tree.getGoal().coord, random(0.0, TWO_PI)};
         }
 
         return tree.getRandomPoint(search_radius);
@@ -48,15 +48,17 @@ class RRT {
      */
     void run() {
         for (int _ = 0; _ < num_iterations; _++) {
+            std::cout << _ << std::endl;
             if (tree.getAirspace().isGoalFound()) {
                 break;
             }
             RRTPoint sample = generateSamplePoint();
 
             std::vector<std::pair<RRTNode *, RRTOption>> options = tree.pathingOptions(sample);
-
+            std::cout << "options: " << options.size() << std::endl;
             // [TODO] add rest of function
             bool validity = parseOptions(&options, sample);
+            std::cout << "validity: " << validity << std::endl;
         }
     }
 
@@ -66,13 +68,15 @@ class RRT {
     bool parseOptions(std::vector<std::pair<RRTNode *, RRTOption>> *options, RRTPoint &sample) {
         for (const auto &[node, option] : *options) {
             // if the node is the sample, return (preventes loops)
-            if (node == nullptr || node->getPoint() == sample) {
+            if (node == nullptr || node->getPoint() == sample || std::isnan(option.length)) {
                 return false;  // invalid
             }
 
             // else, add the node to the
             
+            std::cout << "adding node" << std::endl;
             bool sucessful_addition = tree.addNode(node, sample, option);
+            std::cout << "sucessful addition: " << sucessful_addition << std::endl;
 
             // for clarity, sample is not used beyond this point. It is now the
             // new_node

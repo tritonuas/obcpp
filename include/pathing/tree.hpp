@@ -8,6 +8,7 @@
 #include "pathing/dubins.hpp"
 #include "pathing/environment.hpp"
 #include "utilities/datatypes.hpp"
+#include "utilities/rng.hpp"
 
 class RRTNode;
 typedef std::vector<RRTNode*> RRTNodeList;
@@ -262,6 +263,7 @@ class RRTTree {
     RRTNode* root;
     std::unordered_map<RRTPoint, RRTNode*, PointHashFunction> node_map{};
     std::unordered_map<std::pair<RRTNode*, RRTNode*>, RRTEdge, EdgeHashFunction> edge_map{};
+    std::unordered_set<RRTNode*> leaf_nodes{};
     std::vector<XYZCoord> path_to_goal = {};
 
     Environment airspace;

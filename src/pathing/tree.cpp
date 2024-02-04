@@ -7,6 +7,7 @@
 #include "pathing/dubins.hpp"
 #include "pathing/environment.hpp"
 #include "utilities/datatypes.hpp"
+#include "utilities/rng.hpp"
 
 std::size_t EdgeHashFunction::operator()(const std::pair<RRTNode*, RRTNode*>& node_pair) const {
     PointHashFunction p = PointHashFunction();
@@ -86,9 +87,10 @@ void RRTEdge::setPath(std::vector<XYZCoord> path) { this->path = path; }
 /** RRTTree */
 RRTTree::RRTTree(RRTPoint root_point, Environment airspace, Dubins dubins)
     : airspace{airspace}, dubins{dubins} {
-    RRTNode* newNode = new RRTNode(root_point, LARGE_COST);
-    root = newNode;
-    node_map.insert(std::make_pair(root_point, newNode));
+    RRTNode* new_node = new RRTNode(root_point, LARGE_COST);
+    root = new_node;
+    node_map.insert(std::make_pair(root_point, new_node));
+    leaf_nodes.insert(new_node);
 }
 
 // TODO - seems a bit sketchy
@@ -101,6 +103,13 @@ RRTTree::~RRTTree() {
 // TODO - convert from old to new
 bool RRTTree::addNode(RRTNode* anchor_node, RRTPoint& new_point, const RRTOption& option) {
     // checking if path is valid
+    std::cout << "Anchor: " << anchor_node << std::endl;
+    std::cout << "Anchor: (" << anchor_node->getPoint().coord.x << ", " << anchor_node->getPoint().coord.y << ", "
+              << anchor_node->getPoint().coord.z << ")" << std::endl;
+    std::cout << "New: (" << new_point.coord.x << ", " << new_point.coord.y << ", "
+              << new_point.coord.z << ")" << std::endl; 
+    std::cout << "Option length: " << option.length << std::endl;
+
 
     std::vector<XYZCoord> path = dubins.generatePoints(anchor_node->getPoint(), new_point,
                                                        option.dubins_path, option.has_straight);
@@ -118,6 +127,9 @@ bool RRTTree::addNode(RRTNode* anchor_node, RRTPoint& new_point, const RRTOption
 
     std::pair<RRTPoint, RRTNode*> insertNode(new_node->getPoint(), new_node);
     node_map.insert(insertNode);
+
+    leaf_nodes.erase(anchor_node);
+    leaf_nodes.insert(new_node);
 
     anchor_node->addReachable(new_node);
     if (airspace.isPointInGoal(new_point.coord)) {
@@ -182,7 +194,12 @@ RRTPoint RRTTree::getGoal() const { return this->airspace.getGoal(); }
 Environment RRTTree::getAirspace() const { return this->airspace; }
 
 RRTPoint RRTTree::getRandomPoint(double search_radius) const {
-    return airspace.getRandomPoint(root->getPoint(), search_radius);
+    // todo - randomly select from the leaf nodes
+    int rand_int = randomInt(0, leaf_nodes.size() - 1);
+
+    RRTNode* node = *std::next(leaf_nodes.begin(), rand_int);
+
+    return airspace.getRandomPoint(node->getPoint(), search_radius);
 }
 
 void RRTTree::retreivePathByNode(RRTNode* node, RRTNode* parent) {

@@ -75,12 +75,12 @@ class Environment {
         // vector (and make it toggleable)
 
         // TODO - get rid of magic number
-        for (int i = 0; i < 15; i++) {
-            double angle = random(0, 1) * TWO_PI;
+        for (int i = 0; i < 9999; i++) {
+            double angle = random(0.0, 1.0) * TWO_PI;
             XYZCoord direction_vector{sin(angle), cos(angle), 0};
 
             RRTPoint generated_point{start_point.coord + (search_radius * direction_vector),
-                                     random(0, 1) * TWO_PI};
+                                     random(0.0, 1.0) * TWO_PI};
 
             if (isPointInBounds(generated_point.coord)) {
                 return generated_point;
