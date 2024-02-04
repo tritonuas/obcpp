@@ -18,7 +18,11 @@
 class Environment {
  public:
     Environment(const Polygon valid_region, const RRTPoint goal, const double goal_radius)
-        : valid_region(valid_region), goal(goal), goal_radius(goal_radius), found_goal(false) {}
+        : valid_region(valid_region),
+          goal(goal),
+          goal_radius(goal_radius),
+          found_goal(false),
+          bounds(findBounds()) {}
 
     /**
      * Check if a point is in the valid region
@@ -70,20 +74,17 @@ class Environment {
      * @param search_radius the radius of the search region
      * @return a random RRTPoint in the valid region
      */
-    RRTPoint getRandomPoint(const RRTPoint& start_point, double search_radius) const {
+    RRTPoint getRandomPoint() const {
         // TODO - use some heuristic to more efficiently generate direction
         // vector (and make it toggleable)
 
         // TODO - get rid of magic number
         for (int i = 0; i < 9999; i++) {
-            double angle = random(0.0, 1.0) * TWO_PI;
-            XYZCoord direction_vector{sin(angle), cos(angle), 0};
+            XYZCoord generated_point = {random(bounds.first.first, bounds.first.second),
+                                        random(bounds.second.first, bounds.second.second), 0};
 
-            RRTPoint generated_point{start_point.coord + (search_radius * direction_vector),
-                                     random(0.0, 1.0) * TWO_PI};
-
-            if (isPointInBounds(generated_point.coord)) {
-                return generated_point;
+            if (isPointInBounds(generated_point)) {
+                return RRTPoint(generated_point, random(0, TWO_PI));
             }
         }
 
@@ -102,12 +103,44 @@ class Environment {
      */
     void setGoalfound() { found_goal = true; }
 
+    /**
+     * get bounds
+     */
+    std::pair<std::pair<double, double>, std::pair<double, double>> getBounds() const {
+        return bounds;
+    }
+
  private:
     const Polygon valid_region;  // boundary of the valid map
     const RRTPoint goal;         // goal point
     const double goal_radius;    // radius (tolarance) of the goal region centerd at goal
 
     bool found_goal;
+
+    std::pair<std::pair<double, double>, std::pair<double, double>> bounds;
+
+    /**
+     * Find the bounds of the valid region (i.e. the max/min x and y values).
+     *
+     * ASSUMES valid_region has already been created
+     *
+     * @return a pair of pairs, where the first pair is min/max x values and the second is the
+     * min/max y values
+     */
+    std::pair<std::pair<double, double>, std::pair<double, double>> findBounds() {
+        const XYZCoord* first_point = &valid_region[0];
+        std::pair<double, double> x_bounds = {first_point->x, first_point->x};
+        std::pair<double, double> y_bounds = {first_point->y, first_point->y};
+
+        for (const XYZCoord& point : valid_region) {
+            x_bounds.first = std::min(x_bounds.first, point.x);
+            x_bounds.second = std::max(x_bounds.second, point.x);
+            y_bounds.first = std::min(y_bounds.first, point.y);
+            y_bounds.second = std::max(y_bounds.second, point.y);
+        }
+
+        return std::make_pair(x_bounds, y_bounds);
+    }
 };
 
 #endif  // INCLUDE_PATHING_ENVIRONMENT_HPP_

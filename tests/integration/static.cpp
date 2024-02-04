@@ -16,9 +16,9 @@ int main() {
     RRTPoint start{XYZCoord(100, 100, 0), M_PI / 6.0};
     RRTPoint goal{XYZCoord{150, 700, 0}, M_PI};
     int num_iterations = 999999999;
-    double goal_bias = 0.01;
-    double search_radius = 400;
-    double tolerance_to_goal = 30;
+    double goal_bias = 0.1;
+    double search_radius = 70;
+    double tolerance_to_goal = 20;
     double rewire_radius = 30;
     Polygon bounds{FLIGHT_BOUND_COLOR};
     bounds.emplace_back(XYZCoord{0, 0, 0});

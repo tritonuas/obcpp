@@ -104,12 +104,18 @@ RRTTree::~RRTTree() {
 bool RRTTree::addNode(RRTNode* anchor_node, RRTPoint& new_point, const RRTOption& option) {
     // checking if path is valid
     std::cout << "Anchor: " << anchor_node << std::endl;
-    std::cout << "Anchor: (" << anchor_node->getPoint().coord.x << ", " << anchor_node->getPoint().coord.y << ", "
-              << anchor_node->getPoint().coord.z << ")" << std::endl;
+    std::cout << "Anchor: (" << anchor_node->getPoint().coord.x << ", "
+              << anchor_node->getPoint().coord.y << ", " << anchor_node->getPoint().coord.z << ")"
+              << "psi: " << anchor_node->getPoint().psi << std::endl;
     std::cout << "New: (" << new_point.coord.x << ", " << new_point.coord.y << ", "
-              << new_point.coord.z << ")" << std::endl; 
+              << new_point.coord.z << ")"
+              << "psi: " << new_point.psi << std::endl;
     std::cout << "Option length: " << option.length << std::endl;
 
+    // print bounds
+    std::cout << "Bounds: " << airspace.getBounds().first.first << ", "
+              << airspace.getBounds().second.first << ", " << airspace.getBounds().first.second
+              << ", " << airspace.getBounds().second.second << std::endl;
 
     std::vector<XYZCoord> path = dubins.generatePoints(anchor_node->getPoint(), new_point,
                                                        option.dubins_path, option.has_straight);
@@ -195,11 +201,11 @@ Environment RRTTree::getAirspace() const { return this->airspace; }
 
 RRTPoint RRTTree::getRandomPoint(double search_radius) const {
     // todo - randomly select from the leaf nodes
-    int rand_int = randomInt(0, leaf_nodes.size() - 1);
+    // int rand_int = randomInt(0, leaf_nodes.size() - 1);
 
-    RRTNode* node = *std::next(leaf_nodes.begin(), rand_int);
+    // RRTNode* node = *std::next(leaf_nodes.begin(), rand_int);
 
-    return airspace.getRandomPoint(node->getPoint(), search_radius);
+    return airspace.getRandomPoint();
 }
 
 void RRTTree::retreivePathByNode(RRTNode* node, RRTNode* parent) {
@@ -209,7 +215,7 @@ void RRTTree::retreivePathByNode(RRTNode* node, RRTNode* parent) {
 
     retreivePathByNode(parent, parent->getParent());
 
-    std::vector<XYZCoord> edge = getEdge(parent->getPoint(), node->getPoint())->getPath();
+    std::vector<XYZCoord> edge_path = getEdge(parent->getPoint(), node->getPoint())->getPath();
 
-    path_to_goal.insert(path_to_goal.end(), edge.begin(), edge.end());
+    path_to_goal.insert(path_to_goal.end(), edge_path.begin(), edge_path.end());
 }
