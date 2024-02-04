@@ -102,14 +102,6 @@ class Environment {
      * Sets found_goal to true
      */
     void setGoalfound() { found_goal = true; }
-
-    /**
-     * get bounds
-     */
-    std::pair<std::pair<double, double>, std::pair<double, double>> getBounds() const {
-        return bounds;
-    }
-
  private:
     const Polygon valid_region;  // boundary of the valid map
     const RRTPoint goal;         // goal point
@@ -128,6 +120,10 @@ class Environment {
      * min/max y values
      */
     std::pair<std::pair<double, double>, std::pair<double, double>> findBounds() {
+        if (valid_region.size() == 0) {
+            return std::make_pair(std::make_pair(0, 0), std::make_pair(0, 0));
+        }
+
         const XYZCoord* first_point = &valid_region[0];
         std::pair<double, double> x_bounds = {first_point->x, first_point->x};
         std::pair<double, double> y_bounds = {first_point->y, first_point->y};

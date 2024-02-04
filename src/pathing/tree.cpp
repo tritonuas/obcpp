@@ -112,11 +112,6 @@ bool RRTTree::addNode(RRTNode* anchor_node, RRTPoint& new_point, const RRTOption
               << "psi: " << new_point.psi << std::endl;
     std::cout << "Option length: " << option.length << std::endl;
 
-    // print bounds
-    std::cout << "Bounds: " << airspace.getBounds().first.first << ", "
-              << airspace.getBounds().second.first << ", " << airspace.getBounds().first.second
-              << ", " << airspace.getBounds().second.second << std::endl;
-
     std::vector<XYZCoord> path = dubins.generatePoints(anchor_node->getPoint(), new_point,
                                                        option.dubins_path, option.has_straight);
 

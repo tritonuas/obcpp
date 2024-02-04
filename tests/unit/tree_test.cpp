@@ -100,8 +100,8 @@ TEST(SimpleTreeTest, rewireEdgeTest) {
     valid_region.emplace_back(XYZCoord(0, 100, 0));
     Environment env = Environment(valid_region, RRTPoint(XYZCoord(0, 0, 0), 0), 0);
     RRTPoint point1 = RRTPoint(XYZCoord(25, 25, 0), 0);
-    RRTPoint point2 = RRTPoint(XYZCoord(50, 75, HALF_PI), 0);
-    RRTPoint point3 = RRTPoint(XYZCoord(50, 80, HALF_PI), 0);
+    RRTPoint point2 = RRTPoint(XYZCoord(50, 75, 0), HALF_PI);
+    RRTPoint point3 = RRTPoint(XYZCoord(50, 80, 0), HALF_PI);
 
     RRTOption option1 = dubins.allOptions(point1, point2, true)[0];
     RRTOption option2 = dubins.allOptions(point2, point3, true)[0];
