@@ -11,16 +11,21 @@ using Mat = cv::Mat;
 template <typename T> 
 class CameraConfigMetadata {
     private:
-        const std::string name;
-        T value;
-        const std::string valueType;
-        const bool configurable;
-        const bool executable;
-    public: 
-        CameraConfigMetadata(std::string name, T value, bool configurable, bool executable) {
+        std::string name {};
+        T value {};
+        std::string valueType {};
+        bool configurable {};
+        bool executable {};
+    public:
+        CameraConfigMetadata() 
+        {
+        }
+        CameraConfigMetadata(std::string name, T value, bool configurable, bool executable)
+        {
             this->name = name; 
             this->value = value;
             this->valueType = typeid(this->value).name();
+            this->configurable = configurable;
             this->executable = executable;
         }
 
@@ -43,6 +48,19 @@ class CameraConfigMetadata {
         {
             return this->valueType;
         }
+
+        CameraConfigMetadata<T>& operator=(const CameraConfigMetadata<T>& other) 
+        {
+            name = other.name;
+            value = other.value;
+            valueType = other.valueType;
+            configurable = other.configurable;
+            executable = other.executable;
+
+            return *this;
+        } 
+
+        // TODO: overwrite the = operator
 };
 
 /*
@@ -57,11 +75,12 @@ class CameraConfigMetadata {
 class ImageData
 {
 private:
-    const std::string NAME;
-    const std::string PATH;
-    const Mat DATA;
+    std::string NAME {};
+    std::string PATH {};
+    Mat DATA {};
 
 public:
+    ImageData();
     ImageData(std::string NAME, std::string PATH, Mat DATA);
     std::string getName();
     std::string getPath();
@@ -72,19 +91,22 @@ public:
 // ? data fields
 class CameraConfiguration
 {
-private:
+protected:
     nlohmann::json configJson;
 
 public:
+
+    CameraConfiguration();
+
     explicit CameraConfiguration(nlohmann::json config);
 
     virtual void updateConfig(json newSetting) = 0;
 
-    virtual void updateConfigField(std::string key, std::string value) = 0;
+    // virtual void updateConfigField(std::string key, std::string value) = 0;
 
-    virtual void updateConfigField(std::string key, int value) = 0;
+    // virtual void updateConfigField(std::string key, int value) = 0;
 
-    virtual void updateConfigField(std::string key, bool value) = 0;
+    // virtual void updateConfigField(std::string key, bool value) = 0;
 
     virtual json getConfig() = 0;
 
@@ -93,20 +115,15 @@ public:
 
 class CameraInterface
 {
-private:
-    CameraConfiguration *config;
-    ImageData recentPicture; // might need to move it to public
 
 public:
-    explicit CameraInterface(CameraConfiguration config);
-
     virtual int connect() = 0;
 
     virtual void verifyConnection() = 0;
 
-    virtual ImageData takePicture() = 0;
+    virtual ImageData * takePicture() = 0;
 
-    virtual ImageData getLastPicture() = 0;
+    virtual ImageData * getLastPicture() = 0;
 };
 
 #endif // CAMERA_INTERFACE_HPP_

@@ -1,16 +1,16 @@
 #ifndef CAMERA_LUCID_HPP_
 #define CAMERA_LUCID_HPP_
-
+#define ARENA_SDK_INSTALLED
 #ifdef ARENA_SDK_INSTALLED
 
-#include "interface.hpp"
+#include "camera/interface.hpp"
 #include <nlohmann/json.hpp>
 #include <string>
 #include <optional>
 #include "ArenaApi.h"
 using json = nlohmann::json;
 
-class LucidCameraConfig: public CameraConfiguration {
+class LucidCameraConfig {
     private:
         json configJson;
         CameraConfigMetadata<bool> Key_AcquisitionFrameRateEnable;
@@ -37,24 +37,25 @@ class LucidCameraConfig: public CameraConfiguration {
         CameraConfigMetadata<std::string> Key_BalanceWhiteAuto;
 
         void setConfig(json config);
-    public: 
+    public:
+        LucidCameraConfig();
 
         LucidCameraConfig(json config);
 
-        void updateConfig(json newSetting) override;
+        void updateConfig(json newSetting);
 
-        void updateConfigField(std::string key, std::string value) override;
+        // void updateConfigField(std::string key, std::string value) override;
 
-        void updateConfigField(std::string key, int value) override;
+        // void updateConfigField(std::string key, int value) override;
 
-        void updateConfigField(std::string key, bool value) override;
+        // void updateConfigField(std::string key, bool value) override;
 
-        json getConfig() override;
+        json getConfig();
 
-        json getConfigField(std::string name) override;
+        json getConfigField(std::string name);
 };
 
-class LucidCamera : public CameraInterface {
+class LucidCamera {
     private:
         LucidCameraConfig * config;
         ImageData* recentPicture; // might need to move it to public
@@ -66,13 +67,13 @@ class LucidCamera : public CameraInterface {
     public:
         LucidCamera(LucidCameraConfig * config);
 
-        int connect() override;
+        int connect();
 
-        void verifyConnection() override;
+        void verifyConnection();
 
-        ImageData takePicture() override;
+        ImageData *  takePicture();
 
-        ImageData getLastPicture() override;
+        ImageData * getLastPicture();
 
         // bool takePictureForSeconds(int sec) override;
 
