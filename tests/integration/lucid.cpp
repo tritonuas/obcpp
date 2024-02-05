@@ -8,4 +8,5 @@ using json = nlohmann::json;
 int main() 
 {
     LucidCamera camera = LucidCamera(nullptr);
+    camera.connect();
 }
