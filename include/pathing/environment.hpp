@@ -17,11 +17,11 @@
  */
 class Environment {
  public:
-    Environment(const Polygon valid_region, const RRTPoint goal, const double goal_radius)
+    Environment(const Polygon valid_region, const std::vector<RRTPoint> goals, const double goal_radius)
         : valid_region(valid_region),
-          goal(goal),
+          goals(goals),
           goal_radius(goal_radius),
-          found_goal(false),
+          goals_found(0),
           bounds(findBounds()) {}
 
     /**
@@ -54,8 +54,8 @@ class Environment {
      * @return true if the point is in the goal region, false otherwise
      */
     bool isPointInGoal(XYZCoord point) const {
-        double x = point.x - goal.coord.x;
-        double y = point.y - goal.coord.y;
+        double x = point.x - getGoal().coord.x;
+        double y = point.y - getGoal().coord.y;
         double norm = sqrt(x * x + y * y);
         return norm <= goal_radius;
     }
@@ -65,7 +65,7 @@ class Environment {
      *
      * @return the goal point
      */
-    RRTPoint getGoal() const { return goal; }
+    RRTPoint getGoal() const { return goals[goals_found]; }
 
     /**
      * Generate a random point in the valid region
@@ -92,7 +92,7 @@ class Environment {
             }
         }
 
-        return goal;
+        return goals[goals_found];
     }
 
     /**
@@ -100,19 +100,21 @@ class Environment {
      *
      * @return true if the goal has been found, false otherwise
      */
-    bool isGoalFound() const { return found_goal; }
+    int isGoalFound() const { return goals_found == goals.size(); }
 
     /**
      * Sets found_goal to true
+     * 
+     * NOW UNSAFE, MAY INCREMENT FOUNDGOAL MULTIPLE TIMES
      */
-    void setGoalfound() { found_goal = true; }
+    void setGoalfound() { goals_found++; }
 
  private:
     const Polygon valid_region;  // boundary of the valid map
-    const RRTPoint goal;         // goal point
+    const std::vector<RRTPoint> goals;         // goal point
     const double goal_radius;    // radius (tolarance) of the goal region centerd at goal
 
-    bool found_goal;  // whether or not the goal has been found, once it becomes ture, it will never
+    int goals_found;  // whether or not the goal has been found, once it becomes ture, it will never
                       // be false again
 
     std::pair<std::pair<double, double>, std::pair<double, double>> bounds;  // bounds of the valid

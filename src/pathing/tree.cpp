@@ -89,6 +89,7 @@ RRTTree::RRTTree(RRTPoint root_point, Environment airspace, Dubins dubins)
     : airspace{airspace}, dubins{dubins} {
     RRTNode* new_node = new RRTNode(root_point, LARGE_COST);
     root = new_node;
+    current_head = new_node;
     node_map.insert(std::make_pair(root_point, new_node));
 }
 
@@ -138,8 +139,11 @@ bool RRTTree::addNode(RRTNode* anchor_node, RRTPoint& new_point, const RRTOption
 
     // if goal is found, then it will retrieve a naive path
     if (airspace.isPointInGoal(new_point.coord)) {
+        current_head = new_node;
         airspace.setGoalfound();
-        retreivePathByNode(new_node, new_node->getParent());
+        if (airspace.isGoalFound()) {
+            retreivePathByNode(new_node, new_node->getParent());
+        }
     }
 
     return true;
@@ -232,7 +236,7 @@ std::vector<std::pair<RRTNode*, RRTOption>> RRTTree::pathingOptions(const RRTPoi
                                                                     int quantity_options) {
     // fills the options list with valid values
     std::vector<std::pair<RRTNode*, RRTOption>> options;
-    fillOptions(&options, root, end);
+    fillOptions(&options, current_head, end);
 
     // sorts the list
     std::sort(options.begin(), options.end(),

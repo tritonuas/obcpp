@@ -215,6 +215,7 @@ class RRTTree {
 
  private:
     RRTNode* root;
+    RRTNode* current_head;
     std::unordered_map<RRTPoint, RRTNode*, PointHashFunction> node_map{};
     std::unordered_map<std::pair<RRTNode*, RRTNode*>, RRTEdge, EdgeHashFunction> edge_map{};
     std::vector<XYZCoord> path_to_goal = {};

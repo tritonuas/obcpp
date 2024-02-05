@@ -12,7 +12,7 @@ const double HALF_PI = M_PI / 2;
 
 // FOR TEST, VALUES DONT MAKE SENSE
 const double TURNING_RADIUS = 30;
-const double POINT_SEPARATION = 1;
+const double POINT_SEPARATION = 3;
 
 const double LARGE_COST = 999999999999.0;
 

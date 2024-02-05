@@ -24,14 +24,14 @@ std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
 
 class RRT {
  public:
-    RRT(RRTPoint start, RRTPoint goal, int num_iterations, double goal_bias, double search_radius,
+    RRT(RRTPoint start, std::vector<RRTPoint> goals, int num_iterations, double goal_bias, double search_radius,
         double tolerance_to_goal, double rewire_radius, Polygon bounds)
 
         : num_iterations(num_iterations),
           goal_bias(goal_bias),
           search_radius(search_radius),
           rewire_radius(rewire_radius),
-          tree(start, Environment(bounds, goal, tolerance_to_goal),
+          tree(start, Environment(bounds, goals, tolerance_to_goal),
                Dubins(TURNING_RADIUS, POINT_SEPARATION)) {}
 
     /**
