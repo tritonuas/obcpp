@@ -6,6 +6,7 @@
 #include "core/config.hpp"
 #include "core/ticks.hpp"
 #include "utilities/locks.hpp"
+#include "utilities/constants.hpp"
 
 // // in future might add to this
 // MissionState::MissionState() = default;
@@ -68,6 +69,8 @@ MissionState* ObstacleEvasionState::tick() {
 }
 
 MissionState* ObstacleEvasionState::evade(void) {
+    // Implementation details:
+    // We have chosen to do option 2.
     // There are 3 good options for doing avoidance.
     // - Overwrite the next waypoint
     // - Continue along path but edit next altitude (immediately start climbing/descending)
@@ -81,7 +84,7 @@ MissionState* ObstacleEvasionState::evade(void) {
     uint8_t target_compid = 0;
 
     // Mavlink command number
-    uint16_t command = 30;  // MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT
+    uint16_t command = MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT;
 
     // Climb or Descend (0 = Neutral, command completes when within 5m of this command's altitude,
     // 1 = Climbing, command completes when at or above this command's altitude, 2 = Descending,
