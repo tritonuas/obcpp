@@ -5,6 +5,7 @@
 
 #include <chrono>
 #include <string>
+#include <unordered_map>
 
 // common ratios of pi
 const double TWO_PI = 2 * M_PI;
@@ -28,5 +29,8 @@ const matplot::color WAYPOINTS_COLOR = matplot::color::yellow;
 
 const std::chrono::milliseconds MISSION_PREP_TICK_WAIT = std::chrono::milliseconds(1000);
 const std::chrono::milliseconds PATH_GEN_TICK_WAIT = std::chrono::milliseconds(1000);
+const std::chrono::milliseconds TAKEOFF_PREP_TICK_WAIT = std::chrono::milliseconds(1000);
+
+const double EARTH_RADIUS_METERS = 6378137.0;
 
 #endif  // INCLUDE_UTILITIES_CONSTANTS_HPP_

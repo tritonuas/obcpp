@@ -5,8 +5,8 @@
 
 #include <vector>
 
-#include "utilities/constants.hpp"
 #include "protos/obc.pb.h"
+#include "utilities/constants.hpp"
 
 struct XYZCoord {
     XYZCoord(double x, double y, double z) : x(x), y(y), z(z), color(matplot::color::black) {}
@@ -79,37 +79,23 @@ class PointHashFunction {
 // so we have our own "constructor" here
 GPSCoord makeGPSCoord(double lat, double lng, double alt);
 
-class Polygon : public std::vector<XYZCoord> {
- public:
-    explicit Polygon(matplot::color color);
+using Polygon = std::vector<XYZCoord>;
+using Polyline = std::vector<XYZCoord>;
 
-    [[nodiscard]] matplot::color getColor() const;
+/**
+ * Determines whether a point ia in this polygon via raycasting. Points
+ * on the edge are counted as outside the polygon (to be more
+ * conservative)
+ *
+ * @param point ==> given point
+ * @return      ==> whether or not the point is in this polygon object
+ * @see         ==> https://en.wikipedia.org/wiki/Point_in_polygon
+ */
+bool isPointInBounds(Polygon polygon, XYZCoord point) const;
 
-    /**
-     * Determines whether a point ia in this polygon via raycasting. Points
-     * on the edge are counted as outside the polygon (to be more
-     * conservative)
-     *
-     * @param point ==> given point
-     * @return      ==> whether or not the point is in this polygon object
-     * @see         ==> https://en.wikipedia.org/wiki/Point_in_polygon
-     */
-    bool isPointInBounds(XYZCoord point) const;
+// [TODO] make a method to augment the polygon to get similar polygons
+// [TODO] something that increases cost based on time in the edge
 
-    // [TODO] make a method to augment the polygon to get similar polygons
-    // [TODO] something that increases cost based on time in the edge
- private:
-    matplot::color color{};
-};
-
-class Polyline : public std::vector<XYZCoord> {
- public:
-    explicit Polyline(matplot::color color);
-
-    [[nodiscard]] matplot::color getColor() const;
-
- private:
-    matplot::color color{};
-};
+using GPSProtoVec = google::protobuf::RepeatedPtrField<GPSCoord>;
 
 #endif  // INCLUDE_UTILITIES_DATATYPES_HPP_

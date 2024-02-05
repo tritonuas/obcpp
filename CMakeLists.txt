@@ -45,6 +45,7 @@ include(${DEPS_DIRECTORY}/httplib/httplib.cmake)
 include(${DEPS_DIRECTORY}/mavsdk/mavsdk.cmake)
 include(${DEPS_DIRECTORY}/matplot/matplot.cmake)
 include(${DEPS_DIRECTORY}/protobuf/protobuf.cmake)
+include(${DEPS_DIRECTORY}/loguru/loguru.cmake)
 # =============================
 
 # =============================
@@ -79,6 +80,7 @@ target_add_opencv(${PROJECT_NAME})
 target_add_httplib(${PROJECT_NAME})
 target_add_mavsdk(${PROJECT_NAME})
 target_add_matplot(${PROJECT_NAME})
+target_add_loguru(${PROJECT_NAME})
 # =============================
 
 # =============================
@@ -95,6 +97,7 @@ target_add_httplib(playground)
 target_add_mavsdk(playground)
 target_add_matplot(playground)
 target_add_protobuf(playground)
+target_add_loguru(playground)
 
 # mavsdk
 add_executable(mavsdk ${SOURCES} "tests/integration/mavsdk.cpp")

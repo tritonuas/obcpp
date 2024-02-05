@@ -2,17 +2,17 @@
 
 #include <cmath>
 
+#include "pathing/cartesian.hpp"
 #include "protos/obc.pb.h"
 
-/*
- *   Empty in-line comments prevent VSCode auto-formatter from moving all the
- *   segmented code to inline.
- */
+inline bool floatingPointEquals(double x1, double x2) {
+    return std::fabs(x1 - x2) < std::numeric_limits<double>::epsilon();
+}
 
 bool XYZCoord::operator==(const XYZCoord &other_point) const {
-    return this->x == other_point.x     //
-           && this->y == other_point.y  //
-           && this->z == other_point.z;
+    return floatingPointEquals(this->x, other_point.x) \
+           && floatingPointEquals(this->y, other_point.y) \
+           && floatingPointEquals(this->z, other_point.z);
 }
 
 XYZCoord &XYZCoord::operator+=(const XYZCoord &other_coord) {
@@ -101,22 +101,17 @@ GPSCoord makeGPSCoord(double lat, double lng, double alt) {
 
 Polygon::Polygon(matplot::color color) { this->color = color; }
 
-bool Polygon::isPointInBounds(XYZCoord point) const {
+bool isPointInBounds(Polygon polygon, XYZCoord point) const {
     bool is_inside = false;
-    // Initialize with the last point
-    const XYZCoord *previous_point = &(*this)[this->size() - 1];
-
-    for (const XYZCoord &current_point : *this) {
-        // divide by zero covered by the first condition
-        if ((previous_point->y > point.y) != (current_point.y > point.y) &&
-            (point.x < (current_point.x - previous_point->x)            //
-                               * (point.y - previous_point->y)          //
-                               / (current_point.y - previous_point->y)  //
-                           + previous_point->x)) {
+   
+    // point in polygon
+    for (int i = 0, j = polygon.points.size() - 1; i < polygon.points.size(); j = i++) {
+        if (((polygon.points[i].y > point.y) != (polygon.points[j].y > point.y)) &&
+            (point.x < (polygon.points[j].x - polygon.points[i].x) * (point.y - polygon.points[i].y) /
+                            (polygon.points[j].y - polygon.points[i].y) +
+                        polygon.points[i].x)) {
             is_inside = !is_inside;
         }
-
-        previous_point = &current_point;
     }
 
     return is_inside;
