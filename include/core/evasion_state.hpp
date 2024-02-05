@@ -1,3 +1,18 @@
+#ifndef INCLUDE_CORE_STATES_HPP_
+#define INCLUDE_CORE_STATES_HPP_
+
+#include <memory>
+#include <mutex>
+#include <functional>
+#include <chrono>
+#include <vector>
+
+#include "core/config.hpp"
+#include "utilities/datatypes.hpp"
+#include "utilities/constants.hpp"
+#include "protos/obc.pb.h"
+
+
 /*
     State for when the system has just been turned on and is waiting for
     mission parameters.
@@ -69,3 +84,4 @@ class ObstacleEvasionState: public MissionState {
 
 
     
+#endif  // INCLUDE_CORE_STATES_HPP_
