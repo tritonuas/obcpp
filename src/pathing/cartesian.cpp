@@ -44,8 +44,10 @@ template <typename GPSCoords>
 GPSCoord CartesianConverter<GPSCoords>::toLatLng(XYZCoord coord) const {
     double n = 0.5 * (std::sin(this->phi_0) + std::sin(this->phi_1));
     double c = std::pow(std::cos(this->phi_0), 2.0) + 2 * n * std::sin(this->phi_0);
-    double rho0 = EARTH_RADIUS / n * std::sqrt(c - 2 * n * std::sin(this->latlng_0.latitude()));
-    double rho = std::sqrt(std::pow(coord.x, 2.0) + std::pow(rho0 - coord.y, 2.0)) / EARTH_RADIUS;
+    double rho0 = EARTH_RADIUS_METERS /
+        n * std::sqrt(c - 2 * n * std::sin(this->latlng_0.latitude()));
+    double rho = std::sqrt(std::pow(coord.x, 2.0) +
+        std::pow(rho0 - coord.y, 2.0)) / EARTH_RADIUS_METERS;
     double theta = std::atan(coord.x / (rho0 - coord.y));
 
     double lat = std::asin((c - rho * rho * n * n) / 2.0 / n) * 180.0 / std::numbers::pi;
@@ -62,8 +64,9 @@ XYZCoord CartesianConverter<GPSCoords>::toXYZ(GPSCoord coord) const {
     double n = 1.0 / 2.0 * (std::sin(this->phi_0) + std::sin(this->phi_1));
     double theta = n * (lng - this->latlng_0.longitude());
     double c = std::pow(std::cos(this->phi_0), 2.0) + 2 * n * std::sin(this->phi_0);
-    double rho = EARTH_RADIUS / n * std::sqrt(c - 2.0 * n * std::sin(lat));
-    double rho0 = EARTH_RADIUS / n * std::sqrt(c - 2.0 * n * std::sin(this->latlng_0.latitude()));
+    double rho = EARTH_RADIUS_METERS / n * std::sqrt(c - 2.0 * n * std::sin(lat));
+    double rho0 = EARTH_RADIUS_METERS /
+        n * std::sqrt(c - 2.0 * n * std::sin(this->latlng_0.latitude()));
 
     double x = rho * std::sin(theta);
     double y = rho0 - rho * std::cos(theta);

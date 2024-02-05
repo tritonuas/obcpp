@@ -15,6 +15,8 @@
  * 
  * Note: template functions generally should be implemented in header
  * files, so that is why there is no separate source file.
+ * 
+ * Reference: https://protobuf.dev/reference/cpp/api-docs/google.protobuf.util.json_util/
  */
 template<typename Iterator>
 std::string messagesToJson(Iterator begin, Iterator end) {
