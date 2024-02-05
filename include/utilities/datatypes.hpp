@@ -57,22 +57,9 @@ struct XYZCoord {
 // so we have our own "constructor" here
 GPSCoord makeGPSCoord(double lat, double lng, double alt);
 
-class Polygon : public std::vector<XYZCoord> {
- public:
-    explicit Polygon(matplot::color color);
+using Polygon = std::vector<XYZCoord>;
+using Polyline = std::vector<XYZCoord>;
 
-    [[nodiscard]] matplot::color getColor() const;
- private:
-    matplot::color color{};
-};
-
-class Polyline: public std::vector<XYZCoord> {
- public:
-    explicit Polyline(matplot::color color);
-
-    [[nodiscard]] matplot::color getColor() const;
- private:
-    matplot::color color{};
-};
+using GPSProtoVec = google::protobuf::RepeatedPtrField<GPSCoord>;
 
 #endif  // INCLUDE_UTILITIES_DATATYPES_HPP_
