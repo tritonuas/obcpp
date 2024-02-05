@@ -10,17 +10,16 @@
 #include <utility>
 #include <vector>
 
-#include "core/states.hpp"
 #include "pathing/dubins.hpp"
 #include "pathing/environment.hpp"
 #include "pathing/tree.hpp"
 #include "utilities/datatypes.hpp"
 #include "utilities/rng.hpp"
 
-std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
-    // do pathing here
-    return {};
-}
+// std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
+//     // do pathing here
+//     return {};
+// }
 
 class RRT {
  public:

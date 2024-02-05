@@ -22,7 +22,7 @@ int main() {
     double search_radius = 50;
     double tolerance_to_goal = 10;
     double rewire_radius = 30;
-    Polygon bounds{FLIGHT_BOUND_COLOR};
+    Polygon bounds;
     bounds.emplace_back(XYZCoord{0, 0, 0});
     bounds.emplace_back(XYZCoord{500, 0, 0});
     bounds.emplace_back(XYZCoord{500, 800, 0});

@@ -120,6 +120,7 @@ target_add_opencv(static)
 target_add_httplib(static)
 target_add_mavsdk(static)
 target_add_matplot(static)
+target_add_loguru(static)
 # =============================
 
 # =============================

@@ -99,21 +99,18 @@ GPSCoord makeGPSCoord(double lat, double lng, double alt) {
     return coord;
 }
 
-Polygon::Polygon(matplot::color color) { this->color = color; }
-
-bool isPointInBounds(Polygon polygon, XYZCoord point) const {
+bool isPointInPolygon(Polygon polygon, XYZCoord point) {
     bool is_inside = false;
    
     // point in polygon
-    for (int i = 0, j = polygon.points.size() - 1; i < polygon.points.size(); j = i++) {
-        if (((polygon.points[i].y > point.y) != (polygon.points[j].y > point.y)) &&
-            (point.x < (polygon.points[j].x - polygon.points[i].x) * (point.y - polygon.points[i].y) /
-                            (polygon.points[j].y - polygon.points[i].y) +
-                        polygon.points[i].x)) {
+    for (int i = 0, j = polygon.size() - 1; i < polygon.size(); j = i++) {
+        if (((polygon[i].y > point.y) != (polygon[j].y > point.y)) &&
+            (point.x < (polygon[j].x - polygon[i].x) * (point.y - polygon[i].y) /
+                            (polygon[j].y - polygon[i].y) +
+                        polygon[i].x)) {
             is_inside = !is_inside;
         }
     }
 
     return is_inside;
 }
-Polyline::Polyline(matplot::color color) { this->color = color; }

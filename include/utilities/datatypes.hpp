@@ -91,7 +91,7 @@ using Polyline = std::vector<XYZCoord>;
  * @return      ==> whether or not the point is in this polygon object
  * @see         ==> https://en.wikipedia.org/wiki/Point_in_polygon
  */
-bool isPointInBounds(Polygon polygon, XYZCoord point);
+bool isPointInPolygon(Polygon polygon, XYZCoord point);
 
 // [TODO] make a method to augment the polygon to get similar polygons
 // [TODO] something that increases cost based on time in the edge

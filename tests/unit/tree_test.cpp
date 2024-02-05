@@ -14,12 +14,12 @@
 
 TEST(SimpleTreeTest, addNodeTest) {
     Dubins dubins{5, 0.1};
-    Polygon valid_region{FLIGHT_BOUND_COLOR};
+    Polygon valid_region;
     valid_region.emplace_back(XYZCoord(0, 0, 0));
     valid_region.emplace_back(XYZCoord(100, 0, 0));
     valid_region.emplace_back(XYZCoord(100, 100, 0));
     valid_region.emplace_back(XYZCoord(0, 100, 0));
-    Environment env = Environment(valid_region, RRTPoint(XYZCoord(0, 0, 0), 0), 0);
+    Environment env = Environment(valid_region, {RRTPoint(XYZCoord(0, 0, 0), 0)}, 0);
     RRTPoint point1 = RRTPoint(XYZCoord(25, 25, 0), 0);
     RRTPoint point2 = RRTPoint(XYZCoord(50, 75, 0), 0);
     RRTOption option = dubins.allOptions(point1, point2, true)[0];
@@ -42,12 +42,12 @@ TEST(SimpleTreeTest, addNodeTest) {
 
 TEST(SimpleTreeTest, getNodeTest) {
     Dubins dubins{5, 0.1};
-    Polygon valid_region{FLIGHT_BOUND_COLOR};
+    Polygon valid_region;
     valid_region.emplace_back(XYZCoord(0, 0, 0));
     valid_region.emplace_back(XYZCoord(100, 0, 0));
     valid_region.emplace_back(XYZCoord(100, 100, 0));
     valid_region.emplace_back(XYZCoord(0, 100, 0));
-    Environment env = Environment(valid_region, RRTPoint(XYZCoord(0, 0, 0), 0), 0);
+    Environment env = Environment(valid_region, {RRTPoint(XYZCoord(0, 0, 0), 0)}, 0);
     RRTPoint point1 = RRTPoint(XYZCoord(25, 25, 0), 0);
     RRTPoint point2 = RRTPoint(XYZCoord(50, 75, 0), 0);
     RRTOption option = dubins.allOptions(point1, point2, true)[0];
@@ -70,12 +70,12 @@ TEST(SimpleTreeTest, getNodeTest) {
 
 TEST(SimpleTreeTest, getEdgeTest) {
     Dubins dubins{5, 0.1};
-    Polygon valid_region{FLIGHT_BOUND_COLOR};
+    Polygon valid_region;
     valid_region.emplace_back(XYZCoord(0, 0, 0));
     valid_region.emplace_back(XYZCoord(100, 0, 0));
     valid_region.emplace_back(XYZCoord(100, 100, 0));
     valid_region.emplace_back(XYZCoord(0, 100, 0));
-    Environment env = Environment(valid_region, RRTPoint(XYZCoord(0, 0, 0), 0), 0);
+    Environment env = Environment(valid_region, {RRTPoint(XYZCoord(0, 0, 0), 0)}, 0);
     RRTPoint point1 = RRTPoint(XYZCoord(25, 25, 0), 0);
     RRTPoint point2 = RRTPoint(XYZCoord(50, 75, 0), 0);
     RRTOption option = dubins.allOptions(point1, point2, true)[0];
@@ -93,12 +93,12 @@ TEST(SimpleTreeTest, getEdgeTest) {
 
 TEST(SimpleTreeTest, rewireEdgeTest) {
     Dubins dubins{5, 0.1};
-    Polygon valid_region{FLIGHT_BOUND_COLOR};
+    Polygon valid_region;
     valid_region.emplace_back(XYZCoord(0, 0, 0));
     valid_region.emplace_back(XYZCoord(100, 0, 0));
     valid_region.emplace_back(XYZCoord(100, 100, 0));
     valid_region.emplace_back(XYZCoord(0, 100, 0));
-    Environment env = Environment(valid_region, RRTPoint(XYZCoord(0, 0, 0), 0), 0);
+    Environment env = Environment(valid_region, {RRTPoint(XYZCoord(0, 0, 0), 0)}, 0);
     RRTPoint point1 = RRTPoint(XYZCoord(25, 25, 0), 0);
     RRTPoint point2 = RRTPoint(XYZCoord(50, 75, 0), HALF_PI);
     RRTPoint point3 = RRTPoint(XYZCoord(50, 80, 0), HALF_PI);

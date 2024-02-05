@@ -191,48 +191,48 @@ TEST(XYZCoordOperations, normalized) {
  *   tests Polygon::pointInBounds
  */
 TEST(Polygon, PointInBounds) {
-    Polygon test{FLIGHT_BOUND_COLOR};
+    Polygon test;
     test.emplace_back(XYZCoord{1, 1, 0});
     test.emplace_back(XYZCoord{0, 1, 0});
     test.emplace_back(XYZCoord{0, 0, 0});
     test.emplace_back(XYZCoord{1, 0, 0});
 
-    EXPECT_EQ(true, test.isPointInBounds(XYZCoord{0.5, 0.5, 0}));
-    EXPECT_EQ(true, test.isPointInBounds(XYZCoord{0.5, 0.5, 99999999}));
+    EXPECT_EQ(true, isPointInPolygon(test, XYZCoord{0.5, 0.5, 0}));
+    EXPECT_EQ(true, isPointInPolygon(test, XYZCoord{0.5, 0.5, 99999999}));
 
-    EXPECT_EQ(false, test.isPointInBounds(XYZCoord{1, 0.5, 0}));   // edge is outside
-    EXPECT_EQ(false, test.isPointInBounds(XYZCoord{2, 0.5, 0}));   // right
-    EXPECT_EQ(false, test.isPointInBounds(XYZCoord{0.5, 2, 0}));   // top
-    EXPECT_EQ(false, test.isPointInBounds(XYZCoord{-1, 0.5, 0}));  // left
-    EXPECT_EQ(false, test.isPointInBounds(XYZCoord{0.5, -1, 0}));  // down
+    EXPECT_EQ(false, isPointInPolygon(test, XYZCoord{1, 0.5, 0}));   // edge is outside
+    EXPECT_EQ(false, isPointInPolygon(test, XYZCoord{2, 0.5, 0}));   // right
+    EXPECT_EQ(false, isPointInPolygon(test, XYZCoord{0.5, 2, 0}));   // top
+    EXPECT_EQ(false, isPointInPolygon(test, XYZCoord{-1, 0.5, 0}));  // left
+    EXPECT_EQ(false, isPointInPolygon(test, XYZCoord{0.5, -1, 0}));  // down
 
-    Polygon no_point{FLIGHT_BOUND_COLOR};
+    Polygon no_point;
 
-    EXPECT_EQ(false, no_point.isPointInBounds(XYZCoord{1, 1, 1}));
-    EXPECT_EQ(false, no_point.isPointInBounds(XYZCoord{1, 0, 1}));
-    EXPECT_EQ(false, no_point.isPointInBounds(XYZCoord{0, 1, 1}));
+    EXPECT_EQ(false, isPointInPolygon(no_point, XYZCoord{1, 1, 1}));
+    EXPECT_EQ(false, isPointInPolygon(no_point, XYZCoord{1, 0, 1}));
+    EXPECT_EQ(false, isPointInPolygon(no_point, XYZCoord{0, 1, 1}));
 
-    Polygon point{FLIGHT_BOUND_COLOR};
+    Polygon point;
     point.emplace_back(XYZCoord{1, 1, 1});
 
-    EXPECT_EQ(false, point.isPointInBounds(XYZCoord{1, 1, 1}));
-    EXPECT_EQ(false, point.isPointInBounds(XYZCoord{1, 0, 1}));
-    EXPECT_EQ(false, point.isPointInBounds(XYZCoord{0, 1, 1}));
+    EXPECT_EQ(false, isPointInPolygon(point, XYZCoord{1, 1, 1}));
+    EXPECT_EQ(false, isPointInPolygon(point, XYZCoord{1, 0, 1}));
+    EXPECT_EQ(false, isPointInPolygon(point, XYZCoord{0, 1, 1}));
 
     // tests close to diagonals
-    Polygon quadrilateral{FLIGHT_BOUND_COLOR};
+    Polygon quadrilateral;
     quadrilateral.emplace_back(XYZCoord{0, 0, 0});
     quadrilateral.emplace_back(XYZCoord{2, 1, 0});
     quadrilateral.emplace_back(XYZCoord{4, 4, 0});
     quadrilateral.emplace_back(XYZCoord{1, 2, 0});
 
-    EXPECT_EQ(true, quadrilateral.isPointInBounds(XYZCoord{1.5, 1.00, 0}));
-    EXPECT_EQ(true, quadrilateral.isPointInBounds(XYZCoord{0.5, 0.90, 0}));
-    EXPECT_EQ(true, quadrilateral.isPointInBounds(XYZCoord{2.5, 2.00, 0}));
-    EXPECT_EQ(true, quadrilateral.isPointInBounds(XYZCoord{1.5, 2.25, 0}));
+    EXPECT_EQ(true, isPointInPolygon(quadrilateral, XYZCoord{1.5, 1.00, 0}));
+    EXPECT_EQ(true, isPointInPolygon(quadrilateral, XYZCoord{0.5, 0.90, 0}));
+    EXPECT_EQ(true, isPointInPolygon(quadrilateral, XYZCoord{2.5, 2.00, 0}));
+    EXPECT_EQ(true, isPointInPolygon(quadrilateral, XYZCoord{1.5, 2.25, 0}));
 
-    EXPECT_EQ(false, quadrilateral.isPointInBounds(XYZCoord{1.5, 0.75, 0}));
-    EXPECT_EQ(false, quadrilateral.isPointInBounds(XYZCoord{0.5, 1.10, 0}));
-    EXPECT_EQ(false, quadrilateral.isPointInBounds(XYZCoord{2.5, 1.30, 0}));
-    EXPECT_EQ(false, quadrilateral.isPointInBounds(XYZCoord{1.5, 2.50, 0}));
+    EXPECT_EQ(false, isPointInPolygon(quadrilateral, XYZCoord{1.5, 0.75, 0}));
+    EXPECT_EQ(false, isPointInPolygon(quadrilateral, XYZCoord{0.5, 1.10, 0}));
+    EXPECT_EQ(false, isPointInPolygon(quadrilateral, XYZCoord{2.5, 1.30, 0}));
+    EXPECT_EQ(false, isPointInPolygon(quadrilateral, XYZCoord{1.5, 2.50, 0}));
 }

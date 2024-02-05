@@ -13,13 +13,13 @@
 TEST(EnvironmentTest, PointOutOfBoundsTest) {
     // Create an instance of the Environment class
     // square basic region
-    Polygon small_square{FLIGHT_BOUND_COLOR};
+    Polygon small_square;
     small_square.emplace_back(XYZCoord{1, 1, 0});
     small_square.emplace_back(XYZCoord{0, 1, 0});
     small_square.emplace_back(XYZCoord{0, 0, 0});
     small_square.emplace_back(XYZCoord{1, 0, 0});
 
-    Environment test{small_square, RRTPoint(XYZCoord(0, 0, 0), 0), 0};
+    Environment test{small_square, {RRTPoint(XYZCoord(0, 0, 0), 0)}, 0};
 
     EXPECT_EQ(true, test.isPointInBounds(XYZCoord{0.5, 0.5, 0}));
     EXPECT_EQ(true, test.isPointInBounds(XYZCoord{0.5, 0.5, 99999999}));
@@ -30,30 +30,30 @@ TEST(EnvironmentTest, PointOutOfBoundsTest) {
     EXPECT_EQ(false, test.isPointInBounds(XYZCoord{-1, 0.5, 0}));  // left
     EXPECT_EQ(false, test.isPointInBounds(XYZCoord{0.5, -1, 0}));  // down
 
-    Polygon no_point_polygon{FLIGHT_BOUND_COLOR};
-    Environment no_point = {no_point_polygon, RRTPoint(XYZCoord(0, 0, 0), 0), 0};
+    Polygon no_point_polygon;
+    Environment no_point = {no_point_polygon, {RRTPoint(XYZCoord(0, 0, 0), 0)}, 0};
 
     EXPECT_EQ(false, no_point.isPointInBounds(XYZCoord{1, 1, 1}));
     EXPECT_EQ(false, no_point.isPointInBounds(XYZCoord{1, 0, 1}));
     EXPECT_EQ(false, no_point.isPointInBounds(XYZCoord{0, 1, 1}));
 
-    Polygon point_polygon{FLIGHT_BOUND_COLOR};
+    Polygon point_polygon;
     point_polygon.emplace_back(XYZCoord{1, 1, 1});
 
-    Environment point = {point_polygon, RRTPoint(XYZCoord(0, 0, 0), 0), 0};
+    Environment point = {point_polygon, {RRTPoint(XYZCoord(0, 0, 0), 0)}, 0};
 
     EXPECT_EQ(false, point.isPointInBounds(XYZCoord{1, 1, 1}));
     EXPECT_EQ(false, point.isPointInBounds(XYZCoord{1, 0, 1}));
     EXPECT_EQ(false, point.isPointInBounds(XYZCoord{0, 1, 1}));
 
     // tests close to diagonals
-    Polygon quadrateral_polygon{FLIGHT_BOUND_COLOR};
+    Polygon quadrateral_polygon;
     quadrateral_polygon.emplace_back(XYZCoord{0, 0, 0});
     quadrateral_polygon.emplace_back(XYZCoord{2, 1, 0});
     quadrateral_polygon.emplace_back(XYZCoord{4, 4, 0});
     quadrateral_polygon.emplace_back(XYZCoord{1, 2, 0});
 
-    Environment quadrilateral = {quadrateral_polygon, RRTPoint(XYZCoord(0, 0, 0), 0), 0};
+    Environment quadrilateral = {quadrateral_polygon, {RRTPoint(XYZCoord(0, 0, 0), 0)}, 0};
 
     EXPECT_EQ(true, quadrilateral.isPointInBounds(XYZCoord{1.5, 1.00, 0}));
     EXPECT_EQ(true, quadrilateral.isPointInBounds(XYZCoord{0.5, 0.90, 0}));
@@ -74,13 +74,13 @@ TEST(EnvironmentTest, PointOutOfBoundsTest) {
 TEST(EnvironmentTest, PathOutOfBoundsTest) {
     // Create an instance of the Environment class
     // square basic region
-    Polygon small_square{FLIGHT_BOUND_COLOR};
+    Polygon small_square;
     small_square.emplace_back(XYZCoord{1, 1, 0});
     small_square.emplace_back(XYZCoord{0, 1, 0});
     small_square.emplace_back(XYZCoord{0, 0, 0});
     small_square.emplace_back(XYZCoord{1, 0, 0});
 
-    Environment test{small_square, RRTPoint(XYZCoord(0, 0, 0), 0), 0};
+    Environment test{small_square, {RRTPoint(XYZCoord(0, 0, 0), 0)}, 0};
 
     // TODO --> REALLY SHIT TEST
     std::vector<XYZCoord> path_in_bounds{XYZCoord{0.5, 0.5, 0}, XYZCoord{0.5, 0.5, 99999999},
@@ -98,13 +98,13 @@ TEST(EnvironmentTest, PathOutOfBoundsTest) {
 
 
 TEST(EnvironmentTest, IsPointInGoalTest) {
-    Polygon small_square{FLIGHT_BOUND_COLOR};
+    Polygon small_square;
     small_square.emplace_back(XYZCoord{1, 1, 0});
     small_square.emplace_back(XYZCoord{0, 1, 0});
     small_square.emplace_back(XYZCoord{0, 0, 0});
     small_square.emplace_back(XYZCoord{1, 0, 0});
 
-    Environment test{small_square, RRTPoint(XYZCoord(0, 0, 0), 0), 5};
+    Environment test{small_square, {RRTPoint(XYZCoord(0, 0, 0), 0)}, 5};
 
     EXPECT_EQ(true, test.isPointInGoal(XYZCoord{0, 0, 0}));
     EXPECT_EQ(true, test.isPointInGoal(XYZCoord{1, 1, 0}));

@@ -30,7 +30,7 @@ class Environment {
      * @param point the point to check
      * @return true if the point is in the valid region, false otherwise
      */
-    bool isPointInBounds(XYZCoord point) const { return valid_region.isPointInBounds(point); }
+    bool isPointInBounds(XYZCoord point) const { return isPointInPolygon(valid_region, point); }
 
     /**
      * Check if an entire flight path is in bounds
