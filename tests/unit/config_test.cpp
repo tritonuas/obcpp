@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "core/config.hpp"
+#include "core/mission_config.hpp"
 
 // Test that when the config is created, all of the values are defaulted correctly
 TEST(MissionConfigTest, ConfigDefaultVals) {

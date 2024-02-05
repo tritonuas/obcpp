@@ -18,6 +18,7 @@ target_add_json(${BINARY})
 target_add_mavsdk(${BINARY})
 target_add_matplot(${BINARY})
 target_add_httplib(${BINARY})
+target_add_loguru(${BINARY})
 
 add_test(NAME ${BINARY} COMMAND ${BINARY})
 
