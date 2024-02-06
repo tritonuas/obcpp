@@ -90,7 +90,7 @@ class Environment {
                                         random(bounds.second.first, bounds.second.second), 0};
 
             if (isPointInBounds(generated_point)) {
-                return RRTPoint(generated_point, random(0, TWO_PI));
+                return RRTPoint(generated_point, 0);
             }
         }
 

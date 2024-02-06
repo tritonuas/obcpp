@@ -218,6 +218,8 @@ RRTPoint RRTTree::getRandomPoint(double search_radius) {
 
     const XYZCoord displacement_vector = sample.coord - nearest_point.coord;
 
+    const double angle = std::atan2(displacement_vector.y, displacement_vector.x);
+
     // distance between the vectors, if it is less than the search radius, then it will return the
     // sample point, otherwise, it will return a point `search_radius` away from the nearest point
     const double distance = displacement_vector.norm();
@@ -227,7 +229,7 @@ RRTPoint RRTTree::getRandomPoint(double search_radius) {
     }
 
     RRTPoint new_point(nearest_point.coord + (search_radius / distance) * displacement_vector,
-                       sample.psi);
+                       angle);
 
     return new_point;
 }
