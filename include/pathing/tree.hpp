@@ -130,7 +130,7 @@ class RRTTree {
      *  Add a node to the RRTTree.
      *  If adding the first node to the tree, connectTo can be anything.
      */
-    RRTNode* addNode(RRTNode* anchor_node, RRTPoint& new_point, const RRTOption& option);  // NOLINT
+    RRTNode* addNode(RRTNode* anchor_node, const RRTPoint& new_point, const RRTOption& option);  // NOLINT
 
     /*
      * Delete an edge between 'from' and 'toPrev', and create a new edge

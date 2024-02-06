@@ -101,7 +101,7 @@ RRTTree::~RRTTree() {
 }
 
 // TODO - convert from old to new
-RRTNode* RRTTree::addNode(RRTNode* anchor_node, RRTPoint& new_point, const RRTOption& option) {
+RRTNode* RRTTree::addNode(RRTNode* anchor_node, const RRTPoint& new_point, const RRTOption& option) {
     // checking if path is valid
 
     // debussing text

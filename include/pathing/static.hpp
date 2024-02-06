@@ -60,7 +60,7 @@ class RRT {
             }
 
             // generate a sample point
-            RRTPoint sample = generateSamplePoint();
+            const RRTPoint sample = generateSamplePoint();
 
             // returns all dubins options from the tree to the sample
             std::vector<std::pair<RRTNode *, RRTOption>> options = tree.pathingOptions(sample);
