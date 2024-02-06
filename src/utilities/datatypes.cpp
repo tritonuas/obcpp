@@ -10,9 +10,9 @@ inline bool floatingPointEquals(double x1, double x2) {
 }
 
 bool XYZCoord::operator==(const XYZCoord &other_point) const {
-    return floatingPointEquals(this->x, other_point.x) \
-           && floatingPointEquals(this->y, other_point.y) \
-           && floatingPointEquals(this->z, other_point.z);
+    return floatingPointEquals(this->x, other_point.x) &&
+           floatingPointEquals(this->y, other_point.y) &&
+           floatingPointEquals(this->z, other_point.z);
 }
 
 XYZCoord &XYZCoord::operator+=(const XYZCoord &other_coord) {
@@ -101,13 +101,13 @@ GPSCoord makeGPSCoord(double lat, double lng, double alt) {
 
 bool isPointInPolygon(Polygon polygon, XYZCoord point) {
     bool is_inside = false;
-   
+
     // point in polygon
     for (int i = 0, j = polygon.size() - 1; i < polygon.size(); j = i++) {
         if (((polygon[i].y > point.y) != (polygon[j].y > point.y)) &&
             (point.x < (polygon[j].x - polygon[i].x) * (point.y - polygon[i].y) /
-                            (polygon[j].y - polygon[i].y) +
-                        polygon[i].x)) {
+                               (polygon[j].y - polygon[i].y) +
+                           polygon[i].x)) {
             is_inside = !is_inside;
         }
     }

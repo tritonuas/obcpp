@@ -101,7 +101,7 @@ RRTTree::~RRTTree() {
 }
 
 // TODO - convert from old to new
-bool RRTTree::addNode(RRTNode* anchor_node, RRTPoint& new_point, const RRTOption& option) {
+RRTNode* RRTTree::addNode(RRTNode* anchor_node, RRTPoint& new_point, const RRTOption& option) {
     // checking if path is valid
 
     // debussing text
@@ -119,7 +119,7 @@ bool RRTTree::addNode(RRTNode* anchor_node, RRTPoint& new_point, const RRTOption
                                                        option.dubins_path, option.has_straight);
 
     if (!airspace.isPathInBounds(path)) {
-        return false;
+        return nullptr;
     }
 
     // if a valid path was found, it will add the node to the tree
@@ -146,7 +146,7 @@ bool RRTTree::addNode(RRTNode* anchor_node, RRTPoint& new_point, const RRTOption
         }
     }
 
-    return true;
+    return new_node;
 }
 
 void RRTTree::rewireEdge(RRTNode* current_node, RRTNode* previous_connection,
@@ -290,6 +290,10 @@ std::vector<XYZCoord> RRTTree::getPathToGoal(bool without_cache) {
     return path_to_goal;
 }
 
+void RRTTree::RRTStar(RRTNode* sample, double rewire_radius) {
+    RRTStarRecursive(root, sample, rewire_radius);
+}
+
 void RRTTree::retreivePathByNode(RRTNode* node, RRTNode* parent) {
     if (parent == nullptr || node == nullptr) {
         return;
@@ -317,4 +321,60 @@ RRTNode* RRTTree::getNearestNode(const RRTPoint& point) {
     }
 
     return nearest;
+}
+
+void RRTTree::RRTStarRecursive(RRTNode* current_node, RRTNode* sample, double rewire_radius) {
+    // base case
+    if (current_node == nullptr) {
+        return;
+    }
+
+    // recurse
+    for (RRTNode* child : current_node->getReachable()) {
+        RRTStarRecursive(child, sample, rewire_radius);
+    }
+
+    // for all nodes past the current node, attempt to rewire them
+    for (RRTNode* node : current_node->getReachable()) {
+        // get the distance between the current node and the nearest node
+        if (node->getPoint().distanceTo(sample->getPoint()) > rewire_radius) {
+            continue;
+        }
+
+        if (node->getPoint() == sample->getPoint()) {
+            continue;
+        }
+
+        // get the dubins options
+        std::vector<RRTOption> options =
+            dubins.allOptions(current_node->getPoint(), node->getPoint(), true);
+
+        // for each option
+        for (const RRTOption& option : options) {
+            // get the new cost
+            if (std::isnan(option.length) ||
+                option.length == std::numeric_limits<double>::infinity()) {
+                continue;
+            }
+
+            // check if new path is valid
+            std::vector<XYZCoord> path = dubins.generatePoints(
+                sample->getPoint(), node->getPoint(), option.dubins_path, option.has_straight);
+
+            if (!airspace.isPathInBounds(path)) {
+                continue;
+            }
+
+            // if the node is uncompetitive, continue
+            double new_cost = current_node->getCost() + option.length;
+
+            double cost = node->getCost();
+
+            // if the new cost is less than the current cost
+            if (new_cost < cost) {
+                // rewire the edge
+                rewireEdge(node, current_node, sample, path, new_cost);
+            }
+        }
+    }
 }

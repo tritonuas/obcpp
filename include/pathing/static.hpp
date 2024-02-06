@@ -23,8 +23,8 @@
 
 class RRT {
  public:
-    RRT(RRTPoint start, std::vector<RRTPoint> goals, int num_iterations, double goal_bias, double search_radius,
-        double tolerance_to_goal, double rewire_radius, Polygon bounds)
+    RRT(RRTPoint start, std::vector<RRTPoint> goals, int num_iterations, double goal_bias,
+        double search_radius, double tolerance_to_goal, double rewire_radius, Polygon bounds)
 
         : num_iterations(num_iterations),
           goal_bias(goal_bias),
@@ -66,10 +66,10 @@ class RRT {
             std::vector<std::pair<RRTNode *, RRTOption>> options = tree.pathingOptions(sample);
 
             // returns true if the node is successfully added to the tree
-            bool validity = parseOptions(&options, sample);
+            RRTNode *new_node = parseOptions(options, sample);
 
-            if (validity) {
-                optimizeTree(tree.getNode(sample));
+            if (new_node != nullptr) {
+                optimizeTree(new_node);
             }
 
             // [TODO] add rest of function
@@ -81,10 +81,12 @@ class RRT {
      *
      * @param options   ==> list of options to connect the sample to the tree
      * @param sample    ==> sampled point
-     * @return          ==> whether or not the sample was successfully added to the tree
+     * @return          ==> whether or not the sample was successfully added to the tree (nullptr if
+     * not added)
      */
-    bool parseOptions(std::vector<std::pair<RRTNode *, RRTOption>> *options, RRTPoint &sample) {
-        for (const auto &[node, option] : *options) {
+    RRTNode *parseOptions(const std::vector<std::pair<RRTNode *, RRTOption>> &options,
+                          const RRTPoint &sample) {
+        for (const auto &[node, option] : options) {
             /*
              *  stop if
              *  1. the node is null
@@ -96,18 +98,18 @@ class RRT {
              *
              */
             if (node == nullptr || node->getPoint() == sample || std::isnan(option.length)) {
-                return false;
+                return nullptr;
             }
 
             // else, add the node to the
-            bool sucessful_addition = tree.addNode(node, sample, option);
+            RRTNode *sucessful_addition = tree.addNode(node, sample, option);
 
-            if (sucessful_addition) {
-                return true;
+            if (sucessful_addition != nullptr) {
+                return sucessful_addition;
             }
         }
 
-        return false;
+        return nullptr;
     }
 
     /**
@@ -119,7 +121,6 @@ class RRT {
      */
     void optimizeTree(RRTNode *sample) { tree.RRTStar(sample, rewire_radius); }
 
-
     /**
      * returns a continuous path of points to the goal
      *
@@ -127,7 +128,7 @@ class RRT {
      */
     std::vector<XYZCoord> getPointsGoal() { return tree.getPathToGoal(); }
 
-     private:
+ private:
     RRTTree tree;
 
     int num_iterations;

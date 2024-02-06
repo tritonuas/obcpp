@@ -18,7 +18,7 @@ int main() {
                                 RRTPoint(XYZCoord{400, 500, 0}, HALF_PI),
                                 RRTPoint(XYZCoord{150, 700, 0}, M_PI)};
     int num_iterations = 999999999;
-    double goal_bias = 0.05;
+    double goal_bias = 0.01;
     double search_radius = 50;
     double tolerance_to_goal = 10;
     double rewire_radius = 30;

@@ -2,6 +2,7 @@
 #define INCLUDE_PATHING_ENVIRONMENT_HPP_
 
 #include <vector>
+#include <utility>
 
 #include "utilities/datatypes.hpp"
 #include "utilities/rng.hpp"
@@ -17,7 +18,8 @@
  */
 class Environment {
  public:
-    Environment(const Polygon valid_region, const std::vector<RRTPoint> goals, const double goal_radius)
+    Environment(const Polygon valid_region, const std::vector<RRTPoint> goals,
+                const double goal_radius)
         : valid_region(valid_region),
           goals(goals),
           goal_radius(goal_radius),
@@ -104,15 +106,15 @@ class Environment {
 
     /**
      * Sets found_goal to true
-     * 
+     *
      * NOW UNSAFE, MAY INCREMENT FOUNDGOAL MULTIPLE TIMES
      */
     void setGoalfound() { goals_found++; }
 
  private:
-    const Polygon valid_region;  // boundary of the valid map
-    const std::vector<RRTPoint> goals;         // goal point
-    const double goal_radius;    // radius (tolarance) of the goal region centerd at goal
+    const Polygon valid_region;         // boundary of the valid map
+    const std::vector<RRTPoint> goals;  // goal point
+    const double goal_radius;           // radius (tolarance) of the goal region centerd at goal
 
     int goals_found;  // whether or not the goal has been found, once it becomes ture, it will never
                       // be false again
