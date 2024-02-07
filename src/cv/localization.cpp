@@ -1,4 +1,5 @@
 #include "cv/localization.hpp"
+#include <cmath>
 
 #define PI 3.14159265
 #define PIXEL_SIZE_MM 0.0024
@@ -94,17 +95,19 @@ CameraVector PixelsToAngle(CameraIntrinsics camera, CameraVector state, double t
 }
 
 // Calculate the ENU offset of the intersection of a vector from the plane to the ground (assume flat)
-ENUCoordinates AngleToOffset(CameraVector target, GPSCoordinates aircraft) {
+ENUCoordinates AngleToENU(CameraVector target, GPSCoordinates aircraft, double terrainHeight) {
     double x = aircraft.alt*tan(target.roll);
     double y = aircraft.alt*tan(target.pitch); 
     ENUCoordinates offset;
     offset.e = x*cos(target.heading) + y*sin(target.heading);
     offset.n = -x*sin(target.heading) + y*cos(target.heading);
-    offset.u = -aircraft.alt;
+    offset.u = terrainHeight - aircraft.alt;
     return offset;
 }
 
 GPSCoord Localization::localize(const ImageTelemetry& telemetry, const Bbox& targetBbox) {
+    double terrainHeight = 0;
+
     double targetX = (targetBbox.x1 + targetBbox.x2)/2;
     double targetY = (targetBbox.y1 + targetBbox.y2)/2;
 
@@ -122,17 +125,16 @@ GPSCoord Localization::localize(const ImageTelemetry& telemetry, const Bbox& tar
     GPSCoordinates aircraft;
     aircraft.lat = telemetry.latitude*PI/180;
     aircraft.lon = telemetry.longitude*PI/180;
-    aircraft.alt = telemetry.altitude;
+    aircraft.alt = telemetry.altitude*1000;
 
-    ECEFCoordinates aircraftLocation = GPStoECEF(aircraft);
     CameraVector targetVector = PixelsToAngle(camera, gimbalState, targetX, targetY);
-    ENUCoordinates offset = AngleToOffset(targetVector, aircraft);
+    ENUCoordinates offset = AngleToENU(targetVector, aircraft, terrainHeight);
     ECEFCoordinates targetLocationECEF = ENUtoECEF(offset, aircraft);
     GPSCoordinates targetLocationGPS = ECEFtoGPS(targetLocationECEF);
 
     double lat = targetLocationGPS.lat*180/PI;
     double lon = targetLocationGPS.lon*180/PI;
-    double alt = targetLocationGPS.alt;
+    double alt = targetLocationGPS.alt/1000;
 
     return GPSCoord(lat, lon, alt);
 }
