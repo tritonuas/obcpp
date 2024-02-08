@@ -101,10 +101,11 @@ RRTTree::~RRTTree() {
 }
 
 // TODO - convert from old to new
-RRTNode* RRTTree::addNode(RRTNode* anchor_node, const RRTPoint& new_point, const RRTOption& option) {
+RRTNode* RRTTree::addNode(RRTNode* anchor_node, const RRTPoint& new_point,
+                          const RRTOption& option) {
     // checking if path is valid
 
-    // debussing text
+    // debugging text
     // std::cout << "Anchor: " << anchor_node << std::endl;
     // std::cout << "Anchor: (" << anchor_node->getPoint().coord.x << ", "
     //           << anchor_node->getPoint().coord.y << ", " << anchor_node->getPoint().coord.z <<
@@ -202,8 +203,9 @@ RRTPoint RRTTree::getGoal() const { return this->airspace.getGoal(); }
 
 Environment RRTTree::getAirspace() const { return this->airspace; }
 
-RRTPoint RRTTree::getRandomPoint(double search_radius) {
-    const RRTPoint sample = airspace.getRandomPoint();
+RRTPoint RRTTree::getRandomPoint(double search_radius, bool use_goal) {
+    // gets random point if the goal is not being used
+    const RRTPoint& sample = use_goal ? getGoal() : airspace.getRandomPoint();
 
     // picks the nearest node to the sample, and then returns a point `search_radius` distance away
     // from tat point in the direction of the sample

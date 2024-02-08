@@ -1,9 +1,10 @@
 #ifndef INCLUDE_PATHING_ENVIRONMENT_HPP_
 #define INCLUDE_PATHING_ENVIRONMENT_HPP_
 
-#include <vector>
 #include <utility>
+#include <vector>
 
+#include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
 #include "utilities/rng.hpp"
 
@@ -83,8 +84,7 @@ class Environment {
         // TODO - use some heuristic to more efficiently generate direction
         // vector (and make it toggleable)
 
-        // TODO - get rid of magic number
-        for (int i = 0; i < 9999; i++) {
+        for (int i = 0; i < TRIES_FOR_RANDOM_POINT; i++) {
             // generates a random point in the rectangle contianing the valid region
             XYZCoord generated_point = {random(bounds.first.first, bounds.first.second),
                                         random(bounds.second.first, bounds.second.second), 0};

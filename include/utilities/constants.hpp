@@ -15,6 +15,8 @@ const double HALF_PI = M_PI / 2;
 const double TURNING_RADIUS = 30;
 const double POINT_SEPARATION = 3;
 
+const int TRIES_FOR_RANDOM_POINT = 64;  // for generating random points
+
 const double LARGE_COST = 999999999999.0;
 
 const int DEFAULT_GCS_PORT = 5010;

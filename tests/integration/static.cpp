@@ -18,10 +18,10 @@ int main() {
                                 RRTPoint(XYZCoord{400, 500, 0}, HALF_PI),
                                 RRTPoint(XYZCoord{150, 700, 0}, M_PI)};
     int num_iterations = 999999999;
-    double goal_bias = 0.01;
-    double search_radius = 50;
-    double tolerance_to_goal = 10;
-    double rewire_radius = 30;
+    double goal_bias = 0.1;
+    double search_radius = 45;
+    double tolerance_to_goal = 5;
+    double rewire_radius = 500;
     Polygon bounds;
     bounds.emplace_back(XYZCoord{0, 0, 0});
     bounds.emplace_back(XYZCoord{500, 0, 0});

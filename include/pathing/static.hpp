@@ -39,18 +39,16 @@ class RRT {
      * directly connect to it
      */
     RRTPoint generateSamplePoint() {
-        // TODO - try for goal directly, or just move towards it
-        if (random(0.0, 1.0) < goal_bias) {
-            return RRTPoint{tree.getGoal().coord, random(0.0, TWO_PI)};
-        }
-
-        return tree.getRandomPoint(search_radius);
+        return tree.getRandomPoint(search_radius, random(0.0, 1.0) < goal_bias);
     }
 
     /**
      * RRT algorithm
      *
      * TODO - do all iterations to try to find the most efficient path?
+     *  - maybe do the tolarance as stright distance / num iterations
+     *  - not literally that function, but something that gets more leniant the more iterations
+     * there are
      */
     void run() {
         for (int _ = 0; _ < num_iterations; _++) {
@@ -71,8 +69,6 @@ class RRT {
             if (new_node != nullptr) {
                 optimizeTree(new_node);
             }
-
-            // [TODO] add rest of function
         }
     }
 

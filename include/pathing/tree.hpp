@@ -178,7 +178,7 @@ class RRTTree {
      *
      * @return RRTPoint random point in environment
      */
-    RRTPoint getRandomPoint(double search_radius);
+    RRTPoint getRandomPoint(double search_radius, bool use_goal);
 
     /**
      * Returns a sorted list of the paths to get from a given node to the sampled
