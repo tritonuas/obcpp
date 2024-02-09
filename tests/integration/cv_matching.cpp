@@ -3,15 +3,15 @@
 
 #include <opencv2/opencv.hpp>
 
-const std::string refImagePath0 = "../bin/test/test/000000000.jpg";
-const std::string refImagePath1 = "../bin/test/test/000000001.jpg";
-const std::string refImagePath2 = "../bin/test/test/000000002.jpg";
-const std::string refImagePath3 = "../bin/test/test/000000003.jpg";
-const std::string refImagePath4 = "../bin/test/test/000000004.jpg";
+const std::string refImagePath0 = "../bin/test/test/000000910.jpg";
+const std::string refImagePath1 = "../bin/test/test/000000920.jpg";
+const std::string refImagePath2 = "../bin/test/test/000000003.jpg";
+const std::string refImagePath3 = "../bin/test/test/000000004.jpg";
+const std::string refImagePath4 = "../bin/test/test/000000005.jpg";
 
 const std::string modelPath = "../bin/target_siamese_1.pt";
-const std::string imageMatchPath = "../bin/test/test/000000003.jpg";
-const std::string imageNotMatchPath = "../bin/test/test/000000005.jpg";
+const std::string imageMatchPath = "../bin/test/test/000000920.jpg";
+const std::string imageNotMatchPath = "../bin/test/test/000000016.jpg";
 
 int main(int argc, char* argv[]) {
     // purely for the constructor, doesn't do much in matching
@@ -69,10 +69,23 @@ int main(int argc, char* argv[]) {
         false
     };
 
+    cv::Mat falseImage = cv::imread(imageNotMatchPath);
+    CroppedTarget croppedFalse = {
+        falseImage,
+        dummyBox,
+        false
+    };
+
     MatchResult result = matcher.match(cropped);
-    std::cout << "Found a match with bottle at index " << result.bottleDropIndex << std::endl;
+    std::cout << "Found a match with bottle at index " << int(result.bottleDropIndex) << std::endl;
     std::cout << "foundMatch is " << result.foundMatch << std::endl;
     std::cout << "The similarity is " << result.similarity << std::endl;
+
+
+    MatchResult resultFalse = matcher.match(croppedFalse);
+    std::cout << "Closest is bottle at index " << int(resultFalse.bottleDropIndex) << std::endl;
+    std::cout << "foundMatch is " << resultFalse.foundMatch << std::endl;
+    std::cout << "The similarity is " << resultFalse.similarity << std::endl;
 
     return 0;
 }

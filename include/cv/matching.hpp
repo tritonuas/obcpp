@@ -46,7 +46,7 @@ class Matching {
  private:
         std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES> competitionObjectives;
         double matchThreshold;
-        std::vector<at::Tensor> referenceFeatures;
+        std::vector<torch::Tensor> referenceFeatures;
         torch::jit::script::Module module;
 };
 
