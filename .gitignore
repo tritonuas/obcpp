@@ -1,6 +1,7 @@
 *.so
 lib/
 bin/
+logs/
 
 Makefile
 CMakeFiles/
@@ -16,3 +17,6 @@ imgs/
 
 libcore_library.dylib
 .DS_Store
+
+**/*.pb.cc
+**/*.pb.h

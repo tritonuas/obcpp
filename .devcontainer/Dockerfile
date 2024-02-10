@@ -2,27 +2,57 @@ FROM amd64/ubuntu:22.04
 
 ARG USERNAME=tuas USER_UID=1000 USER_GID=1000 DEBIAN_FRONTEND=noninteractive
 
+# Needed to spawn up a GUI in headless mode for matplotplus to work
+ENV QT_QPA_PLATFORM="vnc"
+
 # Create a non-root user
-RUN groupadd --gid $USER_GID $USERNAME \
+RUN groupadd -f --gid $USER_GID $USERNAME \
     && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
+# exit 0 ensures that it won't prematurely stop if for some reason the user already exists
 
 # https://gist.github.com/SSARCandy/fc960d8905330ac695e71e3f3807ce3d
 # OpenCV dependencies from above
 RUN apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y build-essential \
+                           software-properties-common \
                            sudo \
                            gdb \
                            git \
-                           python3 \
-                           python3-pip \
                            wget \
                            ccache \
                            vim \
                            curl \
                            unzip \
                            protobuf-compiler \
-                           libopencv-dev
+                           libopencv-dev \
+                           # Need these to install Python 3.11 from pyenv
+                           python3-pip \
+                           libssl-dev \
+                           zlib1g-dev \
+                           libbz2-dev \
+                           libreadline-dev \
+                           libsqlite3-dev \
+                           libncursesw5-dev \
+                           xz-utils \
+                           tk-dev \
+                        #    libxm12-dev \
+                           libxmlsec1-dev \
+                           libffi-dev \
+                           liblzma-dev \
+                           gnuplot # needed for matplotplus
+
+RUN apt-add-repository universe
+RUN apt-get install -y cpplint
+
+# Update Python to 3.11 so that libtorch can be properly built from source
+ENV PYENV_ROOT="/.pyenv"
+RUN curl https://pyenv.run | bash
+ENV PATH="${PATH}:${PYENV_ROOT}/bin"
+RUN eval "$(pyenv init -)"
+RUN pyenv install 3.11
+RUN pyenv global 3.11
+RUN pip3 install typing-extensions PyYAML
 
 RUN echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME
@@ -37,7 +67,6 @@ RUN apt-get update \
       && /tmp/cmake-install.sh --skip-license --prefix=/opt/cmake-3.24.1 \
       && rm /tmp/cmake-install.sh \
       && ln -s /opt/cmake-3.24.1/bin/* /usr/local/bin
-
 
 # install prebuilt MAVSDK to system
 # https://github.com/mavlink/MAVSDK/releases
@@ -54,8 +83,14 @@ RUN wget https://github.com/mavlink/MAVSDK/releases/download/v1.4.17/libmavsdk-d
 ARG LIBTORCH_VERSION=2.1.0
 ARG LIBTORCH_INSTALL_DIR=/libtorch-tmp
 WORKDIR ${LIBTORCH_INSTALL_DIR}
-RUN wget "https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-${LIBTORCH_VERSION}%2Bcpu.zip" \
-    && unzip "libtorch-cxx11-abi-shared-with-deps-${LIBTORCH_VERSION}+cpu.zip"
+RUN git clone -b main --recurse-submodule https://github.com/pytorch/pytorch.git
+RUN mkdir pytorch-build
+RUN cd pytorch-build
+RUN cmake -D_GLIBCXX_USE_CXX11_ABI=1 -DBUILD_SHARED_LIBS:BOOL=ON -DCMAKE_BUILD_TYPE:STRING=Release -DPYTHON_EXECUTABLE:PATH=`which python3` -DCMAKE_PREFIX_PATH=../pytorch-install ${LIBTORCH_INSTALL_DIR}/pytorch
+RUN cmake --build . --target install
+
+# RUN wget "https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-${LIBTORCH_VERSION}%2Bcpu.zip" \
+#     && unzip "libtorch-cxx11-abi-shared-with-deps-${LIBTORCH_VERSION}+cpu.zip"
 # needed to build torchvision below and to build targets that use libtorch inside the container
 ENV CMAKE_PREFIX_PATH="${LIBTORCH_INSTALL_DIR}/libtorch"
 
@@ -71,8 +106,6 @@ RUN wget "https://github.com/pytorch/vision/archive/refs/tags/v${TORCHVISION_VER
     && cmake -DWITH_CUDA=off -D_GLIBCXX_USE_CXX11_ABI=1 -DCMAKE_BUILD_TYPE=Release .. \
     && make -j2 \
     && make install
-
-RUN pip3 install cpplint
 
 # login as non-root user
 USER $USERNAME

@@ -1,15 +1,19 @@
 #include "utilities/datatypes.hpp"
 
 #include <cmath>
-/*
- *   Empty in-line comments prevent VSCode auto-formatter screrw with my
- *   preffered way of formatting.
- */
+
+#include "pathing/cartesian.hpp"
+#include "protos/obc.pb.h"
+
+
+inline bool floatingPointEquals(double x1, double x2) {
+    return std::fabs(x1 - x2) < std::numeric_limits<double>::epsilon();
+}
 
 bool XYZCoord::operator==(const XYZCoord &other_point) const {
-    return this->x == other_point.x     //
-           && this->y == other_point.y  //
-           && this->z == other_point.z;
+    return floatingPointEquals(this->x, other_point.x) \
+           && floatingPointEquals(this->y, other_point.y) \
+           && floatingPointEquals(this->z, other_point.z);
 }
 
 XYZCoord &XYZCoord::operator+=(const XYZCoord &other_coord) {
@@ -67,6 +71,10 @@ XYZCoord XYZCoord::normalized() const {
     return (1 / this->norm()) * (*this);
 }
 
-Polygon::Polygon(matplot::color color) { this->color = color; }
-
-Polyline::Polyline(matplot::color color) { this->color = color; }
+GPSCoord makeGPSCoord(double lat, double lng, double alt) {
+    GPSCoord coord;
+    coord.set_latitude(lat);
+    coord.set_longitude(lng);
+    coord.set_altitude(alt);
+    return coord;
+}

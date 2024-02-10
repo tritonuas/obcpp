@@ -24,7 +24,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ./bin)
 
 SET(GCC_COMPILE_FLAGS "")
-SET(GCC_LINK_FLAGS    "-lopencv_core -lopencv_highgui -lopencv_features2d -lopencv_flann -lopencv_imgcodecs -lopencv_dnn -lopencv_videoio -lopencv_imgproc -lopencv_ml -lopencv_photo")
+SET(GCC_LINK_FLAGS    "-lprotobuf -lopencv_core -lopencv_highgui -lopencv_features2d -lopencv_flann -lopencv_imgcodecs -lopencv_dnn -lopencv_videoio -lopencv_imgproc -lopencv_ml -lopencv_photo -lprotobuf")
 
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COMPILE_FLAGS}")
 SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${GCC_LINK_FLAGS}")
@@ -44,17 +44,34 @@ include(${DEPS_DIRECTORY}/opencv/opencv.cmake)
 include(${DEPS_DIRECTORY}/httplib/httplib.cmake)
 include(${DEPS_DIRECTORY}/mavsdk/mavsdk.cmake)
 include(${DEPS_DIRECTORY}/matplot/matplot.cmake)
+include(${DEPS_DIRECTORY}/protobuf/protobuf.cmake)
+include(${DEPS_DIRECTORY}/loguru/loguru.cmake)
+# =============================
+
+# =============================
+# Set up protos
+
+execute_process(
+    COMMAND sh ${PROJECT_SOURCE_DIR}/scripts/install-protos.sh
+    RESULT_VARIABLE ret
+)
+if(NOT (ret EQUAL "0"))
+    message(FATAL_ERROR "Unable to install protos. Script exited with code ${ret}.")
+endif()
+
 # =============================
 
 # =============================
 # obcpp executable
-file(GLOB_RECURSE SOURCES "src/*.cpp")
+file(GLOB_RECURSE SOURCES "src/*.cpp" "build/gen_protos/*.pb.cc")
 list(REMOVE_ITEM SOURCES "${CMAKE_SOURCE_DIR}/src/main.cpp")
-file(GLOB_RECURSE HEADERS "include/*.hpp")
+file(GLOB_RECURSE HEADERS "include/*.hpp" "build/gen_protos/*.pb.h")
 
 set(INCLUDE_DIRECTORY ${PROJECT_SOURCE_DIR}/include)
+set(GEN_PROTOS_DIRECTORY ${PROJECT_SOURCE_DIR}/build/gen_protos)
 add_executable(${PROJECT_NAME} ${SOURCES} "src/main.cpp")
-include_directories(${INCLUDE_DIRECTORY})
+include_directories(${INCLUDE_DIRECTORY} ${GEN_PROTOS_DIRECTORY})
+target_add_protobuf(${PROJECT_NAME})
 target_add_torch(${PROJECT_NAME})
 # target_add_arena(${PROJECT_NAME}) # Tyler: currently broken, so we had to comment this out
 target_add_torchvision(${PROJECT_NAME})
@@ -63,6 +80,7 @@ target_add_opencv(${PROJECT_NAME})
 target_add_httplib(${PROJECT_NAME})
 target_add_mavsdk(${PROJECT_NAME})
 target_add_matplot(${PROJECT_NAME})
+target_add_loguru(${PROJECT_NAME})
 # =============================
 
 # =============================
@@ -70,7 +88,7 @@ target_add_matplot(${PROJECT_NAME})
 
 # playground
 add_executable(playground ${SOURCES} "tests/integration/playground.cpp")
-target_include_directories(playground PRIVATE ${INCLUDE_DIRECTORY})
+target_include_directories(playground PRIVATE ${INCLUDE_DIRECTORY} ${GEN_PROTOS_DIRECTORY})
 target_add_torch(playground)
 # target_add_arena(playground)
 target_add_json(playground)
@@ -78,6 +96,8 @@ target_add_opencv(playground)
 target_add_httplib(playground)
 target_add_mavsdk(playground)
 target_add_matplot(playground)
+target_add_protobuf(playground)
+target_add_loguru(playground)
 
 # mavsdk
 add_executable(mavsdk "tests/integration/mavsdk.cpp")
@@ -112,7 +132,7 @@ if(CPPLINT)
   # define lint target
   add_custom_target(lint
     COMMAND cpplint
-    --filter=-legal,-readability/todo
+    --filter=-legal,-readability/todo,-build/c++11
     --linelength=100
     --recursive
     ../src
