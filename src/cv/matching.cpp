@@ -46,7 +46,7 @@ auto toInput(cv::Mat img, bool show_output=false, bool unsqueeze=false, int unsq
 Matching::Matching(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES>
                        competitionObjectives,
                    double matchThreshold,
-                   std::vector<cv::Mat> referenceImages,
+                   std::vector<std::pair<cv::Mat, uint8_t>> referenceImages,
                    const std::string &modelPath)
     : competitionObjectives(competitionObjectives),
       matchThreshold(matchThreshold) {
@@ -60,10 +60,11 @@ Matching::Matching(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES>
         }
 
         for(int i = 0; i < referenceImages.size(); i++) {
-            cv::Mat image = referenceImages.at(i);
+            cv::Mat image = referenceImages.at(i).first;
+            uint8_t bottle = referenceImages.at(i).second;
             std::vector<torch::jit::IValue> input = toInput(image);
             torch::Tensor output = this->module.forward(input).toTensor();
-            this->referenceFeatures.push_back(output);
+            this->referenceFeatures.push_back(std::make_pair(output, bottle));
         }
     
     }
@@ -73,10 +74,12 @@ Matching::Matching(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES>
 MatchResult Matching::match(const CroppedTarget& croppedTarget) {
     std::vector<torch::jit::IValue> input = toInput(croppedTarget.croppedImage);
     torch::Tensor output = this->module.forward(input).toTensor();
-    uint8_t minIndex = 0;
-    double minDist = torch::pairwise_distance(output, referenceFeatures.at(minIndex)).item().to<double>();
-    for(uint8_t i = 0; i < referenceFeatures.size(); i++) {
-        torch::Tensor curr = referenceFeatures.at(i);
+    int minIndex = 0;
+    double minDist = torch::pairwise_distance(output, 
+                            referenceFeatures.at(minIndex).first).item().to<double>();
+
+    for(int i = 1; i < referenceFeatures.size(); i++) {
+        torch::Tensor curr = referenceFeatures.at(i).first;
         torch::Tensor dist = torch::pairwise_distance(output, curr);
         double tmp = dist.item().to<double>();
         if(tmp < minDist) {
@@ -84,6 +87,7 @@ MatchResult Matching::match(const CroppedTarget& croppedTarget) {
             minIndex = i;
         }
     }
+    uint8_t bottleIdx = referenceFeatures.at(minIndex).second;
     bool isMatch = minDist < this->matchThreshold;
-    return MatchResult{minIndex, isMatch, minDist};
+    return MatchResult{bottleIdx, isMatch, minDist};
 }

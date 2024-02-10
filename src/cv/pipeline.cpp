@@ -8,7 +8,7 @@ const std::string modelPath = "../bin/target_siamese_1.pt";
 // TODO: I also want to have a way to customize if the model will use
 // matching vs segmentation/classification
 Pipeline::Pipeline(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES>
-    competitionObjectives, std::vector<cv::Mat> referenceImages) : 
+    competitionObjectives, std::vector<std::pair<cv::Mat, uint8_t>> referenceImages) : 
     // assumes reference images passed to pipeline from not_stolen
         matcher(competitionObjectives, DEFAULT_MATCHING_THRESHOLD, referenceImages, modelPath) {}
 

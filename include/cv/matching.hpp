@@ -38,7 +38,7 @@ class Matching {
  public:
         Matching(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES>
             competitionObjectives, double matchThreshold, 
-            std::vector<cv::Mat> referenceImages,
+            std::vector<std::pair<cv::Mat, uint8_t>> referenceImages,
             const std::string &modelPath);
 
         MatchResult match(const CroppedTarget& croppedTarget);
@@ -46,7 +46,7 @@ class Matching {
  private:
         std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES> competitionObjectives;
         double matchThreshold;
-        std::vector<torch::Tensor> referenceFeatures;
+        std::vector<std::pair<torch::Tensor, uint8_t>> referenceFeatures;
         torch::jit::script::Module module;
 };
 
