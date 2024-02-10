@@ -1,15 +1,34 @@
 #include "cv/matching.hpp"
 
-// https://stackoverflow.com/questions/17533101/resize-a-matrix-after-created-it-in-opencv
+/*
+* IMPORTANT NOTE:
+* Using torch::from_blob to convert cv::Mat to torch::Tensor results in NaN tensors 
+* for certain images. The solution of using std::memcpy instead was found and corroborated 
+* in this post: 
+* https://discuss.pytorch.org/t/convert-torch-tensor-to-cv-mat/42751/4
+*
+* The reason for from_blob's misbehaving tendencies may have to do with it taking in
+* a pointer as its first argument (img_dst.data) as shown here:
+* https://pytorch.org/cppdocs/api/function_namespacetorch_1ad7fb2a7759ef8c9443b489ddde494787.html
+
+* Every time we exit toInput(), img_dst is deallocated and the pointer to the image's data
+* is thus rendered invalid. This results in tensors filled with NaN.
+* This hypothesis is corroborated by the following post:
+* https://discuss.pytorch.org/t/std-vector-torch-tensor-turns-into-nans/81853 
+* If we wanted to use from_blob, we would have to perhaps pass in a constant reference to
+* img, and only use img (rather than creating a new img_dst to do operations on).
+* Std::memcpy works for the time being, so it will remain.
+*
+* Reference for resizing cv image: 
+* https://stackoverflow.com/questions/17533101/resize-a-matrix-after-created-it-in-opencv
+*/
 auto toInput(cv::Mat img, bool show_output=false, bool unsqueeze=false, int unsqueeze_dim = 0)
 {
     cv::Mat img_dst;
     // scale the image and turn into Tensor, then inputs
     cv::resize(img, img_dst, cv::Size(128, 128), 0, 0, cv::INTER_AREA);
     img_dst.convertTo(img_dst, CV_32FC3);
-    //auto options = torch::TensorOptions().dtype(torch::kFloat32);
-    //torch::Tensor tensor_image = torch::from_blob(img_dst.data, {1, 3, img_dst.rows, img_dst.cols});
-    //tensor_image.to(torch::kFloat32);
+    //torch::Tensor tensor_image = torch::from_blob(img_dst.data, {1, 3, img_dst.rows, img_dst.cols}, torch::kF32);
     torch::Tensor tensor_image = torch::ones({1, 3, img_dst.rows, img_dst.cols}, torch::kF32);
     std::memcpy(tensor_image.data_ptr(), img_dst.data, sizeof(float)*tensor_image.numel());
     // convert back to CV image and display to verify fidelity of image.
