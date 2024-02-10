@@ -6,7 +6,9 @@
 * for certain images. The solution of using std::memcpy instead was found and corroborated 
 * in this post: 
 * https://discuss.pytorch.org/t/convert-torch-tensor-to-cv-mat/42751/4
-*
+* The old broken line is given here for reference (formerly at line 33): 
+* torch::Tensor tensor_image = torch::from_blob(img_dst.data, {1, 3, img_dst.rows, img_dst.cols}, torch::kF32);
+
 * The reason for from_blob's misbehaving tendencies may have to do with it taking in
 * a pointer as its first argument (img_dst.data) as shown here:
 * https://pytorch.org/cppdocs/api/function_namespacetorch_1ad7fb2a7759ef8c9443b489ddde494787.html
@@ -25,24 +27,21 @@
 auto toInput(cv::Mat img, bool show_output=false, bool unsqueeze=false, int unsqueeze_dim = 0)
 {
     cv::Mat img_dst;
-    // scale the image and turn into Tensor, then inputs
+    // scale the image and turn into Tensor, then input vector
     cv::resize(img, img_dst, cv::Size(128, 128), 0, 0, cv::INTER_AREA);
     img_dst.convertTo(img_dst, CV_32FC3);
-    //torch::Tensor tensor_image = torch::from_blob(img_dst.data, {1, 3, img_dst.rows, img_dst.cols}, torch::kF32);
     torch::Tensor tensor_image = torch::ones({1, 3, img_dst.rows, img_dst.cols}, torch::kF32);
     std::memcpy(tensor_image.data_ptr(), img_dst.data, sizeof(float)*tensor_image.numel());
-    // convert back to CV image and display to verify fidelity of image.
+    // convert back to CV image and display to verify fidelity of image if desired
     if (unsqueeze)
         tensor_image.unsqueeze_(unsqueeze_dim);
         
-    
     if (show_output)
         std::cout << tensor_image.slice(2, 0, 1) << std::endl;
 
     return std::vector<torch::jit::IValue>{tensor_image};
 }
-// change referenceImages to a vector of pairs. In each pair: cv::Mat image, uint8_t bottleIndex
-// So each reference image also comes with the bottle index it corresponds to.
+
 Matching::Matching(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES>
                        competitionObjectives,
                    double matchThreshold,
@@ -59,6 +58,7 @@ Matching::Matching(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES>
             throw;
         }
 
+        // Populate referenceFeatures by putting each refImg through model
         for(int i = 0; i < referenceImages.size(); i++) {
             cv::Mat image = referenceImages.at(i).first;
             uint8_t bottle = referenceImages.at(i).second;
@@ -69,8 +69,13 @@ Matching::Matching(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES>
     
     }
 
-// NOTE: Assumes index in referenceImages == index of bottle == index in referenceFeatures
-// Further, assumes size of referenceImages == NUM_AIRDROP_BOTTLES
+/*
+* Matches the given image with one of the referenceFeature elements 
+* (each referenceFeature element corresponds to an element of referenceImages, see constructor).
+* @param croppedTarget - wrapper for cv::Mat image which we extract and use
+* @return MatchResult - struct of bottleIndex, boolean isMatch, and minimum distance found.
+* Boolean isMatch set to true if minimum distance found is below threshold, false otherwise.
+*/
 MatchResult Matching::match(const CroppedTarget& croppedTarget) {
     std::vector<torch::jit::IValue> input = toInput(croppedTarget.croppedImage);
     torch::Tensor output = this->module.forward(input).toTensor();
