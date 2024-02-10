@@ -89,6 +89,12 @@ target_add_matplot(mavsdk)
 add_executable(load_torchvision_model tests/integration/load_torchvision_model.cpp)
 target_add_torch(load_torchvision_model)
 target_add_torchvision(load_torchvision_model)
+
+# mavlink-client
+add_executable(mavlink_client "tests/integration/mavlink_client.cpp")
+target_include_directories(mavsdk PRIVATE ${INCLUDE_DIRECTORY})
+target_add_mavsdk(mavlink_client)
+target_add_matplot(mavlink_client)
 # =============================
 
 # =============================
