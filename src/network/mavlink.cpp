@@ -65,7 +65,7 @@ MavlinkClient::MavlinkClient(const char* link) {
     }
 }
 
-void MavlinkClient::uploadMissionUntilSuccess(MissionConfig config) const {
+void MavlinkClient::uploadMissionUntilSuccess(MissionConfig& config) const {
     LOG_SCOPE_F(INFO, "Uploading Mav Mission");
 
     auto mission = config.getCachedMission();

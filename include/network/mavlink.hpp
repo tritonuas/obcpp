@@ -41,7 +41,7 @@ class MavlinkClient {
      * function only attempt one mission upload, and have the retrying behavior start from the
      * outside.
      */
-    void uploadMissionUntilSuccess(MissionConfig mission) const;
+    void uploadMissionUntilSuccess(MissionConfig& mission) const;
 
     /*
      * Get the plane's location information, which includes lat (deg), lng (deg),

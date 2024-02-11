@@ -32,6 +32,6 @@ void OBC::run() {
 
 void OBC::connectMavlink() {
     // TODO: pull mav ip from config file
-    std::shared_ptr<MavlinkClient> mav(new MavlinkClient("/dev/ttyUSB0"));
+    std::shared_ptr<MavlinkClient> mav(new MavlinkClient("serial:///dev/ttyACM0"));
     this->state->setMav(mav);
 }
