@@ -7,6 +7,7 @@
 #include "core/mission_state.hpp"
 #include "ticks/tick.hpp"
 #include "utilities/locks.hpp"
+#include "network/mavlink.hpp"
 
 // in future might add to this
 MissionState::MissionState() = default;
@@ -75,4 +76,12 @@ bool MissionState::isInitPathValidated() {
 void MissionState::validateInitPath() {
     Lock lock(this->init_path_mut);
     this->init_path_validated = true;
+}
+
+std::shared_ptr<MavlinkClient> MissionState::getMav() {
+    return this->mav;
+}
+
+void MissionState::setMav(std::shared_ptr<MavlinkClient> mav) {
+    this->mav = mav;
 }

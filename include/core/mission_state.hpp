@@ -14,6 +14,7 @@
 #include "protos/obc.pb.h"
 #include "pathing/cartesian.hpp"
 #include "ticks/ids.hpp"
+#include "network/mavlink.hpp"
 
 class Tick;
 
@@ -39,6 +40,15 @@ class MissionState {
     bool isInitPathValidated();
     void validateInitPath();
 
+    /*
+     * Gets a shared_ptr to the mavlink client. 
+     * IMPORTANT: need to check that the pointer is not nullptr
+     * before accessing, to make sure the connection has already
+     * been established
+     */
+    std::shared_ptr<MavlinkClient> getMav();
+    void setMav(std::shared_ptr<MavlinkClient> mav);
+
     MissionConfig config;  // has its own mutex
 
  private:
@@ -51,6 +61,8 @@ class MissionState {
     std::mutex init_path_mut;  // for reading/writing the initial path
     std::vector<GPSCoord> init_path;
     bool init_path_validated = false;  // true when the operator has validated the initial path
+
+    std::shared_ptr<MavlinkClient> mav;
 
     void _setTick(Tick* newTick);  // does not acquire the tick_mut
 };

@@ -8,6 +8,7 @@
 #include "core/mission_config.hpp"
 #include "core/mission_state.hpp"
 #include "network/gcs.hpp"
+#include "network/mavlink.hpp"
 
 /*
  *  The highest level class for the entire OBC
@@ -23,6 +24,8 @@ class OBC {
     std::shared_ptr<MissionState> state;
 
     std::unique_ptr<GCSServer> gcs_server;
+
+    void connectMavlink();
 };
 
 #endif  // INCLUDE_CORE_OBC_HPP_
