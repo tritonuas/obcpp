@@ -1,5 +1,5 @@
-#ifndef INCLUDE_NETWORK_MAVLINK_HPP_ 
-#define INCLUDE_NETWORK_MAVLINK_HPP_ 
+#ifndef INCLUDE_NETWORK_MAVLINK_HPP_
+#define INCLUDE_NETWORK_MAVLINK_HPP_
 
 #include <mavsdk/mavsdk.h>
 #include <mavsdk/plugins/telemetry/telemetry.h>
@@ -23,9 +23,9 @@ class MavlinkClient {
      * example:
      *   MavlinkClient("tcp://192.168.65.254:5762")
      */ 
-    MavlinkClient(const char* link);
+    explicit MavlinkClient(const char* link);
 
-   
+
     /*
      * BLOCKING. Continues to try to upload the mission based on the passed through MissionConfig
      * until it is successfully received by the plane.
@@ -42,7 +42,7 @@ class MavlinkClient {
      * outside.
      */
     void uploadMissionUntilSuccess(MissionConfig mission) const;
-    
+
     /*
      * Get the plane's location information, which includes lat (deg), lng (deg),
      * relative alt (m), and absolute alt (m)
@@ -75,4 +75,4 @@ class MavlinkClient {
     static constexpr const double TELEMETRY_UPDATE_RATE = 1.0;
 };
 
-#endif  // INCLUDE_NETWORK_MAVLINK_HPP_ 
+#endif  // INCLUDE_NETWORK_MAVLINK_HPP_

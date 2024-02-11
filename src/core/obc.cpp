@@ -20,7 +20,7 @@ OBC::OBC(uint16_t gcs_port) {
 
     this->gcs_server = std::make_unique<GCSServer>(gcs_port, this->state);
 
-    std::async(std::launch::async, &OBC::connectMavlink, this);
+    auto _ = std::async(std::launch::async, &OBC::connectMavlink, this);
 }
 
 void OBC::run() {

@@ -1,11 +1,10 @@
 #include "network/mavlink.hpp"
 
-#include <loguru.hpp>
 #include <mavsdk/mavsdk.h>
 #include <mavsdk/plugins/telemetry/telemetry.h>
 #include <mavsdk/plugins/mission/mission.h>
 #include <mavsdk/plugins/geofence/geofence.h>
-#include <mavsdk/log_callback.h>
+
 #include <atomic>
 #include <memory>
 #include <string>
@@ -15,36 +14,12 @@
 #include <optional>
 #include <cmath>
 
+#include <loguru.hpp>
+
 #include "utilities/locks.hpp"
 
 MavlinkClient::MavlinkClient(const char* link) {
     LOG_SCOPE_F(INFO, "Connecting to Mav at %s", link);
-
-    // Overwrite default mavsdk logging to standard out, 
-    // and redirect to loguru
-    mavsdk::log::subscribe([](mavsdk::log::Level level,
-                              const std::string& message,
-                              const std::string& file,
-                              int line) {
-        std::string parsed_msg = "MavSDK@" + file + ":" + std::to_string(line) + "// " + message;
-        
-        switch (level) {
-            case mavsdk::log::Level::Debug:
-                // Do nothing
-                break;
-            case mavsdk::log::Level::Info:
-                LOG_F(INFO, "%s", parsed_msg.c_str());
-                break;
-            case mavsdk::log::Level::Warn:
-                LOG_F(WARNING, "%s", parsed_msg.c_str());
-                break;
-            case mavsdk::log::Level::Err:
-                LOG_F(ERROR, "%s", parsed_msg.c_str());
-                break;
-        }
-
-        return true;  // never log to standard out
-    });
 
     while (true) {
         LOG_F(INFO, "Attempting to add mav connection...");
@@ -54,7 +29,8 @@ MavlinkClient::MavlinkClient(const char* link) {
             break;
         }
 
-        LOG_F(WARNING, "Mavlink connection failed with code %d. Trying again...", conn_result);
+        LOG_F(WARNING, "Mavlink connection failed with code %d. Trying again...",
+            static_cast<int>(conn_result));
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
@@ -84,7 +60,7 @@ MavlinkClient::MavlinkClient(const char* link) {
         }
 
         LOG_F(WARNING, "Setting mavlink polling rate to %f failed with code %d. Trying again...",
-            TELEMETRY_UPDATE_RATE, set_rate_result);
+            TELEMETRY_UPDATE_RATE, static_cast<int>(set_rate_result));
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }
@@ -94,7 +70,7 @@ void MavlinkClient::uploadMissionUntilSuccess(MissionConfig config) const {
 
     auto mission = config.getCachedMission();
     if (!mission.has_value()) {
-        return; // todo determine return type
+        return;  // todo determine return type
     }
 
     // Parse the flight boundary / geofence information
@@ -128,7 +104,8 @@ void MavlinkClient::uploadMissionUntilSuccess(MissionConfig config) const {
             break;
         }
 
-        LOG_F(WARNING, "Geofence failed to upload with code %d. Trying again...", geofence_result);
+        LOG_F(WARNING, "Geofence failed to upload with code %d. Trying again...",
+            static_cast<int>(geofence_result));
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     while (true) {
@@ -149,8 +126,7 @@ void MavlinkClient::uploadMissionUntilSuccess(MissionConfig config) const {
                 if (result == mavsdk::Mission::Result::Next) {
                     LOG_F(INFO, "Upload progress: %f", data.progress);
                 }
-            }
-        );
+            });
 
         // Wait until the mission is fully uploaded
         while (true) {
@@ -162,6 +138,8 @@ void MavlinkClient::uploadMissionUntilSuccess(MissionConfig config) const {
                     return;
                 } else if (upload_status != mavsdk::Mission::Result::Next) {
                     // Neither success nor "next", signalling that there has been an error
+                    LOG_F(WARNING, "Mission upload failed with code %d. Trying again...",
+                        static_cast<int>(upload_status));
                     break;
                 }
             }
@@ -169,7 +147,6 @@ void MavlinkClient::uploadMissionUntilSuccess(MissionConfig config) const {
             std::this_thread::sleep_for(std::chrono::milliseconds(250));
         }
 
-        LOG_F(WARNING, "Mission upload failed with code %d. Trying again...");
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }
