@@ -24,9 +24,8 @@ class PathGenTick : public Tick {
     Tick* tick() override;
  private:
     std::future<std::vector<GPSCoord>> path;
-    bool path_generated;
 
     void startPathGeneration();
 };
 
-#endif  // INCLUDE_TICKS_PATH_GEN_HPP_
+#endif  // include_ticks_path_gen_hpp_

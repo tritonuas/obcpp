@@ -8,7 +8,7 @@
 #include <loguru.hpp>
 
 #include "protos/obc.pb.h"
-#include "ticks/mission_upload.hpp"
+#include "ticks/path_validate.hpp"
 #include "ticks/ids.hpp"
 
 std::vector<GPSCoord> tempGenPath(std::shared_ptr<MissionState> state) {
@@ -37,7 +37,6 @@ PathGenTick::PathGenTick(std::shared_ptr<MissionState> state)
 
 void PathGenTick::startPathGeneration() {
     this->path = std::async(std::launch::async, tempGenPath, this->state);
-    this->path_generated = false;
 }
 
 std::chrono::milliseconds PathGenTick::getWait() const {
@@ -45,22 +44,11 @@ std::chrono::milliseconds PathGenTick::getWait() const {
 }
 
 Tick* PathGenTick::tick() {
-    if (this->state->isInitPathValidated()) {
-        // Path already validated, so move onto next state
-
-        return new MissionUploadTick(this->state);
-    }
-
-    if (this->path_generated) {
-        // Already generated the path, so no point to be here
-        return nullptr;
-    }
-
     auto status = this->path.wait_for(std::chrono::milliseconds(0));
     if (status == std::future_status::ready) {
         LOG_F(INFO, "Initial path generated");
         state->setInitPath(path.get());
-        this->path_generated = true;
+        return new PathValidateTick(this->state);
     }
 
     return nullptr;

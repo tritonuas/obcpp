@@ -6,6 +6,7 @@
 enum class TickID {
     MissionPrep,
     PathGen,
+    PathValidate,
     MissionUpload,
     MissionStart
 };
@@ -17,6 +18,7 @@ constexpr const char* TICK_ID_TO_STR(TickID id) {
     switch (id) {
         _SET_TICK_ID_MAPPING(MissionPrep);
         _SET_TICK_ID_MAPPING(PathGen);
+        _SET_TICK_ID_MAPPING(PathValidate);
         _SET_TICK_ID_MAPPING(MissionUpload);
         _SET_TICK_ID_MAPPING(MissionStart);
         default: return "Unknown TickID";
