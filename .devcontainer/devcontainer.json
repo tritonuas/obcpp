@@ -2,11 +2,14 @@
 {
 	"name": "Existing Dockerfile",
 	"image": "ghcr.io/tritonuas/obcpp:main",
+	// "mounts": ["type=bind,source=/dev/ttyACM0,target=/dev/ttyACM0"],
+	// "runArgs": ["--device=/dev/ttyACM0"],
+	// "forwardPorts": [5010],
 
 	"customizations": {
 		"vscode": {
 			"settings": {
-				// Use bash instead of sh
+				// Use bash instead ofk sh
 				"terminal.integrated.defaultProfile.linux": "bash"
 			},
 			"extensions": [
