@@ -15,6 +15,7 @@
 
 // For any finer grained logging messages we might need to add
 #define TRACE 4
+#define DEBUG 5
 
 time_t getUnixTime();
 

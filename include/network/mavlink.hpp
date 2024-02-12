@@ -6,12 +6,15 @@
 #include <mavsdk/plugins/mission/mission.h>
 #include <mavsdk/plugins/geofence/geofence.h>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <chrono>
 #include <iostream>
 #include <thread>
 #include <optional>
 #include <cmath>
+#include <utility>
+
 
 class MissionState;
 
@@ -24,7 +27,6 @@ class MavlinkClient {
      *   MavlinkClient("tcp://192.168.65.254:5762")
      */ 
     explicit MavlinkClient(const char* link);
-
 
     /*
      * BLOCKING. Continues to try to upload the mission based on the passed through MissionConfig
@@ -47,26 +49,13 @@ class MavlinkClient {
      */
     bool uploadMissionUntilSuccess(std::shared_ptr<MissionState> state) const;
 
-    /*
-     * Get the plane's location information, which includes lat (deg), lng (deg),
-     * relative alt (m), and absolute alt (m)
-     */
-    mavsdk::Telemetry::Position getPosition() const;
-
-    /*
-     * Gets the plane's heading in degrees
-     */
-    double getHeading() const;
-
-    /*
-     * Gets the plane's airspeed in meters per second
-     */
-    float getAirspeed() const;
-
-    /*
-     * Gets the plane's groundspeed in meters per second
-     */
-    double getGroundspeed() const;
+    std::pair<double, double> latlng_deg();
+    double altitude_agl_m();
+    double altitude_msl_m();
+    double groundspeed_m_s();
+    double airspeed_m_s();
+    double heading_deg();
+    mavsdk::Telemetry::FlightMode flight_mode();
 
  private:
     mavsdk::Mavsdk mavsdk;
@@ -75,8 +64,17 @@ class MavlinkClient {
     std::unique_ptr<mavsdk::Mission> mission;
     std::unique_ptr<mavsdk::Geofence> geofence;
 
-    // TODO: set as config in obc config file
-    static constexpr const double TELEMETRY_UPDATE_RATE = 1.0;
+    struct Data {
+        double lat_deg {};
+        double lng_deg {};
+        double altitude_agl_m {};
+        double altitude_msl_m {};
+        double groundspeed_m_s {};
+        double airspeed_m_s {};
+        double heading_deg {};
+        mavsdk::Telemetry::FlightMode flight_mode {};
+    } data;
+    std::mutex data_mut;
 };
 
 #endif  // INCLUDE_NETWORK_MAVLINK_HPP_

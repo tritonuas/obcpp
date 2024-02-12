@@ -17,6 +17,7 @@
 #include <loguru.hpp>
 
 #include "utilities/locks.hpp"
+#include "utilities/logging.hpp"
 #include "core/mission_state.hpp"
 
 MavlinkClient::MavlinkClient(const char* link) {
@@ -52,18 +53,62 @@ MavlinkClient::MavlinkClient(const char* link) {
     this->geofence = std::make_unique<mavsdk::Geofence>(system);
 
     // Set position update rate (1 Hz)
+    // TODO: set the 1.0 update rate value in the obc config
     while (true) {
-        LOG_F(INFO, "Attempting to set telemetry polling rate to %f...", TELEMETRY_UPDATE_RATE);
-        const auto set_rate_result = this->telemetry->set_rate_position(TELEMETRY_UPDATE_RATE);
+        LOG_F(INFO, "Attempting to set telemetry polling rate to %f...", 1.0);
+        const auto set_rate_result = this->telemetry->set_rate_position(1.0);
         if (set_rate_result == mavsdk::Telemetry::Result::Success) {
-            LOG_F(INFO, "Successfully set mavlink polling rate to %f", TELEMETRY_UPDATE_RATE);
+            LOG_F(INFO, "Successfully set mavlink polling rate to %f", 1.0);
             break;
         }
 
         LOG_F(WARNING, "Setting mavlink polling rate to %f failed with code %d. Trying again...",
-            TELEMETRY_UPDATE_RATE, static_cast<int>(set_rate_result));
+            1.0, static_cast<int>(set_rate_result));
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
+
+    LOG_F(INFO, "Setting mavlink telemetry subscriptions");
+    // Set subscription functions to keep internal data struct up to date
+    this->telemetry->subscribe_position(
+        [this](mavsdk::Telemetry::Position position) {
+            VLOG_F(DEBUG, "Latitude: %f\nLongitude: %f\nAGL Alt: %f\nMSL Alt: %f)", 
+                position.latitude_deg, position.longitude_deg, 
+                position.relative_altitude_m, position.absolute_altitude_m);
+
+            Lock lock(this->data_mut);
+            this->data.altitude_agl_m = position.relative_altitude_m;
+            this->data.altitude_msl_m = position.absolute_altitude_m;
+            this->data.lat_deg = position.latitude_deg;
+            this->data.lng_deg = position.longitude_deg;
+        }
+    );
+    this->telemetry->subscribe_flight_mode(
+        [this](mavsdk::Telemetry::FlightMode flight_mode){
+            VLOG_F(DEBUG, "Mav Flight Mode: (%d)", static_cast<int>(flight_mode));
+
+            Lock lock(this->data_mut);
+            this->data.flight_mode = flight_mode;
+        }
+    );
+    this->telemetry->subscribe_fixedwing_metrics(
+        [this](mavsdk::Telemetry::FixedwingMetrics fwmets) {
+            VLOG_F(DEBUG, "Airspeed: %f", fwmets.airspeed_m_s);
+
+            Lock lock(this->data_mut);
+            this->data.airspeed_m_s = static_cast<double>(fwmets.airspeed_m_s);
+        }
+    );
+    this->telemetry->subscribe_velocity_ned(
+        [this](mavsdk::Telemetry::VelocityNed vned) {
+            const double groundspeed_m_s =
+                std::sqrt(std::pow(vned.east_m_s, 2) + std::pow(vned.north_m_s, 2));
+            
+            VLOG_F(DEBUG, "Groundspeed: %f", groundspeed_m_s);
+            
+            Lock lock(this->data_mut);
+            this->data.groundspeed_m_s = groundspeed_m_s;
+        }
+    );
 }
 
 bool MavlinkClient::uploadMissionUntilSuccess(std::shared_ptr<MissionState> state) const {
@@ -158,19 +203,37 @@ bool MavlinkClient::uploadMissionUntilSuccess(std::shared_ptr<MissionState> stat
     }
 }
 
-mavsdk::Telemetry::Position MavlinkClient::getPosition() const {
-    return this->telemetry->position();
+std::pair<double, double> MavlinkClient::latlng_deg() {
+    Lock lock(this->data_mut);
+    return {this->data.lat_deg, this->data.lng_deg};
 }
 
-double MavlinkClient::getHeading() const {
-    return this->telemetry->heading().heading_deg;
+double MavlinkClient::altitude_agl_m() {
+    Lock lock(this->data_mut);
+    return this->data.altitude_agl_m;
 }
 
-float MavlinkClient::getAirspeed() const {
-    return this->telemetry->fixedwing_metrics().airspeed_m_s;
+double MavlinkClient::altitude_msl_m() {
+    Lock lock(this->data_mut);
+    return this->data.altitude_msl_m;
 }
 
-double MavlinkClient::getGroundspeed() const {
-    const auto velocity_ned = this->telemetry->velocity_ned();
-    return std::sqrt(std::pow(velocity_ned.east_m_s, 2) + std::pow(velocity_ned.north_m_s, 2));
+double MavlinkClient::groundspeed_m_s() {
+    Lock lock(this->data_mut);
+    return this->data.groundspeed_m_s;
+}
+
+double MavlinkClient::airspeed_m_s() {
+    Lock lock(this->data_mut);
+    return this->data.airspeed_m_s;
+}
+
+double MavlinkClient::heading_deg() {
+    Lock lock(this->data_mut);
+    return this->data.heading_deg;
+}
+
+mavsdk::Telemetry::FlightMode MavlinkClient::flight_mode() {
+    Lock lock(this->data_mut);
+    return this->data.flight_mode;
 }
