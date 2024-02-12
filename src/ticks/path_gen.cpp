@@ -8,7 +8,7 @@
 #include <loguru.hpp>
 
 #include "protos/obc.pb.h"
-#include "ticks/takeoff_prep.hpp"
+#include "ticks/mission_upload.hpp"
 #include "ticks/ids.hpp"
 
 std::vector<GPSCoord> tempGenPath(std::shared_ptr<MissionState> state) {
@@ -48,10 +48,7 @@ Tick* PathGenTick::tick() {
     if (this->state->isInitPathValidated()) {
         // Path already validated, so move onto next state
 
-        // upload path to plane
-        this->state->getMav()->uploadMissionUntilSuccess(this->state->config);
-
-        return new TakeoffPrepTick(this->state);
+        return new MissionUploadTick(this->state);
     }
 
     if (this->path_generated) {

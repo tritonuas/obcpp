@@ -9,16 +9,16 @@
 // into the macro correctly
 
 // Logging levels for mav sdk mesages
-#define MAV_INFO 1
+#define MAV_INFO 3
 #define MAV_WARN 2
-#define MAV_ERR  3
+#define MAV_ERR  1
 
 // For any finer grained logging messages we might need to add
 #define TRACE 4
 
 time_t getUnixTime();
 
-std::pair<std::string,std::string> getLoggingFilenames(int argc, char* argv[]);
+std::pair<std::string, std::string> getLoggingFilenames(int argc, char* argv[]);
 
 void initLogging(int argc, char* argv[]);
 

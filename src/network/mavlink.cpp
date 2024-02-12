@@ -17,6 +17,7 @@
 #include <loguru.hpp>
 
 #include "utilities/locks.hpp"
+#include "core/mission_state.hpp"
 
 MavlinkClient::MavlinkClient(const char* link) {
     LOG_SCOPE_F(INFO, "Connecting to Mav at %s", link);
@@ -65,12 +66,18 @@ MavlinkClient::MavlinkClient(const char* link) {
     }
 }
 
-void MavlinkClient::uploadMissionUntilSuccess(MissionConfig& config) const {
+bool MavlinkClient::uploadMissionUntilSuccess(std::shared_ptr<MissionState> state) const {
     LOG_SCOPE_F(INFO, "Uploading Mav Mission");
 
-    auto mission = config.getCachedMission();
+    // Make sure everything is set up
+    auto mission = state->config.getCachedMission();
     if (!mission.has_value()) {
-        return;  // todo determine return type
+        LOG_F(ERROR, "Upload failed - no mission");
+        return false;  // todo determine return type
+    }
+    if (state->getInitPath().empty()) {
+        LOG_F(ERROR, "Upload failed - no initial path");
+        return false;
     }
 
     // Parse the flight boundary / geofence information
@@ -85,7 +92,7 @@ void MavlinkClient::uploadMissionUntilSuccess(MissionConfig& config) const {
 
     // Parse the waypoint information
     std::vector<mavsdk::Mission::MissionItem> mission_items;
-    for (const auto& coord : mission->waypoints()) {
+    for (const auto& coord : state->getInitPath()) {
         mavsdk::Mission::MissionItem new_item {};
         mission_items.push_back(mavsdk::Mission::MissionItem {
             .latitude_deg {coord.latitude()},
@@ -135,7 +142,7 @@ void MavlinkClient::uploadMissionUntilSuccess(MissionConfig& config) const {
                 // Check if it is uploaded
                 if (upload_status == mavsdk::Mission::Result::Success) {
                     LOG_F(INFO, "Successfully uploaded the mission. YIPIEE!");
-                    return;
+                    return true;
                 } else if (upload_status != mavsdk::Mission::Result::Next) {
                     // Neither success nor "next", signalling that there has been an error
                     LOG_F(WARNING, "Mission upload failed with code %d. Trying again...",

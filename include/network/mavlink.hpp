@@ -13,7 +13,7 @@
 #include <optional>
 #include <cmath>
 
-#include "core/mission_config.hpp"
+class MissionState;
 
 class MavlinkClient {
  public:
@@ -40,8 +40,12 @@ class MavlinkClient {
      * thread if async behavior is desired. TODO: consider if it would be better to have this
      * function only attempt one mission upload, and have the retrying behavior start from the
      * outside.
+     * 
+     * The only way this function fails is if there is no cached mission inside
+     * of the state, or if the initial path is empty, which will make it return false. This
+     * should never happen due to how the state machine is set up, but it is there just in case.
      */
-    void uploadMissionUntilSuccess(MissionConfig& mission) const;
+    bool uploadMissionUntilSuccess(std::shared_ptr<MissionState> state) const;
 
     /*
      * Get the plane's location information, which includes lat (deg), lng (deg),
