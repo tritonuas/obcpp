@@ -20,4 +20,4 @@ class PathValidateTick : public Tick {
     Tick* tick() override;
 };
 
-#endif  // include_ticks_path_gen_hpp_
+#endif  // INCLUDE_TICKS_PATH_VALIDATE_HPP_

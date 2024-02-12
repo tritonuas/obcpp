@@ -28,4 +28,4 @@ class PathGenTick : public Tick {
     void startPathGeneration();
 };
 
-#endif  // include_ticks_path_gen_hpp_
+#endif  // INCLUDE_TICKS_PATH_GEN_HPP_
