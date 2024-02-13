@@ -1,13 +1,12 @@
 #include <memory>
 #include <mutex>
 
-#include <loguru.hpp>
-
 #include "core/mission_config.hpp"
 #include "core/mission_state.hpp"
 #include "ticks/tick.hpp"
 #include "utilities/locks.hpp"
 #include "network/mavlink.hpp"
+#include "utilities/logging.hpp"
 
 // in future might add to this
 MissionState::MissionState() = default;

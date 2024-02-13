@@ -3,8 +3,7 @@
 #include <memory>
 #include <string>
 
-#include <loguru.hpp>
-
+#include "utilities/logging.hpp"
 #include "core/mission_state.hpp"
 #include "ticks/path_gen.hpp"
 #include "ticks/ids.hpp"

@@ -14,8 +14,6 @@
 #include <optional>
 #include <cmath>
 
-#include <loguru.hpp>
-
 #include "utilities/locks.hpp"
 #include "utilities/logging.hpp"
 #include "core/mission_state.hpp"
@@ -31,8 +29,7 @@ MavlinkClient::MavlinkClient(const char* link) {
             break;
         }
 
-        LOG_F(WARNING, "Mavlink connection failed with code %d. Trying again...",
-            static_cast<int>(conn_result));
+        LOG_S(WARNING) << "Mavlink connection failed: " << conn_result << ". Trying again...";
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
@@ -60,10 +57,13 @@ MavlinkClient::MavlinkClient(const char* link) {
         if (set_rate_result == mavsdk::Telemetry::Result::Success) {
             LOG_F(INFO, "Successfully set mavlink polling rate to %f", 1.0);
             break;
+        } else if (set_rate_result == mavsdk::Telemetry::Result::Unsupported) {
+            LOG_F(INFO, "Setting mavlink polling rate Unsupported, so skipping");
+            break;
         }
 
-        LOG_F(WARNING, "Setting mavlink polling rate to %f failed with code %d. Trying again...",
-            1.0, static_cast<int>(set_rate_result));
+        LOG_S(WARNING) << "Setting mavlink polling rate to 1.0 failed: "
+            << set_rate_result << ". Trying again...";
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
@@ -71,7 +71,7 @@ MavlinkClient::MavlinkClient(const char* link) {
     // Set subscription functions to keep internal data struct up to date
     this->telemetry->subscribe_position(
         [this](mavsdk::Telemetry::Position position) {
-            VLOG_F(DEBUG, "Latitude: %f\nLongitude: %f\nAGL Alt: %f\nMSL Alt: %f)", 
+            VLOG_F(DEBUG, "Latitude: %f\tLongitude: %f\tAGL Alt: %f\tMSL Alt: %f)", 
                 position.latitude_deg, position.longitude_deg, 
                 position.relative_altitude_m, position.absolute_altitude_m);
 
@@ -84,7 +84,9 @@ MavlinkClient::MavlinkClient(const char* link) {
     );
     this->telemetry->subscribe_flight_mode(
         [this](mavsdk::Telemetry::FlightMode flight_mode){
-            VLOG_F(DEBUG, "Mav Flight Mode: (%d)", static_cast<int>(flight_mode));
+            std::ostringstream stream;
+            stream << flight_mode;
+            VLOG_F(DEBUG, "Mav Flight Mode: %s", stream.str().c_str());
 
             Lock lock(this->data_mut);
             this->data.flight_mode = flight_mode;
@@ -156,8 +158,8 @@ bool MavlinkClient::uploadMissionUntilSuccess(std::shared_ptr<MissionState> stat
             break;
         }
 
-        LOG_F(WARNING, "Geofence failed to upload with code %d. Trying again...",
-            static_cast<int>(geofence_result));
+        LOG_S(WARNING) << "Geofence failed to upload: " 
+            << geofence_result << ". Trying again...";
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     while (true) {
@@ -190,8 +192,8 @@ bool MavlinkClient::uploadMissionUntilSuccess(std::shared_ptr<MissionState> stat
                     return true;
                 } else if (upload_status != mavsdk::Mission::Result::Next) {
                     // Neither success nor "next", signalling that there has been an error
-                    LOG_F(WARNING, "Mission upload failed with code %d. Trying again...",
-                        static_cast<int>(upload_status));
+                    LOG_S(WARNING) << "Mission upload failed: "
+                        << upload_status << ". Trying again...";
                     break;
                 }
             }

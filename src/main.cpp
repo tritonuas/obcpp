@@ -2,8 +2,6 @@
 #include <chrono>
 #include <string>
 
-#include <loguru.hpp>
-
 #include "core/obc.hpp"
 #include "utilities/constants.hpp"
 #include "utilities/logging.hpp"

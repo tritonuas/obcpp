@@ -9,8 +9,6 @@
 #include <filesystem>
 #include <utility>
 
-#include <loguru.hpp>
-
 time_t getUnixTime() {
     const auto now = std::chrono::system_clock::now();
     return std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();

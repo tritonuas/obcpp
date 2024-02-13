@@ -4,8 +4,7 @@
 #include <string>
 #include <future>
 
-#include <loguru.hpp>
-
+#include "utilities/logging.hpp"
 #include "core/mission_state.hpp"
 #include "ticks/ids.hpp"
 #include "ticks/mission_prep.hpp"

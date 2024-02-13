@@ -5,11 +5,10 @@
 #include <future>
 #include <chrono>
 
-#include <loguru.hpp>
-
 #include "protos/obc.pb.h"
 #include "ticks/path_validate.hpp"
 #include "ticks/ids.hpp"
+#include "utilities/logging.hpp"
 
 std::vector<GPSCoord> tempGenPath(std::shared_ptr<MissionState> state) {
     // TODO: replace this with the actual path generation function
