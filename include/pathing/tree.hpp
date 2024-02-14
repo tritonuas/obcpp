@@ -130,7 +130,8 @@ class RRTTree {
      *  Add a node to the RRTTree.
      *  If adding the first node to the tree, connectTo can be anything.
      */
-    RRTNode* addNode(RRTNode* anchor_node, const RRTPoint& new_point, const RRTOption& option);  // NOLINT
+    RRTNode* addNode(RRTNode* anchor_node, const RRTPoint& new_point,
+                     const RRTOption& option);  // NOLINT
 
     /*
      * Delete an edge between 'from' and 'toPrev', and create a new edge
@@ -257,6 +258,50 @@ class RRTTree {
      * @param search_radius  ==> the radius to search for nodes to rewire
      */
     void RRTStarRecursive(RRTNode* current_node, RRTNode* sample, double rewire_radius);
+
+    /**
+     * Fills out an array of List<Node*> and path lengths to the goal using depth first search
+     * TODO - test
+     *
+     * @param options   ==> list of options to fill
+     * @param node      ==> current node to traverse
+     * @param parent    ==> the parent of the current node
+     * @param current_length ==> the current length of the path
+     * @param current_path   ==> the current path being traced by DFS
+     */
+    void fillPathOptionsRecursive(std::vector<std::pair<std::vector<RRTNode*>, double>>& options,
+                                  RRTNode* node, RRTNode* parent, double current_length,
+                                  std::vector<RRTNode*>& current_path) {
+        // parent should never be nullptr, but for safety
+        if (node == nullptr || parent == nullptr) {
+            return;
+        }
+
+        // find the edge between the parent and current node
+        RRTEdge* edge = getEdge(parent->getPoint(), node->getPoint());
+
+        if (edge == nullptr) {
+            return;
+        }
+
+        double edge_cost = edge->getCost();
+
+        current_path.push_back(node);
+
+        if (airspace.isPointInGoal(node->getPoint().coord)) {
+            // add the path to the goal (deep copy of current_path)
+            options.push_back(std::make_pair(current_path, current_length + edge_cost));
+            current_path.pop_back();
+            return;
+        }
+
+        for (RRTNode* neighbor : node->getReachable()) {
+            fillPathOptionsRecursive(options, neighbor, node, current_length + edge_cost,
+                                     current_path);
+        }
+
+        current_path.pop_back();
+    }
 };
 
 #endif  // INCLUDE_PATHING_TREE_HPP_

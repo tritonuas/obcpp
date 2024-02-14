@@ -284,7 +284,43 @@ void RRTTree::fillOptions(std::vector<std::pair<RRTNode*, RRTOption>>* options, 
 
 std::vector<XYZCoord> RRTTree::getPathToGoal(bool without_cache) {
     if (without_cache) {
-        return {};  // TODO
+        std::vector<std::pair<std::vector<RRTNode*>, double>> path_options{};
+
+        // run DFS
+        for (RRTNode* child : root->getReachable()) {
+            std::vector<RRTNode*> current_path;
+            fillPathOptionsRecursive(path_options, child, root, 0, current_path);
+        }
+
+        // if there are no paths, then return an empty path
+        if (path_options.size() == 0) {
+            return {};
+        }
+
+        // sort path by shortest path length
+        std::sort(path_options.begin(), path_options.end(),
+                  [](auto a, auto b) { return a.second < b.second; });
+
+        // gets the first path in path_options
+        std::vector<RRTNode*> path_nodes = path_options[0].first;
+
+        // generate the path
+        std::vector<XYZCoord> path;
+
+        for (int i = 0; i < path_nodes.size() - 1; i++) {
+            RRTNode* node1 = path_nodes[i];
+            RRTNode* node2 = path_nodes[i + 1];
+
+            RRTEdge* edge = getEdge(node1->getPoint(), node2->getPoint());
+
+            // fails to connect nodes should probably throw error because this should never happen
+            if (edge == nullptr) {
+                return {};
+            }
+
+            path.insert(path.end(), edge->getPath().begin(), edge->getPath().end());
+        }
+        return path;
     }
 
     if (!airspace.isGoalFound() || path_to_goal.size() == 0) {
