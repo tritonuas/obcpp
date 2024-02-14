@@ -12,55 +12,11 @@ using json = nlohmann::json;
 
 LucidCameraConfig::LucidCameraConfig(json config) {
     this->configJson = config;
-    setConfig(this->configJson);
-}
-
-void LucidCameraConfig::setConfig(json config)
-{
-    this->Key_AcquisitionFrameRateEnable = CameraConfigMetadata<bool>("Key_AcquisitionFrameRateEnable", config["Key_AcquisitionFrameRateEnable"], true, false);
-    this->Key_AcquisitionFrameRate = CameraConfigMetadata<float>("Key_AcquisitionFrameRate", config["Key_AcquisitionFrameRate"], true, false);
-    this->Key_AcquisitionMode = CameraConfigMetadata<std::string>("Key_AcquisitionMode", config["Key_AcquisitionMode"], true, false);
-
-    this->Key_ExposureAuto = CameraConfigMetadata<std::string>("Key_ExposureAuto", config["Key_ExposureAuto"], true, false);
-    if (this->Key_ExposureAuto.getValue() == "Off")
-    {
-        this->Key_ExposureTime = CameraConfigMetadata<float>("Key_ExposureTime", config["Key_ExposureTime"], true, false);
-    }
-    else
-    {
-        std::cout << "Expouser set to Auto, skipping expouse time";
-    }
-
-    this->Key_GainAuto = CameraConfigMetadata<std::string>("Key_GainAuto", config["Key_GainAuto"], true, false);
-    if (this->Key_GainAuto.getValue() == "Off")
-    {
-        this->Key_Gain = CameraConfigMetadata<float>("Key_Gain", config["Key_Gain"], true, false);
-    }
-    else
-    {
-        std::cout << "Gain set to Auto, skipping.";
-    }
-    this->Key_TriggerSource = CameraConfigMetadata<std::string>("Key_TriggerSource", config["Key_TriggerSource"], true, false);
-    this->Key_TriggerMode = CameraConfigMetadata<std::string>("Key_TriggerMode", config["Key_TriggerMode"], true, false);
-    this->Key_TriggerArmed = CameraConfigMetadata<bool>("Key_TriggerArmed", config["Key_TriggerArmed"], false, false);
-    this->Key_TriggerSelector = CameraConfigMetadata<std::string>("Key_TriggerSelector", config["Key_TriggerSelector"], true, false);
-    // idk what to do with this
-    // this->Key_TriggerSoftware = CameraConfigMetadata<bool>("Key_TriggerSoftware", config["Key_TriggerSoftware"], false, true);
-    this->Key_UserSetSelector = CameraConfigMetadata<std::string>("Key_UserSetSelector", config["Key_UserSetSelector"], true, false);
-    // idk what to do with this
-    // this->Key_UserSetLoad = CameraConfigMetadata<bool>("Key_UserSetLoad", config["Key_UserSetLoad"], false, true);
-    this->Key_PixelFormat = CameraConfigMetadata<std::string>("Key_PixelFormat", config["Key_PixelFormat"], true, false);
-    this->Key_GevPersistentARPConflictDetectionEnable = CameraConfigMetadata<bool>("Key_GevPersistentARPConflictDetectionEnable", config["Key_GevPersistentARPConflictDetectionEnable"], true, false);
-    this->Key_BalanceWhiteEnable = CameraConfigMetadata<bool>("Key_BalanceWhiteEnable", config["Key_BalanceWhiteEnable"], true, false);
-    this->Key_Gamma = CameraConfigMetadata<float>("Key_Gamma", config["Key_Gamma"], true, false);
-    this->Key_BlackLevel = CameraConfigMetadata<float>("Key_BlackLevel", config["Key_BlackLevel"], true, false);
-    this->Key_BalanceWhiteAuto = CameraConfigMetadata<std::string>("Key_BalanceWhiteAuto", config["Key_BalanceWhiteAuto"], true, false);
 }
 
 void LucidCameraConfig::updateConfig(json newSetting)
 {
     this->configJson = newSetting;
-    setConfig(this->configJson);
 }
 
 
@@ -115,10 +71,18 @@ int LucidCamera::connect()
         }
         this->device = this->system->CreateDevice(deviceInfos[0]);
 
-        // run example
-        std::cout << "Commence example\n\n";
+        // run configuration
+        std::cout << "Trigger configuration start\n\n";
         configureTrigger();
-        std::cout << "\nExample complete\n";
+        std::cout << "\nTrigger configured finished\n";
+
+        std::cout << "Verifying connection\n\n";
+
+        if (!verifyConnection()) 
+        {
+            std::cout << "Connection fail!\n\n";
+            throw std::exception();
+        }
 
         // TODO: add to destructor
         // pSystem->DestroyDevice(pDevice);
@@ -143,12 +107,55 @@ int LucidCamera::connect()
 
 void LucidCamera::configureTrigger() 
 {
-    return;
+    json configJson = config->getConfig();
+
+    for (auto it = configJson.begin(); it != configJson.end(); it++)
+    {
+        std::string key = it.key();
+
+        if (it.value().type() == json::value_t::number_integer)
+        {
+            int value = it.value();
+            Arena::SetNodeValue<int64_t>(
+                this->device->GetNodeMap(),
+                key.c_str(),
+                value);
+        }
+        else if (it.value().type() == json::value_t::boolean)
+        {
+            bool value = it.value();
+            Arena::SetNodeValue<bool>(
+                this->device->GetNodeMap(),
+                key.c_str(),
+                value);
+        }
+        else if (it.value().type() == json::value_t::number_float)
+        {
+
+            float value_float = it.value();
+            double value = value_float;
+
+            Arena::SetNodeValue<double>(
+                this->device->GetNodeMap(),
+                key.c_str(),
+                value);
+        }
+        else if (it.value().type() == json::value_t::string)
+        {
+            std::string value = it.value();
+            Arena::SetNodeValue<GenICam::gcstring>(
+                this->device->GetNodeMap(),
+                key.c_str(),
+                value.c_str());
+        } else {
+            std::cout << "Unkown type of varible. Skipping " << key << std::endl;
+        }
+    }
 }
 
-void LucidCamera::verifyConnection()
+bool LucidCamera::verifyConnection()
 {
-    return;
+    return this->device->IsConnected();
 }
 
 ImageData * LucidCamera::takePicture()
