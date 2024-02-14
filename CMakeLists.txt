@@ -101,20 +101,6 @@ target_add_matplot(playground)
 target_add_protobuf(playground)
 target_add_loguru(playground)
 
-# mavsdk
-add_executable(mavsdk "tests/integration/mavsdk.cpp")
-target_include_directories(mavsdk PRIVATE ${INCLUDE_DIRECTORY})
-target_add_protobuf(mavsdk)
-target_add_torch(mavsdk)
-# target_add_arena(${PROJECT_NAME}) # Tyler: currently broken, so we had to comment this out
-target_add_torchvision(mavsdk)
-target_add_json(mavsdk)
-target_add_opencv(mavsdk)
-target_add_httplib(mavsdk)
-target_add_mavsdk(mavsdk)
-target_add_matplot(mavsdk)
-target_add_loguru(mavsdk)
-
 # load_torchvision_model
 add_executable(load_torchvision_model tests/integration/load_torchvision_model.cpp)
 target_add_torch(load_torchvision_model)
@@ -122,7 +108,7 @@ target_add_torchvision(load_torchvision_model)
 
 # mavlink-client
 add_executable(mavlink_client ${SOURCES} "tests/integration/mavlink_client.cpp")
-target_include_directories(mavsdk PRIVATE ${INCLUDE_DIRECTORY})
+target_include_directories(mavlink_client PRIVATE ${INCLUDE_DIRECTORY})
 target_add_protobuf(mavlink_client)
 target_add_torch(mavlink_client)
 target_add_torchvision(mavlink_client)
