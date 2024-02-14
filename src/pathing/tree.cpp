@@ -19,9 +19,9 @@ std::size_t EdgeHashFunction::operator()(const std::pair<RRTNode*, RRTNode*>& no
     return c1;
 }
 
-RRTNode::RRTNode(RRTPoint point, double cost) : point{point}, cost{cost} {}
+RRTNode::RRTNode(const RRTPoint &point, double cost) : point{point}, cost{cost} {}
 
-RRTNode::RRTNode(RRTPoint point, double cost, RRTNodeList reachable)
+RRTNode::RRTNode(const RRTPoint &point, double cost, RRTNodeList &reachable)
     : point{point}, cost{cost}, reachable{reachable} {}
 
 bool RRTNode::operator==(const RRTNode& other_node) const {
@@ -30,7 +30,7 @@ bool RRTNode::operator==(const RRTNode& other_node) const {
 
 RRTPoint RRTNode::getPoint() { return this->point; }
 
-void RRTNode::setReachable(RRTNodeList reachable) {
+void RRTNode::setReachable(const RRTNodeList &reachable) {
     this->reachable = reachable;
     for (RRTNode* node : reachable) {
         node->parent = this;
@@ -45,6 +45,7 @@ void RRTNode::addReachable(RRTNode* new_node) {
 void RRTNode::removeReachable(RRTNode* old_node) {
     for (int i = 0; i < reachable.size(); i++) {
         if (reachable.at(i) == old_node) {
+            // TODO - UNSAFE
             reachable.at(i)->parent = nullptr;
             reachable.erase(reachable.begin() + i);
         }
@@ -59,7 +60,10 @@ void RRTNode::setCost(double new_cost) { this->cost = new_cost; }
 
 RRTNode* RRTNode::getParent() const { return this->parent; }
 
-RRTEdge::RRTEdge(RRTNode* from, RRTNode* to, std::vector<XYZCoord> path, double cost)
+void RRTNode::setParent(RRTNode* new_parent) { this->parent = new_parent; }
+/** RRTEdge */
+
+RRTEdge::RRTEdge(RRTNode* from, RRTNode* to, const std::vector<XYZCoord> &path, double cost)
     : from{from}, to{to}, path{path}, cost{cost} {}
 
 bool RRTEdge::operator==(const RRTEdge& other_edge) const {
@@ -101,8 +105,8 @@ RRTTree::~RRTTree() {
 }
 
 // TODO - convert from old to new
-RRTNode* RRTTree::addNode(RRTNode* anchor_node, const RRTPoint& new_point,
-                          const RRTOption& option) {
+RRTNode* RRTTree::addNode(RRTNode* anchor_node, const RRTPoint& new_point, const RRTOption& option,
+                          int goal_index) {
     // checking if path is valid
 
     // debugging text
@@ -124,25 +128,23 @@ RRTNode* RRTTree::addNode(RRTNode* anchor_node, const RRTPoint& new_point,
     }
 
     // if a valid path was found, it will add the node to the tree
-    RRTNode* new_node = new RRTNode(new_point, LARGE_COST);
+    RRTNode* new_node = new RRTNode(new_point, anchor_node->getCost() + option.length);
 
     // creating new edge
     std::pair<RRTNode*, RRTNode*> edgePair(anchor_node, new_node);
     RRTEdge new_edge = RRTEdge(anchor_node, new_node, path, option.length);
-    edge_map.insert(std::make_pair(edgePair, new_edge));
+    edge_map.emplace(edgePair, new_edge);
 
     // inserting the node into the tree
-    std::pair<RRTPoint, RRTNode*> insertNode(new_node->getPoint(), new_node);
-    node_map.insert(insertNode);
+    node_map.emplace(new_node->getPoint(), new_node);
 
     // changing state of its parent
     anchor_node->addReachable(new_node);
 
     // if goal is found, then it will retrieve a naive path
-    if (airspace.isPointInGoal(new_point.coord)) {
-        current_head = new_node;
-        airspace.setGoalfound();
-        if (airspace.isGoalFound()) {
+    if (airspace.isPointInGoal(new_point.coord, goal_index)) {
+        airspace.setGoalfound(goal_index + 1);
+        if (airspace.isPathComplete()) {
             retreivePathByNode(new_node, new_node->getParent());
         }
     }
@@ -150,39 +152,43 @@ RRTNode* RRTTree::addNode(RRTNode* anchor_node, const RRTPoint& new_point,
     return new_node;
 }
 
-void RRTTree::rewireEdge(RRTNode* current_node, RRTNode* previous_connection,
-                         RRTNode* new_connection, std::vector<XYZCoord> path, double cost) {
+void RRTTree::rewireEdge(RRTNode* current_node, RRTNode* previous_parent, RRTNode* new_parent,
+                         const std::vector<XYZCoord> &path, double cost) {
     // if the new_node doesn't have a parent, then this code will crash
-    std::pair<RRTNode*, RRTNode*> previous_pair(current_node, previous_connection);
-    std::pair<RRTNode*, RRTNode*> new_pair(current_node, new_connection);
+    std::pair<RRTNode*, RRTNode*> previous_pair(previous_parent, current_node);
+    std::pair<RRTNode*, RRTNode*> new_pair(new_parent, current_node);
 
-    RRTEdge new_edge = RRTEdge(current_node, new_connection, path, cost);
-    std::pair<std::pair<RRTNode*, RRTNode*>, RRTEdge> edgePair(new_pair, new_edge);
+    RRTEdge new_edge = RRTEdge(new_parent, current_node, path, cost);
     // replace prev node in "from" node's neighbor list with new node
 
     // based on testing, if current_point and new_connection are already connected
     // there will be duplicate edges in the edge_map
-    current_node->addReachable(new_connection);
-    current_node->removeReachable(previous_connection);
+
+    // ORDER MATTERS, REMOVE THEN ADD TO PRESERVE THE CURR_NODE HAS A PARENT
+    previous_parent->removeReachable(current_node);
+    new_parent->addReachable(current_node);
+    // current_node->setParent(new_parent);
 
     // remove old edge from edge_map, add the new edge
     edge_map.erase(previous_pair);
-    edge_map.insert(edgePair);
+    edge_map.emplace(new_pair, new_edge);
+    current_node->setCost(new_parent->getCost() + cost);
 
     // remove old node from node_map, add the new node
-    node_map.insert(std::make_pair(new_connection->getPoint(), new_connection));
-    node_map.erase(previous_connection->getPoint());
+    // node_map.insert(std::make_pair(new_connection->getPoint(), new_connection));
+    // node_map.erase(previous_parent->getPoint());
 }
 
-RRTNode* RRTTree::getNode(RRTPoint point) {
-    if (node_map.count(point)) {
+RRTNode* RRTTree::getNode(const RRTPoint &point) {
+    if (node_map.count(point) > 0) {
         return node_map.at(point);
     } else {
         return nullptr;
     }
 }
 
-RRTEdge* RRTTree::getEdge(RRTPoint from, RRTPoint to) {
+// BROKEN
+RRTEdge* RRTTree::getEdge(const RRTPoint &from, const RRTPoint &to) {
     RRTNode* node1 = getNode(from);
     RRTNode* node2 = getNode(to);
     if (node1 == nullptr || node2 == nullptr) {
@@ -199,7 +205,9 @@ RRTEdge* RRTTree::getEdge(RRTPoint from, RRTPoint to) {
 
 RRTNode* RRTTree::getRoot() const { return this->root; }
 
-RRTPoint RRTTree::getGoal() const { return this->airspace.getGoal(); }
+RRTPoint RRTTree::getGoal() const { return airspace.getGoal(); }
+
+RRTPoint RRTTree::getGoal(int index) const { return airspace.getGoal(index); }
 
 Environment RRTTree::getAirspace() const { return this->airspace; }
 
@@ -220,6 +228,7 @@ RRTPoint RRTTree::getRandomPoint(double search_radius, bool use_goal) {
 
     const XYZCoord displacement_vector = sample.coord - nearest_point.coord;
 
+    // TODO - use some heuristic to make this angle as optimal as possible
     const double angle = std::atan2(displacement_vector.y, displacement_vector.x);
 
     // distance between the vectors, if it is less than the search radius, then it will return the
@@ -311,19 +320,15 @@ std::vector<XYZCoord> RRTTree::getPathToGoal(bool without_cache) {
             RRTNode* node1 = path_nodes[i];
             RRTNode* node2 = path_nodes[i + 1];
 
-            RRTEdge* edge = getEdge(node1->getPoint(), node2->getPoint());
+            RRTEdge edge = edge_map.at(std::make_pair(node1, node2));
 
             // fails to connect nodes should probably throw error because this should never happen
-            if (edge == nullptr) {
-                return {};
-            }
-
-            path.insert(path.end(), edge->getPath().begin(), edge->getPath().end());
+            path.insert(path.end(), edge.getPath().begin(), edge.getPath().end());
         }
         return path;
     }
 
-    if (!airspace.isGoalFound() || path_to_goal.size() == 0) {
+    if (!airspace.isPathComplete() || path_to_goal.size() == 0) {
         return {};  // should probably throw an error
     }
 
@@ -331,7 +336,7 @@ std::vector<XYZCoord> RRTTree::getPathToGoal(bool without_cache) {
 }
 
 void RRTTree::RRTStar(RRTNode* sample, double rewire_radius) {
-    RRTStarRecursive(root, sample, rewire_radius);
+    RRTStarRecursive(current_head, sample, rewire_radius);
 }
 
 void RRTTree::retreivePathByNode(RRTNode* node, RRTNode* parent) {
@@ -341,8 +346,9 @@ void RRTTree::retreivePathByNode(RRTNode* node, RRTNode* parent) {
 
     retreivePathByNode(parent, parent->getParent());
 
+    // STEG FAULS GET EDGE, SOMETHING IS WRONG IN THE EDGE MAP OR GET NODE
     // retreive's path from the edge_map
-    std::vector<XYZCoord> edge_path = getEdge(parent->getPoint(), node->getPoint())->getPath();
+    std::vector<XYZCoord> edge_path = edge_map.at(std::make_pair(parent, node)).getPath();
 
     // since this is at the end of the recuraive chain, it adds to the end of the path_to_goal
     path_to_goal.insert(path_to_goal.end(), edge_path.begin(), edge_path.end());
@@ -387,14 +393,14 @@ void RRTTree::RRTStarRecursive(RRTNode* current_node, RRTNode* sample, double re
 
         // get the dubins options
         std::vector<RRTOption> options =
-            dubins.allOptions(current_node->getPoint(), node->getPoint(), true);
+            dubins.allOptions(sample->getPoint(), node->getPoint(), true);
 
         // for each option
         for (const RRTOption& option : options) {
             // get the new cost
             if (std::isnan(option.length) ||
                 option.length == std::numeric_limits<double>::infinity()) {
-                continue;
+                break;
             }
 
             // check if new path is valid
@@ -406,14 +412,14 @@ void RRTTree::RRTStarRecursive(RRTNode* current_node, RRTNode* sample, double re
             }
 
             // if the node is uncompetitive, continue
-            double new_cost = current_node->getCost() + option.length;
+            double new_cost = sample->getCost() + option.length;
 
             double cost = node->getCost();
 
             // if the new cost is less than the current cost
             if (new_cost < cost) {
                 // rewire the edge
-                rewireEdge(node, current_node, sample, path, new_cost);
+                rewireEdge(node, current_node, sample, path, option.length);
             }
         }
     }

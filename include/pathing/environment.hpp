@@ -3,6 +3,7 @@
 
 #include <utility>
 #include <vector>
+#include <cmath>
 
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
@@ -55,10 +56,22 @@ class Environment {
      *
      * @param point the point to check
      * @return true if the point is in the goal region, false otherwise
+     *  TODO - breaks on initial
      */
-    bool isPointInGoal(XYZCoord point) const {
-        double x = point.x - getGoal().coord.x;
-        double y = point.y - getGoal().coord.y;
+    bool isPointInGoal(const XYZCoord& point) const {
+        return isPointInGoal(point, goals_found - 1);
+    }
+
+    /**
+     * Check if a point is in the goal region
+     *
+     * @param point the point to check
+     * @param goal_index the index of the goal to check
+     * @return true if the point is in the goal region, false otherwise
+     */
+    bool isPointInGoal(const XYZCoord& point, int goal_index) const {
+        double x = point.x - getGoal(goal_index).coord.x;
+        double y = point.y - getGoal(goal_index).coord.y;
         double norm = sqrt(x * x + y * y);
         return norm <= goal_radius;
     }
@@ -69,6 +82,13 @@ class Environment {
      * @return the goal point
      */
     RRTPoint getGoal() const { return goals[goals_found]; }
+
+    /**
+     * Get the goal point from given index
+     *
+     * @return the goal point
+     */
+    RRTPoint getGoal(int index) const { return goals[index]; }
 
     /**
      * Generate a random point in the valid region
@@ -102,14 +122,28 @@ class Environment {
      *
      * @return true if the goal has been found, false otherwise
      */
-    int isGoalFound() const { return goals_found == goals.size(); }
+    bool isPathComplete() const { return goals_found == goals.size(); }
+
+    /**
+     * returns number of goals found
+     *
+     * @return number of goals found
+     */
+    int getGoalsFound() const { return goals_found; }
 
     /**
      * Sets found_goal to true
      *
-     * NOW UNSAFE, MAY INCREMENT FOUNDGOAL MULTIPLE TIMES
+     * 
      */
-    void setGoalfound() { goals_found++; }
+    void setGoalfound(int index) { goals_found = std::max(goals_found, index); }
+
+    /**
+     * Get number of Goals
+     *
+     * @return number of goals
+     */
+    int getNumGoals() const { return goals.size(); }
 
  private:
     const Polygon valid_region;         // boundary of the valid map

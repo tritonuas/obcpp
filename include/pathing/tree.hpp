@@ -16,8 +16,8 @@ typedef XYZCoord Vector;
 
 class RRTNode {
  public:
-    RRTNode(RRTPoint point, double cost);
-    RRTNode(RRTPoint point, double cost, RRTNodeList reachable);
+    RRTNode(const RRTPoint& point, double cost);
+    RRTNode(const RRTPoint& point, double cost, RRTNodeList& reachable);  // NOLINT
     //  ~RRTNode();
 
     /*
@@ -33,7 +33,7 @@ class RRTNode {
     /*
      *  Set the reachable (neighbors) list for this RRTNode object
      */
-    void setReachable(RRTNodeList reachable);
+    void setReachable(const RRTNodeList& reachable);
 
     /*
      *  Add a new node to the end of this node's reachable list.
@@ -69,6 +69,13 @@ class RRTNode {
      */
     RRTNode* getParent() const;
 
+    /**
+     * Set the parent of this node
+     *
+     * @param new_parent pointer to new parent node
+     */
+    void setParent(RRTNode* new_parent);
+
  private:
     RRTPoint point;
     RRTNodeList reachable{};
@@ -87,7 +94,7 @@ class EdgeHashFunction {
 
 class RRTEdge {
  public:
-    RRTEdge(RRTNode* from, RRTNode* to, std::vector<Vector> path, double cost);
+    RRTEdge(RRTNode* from, RRTNode* to, const std::vector<Vector>& path, double cost);
 
     /*
      *  Equality overload method for RRTEdge comparison
@@ -130,28 +137,26 @@ class RRTTree {
      *  Add a node to the RRTTree.
      *  If adding the first node to the tree, connectTo can be anything.
      */
-    RRTNode* addNode(RRTNode* anchor_node, const RRTPoint& new_point,
-                     const RRTOption& option);  // NOLINT
+    RRTNode* addNode(RRTNode* anchor_node, const RRTPoint& new_point, const RRTOption& option,
+                     int goal_index);
 
     /*
-     * Delete an edge between 'from' and 'toPrev', and create a new edge
-     * between 'from' to 'toNew'. Add 'toNew' to the node_map, and delete
-     * 'toPrev'.
+
      */
     void rewireEdge(RRTNode* current_point, RRTNode* previous_connection, RRTNode* new_connection,
-                    std::vector<Vector> path, double cost);
+                    const std::vector<Vector>& path, double cost);
 
     /*
      *  Returns a pointer to the node in the tree corresponding to the RRTPoint.
      *  If the node doesn't exist in the tree, returns nullptr.
      */
-    RRTNode* getNode(RRTPoint point);
+    RRTNode* getNode(const RRTPoint& point);
 
     /*
      *  Returns a pointer to the edge in the tree corresponding to the point
      * pair. If the edge doesn't exist in the tree, returns nullptr.
      */
-    RRTEdge* getEdge(RRTPoint from, RRTPoint to);
+    RRTEdge* getEdge(const RRTPoint& from, const RRTPoint& to);
 
     /**
      * Returns a pointer to the root node
@@ -166,6 +171,13 @@ class RRTTree {
      * @return RRTPoint goal point
      */
     RRTPoint getGoal() const;
+
+    /**
+     * Get goal point
+     *
+     * @return RRTPoint goal point
+     */
+    RRTPoint getGoal(int index) const;
 
     /**
      * returns the Environment object
@@ -221,6 +233,31 @@ class RRTTree {
      */
     void RRTStar(RRTNode* sample, double rewire_radius);
 
+    /**
+     * changes current_head to the goal node with the closest length
+     * TODO - ensure that the path is the most efficient
+     * @param goal_index the current_goal index to find the goal to
+     */
+    void changeCurrentHead(int goal_index) {
+        // gets the nodes in the goal
+        std::vector<RRTNode*> nodes = getNodesInGoal(goal_index);
+
+        if (nodes.size() == 0) {
+            return;
+        }
+
+        // finds the node with the shortest path
+        RRTNode* goal = nodes[0];
+
+        for (RRTNode* node : nodes) {
+            if (node->getCost() < goal->getCost()) {
+                goal = node;
+            }
+        }
+
+        current_head = goal;
+    }
+
  private:
     RRTNode* root;
     RRTNode* current_head;
@@ -232,6 +269,35 @@ class RRTTree {
     Dubins dubins;
 
     double distance_to_goal;  // not used at the moment
+
+    /**
+     * Returns all the nodes in the specified goal area recursively
+     *
+     * @param goal_index the index of the goal to search for
+     */
+    std::vector<RRTNode*> getNodesInGoal(int goal_index) {
+        std::vector<RRTNode*> nodes;
+        getNodesInGoalRecursive(root, goal_index, nodes);
+        return nodes;
+    }
+
+    /**
+     * Recursive helper for getNodesInGoal
+     *
+     * @param node the current node to search
+     * @param goal_index the index of the goal to search for
+     * @param nodes the list of nodes to add to
+     */
+    void getNodesInGoalRecursive(RRTNode* node, int goal_index, std::vector<RRTNode*>& nodes) {
+        if (airspace.isPointInGoal(node->getPoint().coord, goal_index)) {
+            nodes.push_back(node);
+            return;
+        }
+
+        for (RRTNode* neighbor : node->getReachable()) {
+            getNodesInGoalRecursive(neighbor, goal_index, nodes);
+        }
+    }
 
     /**
      * When the goal is found, recursively add the path constructed

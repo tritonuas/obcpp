@@ -51,24 +51,39 @@ class RRT {
      * there are
      */
     void run() {
-        for (int _ = 0; _ < num_iterations; _++) {
+        // divide the total iterations by the number of goals
+        int total_goals = tree.getAirspace().getNumGoals();
+        int tries = num_iterations / total_goals;
+        int next_goal = 1;
+
+        for (int current_goal_index = 0; current_goal_index < total_goals; current_goal_index++) {
             // base case ==> if the goal is found, stop
-            if (tree.getAirspace().isGoalFound()) {
-                break;
+            for (int __ = 0; __ < tries; __++) {
+                // if (tree.getAirspace().isPathComplete()) {
+                //     next_goal++;
+                //     break;
+                // }
+
+                // generate a sample point
+                const RRTPoint sample = generateSamplePoint();
+
+                // returns all dubins options from the tree to the sample
+                std::vector<std::pair<RRTNode *, RRTOption>> options = tree.pathingOptions(sample);
+
+                // returns true if the node is successfully added to the tree
+                RRTNode *new_node = parseOptions(options, sample, current_goal_index);
+
+                if (new_node != nullptr) {
+                    optimizeTree(new_node);
+                }
             }
 
-            // generate a sample point
-            const RRTPoint sample = generateSamplePoint();
+            // changes the current head to make the tree searching more efficient
+            tree.changeCurrentHead(current_goal_index);
 
-            // returns all dubins options from the tree to the sample
-            std::vector<std::pair<RRTNode *, RRTOption>> options = tree.pathingOptions(sample);
-
-            // returns true if the node is successfully added to the tree
-            RRTNode *new_node = parseOptions(options, sample);
-
-            if (new_node != nullptr) {
-                optimizeTree(new_node);
-            }
+            // if (tree.getAirspace().isPathComplete()) {
+            //     break;
+            // }
         }
     }
 
@@ -81,7 +96,7 @@ class RRT {
      * not added)
      */
     RRTNode *parseOptions(const std::vector<std::pair<RRTNode *, RRTOption>> &options,
-                          const RRTPoint &sample) {
+                          const RRTPoint &sample, int goal_index) {
         for (const auto &[node, option] : options) {
             /*
              *  stop if
@@ -98,7 +113,7 @@ class RRT {
             }
 
             // else, add the node to the
-            RRTNode *sucessful_addition = tree.addNode(node, sample, option);
+            RRTNode *sucessful_addition = tree.addNode(node, sample, option, goal_index);
 
             if (sucessful_addition != nullptr) {
                 return sucessful_addition;
@@ -122,7 +137,9 @@ class RRT {
      *
      * @return  ==> list of 2-vectors to the goal region
      */
-    std::vector<XYZCoord> getPointsGoal() { return tree.getPathToGoal(); }
+    std::vector<XYZCoord> getPointsGoal(bool without_cache) {
+        return tree.getPathToGoal(without_cache);
+    }
 
  private:
     RRTTree tree;
