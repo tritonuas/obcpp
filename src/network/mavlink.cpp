@@ -150,6 +150,11 @@ bool MavlinkClient::uploadMissionUntilSuccess(std::shared_ptr<MissionState> stat
     }
 
     // Upload to the plane
+    // For some reason it seems that the SITL does not accept the geofence upload
+    // So we will try this upload 5 times. If it doesn't work, assume we are on the
+    // SITL and skip, but we'll do a big scary log message in case this is something
+    // important to notice
+    int geofence_attempts = 5;
     while (true) {
         LOG_F(INFO, "Sending geofence information...");
         auto geofence_result = this->geofence->upload_geofence({flight_bound});
@@ -158,10 +163,20 @@ bool MavlinkClient::uploadMissionUntilSuccess(std::shared_ptr<MissionState> stat
             break;
         }
 
-        LOG_S(WARNING) << "Geofence failed to upload: " 
-            << geofence_result << ". Trying again...";
+        LOG_S(WARNING) << "Geofence failed to upload: " << geofence_result;
+        if (geofence_attempts == 0) {
+            LOG_S(ERROR) << "Unable to upload geofence. If this is on the SITL," 
+                << " this is probably okay. If this is a real mission, AAHHHhhhhhhhHHHh!";
+            break;
+        } else {
+            geofence_attempts--;
+            LOG_F(WARNING, "Trying again...");
+        }
+
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
+    // For some reason the sitl won't sometimes accept waypoint missions...
+    // but there is no reason to go until it works, so block here
     while (true) {
         LOG_F(INFO, "Sending waypoint information...");
 

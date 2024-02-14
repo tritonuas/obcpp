@@ -31,7 +31,7 @@ void OBC::run() {
 
 void OBC::connectMavlink() {
     // TODO: pull mav ip from config file
-    // std::shared_ptr<MavlinkClient> mav(new MavlinkClient("serial:///dev/ttyACM0"));
-    std::shared_ptr<MavlinkClient> mav(new MavlinkClient("tcp://172.17.0.1:5760"));
+    std::shared_ptr<MavlinkClient> mav(new MavlinkClient("serial:///dev/ttyACM0"));
+    // std::shared_ptr<MavlinkClient> mav(new MavlinkClient("tcp://172.17.0.1:5760"));
     this->state->setMav(mav);
 }
