@@ -71,8 +71,8 @@ MavlinkClient::MavlinkClient(const char* link) {
     // Set subscription functions to keep internal data struct up to date
     this->telemetry->subscribe_position(
         [this](mavsdk::Telemetry::Position position) {
-            VLOG_F(DEBUG, "Latitude: %f\tLongitude: %f\tAGL Alt: %f\tMSL Alt: %f)", 
-                position.latitude_deg, position.longitude_deg, 
+            VLOG_F(DEBUG, "Latitude: %f\tLongitude: %f\tAGL Alt: %f\tMSL Alt: %f)",
+                position.latitude_deg, position.longitude_deg,
                 position.relative_altitude_m, position.absolute_altitude_m);
 
             Lock lock(this->data_mut);
@@ -80,8 +80,7 @@ MavlinkClient::MavlinkClient(const char* link) {
             this->data.altitude_msl_m = position.absolute_altitude_m;
             this->data.lat_deg = position.latitude_deg;
             this->data.lng_deg = position.longitude_deg;
-        }
-    );
+        });
     this->telemetry->subscribe_flight_mode(
         [this](mavsdk::Telemetry::FlightMode flight_mode){
             std::ostringstream stream;
@@ -90,27 +89,24 @@ MavlinkClient::MavlinkClient(const char* link) {
 
             Lock lock(this->data_mut);
             this->data.flight_mode = flight_mode;
-        }
-    );
+        });
     this->telemetry->subscribe_fixedwing_metrics(
         [this](mavsdk::Telemetry::FixedwingMetrics fwmets) {
             VLOG_F(DEBUG, "Airspeed: %f", fwmets.airspeed_m_s);
 
             Lock lock(this->data_mut);
             this->data.airspeed_m_s = static_cast<double>(fwmets.airspeed_m_s);
-        }
-    );
+        });
     this->telemetry->subscribe_velocity_ned(
         [this](mavsdk::Telemetry::VelocityNed vned) {
             const double groundspeed_m_s =
                 std::sqrt(std::pow(vned.east_m_s, 2) + std::pow(vned.north_m_s, 2));
-            
+
             VLOG_F(DEBUG, "Groundspeed: %f", groundspeed_m_s);
-            
+
             Lock lock(this->data_mut);
             this->data.groundspeed_m_s = groundspeed_m_s;
-        }
-    );
+        });
 }
 
 bool MavlinkClient::uploadMissionUntilSuccess(std::shared_ptr<MissionState> state) const {
@@ -165,7 +161,7 @@ bool MavlinkClient::uploadMissionUntilSuccess(std::shared_ptr<MissionState> stat
 
         LOG_S(WARNING) << "Geofence failed to upload: " << geofence_result;
         if (geofence_attempts == 0) {
-            LOG_S(ERROR) << "Unable to upload geofence. If this is on the SITL," 
+            LOG_S(ERROR) << "Unable to upload geofence. If this is on the SITL,"
                 << " this is probably okay. If this is a real mission, AAHHHhhhhhhhHHHh!";
             break;
         } else {
