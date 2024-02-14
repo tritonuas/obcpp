@@ -33,6 +33,12 @@
  *        the LOG_RESPONSE macro will handle it for you.
  */
 
+DEF_GCS_HANDLE(Get, tick) {
+    LOG_REQUEST("GET", "/tick");
+
+    LOG_RESPONSE(INFO, TICK_ID_TO_STR(state->getTickID()), OK);
+}
+
 DEF_GCS_HANDLE(Get, mission) {
     LOG_REQUEST("GET", "/mission");
 

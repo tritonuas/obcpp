@@ -45,6 +45,7 @@ GCSServer::~GCSServer() {
 }
 
 void GCSServer::_bindHandlers() {
+    BIND_HANDLER(Get, tick);
     BIND_HANDLER(Get, mission);
     BIND_HANDLER(Post, mission);
     BIND_HANDLER(Post, airdrop);
