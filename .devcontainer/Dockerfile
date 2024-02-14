@@ -40,7 +40,10 @@ RUN apt-get update \
                            libxmlsec1-dev \
                            libffi-dev \
                            liblzma-dev \
-                           gnuplot # needed for matplotplus
+                           # needed for matplotplus
+                           gnuplot \ 
+                           # imagemagick with c++ dependency
+                           graphicsmagick-libmagick-dev-compat 
 
 RUN apt-add-repository universe
 RUN apt-get install -y cpplint
