@@ -35,8 +35,10 @@ auto transpose(at::Tensor tensor, c10::IntArrayRef dims = { 0, 3, 1, 2 })
 std::vector<torch::jit::IValue> ToInput(at::Tensor tensor_image)
 {
     // Create a vector of inputs.
-    std::vector<torch::jit::IValue> toReturn;
-    toReturn.push_back(tensor_image);
+    std::vector<torch::jit::IValue> toReturn; //c10 List is also IValue
+    c10::List<at::Tensor> tensorList;
+    tensorList.push_back(tensor_image);       // add Tensor to c10::List
+    toReturn.push_back(tensorList);           // add c10::List to vector of IValues
     return toReturn;
 }
 
@@ -51,46 +53,48 @@ int main(int argc, const char* argv[]) {
   auto currentPath = argv[1];
   auto img = cv::imread(currentPath);
   // show_image(img, msg);
-
   auto tensor = ToTensor(img);
 
   // convert the tensor into float and scale it 
   tensor = tensor.toType(c10::kFloat).div(255);
+  
   // swap axis 
   tensor = transpose(tensor, { (2),(0),(1) });
+  
   //add batch dim (an inplace operation just like in pytorch)
-  tensor.unsqueeze_(0);
+  // tensor.unsqueeze_(0);
 
-  std::vector<torch::jit::IValue> input_to_net = ToInput(tensor);
-  // auto input_to_net = ToInput(tensor);
+  auto input_to_net = ToInput(tensor);
 
   torch::jit::script::Module module;
   try {
     // Deserialize the ScriptModule from a file using torch::jit::load().
-    module = torch::jit::load("/workspaces/obcpp/models/traced_resnet_model.pt"); // cannot accept .pth?
-    // at::Tensor output = module.forward(input_to_net).toTensor(); 
-    // std::cout << output.sizes() << std::endl;
-    // std::cout << "output: " << output[0] << std::endl;
+    module = torch::jit::load("/workspaces/obcpp/models/default.pth"); // cannot accept .pth?
+    module.eval();
   }
   catch (const c10::Error& e) {
     std::cerr << "error loading the model\n";
     std::cerr << e.msg() << std::endl; 
-    // REGARDING ERROR: see comments
-    // https://discuss.pytorch.org/t/how-to-convert-an-opencv-image-into-libtorch-tensor/90818/4
     return -1;
   }
 
-  // std::cout << input_to_net.size() << std::endl;
   // making a prediction on the image using our model
-  at::Tensor output = module.forward(input_to_net).toTensor(); 
-  std::cout << output.sizes() << std::endl;
-  // std::cout << "output: " << output[0] << std::endl;
-
-  std::cout << "ok\n";
-  // torch::Tensor tensor = torch::randn({3, 5000, 3000});
-  // std::vector<torch::jit::IValue> tensors;
-  
-  // tensors.push_back(input_to_net);
   // at::Tensor output = module.forward(input_to_net).toTensor(); 
-  // std::cout << output.slice(/*dim=*/1, /*start=*/0, /*end=*/5) << '\n';
+  auto output = module.forward(input_to_net); // vector of IValues which contains c10::List to IValue output
+  c10::ivalue::Tuple& tuple = output.toTupleRef();
+  auto detections = tuple.elements()[1].toList();
+  std::cout << detections << "\n";
+
+  // need to extract values from the tuple
+
+  // Is output IValue a tensor? No, it is a tuple.
+  // links from 1/31:
+  // https://pytorch.org/cppdocs/api/structtorch_1_1jit_1_1_module.html#exhale-struct-structtorch-1-1jit-1-1-module
+  // https://pytorch.org/cppdocs/api/structc10_1_1_i_value.html
+  // https://github.com/pytorch/pytorch/blob/main/aten/src/ATen/core/ivalue.h
+  // link from 2/8
+  // https://dev-discuss.pytorch.org/t/working-with-c10-ivalue-efficiently/585  
+  // std::cout << output.isTensor() << "\n";
+  std::cout << "ok\n";
+  
 }
