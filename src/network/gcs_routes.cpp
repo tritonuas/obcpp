@@ -6,13 +6,12 @@
 #include <string>
 #include <optional>
 
-#include <loguru.hpp>
-
 #include "core/mission_state.hpp"
 #include "protos/obc.pb.h"
 #include "utilities/serialize.hpp"
-#include "network/gcs_macros.hpp"
 #include "utilities/http.hpp"
+#include "utilities/logging.hpp"
+#include "network/gcs_macros.hpp"
 #include "ticks/tick.hpp"
 #include "ticks/path_gen.hpp"
 

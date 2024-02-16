@@ -1,16 +1,13 @@
+
 #include <chrono>
 #include <string>
-
-#include <loguru.hpp>
 
 #include "core/obc.hpp"
 #include "utilities/constants.hpp"
 #include "utilities/logging.hpp"
 
 int main(int argc, char* argv[]) {
-    loguru::init(argc, argv);
-    loguru::add_file(getLoggingFilename(argc, argv).c_str(),
-        loguru::Truncate, loguru::Verbosity_MAX);
+    initLogging(argc, argv);
 
     // In future, load configs, perhaps command line parameters, and pass
     // into the obc object

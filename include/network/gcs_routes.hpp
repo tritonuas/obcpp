@@ -9,8 +9,7 @@
 #include <string>
 #include <optional>
 
-#include <loguru.hpp>
-
+#include "utilities/logging.hpp"
 #include "core/mission_state.hpp"
 #include "protos/obc.pb.h"
 #include "utilities/serialize.hpp"
