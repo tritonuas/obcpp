@@ -22,6 +22,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_C_COMPILER gcc)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ./bin)
+set(CMAKE_EXPORT_COMPILE_COMMANDS True)
 
 SET(GCC_COMPILE_FLAGS "")
 SET(GCC_LINK_FLAGS    "-lprotobuf -lopencv_core -lopencv_highgui -lopencv_features2d -lopencv_flann -lopencv_imgcodecs -lopencv_dnn -lopencv_videoio -lopencv_imgproc -lopencv_ml -lopencv_photo -lprotobuf")
@@ -63,6 +64,14 @@ endif()
 # =============================
 
 # =============================
+# Set up imagemagick
+add_definitions( -DMAGICKCORE_QUANTUM_DEPTH=16 )
+add_definitions( -DMAGICKCORE_HDRI_ENABLE=0 )
+
+find_package(ImageMagick COMPONENTS Magick++ REQUIRED)
+# =============================
+
+# =============================
 # obcpp executable
 file(GLOB_RECURSE SOURCES "src/*.cpp" "build/gen_protos/*.pb.cc")
 list(REMOVE_ITEM SOURCES "${CMAKE_SOURCE_DIR}/src/main.cpp")
@@ -82,6 +91,10 @@ target_add_httplib(${PROJECT_NAME})
 target_add_mavsdk(${PROJECT_NAME})
 target_add_matplot(${PROJECT_NAME})
 target_add_loguru(${PROJECT_NAME})
+# for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
+# target_add_imagemagick(${PROJECT_NAME})
+target_include_directories(${PROJECT_NAME} PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 # =============================
 
 # =============================
@@ -117,6 +130,21 @@ target_add_httplib(mavlink_client)
 target_add_mavsdk(mavlink_client)
 target_add_matplot(mavlink_client)
 target_add_loguru(mavlink_client)
+
+# path_plotting 
+add_executable(path_plotting ${SOURCES} tests/integration/path_plotting.cpp)
+target_add_torch(path_plotting)
+target_add_json(path_plotting)
+target_add_httplib(path_plotting)
+target_add_mavsdk(path_plotting)
+target_add_matplot(path_plotting)
+target_add_protobuf(path_plotting)
+target_add_opencv(path_plotting) 
+target_add_loguru(path_plotting)
+# for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
+# target_add_imagemagick(path_plotting)
+target_include_directories(path_plotting PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(path_plotting PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 # =============================
 
 # =============================
