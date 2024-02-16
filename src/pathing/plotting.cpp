@@ -12,8 +12,8 @@
 #include "pathing/plotting.hpp"
 #include "utilities/datatypes.hpp"
 
-PathingPlot::PathingPlot() :
-    figure(matplot::gcf()) {
+PathingPlot::PathingPlot(std::filesystem::path outputDir) :
+    outputDir(outputDir), figure(matplot::gcf()) {
 
     // https://alandefreitas.github.io/matplotplusplus/coding-styles/reactive-vs-quiet-figures/
     this->figure->quiet_mode(true);
@@ -22,7 +22,8 @@ PathingPlot::PathingPlot() :
     this->figure->current_axes()->hold(true);
 }
 
-PathingPlot::PathingPlot(Polygon flightBoundary, Polygon aidropBoundary, std::vector<XYZCoord> waypoints) :
+PathingPlot::PathingPlot(std::filesystem::path outputDir, Polygon flightBoundary, Polygon aidropBoundary, std::vector<XYZCoord> waypoints) :
+    outputDir(outputDir),
     figure(matplot::gcf()),
     flightBoundary(flightBoundary),
     airdropBoundary(aidropBoundary),
@@ -102,11 +103,10 @@ void PathingPlot::addIntermediatePolyline(Polyline polyline) {
 }
 
 void PathingPlot::output(std::string filename, PathOutputType pathType) {
-    // TODO: save this to the repo root. right now it just saves to the cwd
-    std::filesystem::create_directories("plots");
+    std::filesystem::create_directories(outputDir);
 
-    std::filesystem::path staticFilepath("plots/" + filename + ".jpg");
-    std::filesystem::path animatedFilepath("plots/" + filename + ".gif");
+    std::filesystem::path staticFilepath(outputDir / (filename + ".jpg"));
+    std::filesystem::path animatedFilepath(outputDir / (filename + ".gif"));
 
     auto ax = this->figure->current_axes();
     switch (pathType) {
@@ -125,6 +125,22 @@ void PathingPlot::output(std::string filename, PathOutputType pathType) {
     default:
         return;
     }
+}
+
+
+void PathingPlot::setLineWidth(float lineWidth) {
+    this->lineWidth = lineWidth;
+}
+void PathingPlot::setCoordSize(float coordSize) {
+    this->coordSize = coordSize;
+}
+
+void PathingPlot::setAnimationDelay(size_t animationDelayCentiSec) {
+    this->animationDelayCentiSec = animationDelayCentiSec;
+}
+
+void PathingPlot::setFramesPerDistanceUnit(double framesPerDistanceUnit) {
+    this->framesPerDistanceUnit = framesPerDistanceUnit;
 }
 
 void PathingPlot::outputStatic(matplot::axes_handle ax, std::filesystem::path filepath) {

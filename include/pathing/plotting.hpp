@@ -37,10 +37,10 @@ struct PlottingChunk {
 
 class PathingPlot {
  public:
-    PathingPlot();
+    PathingPlot(std::filesystem::path outputDir);
     // Constructor for initializing with competition boundaries and waypoints.
     // These items will remain in the background of all paths.
-    PathingPlot(Polygon flightBoundary, Polygon airdropBoundary, std::vector<XYZCoord> waypoints);
+    PathingPlot(std::filesystem::path outputDir, Polygon flightBoundary, Polygon airdropBoundary, std::vector<XYZCoord> waypoints);
 
     // Add a point which will be wiped from the graph when the next segment is finalized.
     // Only use for intermediate/temporary items that we are exploring but have not
@@ -77,7 +77,19 @@ class PathingPlot {
     // Output to filename. Don't include extension as the function
     // will add the correct extension itself
     void output(std::string filename, PathOutputType pathType);
+
+    // how thick polylines and polygon lines should be
+    void setLineWidth(float lineWidth);
+    // how large points should be
+    void setCoordSize(float coordSize);
+    // how much to pause between each frame in 1/100th of a second
+    void setAnimationDelay(size_t animationDelayCentiSec);
+    // how many frames to generate per unit of distance, how fine/granular the GIF should be
+    // ex: if the line moves 1 ft, generate x number of frames to animate that 1ft change
+    void setFramesPerDistanceUnit(double framesPerDistanceUnit);
  private:
+    std::filesystem::path outputDir;
+
     std::optional<Polygon> flightBoundary;
     std::optional<Polygon> airdropBoundary;
     std::optional<std::vector<XYZCoord>> waypoints;
@@ -109,15 +121,15 @@ class PathingPlot {
     // internal counter to keep track of which frame we're on
     int currFrame = 0;
 
-    const float lineWidth = 4.0f;
-    const float coordSize = 10.0f;
+    float lineWidth = 4.0f;
+    float coordSize = 10.0f;
 
     // Time in 1/100ths of a second which must expire before
     // displaying the next image in an animated sequence.
-    const size_t animationDelayCentiSec = 100;
+    size_t animationDelayCentiSec = 10;
 
     // how many frames to generate per each unit of distance in a path
-    const double framesPerDistanceUnit = 0.1f;
+    double framesPerDistanceUnit = 0.1f;
 
     // helper function to find the smallest and largest coordinates from both intermediate and final objects. 
     // Returns ((minX, maxX), (minY, maxY))
