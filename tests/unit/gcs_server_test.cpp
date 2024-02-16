@@ -16,7 +16,7 @@
 #include "utilities/http.hpp"
 #include "ticks/mission_prep.hpp"
 #include "ticks/path_gen.hpp"
-#include "ticks/takeoff_prep.hpp"
+#include "ticks/mission_upload.hpp"
 #include "ticks/tick.hpp"
 
 #define DECLARE_HANDLER_PARAMS(STATE, REQ, RESP) \
@@ -195,14 +195,8 @@ TEST(GCSServerTest, SetupStateTransitions) {
     } while (state->getInitPath().empty());
     // have an initial path, but waiting for validation
     EXPECT_FALSE(state->getInitPath().empty());
-    EXPECT_EQ(state->getTickID(), TickID::PathGen); 
+    EXPECT_EQ(state->getTickID(), TickID::PathValidate); 
 
-    // Now try and validate the path
-    DECLARE_HANDLER_PARAMS(_, req2, resp2);
-
-    GCS_HANDLE(Post, path, initial, validate)(state, req2, resp2);
-
-    EXPECT_EQ(resp2.status, OK);
-    state->doTick();
-    EXPECT_EQ(state->getTickID(), TickID::TakeoffPrep);
+    // todo: figure out way to mock the mav connection
+    // so we can validate the path and mock mission upload
 }

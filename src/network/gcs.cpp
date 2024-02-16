@@ -8,14 +8,13 @@
 #include <iostream>
 #include <string>
 
-#include <loguru.hpp>
-
 #include "core/mission_config.hpp"
 #include "core/mission_state.hpp"
 #include "ticks/tick.hpp"
 #include "ticks/path_gen.hpp"
 #include "utilities/locks.hpp"
 #include "utilities/serialize.hpp"
+#include "utilities/logging.hpp"
 #include "protos/obc.pb.h"
 #include "pathing/cartesian.hpp"
 #include "network/gcs_routes.hpp"

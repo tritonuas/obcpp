@@ -46,6 +46,8 @@ include(${DEPS_DIRECTORY}/mavsdk/mavsdk.cmake)
 include(${DEPS_DIRECTORY}/matplot/matplot.cmake)
 include(${DEPS_DIRECTORY}/protobuf/protobuf.cmake)
 include(${DEPS_DIRECTORY}/loguru/loguru.cmake)
+
+
 # =============================
 
 # =============================
@@ -99,16 +101,23 @@ target_add_matplot(playground)
 target_add_protobuf(playground)
 target_add_loguru(playground)
 
-# mavsdk
-add_executable(mavsdk "tests/integration/mavsdk.cpp")
-target_include_directories(mavsdk PRIVATE ${INCLUDE_DIRECTORY})
-target_add_mavsdk(mavsdk)
-target_add_matplot(mavsdk)
-
 # load_torchvision_model
 add_executable(load_torchvision_model tests/integration/load_torchvision_model.cpp)
 target_add_torch(load_torchvision_model)
 target_add_torchvision(load_torchvision_model)
+
+# mavlink-client
+add_executable(mavlink_client ${SOURCES} "tests/integration/mavlink_client.cpp")
+target_include_directories(mavlink_client PRIVATE ${INCLUDE_DIRECTORY})
+target_add_protobuf(mavlink_client)
+target_add_torch(mavlink_client)
+target_add_torchvision(mavlink_client)
+target_add_json(mavlink_client)
+target_add_opencv(mavlink_client)
+target_add_httplib(mavlink_client)
+target_add_mavsdk(mavlink_client)
+target_add_matplot(mavlink_client)
+target_add_loguru(mavlink_client)
 # =============================
 
 # =============================
