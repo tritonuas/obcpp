@@ -6,7 +6,7 @@
 	"customizations": {
 		"vscode": {
 			"settings": {
-				// Use bash instead ofk sh
+				// Use bash instead of sh
 				"terminal.integrated.defaultProfile.linux": "bash"
 			},
 			"extensions": [

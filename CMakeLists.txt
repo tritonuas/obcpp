@@ -31,8 +31,6 @@ SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${GCC_LINK_FLAGS}")
 
 project(obcpp VERSION 1.0)
 
-set(LOGURU_WITH_STREAMS TRUE)
-
 # =============================
 # Dependencies 
 set(FETCHCONTENT_QUIET FALSE)
@@ -48,6 +46,8 @@ include(${DEPS_DIRECTORY}/mavsdk/mavsdk.cmake)
 include(${DEPS_DIRECTORY}/matplot/matplot.cmake)
 include(${DEPS_DIRECTORY}/protobuf/protobuf.cmake)
 include(${DEPS_DIRECTORY}/loguru/loguru.cmake)
+
+
 # =============================
 
 # =============================
