@@ -6,6 +6,12 @@
 #include <utility>
 #include <filesystem>
 
+// NOTE: this is very dumb but this #include <assert.h> is needed
+// before we #include <Magick++.h>. This is because ImageMagick
+// defines some assert related function that conflicts with
+// what the protobuf code expects to be available.
+// https://github.com/ImageMagick/ImageMagick/issues/4679
+// https://stackoverflow.com/questions/43676010/c-boost-assert-fail-was-not-declared-in-this-scope
 #include <assert.h>
 #include <Magick++.h>
 
