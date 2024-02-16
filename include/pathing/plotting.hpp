@@ -1,14 +1,16 @@
 #ifndef INCLUDE_PATHING_PLOTTING_HPP_
 #define INCLUDE_PATHING_PLOTTING_HPP_
 
+#include <matplot/matplot.h>
+
 #include <list>
 #include <string>
 #include <vector>
 #include <cmath>
 #include <variant>
 #include <filesystem>
+#include <utility>
 
-#include <matplot/matplot.h>
 #include <opencv2/opencv.hpp>
 
 #include "utilities/datatypes.hpp"
@@ -20,27 +22,28 @@ using Plottable = std::variant<XYZCoord, Polyline>;
 
 // PathType describes what type of path to output
 enum class PathOutputType {
-   NONE, // we want this during competition, for performance
-   STATIC, // output to .jpg
-   ANIMATED, // output to .gif
-   BOTH // both STATIC and ANIMATED
+    NONE,  // we want this during competition, for performance
+    STATIC,  // output to .jpg
+    ANIMATED,  // output to .gif
+    BOTH  // both STATIC and ANIMATED
 };
 
 // PlottingChunk
 struct PlottingChunk {
-   // intermediateItems contain anything to be plotted 
-   // that shouldn't be a part of the final result 
-   std::vector<Plottable> intermediateItems;
-   // finalItem contains a persistent item that will be a part of the final result
-   std::optional<Plottable> finalItem;
+    // intermediateItems contain anything to be plotted
+    // that shouldn't be a part of the final result
+    std::vector<Plottable> intermediateItems;
+    // finalItem contains a persistent item that will be a part of the final result
+    std::optional<Plottable> finalItem;
 };
 
 class PathingPlot {
  public:
-    PathingPlot(std::filesystem::path outputDir);
+    explicit PathingPlot(std::filesystem::path outputDir);
     // Constructor for initializing with competition boundaries and waypoints.
     // These items will remain in the background of all paths.
-    PathingPlot(std::filesystem::path outputDir, Polygon flightBoundary, Polygon airdropBoundary, std::vector<XYZCoord> waypoints);
+    PathingPlot(std::filesystem::path outputDir,
+      Polygon flightBoundary, Polygon airdropBoundary, std::vector<XYZCoord> waypoints);
 
     // Add a point which will be wiped from the graph when the next segment is finalized.
     // Only use for intermediate/temporary items that we are exploring but have not
@@ -87,6 +90,7 @@ class PathingPlot {
     // how many frames to generate per unit of distance, how fine/granular the GIF should be
     // ex: if the line moves 1 ft, generate x number of frames to animate that 1ft change
     void setFramesPerDistanceUnit(double framesPerDistanceUnit);
+
  private:
     std::filesystem::path outputDir;
 
@@ -109,14 +113,21 @@ class PathingPlot {
 
     // the following methods modify the axes_handle passed in
     void plotStaticBackground(matplot::axes_handle ax);
-    void plotStaticPlottable(matplot::axes_handle ax, Plottable& plottable, matplot::color color);
-    void plotStaticPolyline(matplot::axes_handle ax, Polyline &polyline, matplot::color color);
-    void plotStaticCoord(matplot::axes_handle ax, XYZCoord &coord, matplot::color color);
-    void plotStaticPolygon(matplot::axes_handle ax, Polygon &polygon, matplot::color color);
-   
-    // the following two methods modify the axes_handle passed in and save multiple frames to .jpg files
-    void plotAnimatedPlottable(matplot::axes_handle ax, Plottable& plottable, matplot::color color, std::filesystem::path tmpFrameDir);
-    void plotAnimatedPolyline(matplot::axes_handle ax, Polyline& polyline, matplot::color color, std::filesystem::path tmpFrameDir);
+    void plotStaticPlottable(matplot::axes_handle ax, const Plottable& plottable,
+      matplot::color color);
+    void plotStaticPolyline(matplot::axes_handle ax, const Polyline &polyline,
+      matplot::color color);
+    void plotStaticCoord(matplot::axes_handle ax, const XYZCoord &coord,
+      matplot::color color);
+    void plotStaticPolygon(matplot::axes_handle ax, const Polygon &polygon,
+      matplot::color color);
+
+    // the following two methods modify the axes_handle passed in and
+    // save multiple frames to .jpg files
+    void plotAnimatedPlottable(matplot::axes_handle ax, const Plottable& plottable,
+      matplot::color color, std::filesystem::path tmpFrameDir);
+    void plotAnimatedPolyline(matplot::axes_handle ax, const Polyline& polyline,
+      matplot::color color, std::filesystem::path tmpFrameDir);
 
     // internal counter to keep track of which frame we're on
     int currFrame = 0;
@@ -131,7 +142,8 @@ class PathingPlot {
     // how many frames to generate per each unit of distance in a path
     double framesPerDistanceUnit = 0.1f;
 
-    // helper function to find the smallest and largest coordinates from both intermediate and final objects. 
+    // helper function to find the smallest and largest coordinates
+    // from both intermediate and final objects.
     // Returns ((minX, maxX), (minY, maxY))
     std::pair<std::pair<double, double>, std::pair<double, double>> getAnimatedPlotLimits();
 };
