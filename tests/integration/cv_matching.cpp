@@ -79,16 +79,13 @@ int main(int argc, char* argv[]) {
     };
 
     MatchResult result = matcher.match(cropped);
-    std::cout << "MATCHING TEST:" << std::endl;
-    std::cout << "Found a match with bottle " << int(result.bottleDropIndex) << std::endl;
-    std::cout << "Expected bottle with index " << bottleIdxMatch << std::endl;
+    std::cout << "Found a match with bottle at index " << int(result.bottleDropIndex) << std::endl;
     std::cout << "foundMatch is " << result.foundMatch << std::endl;
     std::cout << "The similarity is " << result.similarity << std::endl;
 
 
     MatchResult resultFalse = matcher.match(croppedFalse);
-    std::cout << "\nNO MATCH TEST:" << std::endl;
-    std::cout << "Closest is bottle with index " << int(resultFalse.bottleDropIndex) << std::endl;
+    std::cout << "Closest is bottle at index " << int(resultFalse.bottleDropIndex) << std::endl;
     std::cout << "foundMatch is " << resultFalse.foundMatch << std::endl;
     std::cout << "The similarity is " << resultFalse.similarity << std::endl;
 
