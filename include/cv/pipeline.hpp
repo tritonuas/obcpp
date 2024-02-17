@@ -12,12 +12,6 @@
 #include "cv/saliency.hpp"
 #include "cv/segmentation.hpp"
 
-// Same TODO as above
-struct AirdropTarget {
-    uint8_t bottleDropIndex;
-    GPSCoord coordinate;
-};
-
 // Processed image holds all predictions made concerning a given image.
 //
 // A single aerial image can have multiple targets that are matches with
@@ -37,8 +31,8 @@ struct PipelineResults {
 // Pipeline handles all infrastructure within the CV pipeline
 class Pipeline {
     public:
-        Pipeline(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES> 
-            competitionObjectives, std::vector<std::pair<cv::Mat, uint8_t>> referenceImages);
+        Pipeline(std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives,
+            std::vector<std::pair<cv::Mat, uint8_t>> referenceImages);
 
     PipelineResults run(const ImageData& imageData);
 

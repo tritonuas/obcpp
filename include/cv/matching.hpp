@@ -9,6 +9,8 @@
 #include <torch/script.h>
 #include <torchvision/vision.h>
 
+#include "protos/obc.pb.h"
+
 struct MatchResult {
     uint8_t bottleDropIndex;
     bool foundMatch;
@@ -36,15 +38,15 @@ struct MatchResult {
 // see how close it is to known objectives.
 class Matching {
  public:
-        Matching(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES>
-            competitionObjectives, double matchThreshold, 
+        Matching(std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives, 
+            double matchThreshold, 
             std::vector<std::pair<cv::Mat, uint8_t>> referenceImages,
             const std::string &modelPath);
 
         MatchResult match(const CroppedTarget& croppedTarget);
 
  private:
-        std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES> competitionObjectives;
+        std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives;
         double matchThreshold;
         std::vector<std::pair<torch::Tensor, uint8_t>> referenceFeatures;
         torch::jit::script::Module module;

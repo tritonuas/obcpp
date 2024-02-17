@@ -42,7 +42,7 @@ auto toInput(cv::Mat img, bool show_output=false, bool unsqueeze=false, int unsq
     return std::vector<torch::jit::IValue>{tensor_image};
 }
 
-Matching::Matching(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES>
+Matching::Matching(std::array<Bottle, NUM_AIRDROP_BOTTLES>
                        competitionObjectives,
                    double matchThreshold,
                    std::vector<std::pair<cv::Mat, uint8_t>> referenceImages,

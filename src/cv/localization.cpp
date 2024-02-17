@@ -136,5 +136,9 @@ GPSCoord Localization::localize(const ImageTelemetry& telemetry, const Bbox& tar
     double lon = targetLocationGPS.lon*180/PI;
     double alt = targetLocationGPS.alt/1000;
 
-    return GPSCoord(lat, lon, alt);
+    GPSCoord targetCoord;
+    targetCoord.set_latitude(lat);
+    targetCoord.set_longitude(lon);
+    targetCoord.set_altitude(alt);
+    return targetCoord;
 }
