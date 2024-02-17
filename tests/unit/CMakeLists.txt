@@ -19,6 +19,7 @@ target_add_mavsdk(${BINARY})
 target_add_matplot(${BINARY})
 target_add_httplib(${BINARY})
 target_add_loguru(${BINARY})
+target_add_torch(${BINARY})
 
 add_test(NAME ${BINARY} COMMAND ${BINARY})
 

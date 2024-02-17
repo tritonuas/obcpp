@@ -106,12 +106,6 @@ add_executable(load_torchvision_model "tests/integration/load_torchvision_model.
 target_add_torch(load_torchvision_model)
 target_add_torchvision(load_torchvision_model)
 
-# cv_pipeline 
-add_executable(cv_pipeline ${SOURCES} "tests/integration/cv_pipeline.cpp")
-target_add_json(cv_pipeline)
-target_add_matplot(cv_pipeline)
-target_add_opencv(cv_pipeline)
-
 # mavlink-client
 add_executable(mavlink_client ${SOURCES} "tests/integration/mavlink_client.cpp")
 target_include_directories(mavlink_client PRIVATE ${INCLUDE_DIRECTORY})
@@ -133,6 +127,10 @@ target_add_opencv(cv_pipeline)
 target_add_loguru(cv_pipeline)
 target_add_httplib(cv_pipeline)
 target_add_protobuf(cv_pipeline)
+target_add_torch(cv_pipeline)
+target_add_torchvision(cv_pipeline)
+target_add_mavsdk(cv_pipeline)
+target_add_loguru(cv_pipeline)
 
 # cv_matching
 add_executable(cv_matching ${SOURCES} "tests/integration/cv_matching.cpp")
@@ -141,6 +139,9 @@ target_add_matplot(cv_matching)
 target_add_opencv(cv_matching)
 target_add_torch(cv_matching)
 target_add_torchvision(cv_matching)
+target_add_loguru(cv_matching)
+target_add_httplib(cv_matching)
+target_add_mavsdk(cv_matching)
 # =============================
 
 # =============================
