@@ -80,7 +80,7 @@ TEST(EnvironmentTest, PathOutOfBoundsTest) {
     small_square.emplace_back(XYZCoord{0, 0, 0});
     small_square.emplace_back(XYZCoord{1, 0, 0});
 
-    Environment test{small_square, {RRTPoint(XYZCoord(0, 0, 0), 0)}, 0};
+    Environment test{small_square, {RRTPoint(XYZCoord(0, 0, 0), 0)}, 1};
 
     // TODO --> REALLY SHIT TEST
     std::vector<XYZCoord> path_in_bounds{XYZCoord{0.5, 0.5, 0}, XYZCoord{0.5, 0.5, 99999999},
@@ -106,10 +106,10 @@ TEST(EnvironmentTest, IsPointInGoalTest) {
 
     Environment test{small_square, {RRTPoint(XYZCoord(0, 0, 0), 0)}, 5};
 
-    EXPECT_EQ(true, test.isPointInGoal(XYZCoord{0, 0, 0}));
-    EXPECT_EQ(true, test.isPointInGoal(XYZCoord{1, 1, 0}));
-    EXPECT_EQ(true, test.isPointInGoal(XYZCoord{1, 1, 100000000}));
-    EXPECT_EQ(true, test.isPointInGoal(XYZCoord{5, 0, 0}));
-    EXPECT_EQ(true, test.isPointInGoal(XYZCoord{2, 1, 0}));
-    EXPECT_EQ(false, test.isPointInGoal(XYZCoord{5.00001, 0, 0})); 
+    EXPECT_EQ(true, test.isPointInGoal(XYZCoord{0, 0, 0}, 0));
+    EXPECT_EQ(true, test.isPointInGoal(XYZCoord{1, 1, 0}, 0));
+    EXPECT_EQ(true, test.isPointInGoal(XYZCoord{1, 1, 100000000}, 0));
+    EXPECT_EQ(true, test.isPointInGoal(XYZCoord{5, 0, 0}, 0));
+    EXPECT_EQ(true, test.isPointInGoal(XYZCoord{2, 1, 0}, 0));
+    EXPECT_EQ(false, test.isPointInGoal(XYZCoord{5.00001, 0, 0}, 0)); 
 }

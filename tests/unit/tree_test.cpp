@@ -29,7 +29,7 @@ TEST(SimpleTreeTest, addNodeTest) {
     RRTNode* root = simple_tree.getRoot();
 
     // simpleTree.addNode(root, point1);
-    bool added_point = simple_tree.addNode(root, point2, option);
+    bool added_point = simple_tree.addNode(root, point2, option, 0);
 
     EXPECT_TRUE(added_point);
     EXPECT_TRUE(root->getReachable().size() > 0);
@@ -57,7 +57,7 @@ TEST(SimpleTreeTest, getNodeTest) {
     RRTNode* root = simple_tree.getRoot();
 
     // simpleTree.addNode(root, point1);
-    bool added_point = simple_tree.addNode(root, point2, option);
+    bool added_point = simple_tree.addNode(root, point2, option, 0);
 
     EXPECT_TRUE(true);
 
@@ -85,7 +85,7 @@ TEST(SimpleTreeTest, getEdgeTest) {
     RRTNode* root = simple_tree.getRoot();
 
     // simpleTree.addNode(root, point1);
-    bool added_point = simple_tree.addNode(root, point2, option);
+    bool added_point = simple_tree.addNode(root, point2, option, 0);
 
     EXPECT_TRUE(simple_tree.getEdge(point1, point2) != nullptr);
     // EXPECT_TRUE(*(simple_tree.getEdge(point1, point2)) == edge);
@@ -98,31 +98,36 @@ TEST(SimpleTreeTest, rewireEdgeTest) {
     valid_region.emplace_back(XYZCoord(100, 0, 0));
     valid_region.emplace_back(XYZCoord(100, 100, 0));
     valid_region.emplace_back(XYZCoord(0, 100, 0));
-    Environment env = Environment(valid_region, {RRTPoint(XYZCoord(0, 0, 0), 0)}, 0);
+    Environment env = Environment(valid_region, {RRTPoint(XYZCoord(0, 0, 0), 0)}, 1);
     RRTPoint point1 = RRTPoint(XYZCoord(25, 25, 0), 0);
     RRTPoint point2 = RRTPoint(XYZCoord(50, 75, 0), HALF_PI);
-    RRTPoint point3 = RRTPoint(XYZCoord(50, 80, 0), HALF_PI);
+    RRTPoint point3 = RRTPoint(XYZCoord(50, 80, 1.5), HALF_PI);
+    RRTPoint point4 = RRTPoint(XYZCoord(50, 60, 0.9), HALF_PI);
 
     RRTOption option1 = dubins.allOptions(point1, point2, true)[0];
     RRTOption option2 = dubins.allOptions(point2, point3, true)[0];
+    RRTOption option3 = dubins.allOptions(point1, point4, true)[0];
+    RRTOption new_option = dubins.allOptions(point4, point3, true)[0];
 
     RRTTree simple_tree = RRTTree(point1, env, dubins);
 
     RRTNode* root = simple_tree.getRoot();
 
     // these two should add
-    bool add1 = simple_tree.addNode(root, point2, option1);
-    bool add2 = simple_tree.addNode(simple_tree.getNode(point2), point3, option2);
+    bool add1 = simple_tree.addNode(root, point2, option1, 0);
+    bool add2 = simple_tree.addNode(simple_tree.getNode(point2), point3, option2, 0);
+    bool add3 = simple_tree.addNode(root, point4, option3, 0);
     EXPECT_TRUE(add1);
     EXPECT_TRUE(add2);
+    EXPECT_TRUE(add3);
 
-    simple_tree.rewireEdge(simple_tree.getNode(point1), simple_tree.getNode(point2), simple_tree.getNode(point3), {}, 0);
-    EXPECT_TRUE(root->getReachable().front() == simple_tree.getNode(point3));
-    EXPECT_TRUE(simple_tree.getNode(point2) == nullptr);
-    EXPECT_TRUE(simple_tree.getNode(point3) != nullptr);
-    EXPECT_TRUE(simple_tree.getNode(point3)->getParent() == root);
-    // EXPECT_TRUE(simple_tree.getNode(point3) == &c);
+    simple_tree.rewireEdge(simple_tree.getNode(point3), simple_tree.getNode(point2), simple_tree.getNode(point4), {}, 0);
+    EXPECT_TRUE(simple_tree.getEdge(point4, point3) != nullptr);
+    EXPECT_TRUE(simple_tree.getEdge(point2, point3) == nullptr);
 
-    EXPECT_TRUE(simple_tree.getEdge(point1, point3) != nullptr);
-    EXPECT_TRUE(simple_tree.getEdge(point1, point2) == nullptr);
+    EXPECT_TRUE(simple_tree.getNode(point3)->getParent() == simple_tree.getNode(point4));
+    EXPECT_TRUE(simple_tree.getNode(point2)->getParent() == root);
+    EXPECT_TRUE(simple_tree.getNode(point4)->getReachable().size() == 1);
+    EXPECT_TRUE(simple_tree.getNode(point2)->getReachable().size() == 0);
+    EXPECT_TRUE(simple_tree.getNode(point1)->getReachable().size() == 2);
 }

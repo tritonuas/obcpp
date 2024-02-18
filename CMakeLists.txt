@@ -145,6 +145,21 @@ target_add_loguru(path_plotting)
 # target_add_imagemagick(path_plotting)
 target_include_directories(path_plotting PRIVATE ${ImageMagick_INCLUDE_DIRS})
 target_link_libraries(path_plotting PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
+
+add_executable(path_planning ${SOURCES} "tests/integration/path_planning.cpp")
+target_include_directories(path_planning PRIVATE ${INCLUDE_DIRECTORY})
+target_add_protobuf(path_planning)
+target_add_torch(path_planning)
+target_add_torchvision(path_planning)
+target_add_json(path_planning)
+target_add_opencv(path_planning)
+target_add_httplib(path_planning)
+target_add_mavsdk(path_planning)
+target_add_matplot(path_planning)
+target_add_loguru(path_planning)
+
+target_include_directories(path_planning PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(path_planning PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 # =============================
 
 # =============================

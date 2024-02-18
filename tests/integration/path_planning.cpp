@@ -58,7 +58,7 @@ int main() {
     std::cout << rrt.getPointsGoal(false).size() << std::endl;
 
 
-    for (const XYZCoord& point : rrt.getPointsGoal(true)) {
+    for (const XYZCoord& point : path) {
         file << point.x << "," << point.y << std::endl;
     }
 

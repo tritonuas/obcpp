@@ -56,7 +56,7 @@ class Environment {
      *
      * @param point the point to check
      * @return true if the point is in the goal region, false otherwise
-     *  TODO - breaks on initial
+     *  TODO - breaks on initial, needs a redesign
      */
     bool isPointInGoal(const XYZCoord& point) const {
         return isPointInGoal(point, goals_found - 1);
