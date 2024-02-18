@@ -19,6 +19,10 @@ target_add_mavsdk(${BINARY})
 target_add_matplot(${BINARY})
 target_add_httplib(${BINARY})
 target_add_loguru(${BINARY})
+# for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
+# target_add_imagemagick(path_plotting)
+target_include_directories(${BINARY} PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(${BINARY} PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
 add_test(NAME ${BINARY} COMMAND ${BINARY})
 
