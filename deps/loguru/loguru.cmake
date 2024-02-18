@@ -6,7 +6,12 @@ function(target_add_loguru target_name)
         DOWNLOAD_EXTRACT_TIMESTAMP true
     )
 
-    # set any loguru compile-time flags before calling MakeAvailable()
+    # This line is necessary to enable logging with streams in loguru
+    # (i.e. LOG_S(mode) << "Log message"; )
+    # You need to include this line, AND #define LOGURU_WITH_STREAMS 1
+    # to enable logging with streams
+    set(LOGURU_WITH_STREAMS TRUE)
+
     FetchContent_MakeAvailable(LoguruGitRepo) # defines target 'loguru::loguru'
 
     target_link_libraries(${target_name} PRIVATE

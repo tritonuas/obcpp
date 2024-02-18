@@ -9,16 +9,13 @@
 #include "utilities/constants.hpp"
 
 struct XYZCoord {
-    XYZCoord(double x, double y, double z) : x(x), y(y), z(z), color(matplot::color::black) {}
-
-    XYZCoord(double x, double y, double z, matplot::color color) : x(x), y(y), z(z), color(color) {}
+    XYZCoord(double x, double y, double z)
+        :x(x), y(y), z(z) {}
 
     /**
      * Checks whether the coordinates of the XYZCoords are identtical
-     *
-     * DOES NOT CHECK XYZCoord.color
-     */
-    bool operator==(const XYZCoord &other_point) const;
+    */
+    bool operator== (const XYZCoord &other_point) const;
 
     /**
      *  Performes vector addition
@@ -49,7 +46,6 @@ struct XYZCoord {
     double x;
     double y;
     double z;
-    matplot::color color;
 };
 
 struct RRTPoint {
