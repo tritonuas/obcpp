@@ -37,7 +37,7 @@ class LucidCamera {
         ImageData* recentPicture; // might need to move it to public
         Arena::IDevice * device;
         Arena::ISystem * system;
-        ImageData imgConvert(Arena::IImage * pImage); 
+        ImageData * imgConvert(Arena::IImage * pImage); 
         void configureTrigger();
 
     public:
@@ -47,7 +47,7 @@ class LucidCamera {
 
         bool verifyConnection();
 
-        ImageData *  takePicture();
+        ImageData *  takePicture(int timeout);
 
         ImageData * getLastPicture();
 

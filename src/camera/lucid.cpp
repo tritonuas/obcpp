@@ -7,6 +7,9 @@
 #include <string>
 #include <unordered_map>
 #include <optional>
+#include <opencv2/opencv.hpp>
+#include <opencv2/core/mat.hpp>
+#include <opencv2/core.hpp>
 using json = nlohmann::json;
 
 
@@ -42,6 +45,22 @@ json LucidCameraConfig::getConfigField(std::string name)
     }
 
     return returnJ;
+}
+
+ImageData * LucidCamera::imgConvert(Arena::IImage * pImage)
+{
+    Arena::IImage *pConverted = Arena::ImageFactory::Convert(
+        pImage,
+        BGR8);
+
+    std::string name = "img_"+pConverted->GetTimestamp();
+    void * data = (void *)pConverted->GetData();
+    std::string path = "";
+
+    cv::Mat mat = cv::Mat(static_cast<int>(pConverted->GetHeight()), static_cast<int>(pConverted->GetWidth()), CV_8UC3, data);
+
+    ImageData * img = new ImageData(name, path, mat);
+    return img;
 }
 
 LucidCamera::LucidCamera(LucidCameraConfig *config)
@@ -158,14 +177,29 @@ bool LucidCamera::verifyConnection()
     return this->device->IsConnected();
 }
 
-ImageData * LucidCamera::takePicture()
+ImageData * LucidCamera::takePicture(int timeout)
 {
-    return nullptr;
+    device->StartStream();
+    Arena::IImage* pImage = device->GetImage(timeout);
+
+    if (pImage->IsIncomplete())
+    {
+        std::cout << "WARNING! Recivied Image is incomplete" << std::endl;
+        return nullptr;
+    }
+
+    device->RequeueBuffer(pImage);
+    device->StopStream();
+
+    ImageData * returnImg = imgConvert(pImage);
+    this->recentPicture = returnImg;
+
+    return returnImg;
 }
 
 ImageData *  LucidCamera::getLastPicture()
 {
-    return nullptr;
+    return this->recentPicture;
 }
 
 #endif // ARENA_SDK_INSTALLED
