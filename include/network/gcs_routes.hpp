@@ -18,6 +18,15 @@
 #include "ticks/path_gen.hpp"
 
 /*
+ * GET /tick
+ * ---
+ * Returns the name of the current tick function, for display in the GCS control page
+ * 
+ * 200 OK: No problems occurred
+ **/
+DEF_GCS_HANDLE(Get, tick);
+
+/*
  * GET /mission
  * ---
  * Response includes the information stored in the MissionConfig as a JSON object.
