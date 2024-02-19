@@ -258,7 +258,7 @@ class RRTTree {
         current_head = goal;
     }
 
-//  private:
+    //  private:
     RRTNode* root;
     RRTNode* current_head;
     std::unordered_map<RRTPoint, RRTNode*, PointHashFunction> node_map{};
@@ -336,7 +336,7 @@ class RRTTree {
      * @param current_path   ==> the current path being traced by DFS
      */
     void fillPathOptionsRecursive(std::vector<std::pair<std::vector<RRTNode*>, double>>& options,
-                                  RRTNode* node, RRTNode* parent, double current_length,
+                                  RRTNode* node, RRTNode* parent,
                                   std::vector<RRTNode*>& current_path) {
         // parent should never be nullptr, but for safety
         if (node == nullptr || parent == nullptr) {
@@ -356,14 +356,13 @@ class RRTTree {
 
         if (airspace.isPointInGoal(node->getPoint().coord)) {
             // add the path to the goal (deep copy of current_path)
-            options.push_back(std::make_pair(current_path, current_length + edge_cost));
+            options.push_back(std::make_pair(current_path, node->getCost()));
             current_path.pop_back();
             return;
         }
 
         for (RRTNode* neighbor : node->getReachable()) {
-            fillPathOptionsRecursive(options, neighbor, node, current_length + edge_cost,
-                                     current_path);
+            fillPathOptionsRecursive(options, neighbor, node, current_path);
         }
 
         current_path.pop_back();
@@ -372,20 +371,21 @@ class RRTTree {
     /**
      * After rewire edge, it goes down the tree and reassigns the cost of the
      * nodes
-     * 
+     *
      * @param changed_node the node that has been changed
-    */
+     */
     void reassignCosts(RRTNode* changed_node) {
         if (changed_node == nullptr) {
             return;
         }
 
-        for (RRTNode* child: changed_node->getReachable()) {
+        for (RRTNode* child : changed_node->getReachable()) {
             reassignCostsRecursive(changed_node, child, changed_node->getCost());
         }
     }
 
-    void reassignCostsRecursive(RRTNode* parent, RRTNode* node, double cost) {
+    void reassignCostsRecursive(RRTNode* parent, RRTNode* node, double path_cost) {
+
         if (node == nullptr) {
             return;
         }
@@ -393,7 +393,7 @@ class RRTTree {
         // get edge cost
         double edge_cost = getEdge(parent->getPoint(), node->getPoint())->getCost();
 
-        node->setCost(cost + edge_cost);
+        node->setCost(path_cost + edge_cost);
         for (RRTNode* neighbor : node->getReachable()) {
             reassignCostsRecursive(node, neighbor, node->getCost());
         }

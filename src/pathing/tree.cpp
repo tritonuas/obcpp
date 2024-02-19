@@ -161,13 +161,9 @@ void RRTTree::rewireEdge(RRTNode* current_node, RRTNode* previous_parent, RRTNod
     RRTEdge new_edge = RRTEdge(new_parent, current_node, path, cost);
     // replace prev node in "from" node's neighbor list with new node
 
-    // based on testing, if current_point and new_connection are already connected
-    // there will be duplicate edges in the edge_map
-
     // ORDER MATTERS, REMOVE THEN ADD TO PRESERVE THE CURR_NODE HAS A PARENT
     previous_parent->removeReachable(current_node);
     new_parent->addReachable(current_node);
-    // current_node->setParent(new_parent);
 
     // remove old edge from edge_map, add the new edge
     edge_map.erase(previous_pair);
@@ -297,7 +293,7 @@ std::vector<XYZCoord> RRTTree::getPathToGoal(bool without_cache) {
         // run DFS
         for (RRTNode* child : root->getReachable()) {
             std::vector<RRTNode*> current_path;
-            fillPathOptionsRecursive(path_options, child, root, 0, current_path);
+            fillPathOptionsRecursive(path_options, child, root, current_path);
         }
 
         // if there are no paths, then return an empty path

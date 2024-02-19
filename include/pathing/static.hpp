@@ -22,6 +22,11 @@
 //     return {};
 // }
 
+/*
+    TODO - 
+        1] get rid of the goal bias, will sample goal before and after iterations
+        2] sample the goal before and after iterations
+*/
 class RRT {
  public:
     RRT(RRTPoint start, std::vector<RRTPoint> goals, int num_iterations, double goal_bias,
