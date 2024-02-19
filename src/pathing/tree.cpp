@@ -174,11 +174,10 @@ void RRTTree::rewireEdge(RRTNode* current_node, RRTNode* previous_parent, RRTNod
     edge_map.emplace(new_pair, new_edge);
     current_node->setCost(new_parent->getCost() + cost);
 
-    // remove old node from node_map, add the new node
-    // node_map.insert(std::make_pair(new_connection->getPoint(), new_connection));
-    // node_map.erase(previous_parent->getPoint());
+    reassignCosts(current_node);
 }
 
+// ALSO BROKEN
 RRTNode* RRTTree::getNode(const RRTPoint &point) {
     if (node_map.count(point) > 0) {
         return node_map.at(point);

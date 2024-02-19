@@ -145,7 +145,7 @@ class Environment {
      */
     int getNumGoals() const { return goals.size(); }
 
- private:
+//  private:
     const Polygon valid_region;         // boundary of the valid map
     const std::vector<RRTPoint> goals;  // goal point
     const double goal_radius;           // radius (tolarance) of the goal region centerd at goal

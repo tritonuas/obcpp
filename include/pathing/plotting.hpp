@@ -137,7 +137,7 @@ class PathingPlot {
 
     // Time in 1/100ths of a second which must expire before
     // displaying the next image in an animated sequence.
-    size_t animationDelayCentiSec = 10;
+    size_t animationDelayCentiSec = 1;
 
     // how many frames to generate per each unit of distance in a path
     double framesPerDistanceUnit = 0.1f;

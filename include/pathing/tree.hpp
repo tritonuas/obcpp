@@ -258,7 +258,7 @@ class RRTTree {
         current_head = goal;
     }
 
- private:
+//  private:
     RRTNode* root;
     RRTNode* current_head;
     std::unordered_map<RRTPoint, RRTNode*, PointHashFunction> node_map{};
@@ -367,6 +367,36 @@ class RRTTree {
         }
 
         current_path.pop_back();
+    }
+
+    /**
+     * After rewire edge, it goes down the tree and reassigns the cost of the
+     * nodes
+     * 
+     * @param changed_node the node that has been changed
+    */
+    void reassignCosts(RRTNode* changed_node) {
+        if (changed_node == nullptr) {
+            return;
+        }
+
+        for (RRTNode* child: changed_node->getReachable()) {
+            reassignCostsRecursive(changed_node, child, changed_node->getCost());
+        }
+    }
+
+    void reassignCostsRecursive(RRTNode* parent, RRTNode* node, double cost) {
+        if (node == nullptr) {
+            return;
+        }
+
+        // get edge cost
+        double edge_cost = getEdge(parent->getPoint(), node->getPoint())->getCost();
+
+        node->setCost(cost + edge_cost);
+        for (RRTNode* neighbor : node->getReachable()) {
+            reassignCostsRecursive(node, neighbor, node->getCost());
+        }
     }
 };
 

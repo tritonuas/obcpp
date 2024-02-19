@@ -18,11 +18,11 @@ int main() {
     std::vector<RRTPoint> goals{RRTPoint(XYZCoord{400, 150, 0}, M_PI / 4),
                                 RRTPoint(XYZCoord{400, 500, 0}, HALF_PI),
                                 RRTPoint(XYZCoord{150, 700, 0}, M_PI)};
-    int num_iterations = 1800;
-    double goal_bias = 0.4;
-    double search_radius = 45;
-    double tolerance_to_goal = 30;
-    double rewire_radius = 100;
+    int num_iterations = 100;
+    double goal_bias = 0.6;
+    double search_radius = 5000;
+    double tolerance_to_goal = 50;
+    double rewire_radius = 40;
     Polygon bounds;
     bounds.emplace_back(XYZCoord{0, 0, 0});
     bounds.emplace_back(XYZCoord{500, 0, 0});

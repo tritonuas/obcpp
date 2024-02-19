@@ -12,6 +12,7 @@
 
 #include "pathing/dubins.hpp"
 #include "pathing/environment.hpp"
+#include "pathing/plotting.hpp"
 #include "pathing/tree.hpp"
 #include "utilities/datatypes.hpp"
 #include "utilities/rng.hpp"
@@ -51,14 +52,20 @@ class RRT {
      * there are
      */
     void run() {
-        // divide the total iterations by the number of goals
+        // gets the goal coordinates from the environment
+        std::vector<XYZCoord> goal_coords;
+        for (const RRTPoint &goal : tree.getAirspace().goals) {
+            goal_coords.push_back(goal.coord);
+        }
+
+        PathingPlot plotter("pathing_output", tree.getAirspace().valid_region, {}, goal_coords);
         int total_goals = tree.getAirspace().getNumGoals();
         int tries = num_iterations / total_goals;
         int next_goal = 1;
 
         for (int current_goal_index = 0; current_goal_index < total_goals; current_goal_index++) {
             // base case ==> if the goal is found, stop
-            for (int __ = 0; __ < tries; __++) {
+            for (int _ = 0; _ < tries; _++) {
                 // if (tree.getAirspace().isPathComplete()) {
                 //     next_goal++;
                 //     break;
@@ -74,17 +81,18 @@ class RRT {
                 RRTNode *new_node = parseOptions(options, sample, current_goal_index);
 
                 if (new_node != nullptr) {
+                    Polyline path =
+                        tree.edge_map.at(std::make_pair(new_node->getParent(), new_node)).getPath();
+                    plotter.addIntermediatePolyline(path);
                     optimizeTree(new_node);
                 }
             }
 
             // changes the current head to make the tree searching more efficient
             tree.changeCurrentHead(current_goal_index);
-
-            // if (tree.getAirspace().isPathComplete()) {
-            //     break;
-            // }
         }
+
+        plotter.output("test_animated", PathOutputType::ANIMATED);
     }
 
     /**

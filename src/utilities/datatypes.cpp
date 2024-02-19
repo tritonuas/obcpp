@@ -81,8 +81,7 @@ std::size_t PointHashFunction::operator()(const RRTPoint &point) const {
 RRTPoint::RRTPoint(XYZCoord point, double psi) : coord{point}, psi{psi} {}
 
 bool RRTPoint::operator==(const RRTPoint &otherPoint) const {
-    return (this->coord.x == otherPoint.coord.x && this->coord.y == otherPoint.coord.y &&
-            this->coord.z == otherPoint.coord.z && this->psi == otherPoint.psi);
+    return (this->coord == otherPoint.coord && this->psi == otherPoint.psi);
 }
 
 double RRTPoint::distanceTo(const RRTPoint &otherPoint) const {
