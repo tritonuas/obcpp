@@ -150,6 +150,7 @@ bool MavlinkClient::uploadMissionUntilSuccess(std::shared_ptr<MissionState> stat
     // So we will try this upload 5 times. If it doesn't work, assume we are on the
     // SITL and skip, but we'll do a big scary log message in case this is something
     // important to notice
+    // see TODO below, so we can treat the cases separately for testing and for real missions
     int geofence_attempts = 5;
     while (true) {
         LOG_F(INFO, "Sending geofence information...");
@@ -161,8 +162,9 @@ bool MavlinkClient::uploadMissionUntilSuccess(std::shared_ptr<MissionState> stat
 
         LOG_S(WARNING) << "Geofence failed to upload: " << geofence_result;
         if (geofence_attempts == 0) {
-            LOG_S(ERROR) << "Unable to upload geofence. If this is on the SITL,"
-                << " this is probably okay. If this is a real mission, AAHHHhhhhhhhHHHh!";
+            // TODO: in the obc config file, set whether or not it is a real mission.
+            // That way we can decide if this should be a FATAL error or not
+            LOG_S(ERROR) << "Unable to upload geofence. If this is a real mission THIS IS BAD.";
             break;
         } else {
             geofence_attempts--;

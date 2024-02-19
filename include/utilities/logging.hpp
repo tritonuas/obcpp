@@ -5,8 +5,8 @@
 #include <utility>
 
 // Include this file instead of loguru.hpp directly
-// because I cannot figure out how to pass the compiler flag
-// to enable logging with streams
+// to ensure that this define is always included before
+// the include to loguru.
 #define LOGURU_WITH_STREAMS 1
 #include <loguru.hpp>
 
