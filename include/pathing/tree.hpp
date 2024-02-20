@@ -234,19 +234,17 @@ class RRTTree {
 
     /**
      * Returns the currenthead of the tree
-    */
-    RRTNode* getCurrentHead() const {
-        return current_head;
-    }
+     */
+    RRTNode* getCurrentHead() const { return current_head; }
 
     /**
      * Changes the currentHead to the given goal
-     * 
+     *
      * @param goal ==> the goal to change the currentHead to
-    */
-   void setCurrentHead(RRTNode* goal) {
+     */
+    void setCurrentHead(RRTNode* goal) {
         if (goal == nullptr || node_map[goal->getPoint()] == nullptr) {
-            std::cout << "FAILURE: Goal is not in the tree\n" << std::endl; 
+            std::cout << "FAILURE: Goal is not in the tree\n" << std::endl;
             return;
         }
         current_head = goal;
@@ -302,7 +300,6 @@ class RRTTree {
     }
 
     void reassignCostsRecursive(RRTNode* parent, RRTNode* node, double path_cost) {
-
         if (node == nullptr) {
             return;
         }

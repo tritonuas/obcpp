@@ -23,9 +23,7 @@
 // }
 
 /*
-    TODO -
-        1] get rid of the goal bias, will sample goal before and after iterations
-        2] sample the goal before and after iterations
+    TODO - abstract out fnctions
 */
 class RRT {
  public:

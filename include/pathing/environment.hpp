@@ -4,6 +4,7 @@
 #include <utility>
 #include <vector>
 #include <cmath>
+#include <algorithm>
 
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
