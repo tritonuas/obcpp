@@ -84,8 +84,9 @@ typedef struct ad_packet ad_packet_t;
 static locale_t _send_locale = (locale_t) 0;
 static locale_t _recv_locale = (locale_t) 0;
 
-// Uses malloc to manually allocate an airdrop packet. MAKE SURE to free this packet
-// using the provided free_airdrop_packet function.
+// Uses malloc to manually allocate an airdrop packet.
+// DO NOT MANUALLLY USE delete TO FREE THIS MEMORY
+// Instead, it will be free'd when consumed by send_packet
 ad_packet_t* make_ad_packet(uint8_t hdr, uint8_t data) {
     ad_packet_t* packet = (ad_packet_t*) malloc(sizeof(ad_packet_t));
     packet->hdr = hdr;
@@ -93,20 +94,34 @@ ad_packet_t* make_ad_packet(uint8_t hdr, uint8_t data) {
     return packet;
 }
 
-// This exists to remind people that you should NOT use C++'s delete operator
-// on a packet created from make_airdrop_packet
-void free_ad_packet(ad_packet_t* packet) {
-    free(packet);
+// Get most recent error message for single threaded use,
+// or for when creating the socket initially
+const char* get_ad_err() {
+    return strerror(errno);
 }
 
 // Get error message for previous error with a send socket
-const char* get_ad_send_err_msg() {
+const char* get_ad_send_thread_err() {
     return strerror_l(errno, _send_locale);
 }
 
 // Get error message for previous error with a recv socket
-const char* get_ad_recv_err_msg() {
+const char* get_ad_recv_thread_err() {
     return strerror_l(errno, _recv_locale);
+}
+
+// Need to call these two functions from corresponding thread
+// if doing things multithreaded. This is so that the error messages
+// between the two different threads won't override each other.
+void set_send_thread() {
+    // Tie error messages in this thread to the send locale
+    _send_locale = newlocale(LC_ALL_MASK, "", (locale_t) 0);
+    uselocale(_send_locale);
+}
+void set_recv_thread() {
+    // Tie error messages in this thread to the recv locale
+    _recv_locale = newlocale(LC_ALL_MASK, "", (locale_t) 0);
+    uselocale(_recv_locale);
 }
 
 struct ad_socket_result {
@@ -124,13 +139,9 @@ typedef ad_socket_result ad_socket_result_t;
 
 // Makes a socket for sending airdrop packets
 // If the return value is negative, then an error occured
-ad_socket_result make_send_ad_socket() {
+ad_socket_result make_ad_socket() {
     static char err[AD_ERR_LEN];
     int sock_fd;
-
-    // Tie error messages in this thread to the send locale
-    _send_locale = newlocale(LC_ALL_MASK, "", (locale_t) 0);
-    uselocale(_send_locale);
 
     // Using IPv4 addrs with UDP datagrams
     if ((sock_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
@@ -168,48 +179,17 @@ ad_socket_result make_send_ad_socket() {
     };
 }
 
-ad_socket_result_t make_recv_ad_socket() {
-    static char err[AD_ERR_LEN];
-    int sock_fd;
-
-    // Tie error messages in this thread to the send locale
-    _recv_locale = newlocale(LC_ALL_MASK, "", (locale_t) 0);
-    uselocale(_recv_locale);
-
-    // Using IPv4 addrs with UDP datagrams
-    if ((sock_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-        strncpy(&err[0], "socket failed", AD_ERR_LEN);
-        return ad_socket_result_t {
-            .data = { .err_hdr = &err[0] },
-            .is_err = 1,
-        };
-    }
-
-    // Bind the socket to the broadcast address
-    if (bind(sock_fd, (struct sockaddr*) &BROADCAST_ADDR, sizeof(BROADCAST_ADDR)) < 0) {
-        strncpy(&err[0], "bind socket failed", AD_ERR_LEN);
-        return ad_socket_result_t {
-            .data = { .err_hdr = &err[0] },
-            .is_err = 1,
-        };
-    }
-
-    return ad_socket_result_t {
-        .data = { .sock_fd = sock_fd },
-        .is_err = 0,
-    };
-}
-
 // Actual Send/Receive helper functions
 
-// send packet on the network through sock_fd
-int send_ad_packet(int sock_fd, const ad_packet_t* packet) {
-    uselocale(_send_locale);
-    return send(sock_fd, (void*) packet, sizeof(packet), 0);
+// send packet on the network through sock_fd and then
+// frees the memory pointed to by packet
+int send_ad_packet(int sock_fd, ad_packet_t* packet) {
+    int res = send(sock_fd, (void*) packet, sizeof(packet), 0);
+    free(packet);
+    return res;
 }
 
 // receive packet and place into buf, which is of length buf_len
 int recv_ad_packet(int sock_fd, void* buf, size_t buf_len) {
-    uselocale(_recv_locale);
     return recv(sock_fd, buf, buf_len, 0);
 }

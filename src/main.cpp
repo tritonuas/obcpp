@@ -11,21 +11,18 @@
 int main(int argc, char* argv[]) {
     initLogging(argc, argv);
 
-    auto send_result = make_send_ad_socket();
-    if (send_result.is_err) {
-        LOG_F(ERROR, "send %s: %s", send_result.data.err_hdr, get_ad_send_err_msg());
+    auto socket_result = make_ad_socket();
+    if (socket_result.is_err) {
+        LOG_F(ERROR, "%s: %s", socket_result.data.err_hdr, get_ad_err());
         return 1;
     }
+    int socket = socket_result.data.sock_fd;
 
-    int send_socket = send_result.data.sock_fd;
+    send_ad_packet(socket, make_ad_packet(SET_MODE, DIRECT_DROP));
 
-    auto recv_result = make_recv_ad_socket();
-    if (recv_result.is_err) {
-        LOG_F(ERROR, "recv %s: %s", recv_result.data.err_hdr, get_ad_recv_err_msg());
-        return 1;
-    }
-
-    LOG_F(INFO, "worked");
+    char buf[100];
+    recv_ad_packet(socket, &buf[0], 100);
+    LOG_F(INFO, "%s", buf);
     return 0;
 
     // In future, load configs, perhaps command line parameters, and pass
