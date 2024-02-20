@@ -36,6 +36,13 @@ struct XYZCoord {
     friend XYZCoord operator*(const XYZCoord &vector, double scalar);
 
     /**
+     * Distance to another XYZCoord
+     * 
+     * @param other point to calculate distance to
+    */
+    double distanceTo(const XYZCoord& other) const;
+
+    /**
      * @returns the magnitude of a vector
      * @see https://mathworld.wolfram.com/VectorNorm.html
      */

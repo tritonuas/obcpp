@@ -20,11 +20,9 @@
  */
 class Environment {
  public:
-    Environment(const Polygon valid_region, const std::vector<RRTPoint> goals,
-                const double goal_radius)
+    Environment(const Polygon valid_region, const std::vector<XYZCoord> goals)
         : valid_region(valid_region),
           goals(goals),
-          goal_radius(goal_radius),
           goals_found(0),
           bounds(findBounds()) {}
 
@@ -52,43 +50,18 @@ class Environment {
     }
 
     /**
-     * Check if a point is in the goal region
-     *
-     * @param point the point to check
-     * @return true if the point is in the goal region, false otherwise
-     *  TODO - breaks on initial, needs a redesign
-     */
-    bool isPointInGoal(const XYZCoord& point) const {
-        return isPointInGoal(point, goals_found - 1);
-    }
-
-    /**
-     * Check if a point is in the goal region
-     *
-     * @param point the point to check
-     * @param goal_index the index of the goal to check
-     * @return true if the point is in the goal region, false otherwise
-     */
-    bool isPointInGoal(const XYZCoord& point, int goal_index) const {
-        double x = point.x - getGoal(goal_index).coord.x;
-        double y = point.y - getGoal(goal_index).coord.y;
-        double norm = sqrt(x * x + y * y);
-        return norm <= goal_radius;
-    }
-
-    /**
      * Get the goal point
      *
      * @return the goal point
      */
-    RRTPoint getGoal() const { return goals[goals_found]; }
+    XYZCoord getGoal() const { return goals[goals_found]; }
 
     /**
      * Get the goal point from given index
      *
      * @return the goal point
      */
-    RRTPoint getGoal(int index) const { return goals[index]; }
+    XYZCoord getGoal(int index) const { return goals[index]; }
 
     /**
      * Generate a random point in the valid region
@@ -110,11 +83,12 @@ class Environment {
                                         random(bounds.second.first, bounds.second.second), 0};
 
             if (isPointInBounds(generated_point)) {
+                // print out the random point
                 return RRTPoint(generated_point, 0);
             }
         }
 
-        return goals[goals_found];
+        return RRTPoint(goals[goals_found], random(0, TWO_PI));
     }
 
     /**
@@ -147,8 +121,7 @@ class Environment {
 
 //  private:
     const Polygon valid_region;         // boundary of the valid map
-    const std::vector<RRTPoint> goals;  // goal point
-    const double goal_radius;           // radius (tolarance) of the goal region centerd at goal
+    const std::vector<XYZCoord> goals;  // goal point
 
     int goals_found;  // whether or not the goal has been found, once it becomes ture, it will never
                       // be false again

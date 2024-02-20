@@ -23,30 +23,26 @@
 // }
 
 /*
-    TODO - 
+    TODO -
         1] get rid of the goal bias, will sample goal before and after iterations
         2] sample the goal before and after iterations
 */
 class RRT {
  public:
-    RRT(RRTPoint start, std::vector<RRTPoint> goals, int num_iterations, double goal_bias,
-        double search_radius, double tolerance_to_goal, double rewire_radius, Polygon bounds)
+    RRT(RRTPoint start, std::vector<XYZCoord> goals, int num_iterations, double search_radius,
+        double rewire_radius, Polygon bounds)
 
         : num_iterations(num_iterations),
-          goal_bias(goal_bias),
           search_radius(search_radius),
           rewire_radius(rewire_radius),
-          tree(start, Environment(bounds, goals, tolerance_to_goal),
-               Dubins(TURNING_RADIUS, POINT_SEPARATION)) {}
+          tree(start, Environment(bounds, goals), Dubins(TURNING_RADIUS, POINT_SEPARATION)) {}
 
     /**
      * Generates a random point in the airspace, with a bias towards the goal
      * if the random number is less than the goal bias, it just returns the goal to see if we can
      * directly connect to it
      */
-    RRTPoint generateSamplePoint() {
-        return tree.getRandomPoint(search_radius, random(0.0, 1.0) < goal_bias);
-    }
+    RRTPoint generateSamplePoint() { return tree.getRandomPoint(search_radius); }
 
     /**
      * RRT algorithm
@@ -59,23 +55,68 @@ class RRT {
     void run() {
         // gets the goal coordinates from the environment
         std::vector<XYZCoord> goal_coords;
-        for (const RRTPoint &goal : tree.getAirspace().goals) {
-            goal_coords.push_back(goal.coord);
+        for (const XYZCoord &goal : tree.getAirspace().goals) {
+            goal_coords.push_back(goal);
         }
 
         PathingPlot plotter("pathing_output", tree.getAirspace().valid_region, {}, goal_coords);
         int total_goals = tree.getAirspace().getNumGoals();
         int tries = num_iterations / total_goals;
-        int next_goal = 1;
 
         for (int current_goal_index = 0; current_goal_index < total_goals; current_goal_index++) {
-            // base case ==> if the goal is found, stop
-            for (int _ = 0; _ < tries; _++) {
-                // if (tree.getAirspace().isPathComplete()) {
-                //     next_goal++;
-                //     break;
-                // }
+            int direct_distance = tree.getGoal(current_goal_index)
+                                      .distanceTo(tree.getCurrentHead()->getPoint().coord);
 
+            // try to connect to the goal directly
+            // first is the goal version
+            // second is the option
+            std::vector<std::pair<RRTPoint, RRTOption>> direct_options;
+            RRTPoint current_head = tree.getCurrentHead()->getPoint();
+            bool direct_success = false;
+
+            for (const double &angle : angles) {
+                RRTPoint goal(tree.getAirspace().getGoal(current_goal_index), angle);
+
+                // returns all dubins options from the tree to the sample
+                std::vector<RRTOption> options = tree.dubins.allOptions(current_head, goal);
+
+                for (const RRTOption &option : options) {
+                    direct_options.emplace_back(std::make_pair(goal, option));
+                }
+            }
+
+            // sort the options by length
+            std::sort(direct_options.begin(), direct_options.end(),
+                      [](const std::pair<RRTPoint, RRTOption> &a,
+                         const std::pair<RRTPoint, RRTOption> &b) {
+                          return compareRRTOptionLength(a.second, b.second);
+                      });
+
+            // if the direct distance is within x of the best option, then just connect to the goal
+            // TODO get rid of magic number
+            for (const auto &[goal, option] : direct_options) {
+                if (option.length < 1.2 * direct_distance) {
+                    RRTNode *new_node = tree.addNode(tree.getCurrentHead(), goal, option);
+
+                    if (new_node != nullptr) {
+                        Polyline path =
+                            tree.edge_map.at(std::make_pair(new_node->getParent(), new_node))
+                                .getPath();
+                        plotter.addIntermediatePolyline(path);
+                        tree.setCurrentHead(new_node);
+                        direct_success = true;
+                        break;
+                    }
+                } else {
+                    break;
+                }
+            }
+
+            if (direct_success) {
+                continue;
+            }
+
+            for (int _ = 0; _ < tries; _++) {
                 // generate a sample point
                 const RRTPoint sample = generateSamplePoint();
 
@@ -83,7 +124,7 @@ class RRT {
                 std::vector<std::pair<RRTNode *, RRTOption>> options = tree.pathingOptions(sample);
 
                 // returns true if the node is successfully added to the tree
-                RRTNode *new_node = parseOptions(options, sample, current_goal_index);
+                RRTNode *new_node = parseOptions(options, sample);
 
                 if (new_node != nullptr) {
                     Polyline path =
@@ -93,8 +134,40 @@ class RRT {
                 }
             }
 
-            // changes the current head to make the tree searching more efficient
-            tree.changeCurrentHead(current_goal_index);
+            // attempts to connect to the goal, should always connect
+            std::vector<RRTPoint> goal_points;
+            for (const double angle : angles) {
+                goal_points.push_back(
+                    RRTPoint(tree.getAirspace().getGoal(current_goal_index), angle));
+            }
+
+            std::vector<std::pair<RRTPoint, std::pair<RRTNode *, RRTOption>>> all_options;
+            for (const RRTPoint &goal : goal_points) {
+                std::vector<std::pair<RRTNode *, RRTOption>> options = tree.pathingOptions(goal);
+
+                for (const auto &[node, option] : options) {
+                    all_options.push_back(std::make_pair(goal, std::make_pair(node, option)));
+                }
+            }
+
+            std::sort(all_options.begin(), all_options.end(), [](const auto &a, const auto &b) {
+                return compareRRTOptionLength(a.second.second, b.second.second);
+            });
+
+            for (const auto &[goal, pair] : all_options) {
+                RRTNode *anchor_node = pair.first;
+                RRTOption option = pair.second;
+
+                RRTNode *new_node = tree.addNode(anchor_node, goal, option);
+
+                if (new_node != nullptr) {
+                    Polyline path =
+                        tree.edge_map.at(std::make_pair(new_node->getParent(), new_node)).getPath();
+                    plotter.addIntermediatePolyline(path);
+                    tree.setCurrentHead(new_node);
+                    break;
+                }
+            }
         }
 
         plotter.output("test_animated", PathOutputType::ANIMATED);
@@ -109,7 +182,7 @@ class RRT {
      * not added)
      */
     RRTNode *parseOptions(const std::vector<std::pair<RRTNode *, RRTOption>> &options,
-                          const RRTPoint &sample, int goal_index) {
+                          const RRTPoint &sample) {
         for (const auto &[node, option] : options) {
             /*
              *  stop if
@@ -126,7 +199,7 @@ class RRT {
             }
 
             // else, add the node to the
-            RRTNode *sucessful_addition = tree.addNode(node, sample, option, goal_index);
+            RRTNode *sucessful_addition = tree.addNode(node, sample, option);
 
             if (sucessful_addition != nullptr) {
                 return sucessful_addition;
@@ -158,9 +231,11 @@ class RRT {
     RRTTree tree;
 
     int num_iterations;
-    double goal_bias;
     double search_radius;
     double rewire_radius;
+
+    const std::vector<double> angles = {0,    M_PI / 4,     M_PI / 2,     3 * M_PI / 4,
+                                        M_PI, 5 * M_PI / 4, 3 * M_PI / 2, 7 * M_PI / 4};
 };
 
 #endif  // INCLUDE_PATHING_STATIC_HPP_

@@ -137,8 +137,7 @@ class RRTTree {
      *  Add a node to the RRTTree.
      *  If adding the first node to the tree, connectTo can be anything.
      */
-    RRTNode* addNode(RRTNode* anchor_node, const RRTPoint& new_point, const RRTOption& option,
-                     int goal_index);
+    RRTNode* addNode(RRTNode* anchor_node, const RRTPoint& new_point, const RRTOption& option);
 
     /*
 
@@ -170,14 +169,14 @@ class RRTTree {
      *
      * @return RRTPoint goal point
      */
-    RRTPoint getGoal() const;
+    XYZCoord getGoal() const;
 
     /**
      * Get goal point
      *
      * @return RRTPoint goal point
      */
-    RRTPoint getGoal(int index) const;
+    XYZCoord getGoal(int index) const;
 
     /**
      * returns the Environment object
@@ -191,7 +190,7 @@ class RRTTree {
      *
      * @return RRTPoint random point in environment
      */
-    RRTPoint getRandomPoint(double search_radius, bool use_goal);
+    RRTPoint getRandomPoint(double search_radiusl);
 
     /**
      * Returns a sorted list of the paths to get from a given node to the sampled
@@ -234,27 +233,22 @@ class RRTTree {
     void RRTStar(RRTNode* sample, double rewire_radius);
 
     /**
-     * changes current_head to the goal node with the closest length
-     * TODO - ensure that the path is the most efficient
-     * @param goal_index the current_goal index to find the goal to
-     */
-    void changeCurrentHead(int goal_index) {
-        // gets the nodes in the goal
-        std::vector<RRTNode*> nodes = getNodesInGoal(goal_index);
+     * Returns the currenthead of the tree
+    */
+    RRTNode* getCurrentHead() const {
+        return current_head;
+    }
 
-        if (nodes.size() == 0) {
+    /**
+     * Changes the currentHead to the given goal
+     * 
+     * @param goal ==> the goal to change the currentHead to
+    */
+   void setCurrentHead(RRTNode* goal) {
+        if (goal == nullptr || node_map[goal->getPoint()] == nullptr) {
+            std::cout << "FAILURE: Goal is not in the tree\n" << std::endl; 
             return;
         }
-
-        // finds the node with the shortest path
-        RRTNode* goal = nodes[0];
-
-        for (RRTNode* node : nodes) {
-            if (node->getCost() < goal->getCost()) {
-                goal = node;
-            }
-        }
-
         current_head = goal;
     }
 
@@ -269,40 +263,6 @@ class RRTTree {
     Dubins dubins;
 
     double distance_to_goal;  // not used at the moment
-
-    /**
-     * Returns all the nodes in the specified goal area recursively
-     *
-     * @param goal_index the index of the goal to search for
-     */
-    std::vector<RRTNode*> getNodesInGoal(int goal_index) {
-        std::vector<RRTNode*> nodes;
-        getNodesInGoalRecursive(root, goal_index, nodes);
-        return nodes;
-    }
-
-    /**
-     * Recursive helper for getNodesInGoal
-     *
-     * @param node the current node to search
-     * @param goal_index the index of the goal to search for
-     * @param nodes the list of nodes to add to
-     */
-    void getNodesInGoalRecursive(RRTNode* node, int goal_index, std::vector<RRTNode*>& nodes) {
-        if (airspace.isPointInGoal(node->getPoint().coord, goal_index)) {
-            nodes.push_back(node);
-            return;
-        }
-
-        for (RRTNode* neighbor : node->getReachable()) {
-            getNodesInGoalRecursive(neighbor, goal_index, nodes);
-        }
-    }
-
-    /**
-     * When the goal is found, recursively add the path constructed
-     */
-    void retreivePathByNode(RRTNode* node, RRTNode* parent);
 
     /**
      * Gets the nearest node to a given RRTPoint
@@ -324,49 +284,6 @@ class RRTTree {
      * @param search_radius  ==> the radius to search for nodes to rewire
      */
     void RRTStarRecursive(RRTNode* current_node, RRTNode* sample, double rewire_radius);
-
-    /**
-     * Fills out an array of List<Node*> and path lengths to the goal using depth first search
-     * TODO - test
-     *
-     * @param options   ==> list of options to fill
-     * @param node      ==> current node to traverse
-     * @param parent    ==> the parent of the current node
-     * @param current_length ==> the current length of the path
-     * @param current_path   ==> the current path being traced by DFS
-     */
-    void fillPathOptionsRecursive(std::vector<std::pair<std::vector<RRTNode*>, double>>& options,
-                                  RRTNode* node, RRTNode* parent,
-                                  std::vector<RRTNode*>& current_path) {
-        // parent should never be nullptr, but for safety
-        if (node == nullptr || parent == nullptr) {
-            return;
-        }
-
-        // find the edge between the parent and current node
-        RRTEdge* edge = getEdge(parent->getPoint(), node->getPoint());
-
-        if (edge == nullptr) {
-            return;
-        }
-
-        double edge_cost = edge->getCost();
-
-        current_path.push_back(node);
-
-        if (airspace.isPointInGoal(node->getPoint().coord)) {
-            // add the path to the goal (deep copy of current_path)
-            options.push_back(std::make_pair(current_path, node->getCost()));
-            current_path.pop_back();
-            return;
-        }
-
-        for (RRTNode* neighbor : node->getReachable()) {
-            fillPathOptionsRecursive(options, neighbor, node, current_path);
-        }
-
-        current_path.pop_back();
-    }
 
     /**
      * After rewire edge, it goes down the tree and reassigns the cost of the

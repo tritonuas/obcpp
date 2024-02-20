@@ -52,6 +52,10 @@ XYZCoord operator*(double scalar, const XYZCoord &vector) {
 
 XYZCoord operator*(const XYZCoord &vector, double scalar) { return scalar * vector; }
 
+double XYZCoord::distanceTo(const XYZCoord &other) const {
+    return (*this - other).norm();
+}
+
 double XYZCoord::norm() const {
     return sqrt(this->x * this->x    //
                 + this->y * this->y  //
@@ -85,9 +89,7 @@ bool RRTPoint::operator==(const RRTPoint &otherPoint) const {
 }
 
 double RRTPoint::distanceTo(const RRTPoint &otherPoint) const {
-    return std::sqrt(std::pow(this->coord.x - otherPoint.coord.x, 2) +
-                     std::pow(this->coord.y - otherPoint.coord.y, 2) +
-                     std::pow(this->coord.z - otherPoint.coord.z, 2));
+    return this->coord.distanceTo(otherPoint.coord);
 }
 
 GPSCoord makeGPSCoord(double lat, double lng, double alt) {
