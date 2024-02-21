@@ -30,10 +30,7 @@ struct ad_int_result {
 };
 typedef struct ad_int_result ad_int_result_t;
 
-// Uses malloc to manually allocate an airdrop packet.
-// DO NOT MANUALLLY USE delete TO FREE THIS MEMORY!
-// Instead, it will be free'd when consumed by send_ad_packet.
-ad_packet_t* make_ad_packet(uint8_t hdr, uint8_t data);
+ad_packet_t make_ad_packet(uint8_t hdr, uint8_t data);
 
 // TODO: write documentation
 ad_socket_result_t make_ad_socket(uint16_t recv_port, uint16_t send_port);
@@ -52,7 +49,7 @@ ad_int_result_t set_socket_nonblocking(int sock_fd);
 
 // Actual Send/Receive helper functions
 
-// Send packet on the network through sock_fd and then frees the packet.
+// Send packet on the network through sock_fd
 // Either returns an error string or the number of bytes sent.
 // IMPORTANT: must have previously called set_send_thread from curr thread.
 ad_int_result_t send_ad_packet(ad_socket_t socket, ad_packet_t* packet);

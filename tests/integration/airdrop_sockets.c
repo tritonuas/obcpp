@@ -51,7 +51,8 @@ int main(int argc, char* argv[]) {
         set_recv_thread();
 
         while (1) {
-            ir = send_ad_packet(socket, make_ad_packet(SET_MODE, INDIRECT_DROP));
+            ad_packet_t packet = make_ad_packet(SET_MODE, INDIRECT_DROP);
+            ir = send_ad_packet(socket, &packet);
             ASSERT_ERROR(sr);        
             printf("Client sent packet.\n");
 
@@ -64,8 +65,8 @@ int main(int argc, char* argv[]) {
                 continue;
             }
 
-            ad_packet_t* packet = (ad_packet_t*) buf;
-            printf("Client received packet: %hhu %hhu\n", packet->hdr, packet->data);
+            ad_packet_t* new_packet = (ad_packet_t*) buf;
+            printf("Client received packet: %hhu %hhu\n", new_packet->hdr, new_packet->data);
             exit(0);
         }
     } else if (strcmp(argv[1], "server") == 0) {
@@ -86,7 +87,8 @@ int main(int argc, char* argv[]) {
             ad_packet_t* packet = (ad_packet_t*) buf;
             printf("Server received packet: %hhu %hhu\n", packet->hdr, packet->data);
 
-            ir = send_ad_packet(socket, make_ad_packet(ACK_MODE, packet->data));
+            ad_packet_t send_packet = make_ad_packet(ACK_MODE, packet->data);
+            ir = send_ad_packet(socket, &send_packet);
             ASSERT_ERROR(ir);
             printf("Server sent ack packet.");
         }

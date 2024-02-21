@@ -21,10 +21,11 @@
 static locale_t _send_locale = (locale_t) 0;
 static locale_t _recv_locale = (locale_t) 0;
 
-ad_packet_t* make_ad_packet(uint8_t hdr, uint8_t data) {
-    ad_packet_t* packet = (ad_packet_t*) malloc(sizeof(ad_packet_t));
-    packet->hdr = hdr;
-    packet->data = data;
+ad_packet_t make_ad_packet(uint8_t hdr, uint8_t data) {
+    ad_packet_t packet = {
+        .hdr = hdr,
+        .data = data,
+    };
     return packet;
 }
 
@@ -121,7 +122,6 @@ ad_int_result_t send_ad_packet(ad_socket_t socket, ad_packet_t* packet) {
     static char err[AD_ERR_LEN];
     int bytes_sent = sendto(socket.fd, (void*) packet, sizeof(packet), 0,
                             (struct sockaddr*) &SEND_ADDR, sizeof(SEND_ADDR));
-    free(packet);
 
     if (bytes_sent < 0) {
         snprintf(&err[0], AD_ERR_LEN, "send failed: %s", strerror_l(errno, _send_locale));
