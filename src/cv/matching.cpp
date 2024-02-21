@@ -42,32 +42,63 @@ auto toInput(cv::Mat img, bool show_output=false, bool unsqueeze=false, int unsq
     return std::vector<torch::jit::IValue>{tensor_image};
 }
 
+/*
+* Loads model, throws exception if unsuccessful. Must be called before calling cacheRefImages().
+*/
+void Matching::loadModel(const std::string &modelPath) {
+    try {
+        this->module = torch::jit::load(modelPath);
+        this->success = true;
+    }
+    catch (const c10::Error& e) {
+        std::cerr << "ERROR: could not load the model, check if model file is present in /bin\n";
+        this->success = false;
+    }
+}
+
+/*
+* Returns true if reference images successfully loaded, false otherwise
+*/
+bool Matching::cacheRefImages(const std::vector<std::pair<cv::Mat, BottleDropIndex>> &referenceImages) {
+    if(referenceImages.size() == 0) {
+        this->success = false;
+        std::cerr << "ERROR: Empty reference image vector passed as argument\n";
+        return false;
+    }
+
+    // Populate referenceFeatures by putting each refImg through model
+    for(int i = 0; i < referenceImages.size(); i++) {
+        cv::Mat image = referenceImages.at(i).first;
+        BottleDropIndex bottle = referenceImages.at(i).second;
+        std::vector<torch::jit::IValue> input = toInput(image);
+        torch::Tensor output = this->module.forward(input).toTensor();
+        this->referenceFeatures.push_back(std::make_pair(output, bottle));
+    }
+    this->success = true;
+    return true;
+}
+
 Matching::Matching(std::array<Bottle, NUM_AIRDROP_BOTTLES>
                        competitionObjectives,
                    double matchThreshold,
-                   std::vector<std::pair<cv::Mat, uint8_t>> referenceImages,
+                   std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages,
                    const std::string &modelPath)
     : competitionObjectives(competitionObjectives),
       matchThreshold(matchThreshold) {
 
-        try {
-            this->module = torch::jit::load(modelPath);
-        }
-        catch (const c10::Error& e) {
-            std::cerr << "error loading the model\n";
-            throw;
-        }
-
-        // Populate referenceFeatures by putting each refImg through model
-        for(int i = 0; i < referenceImages.size(); i++) {
-            cv::Mat image = referenceImages.at(i).first;
-            uint8_t bottle = referenceImages.at(i).second;
-            std::vector<torch::jit::IValue> input = toInput(image);
-            torch::Tensor output = this->module.forward(input).toTensor();
-            this->referenceFeatures.push_back(std::make_pair(output, bottle));
-        }
+    this->success = true;
     
+    loadModel(modelPath);
+    if(!this->success) {
+        std::cerr << "ERROR loading model. See above message. Matching will not proceed.\n";
     }
+    else {
+        cacheRefImages(referenceImages);
+        if(!this->success)
+            std::cerr << "ERROR loading reference images. See above. Matching will not proceed.\n";
+    }
+    
+}
 
 /*
 * Matches the given image with one of the referenceFeature elements 
@@ -75,24 +106,32 @@ Matching::Matching(std::array<Bottle, NUM_AIRDROP_BOTTLES>
 * @param croppedTarget - wrapper for cv::Mat image which we extract and use
 * @return MatchResult - struct of bottleIndex, boolean isMatch, and minimum distance found.
 * Boolean isMatch set to true if minimum distance found is below threshold, false otherwise.
+*
+* NOTE: Matching only occurs if loading model and ref. images was successful.
 */
 MatchResult Matching::match(const CroppedTarget& croppedTarget) {
-    std::vector<torch::jit::IValue> input = toInput(croppedTarget.croppedImage);
-    torch::Tensor output = this->module.forward(input).toTensor();
-    int minIndex = 0;
-    double minDist = torch::pairwise_distance(output, 
+    if(this->success) {
+        std::vector<torch::jit::IValue> input = toInput(croppedTarget.croppedImage);
+        torch::Tensor output = this->module.forward(input).toTensor();
+        int minIndex = 0;
+        double minDist = torch::pairwise_distance(output, 
                             referenceFeatures.at(minIndex).first).item().to<double>();
 
-    for(int i = 1; i < referenceFeatures.size(); i++) {
-        torch::Tensor curr = referenceFeatures.at(i).first;
-        torch::Tensor dist = torch::pairwise_distance(output, curr);
-        double tmp = dist.item().to<double>();
-        if(tmp < minDist) {
-            minDist = tmp;
-            minIndex = i;
+        for(int i = 1; i < referenceFeatures.size(); i++) {
+            torch::Tensor curr = referenceFeatures.at(i).first;
+            torch::Tensor dist = torch::pairwise_distance(output, curr);
+            double tmp = dist.item().to<double>();
+            if(tmp < minDist) {
+                minDist = tmp;
+                minIndex = i;
+            }
         }
+        BottleDropIndex bottleIdx = referenceFeatures.at(minIndex).second;
+        bool isMatch = minDist < this->matchThreshold;
+        return MatchResult{bottleIdx, isMatch, minDist};
     }
-    uint8_t bottleIdx = referenceFeatures.at(minIndex).second;
-    bool isMatch = minDist < this->matchThreshold;
-    return MatchResult{bottleIdx, isMatch, minDist};
+    else {
+        BottleDropIndex bottleIdx = BottleDropIndex::A;
+        return MatchResult{bottleIdx, false, this->matchThreshold};
+    }
 }

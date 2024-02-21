@@ -32,7 +32,7 @@ struct PipelineResults {
 class Pipeline {
     public:
         Pipeline(std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives,
-            std::vector<std::pair<cv::Mat, uint8_t>> referenceImages);
+            std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages);
 
     PipelineResults run(const ImageData& imageData);
 

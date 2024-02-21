@@ -12,7 +12,7 @@
 #include "protos/obc.pb.h"
 
 struct MatchResult {
-    uint8_t bottleDropIndex;
+    BottleDropIndex bottleDropIndex;
     bool foundMatch;
     double similarity;
 };
@@ -40,16 +40,19 @@ class Matching {
  public:
         Matching(std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives, 
             double matchThreshold, 
-            std::vector<std::pair<cv::Mat, uint8_t>> referenceImages,
+            std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages,
             const std::string &modelPath);
 
         MatchResult match(const CroppedTarget& croppedTarget);
+        bool cacheRefImages(const std::vector<std::pair<cv::Mat, BottleDropIndex>> &referenceImages);
+        void loadModel(const std::string &modelPath);
 
  private:
         std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives;
         double matchThreshold;
-        std::vector<std::pair<torch::Tensor, uint8_t>> referenceFeatures;
+        std::vector<std::pair<torch::Tensor, BottleDropIndex>> referenceFeatures;
         torch::jit::script::Module module;
+        bool success; // If false, we do no matching because error occurred in constructor
 };
 
 #endif  // INCLUDE_CV_MATCHING_HPP_
