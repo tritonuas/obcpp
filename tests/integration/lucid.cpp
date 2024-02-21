@@ -8,7 +8,7 @@ using json = nlohmann::json;
 
 int main() 
 {
-    std::ifstream ifs("tests/integration/util/config.json");
+    std::ifstream f("./util/config.json");
     json config = json::parse(ifs);
     LucidCameraConfig * lucidConfig = new LucidCameraConfig(config);
 
