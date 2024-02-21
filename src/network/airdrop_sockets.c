@@ -42,21 +42,21 @@ void set_recv_thread() {
 // Very large just in case strerror(errno) actually ends up being incredibly large
 #define AD_ERR_LEN 999
 
-#define AD_RETURN_ERR_RESULT(err) \
-    ad_socket_result_t result = { \
+#define AD_RETURN_ERR_RESULT(typename, err) \
+    ad_##typename##_result_t result = { \
         .data = { .err = &err[0] }, \
         .is_err = 1, \
     }; \
     return result
 
-#define AD_RETURN_SUCC_RESULT(value) \
-    ad_socket_result_t result = { \
+#define AD_RETURN_SUCC_RESULT(typename, value) \
+    ad_##typename##_result_t result = { \
         .data = { .res = value }, \
         .is_err = 0, \
     }; \
     return result
 
-ad_socket_result_t make_ad_socket(uint16_t recv_port) {
+ad_socket_result_t make_ad_socket(uint16_t recv_port, uint16_t send_port) {
     // send socket is simple
     static char err[AD_ERR_LEN];
     int sock_fd;
@@ -64,7 +64,7 @@ ad_socket_result_t make_ad_socket(uint16_t recv_port) {
     // Using IPv4 addrs with UDP datagrams
     if ((sock_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
         snprintf(&err[0], AD_ERR_LEN, "socket failed: %s", strerror(errno));
-        AD_RETURN_ERR_RESULT(err);
+        AD_RETURN_ERR_RESULT(socket, err);
     }
 
     // Allow broadcasting on the socket
@@ -73,7 +73,7 @@ ad_socket_result_t make_ad_socket(uint16_t recv_port) {
                   (void*) &broadcast_permission,
                   sizeof(broadcast_permission)) < 0) {
         snprintf(&err[0], AD_ERR_LEN, "setsockopt broadcast failed: %s", strerror(errno));
-        AD_RETURN_ERR_RESULT(err);
+        AD_RETURN_ERR_RESULT(socket, err);
     }
 
     struct sockaddr_in RECV_ADDR = {
@@ -86,69 +86,73 @@ ad_socket_result_t make_ad_socket(uint16_t recv_port) {
     // Bind the socket to the broadcast address for receiving
     if (bind(sock_fd, (struct sockaddr*) &RECV_ADDR, sizeof(RECV_ADDR)) < 0) {
         snprintf(&err[0], AD_ERR_LEN, "bind socket failed: %s", strerror(errno));
-        AD_RETURN_ERR_RESULT(err);
+        AD_RETURN_ERR_RESULT(socket, err);
     }
 
-    AD_RETURN_SUCC_RESULT(sock_fd);
+    ad_socket_t s = {
+        .recv_port = recv_port,
+        .send_port = send_port,
+        .fd = sock_fd,
+    };
+
+    AD_RETURN_SUCC_RESULT(socket, s);
 }
 
-ad_socket_result_t set_socket_nonblocking(int sock_fd) {
+ad_int_result_t set_socket_nonblocking(int sock_fd) {
     static char err[AD_ERR_LEN];
 
     int ret;
     if ((ret = fcntl(sock_fd, F_SETFL, fcntl(sock_fd, F_GETFL) | O_NONBLOCK)) < 0) {
         snprintf(&err[0], AD_ERR_LEN, "set nonblocking failed: %s", strerror(errno));
-        AD_RETURN_ERR_RESULT(err);
+        AD_RETURN_ERR_RESULT(int, err);
     }
 
-    AD_RETURN_SUCC_RESULT(ret);
+    AD_RETURN_SUCC_RESULT(int, ret);
 }
 
-ad_socket_result_t send_ad_packet(int sock_fd,
-                                  ad_packet_t* packet,
-                                  uint16_t send_port) {
+ad_int_result_t send_ad_packet(ad_socket_t socket, ad_packet_t* packet) {
     struct sockaddr_in SEND_ADDR = {
         .sin_family = AF_INET,
-        .sin_port = htons(send_port),
+        .sin_port = htons(socket.send_port),
         .sin_addr = INADDR_BROADCAST,
         .sin_zero = {0},
     };
 
     static char err[AD_ERR_LEN];
-    int bytes_sent = sendto(sock_fd, (void*) packet, sizeof(packet), 0,
+    int bytes_sent = sendto(socket.fd, (void*) packet, sizeof(packet), 0,
                             (struct sockaddr*) &SEND_ADDR, sizeof(SEND_ADDR));
     free(packet);
 
     if (bytes_sent < 0) {
         snprintf(&err[0], AD_ERR_LEN, "send failed: %s", strerror_l(errno, _send_locale));
-        AD_RETURN_ERR_RESULT(err);
+        AD_RETURN_ERR_RESULT(int, err);
     }
 
-    AD_RETURN_SUCC_RESULT(bytes_sent);
+    AD_RETURN_SUCC_RESULT(int, bytes_sent);
 }
 
-ad_socket_result_t recv_ad_packet(int sock_fd, void* buf, size_t buf_len, uint16_t recv_port) {
+ad_int_result_t recv_ad_packet(ad_socket_t socket, void* buf, size_t buf_len) {
     static char err[AD_ERR_LEN];
     struct sockaddr_in RECV_ADDR = {
         .sin_family = AF_INET,
-        .sin_port = htons(recv_port),
+        .sin_port = htons(socket.recv_port),
         .sin_addr = INADDR_ANY,
         .sin_zero = {0},
     };
     socklen_t RECV_ADDR_LEN = sizeof(RECV_ADDR);
-    int bytes_read = recvfrom(sock_fd, buf, buf_len, 0,
+    int bytes_read = recvfrom(socket.fd, buf, buf_len, 0,
                               (struct sockaddr*) &RECV_ADDR, &RECV_ADDR_LEN);
 
     if (bytes_read < 0) {
         // Need to detect if this is the case when a nonblocking socket didn't find a msg
         // because we shouldn't report that to the user as an error in the result.
         if (errno == EWOULDBLOCK || errno == EAGAIN) {
-            AD_RETURN_SUCC_RESULT(AD_RECV_NOPACKETS);
+            AD_RETURN_SUCC_RESULT(int, AD_RECV_NOPACKETS);
         }
 
         snprintf(&err[0], AD_ERR_LEN, "recv failed: %s", strerror_l(errno, _recv_locale));
-        AD_RETURN_ERR_RESULT(err);
+        AD_RETURN_ERR_RESULT(int, err);
     }
 
-    AD_RETURN_SUCC_RESULT(bytes_read);
+    AD_RETURN_SUCC_RESULT(int, bytes_read);
 }
