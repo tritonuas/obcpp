@@ -1,16 +1,16 @@
-#include <httplib.h>
-#include <iostream>
 
-#include "core/states.hpp"
+#include <chrono>
+#include <string>
+
+#include "core/obc.hpp"
 #include "utilities/constants.hpp"
-#include "pathing/plotting.hpp"
+#include "utilities/logging.hpp"
 
-int main() {
-    std::cout << "Starting HTTP server at port " << SERVER_PORT << std::endl;
+int main(int argc, char* argv[]) {
+    initLogging(argc, argv);
 
-    httplib::Server svr;
-    svr.Get("/hi", [](const httplib::Request &, httplib::Response &res) {
-        res.set_content("Hello World!", "text/plain");
-    });
-    svr.listen("0.0.0.0", SERVER_PORT);
+    // In future, load configs, perhaps command line parameters, and pass
+    // into the obc object
+    OBC obc(DEFAULT_GCS_PORT);
+    obc.run();
 }

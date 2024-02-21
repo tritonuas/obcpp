@@ -2,6 +2,7 @@
 #define INCLUDE_CV_PIPELINE_HPP_
 
 #include <vector>
+#include <utility>
 
 #include <opencv2/opencv.hpp>
 
@@ -11,12 +12,6 @@
 #include "cv/matching.hpp"
 #include "cv/saliency.hpp"
 #include "cv/segmentation.hpp"
-
-// Same TODO as above
-struct AirdropTarget {
-    uint8_t bottleDropIndex;
-    GPSCoord coordinate;
-};
 
 // Processed image holds all predictions made concerning a given image.
 //
@@ -37,7 +32,8 @@ struct PipelineResults {
 // Pipeline handles all infrastructure within the CV pipeline
 class Pipeline {
  public:
-    explicit Pipeline(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES> competitionObjectives);
+        Pipeline(std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives,
+            std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages);
 
     PipelineResults run(const ImageData& imageData);
 

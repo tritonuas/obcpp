@@ -1,13 +1,17 @@
 #include "cv/pipeline.hpp"
 
 const double DEFAULT_MATCHING_THRESHOLD = 0.5;
+const char matchingModelPath[] = "../bin/target_siamese_1.pt";
 
 // TODO: eventually we will need to invoke non-default constructors for all the
 // modules of the pipeline (to customize model filepath, etc...)
 // TODO: I also want to have a way to customize if the model will use
 // matching vs segmentation/classification
-Pipeline::Pipeline(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES> competitionObjectives)
-    : matcher(competitionObjectives, DEFAULT_MATCHING_THRESHOLD) {}
+Pipeline::Pipeline(std::array<Bottle, NUM_AIRDROP_BOTTLES>
+    competitionObjectives, std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages) :
+    // assumes reference images passed to pipeline from not_stolen
+        matcher(competitionObjectives, DEFAULT_MATCHING_THRESHOLD, referenceImages,
+                matchingModelPath) {}
 
 /*
  *  Entrypoint of CV Pipeline. At a high level, it will include the following
@@ -26,7 +30,7 @@ Pipeline::Pipeline(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES> competitio
  *        target matching stage is replaced by segmentation/classification.
  */
 PipelineResults Pipeline::run(const ImageData &imageData) {
-    std::vector<CroppedTarget> saliencyResults = detector.salience(imageData.getData());
+    std::vector<CroppedTarget> saliencyResults = this->detector.salience(imageData.getData());
 
     // if saliency finds no potential targets, end early with no results
     if (saliencyResults.empty()) {
@@ -39,11 +43,17 @@ PipelineResults Pipeline::run(const ImageData &imageData) {
     std::vector<AirdropTarget> matchedTargets;
     std::vector<AirdropTarget> unmatchedTargets;
     for (CroppedTarget target : saliencyResults) {
-        MatchResult potentialMatch = matcher.match(target);
+        MatchResult potentialMatch = this->matcher.match(target);
 
-        GPSCoord targetPosition = localizer.localize(imageData.getTelemetry(), target.bbox);
+        GPSCoord* targetPosition = new GPSCoord(this->localizer.localize(imageData.getTelemetry(),
+                                                target.bbox));
 
-        AirdropTarget airdropTarget = {potentialMatch.bottleDropIndex, targetPosition};
+        AirdropTarget airdropTarget;
+        // TODO: Call set_index using a BottleDropIndex type instead of uint8.
+        //      Requires modifying the output of matcher.match()
+        // airdropTarget.set_index(potentialMatch.bottleDropIndex);
+        // give ownership of targetPosition to protobuf, it should handle deallocation
+        airdropTarget.set_allocated_coordinate(targetPosition);
 
         // TODO: we should have some criteria to handle duplicate targets that
         // show up in multiple images

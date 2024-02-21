@@ -7,6 +7,12 @@
 // this image should be located at a relative path to the CMake build dir
 const std::string imagePath = "mock_image.jpg";
 
+const std::string refImagePath0 = "../bin/test/test/000000910.jpg";
+const std::string refImagePath1 = "../bin/test/test/000000920.jpg";
+const std::string refImagePath2 = "../bin/test/test/000000003.jpg";
+const std::string refImagePath3 = "../bin/test/test/000000004.jpg";
+const std::string refImagePath4 = "../bin/test/test/000000005.jpg";
+
 // mock telemetry data
 const double latitude = 38.31568;
 const double longitude = 76.55006;
@@ -22,40 +28,56 @@ int main() {
         yaw, pitch, roll);
     ImageData imageData("mock_image", imagePath, image, mockTelemetry);
 
-    std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES> bottlesToDrop = {
-        CompetitionBottle{
-            ODLCColor::Black,
-            ODLCShape::Circle,
-            ODLCColor::Blue,
-            'C'
-        },
-        CompetitionBottle{
-            ODLCColor::Red,
-            ODLCShape::Triangle,
-            ODLCColor::Green,
-            'X'
-        },
-        CompetitionBottle{
-            ODLCColor::Purple,
-            ODLCShape::Semicircle,
-            ODLCColor::Orange,
-            'T'
-        },
-        CompetitionBottle{
-            ODLCColor::White,
-            ODLCShape::Pentagon,
-            ODLCColor::Red,
-            'Z'
-        },
-        CompetitionBottle{
-            ODLCColor::Blue,
-            ODLCShape::QuarterCircle,
-            ODLCColor::Brown,
-            'B'
-        },
-    };
+    std::array<Bottle, NUM_AIRDROP_BOTTLES> bottlesToDrop;
 
-    Pipeline pipeline(bottlesToDrop);
+    Bottle bottle1;
+    bottle1.set_shapecolor(ODLCColor::Red);
+    bottle1.set_shape(ODLCShape::Circle);
+    bottle1.set_alphanumericcolor(ODLCColor::Orange);
+    bottle1.set_alphanumeric("J");
+    bottlesToDrop[0] = bottle1;
+
+    Bottle bottle2;
+    bottle2.set_shapecolor(ODLCColor::Blue);
+    bottle2.set_shape(ODLCShape::Circle);
+    bottle2.set_alphanumericcolor(ODLCColor::Orange);
+    bottle2.set_alphanumeric("G");
+    bottlesToDrop[1] = bottle2;
+
+    Bottle bottle3;
+    bottle3.set_shapecolor(ODLCColor::Red);
+    bottle3.set_shape(ODLCShape::Circle);
+    bottle3.set_alphanumericcolor(ODLCColor::Blue);
+    bottle3.set_alphanumeric("X");
+    bottlesToDrop[2] = bottle3;
+
+    Bottle bottle4;
+    bottle4.set_shapecolor(ODLCColor::Red);
+    bottle4.set_shape(ODLCShape::Circle);
+    bottle4.set_alphanumericcolor(ODLCColor::Blue);
+    bottle4.set_alphanumeric("F");
+    bottlesToDrop[3] = bottle4;
+
+    Bottle bottle5;
+    bottle5.set_shapecolor(ODLCColor::Green);
+    bottle5.set_shape(ODLCShape::Circle);
+    bottle5.set_alphanumericcolor(ODLCColor::Black);
+    bottle5.set_alphanumeric("F");
+    bottlesToDrop[4] = bottle5;
+
+    std::vector<std::pair<cv::Mat, uint8_t>> referenceImages;
+    cv::Mat ref0 = cv::imread(refImagePath0);
+    referenceImages.push_back(std::make_pair(ref0, 4));
+    cv::Mat ref1 = cv::imread(refImagePath1);
+    referenceImages.push_back(std::make_pair(ref1, 3));
+    cv::Mat ref2 = cv::imread(refImagePath2);
+    referenceImages.push_back(std::make_pair(ref2, 2));
+    cv::Mat ref3 = cv::imread(refImagePath3);
+    referenceImages.push_back(std::make_pair(ref3, 1));
+    cv::Mat ref4 = cv::imread(refImagePath4);
+    referenceImages.push_back(std::make_pair(ref4, 0));
+
+    Pipeline pipeline(bottlesToDrop, referenceImages);
 
     PipelineResults output = pipeline.run(imageData);
 
@@ -68,6 +90,6 @@ int main() {
 
     for (AirdropTarget& match: output.matchedTargets) {
         std::cout << "Found match assigned to bottle index " << 
-            match.bottleDropIndex << std::endl;
+            match.index() << std::endl;
     }
 }

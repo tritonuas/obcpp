@@ -1,14 +1,23 @@
 #ifndef INCLUDE_CV_MATCHING_HPP_
 #define INCLUDE_CV_MATCHING_HPP_
 
-#include <opencv2/opencv.hpp>
+#include <torch/torch.h>
+#include <torch/script.h>
+#include <torchvision/vision.h>
 
+#include <string>
+#include <vector>
+#include <utility>
+
+#include <opencv2/opencv.hpp>
 #include "cv/utilities.hpp"
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
 
+#include "protos/obc.pb.h"
+
 struct MatchResult {
-    uint8_t bottleDropIndex;
+    BottleDropIndex bottleDropIndex;
     bool foundMatch;
     double similarity;
 };
@@ -34,14 +43,18 @@ struct MatchResult {
 // see how close it is to known objectives.
 class Matching {
  public:
-        Matching(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES>
-            competitionObjectives, double matchThreshold);
+        Matching(std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives,
+            double matchThreshold,
+            std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages,
+            const std::string &modelPath);
 
         MatchResult match(const CroppedTarget& croppedTarget);
 
  private:
-        std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES> competitionObjectives;
+        std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives;
         double matchThreshold;
+        std::vector<std::pair<torch::Tensor, BottleDropIndex>> referenceFeatures;
+        torch::jit::script::Module module;
 };
 
 #endif  // INCLUDE_CV_MATCHING_HPP_
