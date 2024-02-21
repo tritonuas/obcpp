@@ -22,8 +22,7 @@
  * TODO: write documentation 
  */
 
-#define AD_PAYLOAD_PORT 45906  // guided payloads listen on this port
-#define AD_OBC_PORT     45907  // obc listens on this port
+#define AD_PORT 45906
 
 enum ad_packet_hdr {
     // Handshake to establish connection
