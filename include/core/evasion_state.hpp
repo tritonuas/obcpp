@@ -7,32 +7,12 @@
 #include <chrono>
 #include <vector>
 
-#include "core/config.hpp"
+#include "core/mission_config.hpp"
 #include "utilities/datatypes.hpp"
 #include "utilities/constants.hpp"
+#include "ticks/ids.hpp"
+#include "ticks/tick.hpp"
 #include "protos/obc.pb.h"
-
-
-/*
-    State for when the system has just been turned on and is waiting for
-    mission parameters.
-*/
-class PreparationState: public MissionState {
-    public:
-        ~PreparationState() override = default;
-        MissionState* tick() override;
-
-        std::string getName() override {
-            return "Mission Preparation";
-        }
-
-    private:
-        std::optional<Polygon> flightBoundary;
-        std::optional<Polygon> airdropBoundary;
-        std::optional<Polyline> waypoints;
-        std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES> bottles;
-};
-
 
 /*
     State for when plane is actively evading a dynamic obstacle.
@@ -42,24 +22,28 @@ class PreparationState: public MissionState {
     The path planning does not run in real-time, so avoidance behaves by inserting
     emergency waypoints and then returning to continue the next unhit waypoint.
 */
-class ObstacleEvasionState: public MissionState {
+class ObstacleEvasionState {
     public:
         // Do not use a default constructor. The evasion state needs to know
         // the location of the obstacle
-        ObstacleEvasionState() override = delete;
+        ObstacleEvasionState() = delete;
         // List of obstacles to avoid
         explicit ObstacleEvasionState(std::vector<GPSCoord> obstacles);
-        ~ObstacleEvasionState() override = default;
+        ~ObstacleEvasionState() = default;
 
-        MissionState* tick() override;
+        TickID getTickID();
+        std::chrono::milliseconds doTick();
+        Tick* _tick();
+        MissionConfig config;  // has its own mutex
 
-        std::string getName() override {
-            return "Evading Dynamic Obstacle";
-        }
-        
         void updateObstaclesList(std::vector<GPSCoord> obstacles);
 
     private:
+        std::mutex tick_mut;  // for reading/writing tick
+        std::unique_ptr<Tick> tick;
+        std::shared_ptr<MavlinkClient> mav;
+        void _setTick(Tick* newTick);  // does not acquire the tick_mut
+
         // Evasion state will exit after not seeing obstacle for 15 seconds
         // or after it determines it has reached safety. Tick will decrement this
         // and exit state when this reaches 0.

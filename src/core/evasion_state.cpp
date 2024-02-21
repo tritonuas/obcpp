@@ -1,33 +1,41 @@
-#include "core/states.hpp"
-
 #include <memory>
 #include <mutex>
 
-#include "core/config.hpp"
-#include "core/ticks.hpp"
+#include "core/evasion_state.hpp"
+#include "core/mission_config.hpp"
 #include "utilities/locks.hpp"
 #include "utilities/constants.hpp"
-
-
-/* ObstacleEvasionState*/
+#include "core/mission_state.hpp"
+#include "network/mavlink.hpp"
+#include "ticks/mission_start.hpp"
 
 ObstacleEvasionState::ObstacleEvasionState(std::vector<GPSCoord> obstacles) {
     ObstacleEvasionState::obstacles = obstacles;
 }
 
-MissionState* ObstacleEvasionState::tick() {
+std::chrono::milliseconds ObstacleEvasionState::doTick() {
+    Lock lock(this->tick_mut);
+
+    Tick* newTick = this->_tick(); // check for state change
+    return DYNAMIC_AVOIDANCE_TICK_WAIT;  // run again in a second
+}
+
+Tick* ObstacleEvasionState::_tick() {
     // Return state change when done evading
     if (ObstacleEvasionState::evasionTimeRemaining <= 0) {
-        return nullptr;  // TODO: return the next state
-    } else {
-        // decrement the time remaining to evade
-        ObstacleEvasionState::evasionTimeRemaining -= 1;
+        return new MissionStartTick(ObstacleEvasionState::tick->state);
     }
 
+    // Otherwise, decrement the time remaining to evade
+    ObstacleEvasionState::evasionTimeRemaining -= 1;
     return nullptr;
 }
 
-MissionState* ObstacleEvasionState::evade(void) {
+TickID getTickID() {
+    return TickID::EvasionState;
+}
+
+void ObstacleEvasionState::evade(void) {
     // Implementation details:
     // We have chosen to do option 2.
     // There are 3 good options for doing avoidance.
@@ -58,10 +66,10 @@ MissionState* ObstacleEvasionState::evade(void) {
     float param6 = 0.0f;
     float param7 = 0.0f;
 
-    int result = sendCustomMavlinkCommand(target_sysid, target_compid, command, param1, param2,
+    // TODO:(Samir) KMS, we need to compile mavlink to use plugins
+    int result = ObstacleEvasionState::mav->sendCustomMavlinkCommand(target_sysid, target_compid, command, param1, param2,
                                           param3, param4, param5, param6, param7);
 
-    return nullptr;
 }
 
 void ObstacleEvasionState::updateObstaclesList(std::vector<GPSCoord> obstacles) {

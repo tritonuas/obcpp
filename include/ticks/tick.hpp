@@ -22,7 +22,7 @@ class Tick {
     // how long to wait between running each tick function
     virtual std::chrono::milliseconds getWait() const = 0;
 
-    // function that is called every getWaitTimeMS() miliseconds
+    // function that is called every getWait() milliseconds
     // return nullptr if no state change should happen
     // return new implementation of Tick if state change should happen
     virtual Tick* tick() = 0;

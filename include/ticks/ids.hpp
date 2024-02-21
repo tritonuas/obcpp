@@ -8,7 +8,8 @@ enum class TickID {
     PathGen,
     PathValidate,
     MissionUpload,
-    MissionStart
+    MissionStart,
+    EvasionState
 };
 
 #define _SET_TICK_ID_MAPPING(id) \
@@ -21,6 +22,7 @@ constexpr const char* TICK_ID_TO_STR(TickID id) {
         _SET_TICK_ID_MAPPING(PathValidate);
         _SET_TICK_ID_MAPPING(MissionUpload);
         _SET_TICK_ID_MAPPING(MissionStart);
+        _SET_TICK_ID_MAPPING(EvasionState);
         default: return "Unknown TickID";
     }
 }

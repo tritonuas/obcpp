@@ -18,6 +18,10 @@ class MissionUploadTick: public Tick {
 
     std::chrono::milliseconds getWait() const override;
 
+    /**
+     * Returns a nullptr if Tick should stay in the same state.
+     * Otherwise, returns the next Tick.
+    */
     Tick* tick() override;
 
  private:
