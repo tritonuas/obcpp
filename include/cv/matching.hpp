@@ -1,13 +1,18 @@
 #ifndef INCLUDE_CV_MATCHING_HPP_
 #define INCLUDE_CV_MATCHING_HPP_
 
+#include <torch/torch.h>
+#include <torch/script.h>
+#include <torchvision/vision.h>
+
+#include <string>
+#include <vector>
+#include <utility>
+
 #include <opencv2/opencv.hpp>
 #include "cv/utilities.hpp"
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
-#include <torch/torch.h>
-#include <torch/script.h>
-#include <torchvision/vision.h>
 
 #include "protos/obc.pb.h"
 
@@ -38,21 +43,18 @@ struct MatchResult {
 // see how close it is to known objectives.
 class Matching {
  public:
-        Matching(std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives, 
-            double matchThreshold, 
+        Matching(std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives,
+            double matchThreshold,
             std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages,
             const std::string &modelPath);
 
         MatchResult match(const CroppedTarget& croppedTarget);
-        bool cacheRefImages(const std::vector<std::pair<cv::Mat, BottleDropIndex>> &referenceImages);
-        void loadModel(const std::string &modelPath);
 
  private:
         std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives;
         double matchThreshold;
         std::vector<std::pair<torch::Tensor, BottleDropIndex>> referenceFeatures;
         torch::jit::script::Module module;
-        bool success; // If false, we do no matching because error occurred in constructor
 };
 
 #endif  // INCLUDE_CV_MATCHING_HPP_

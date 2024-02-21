@@ -1,16 +1,17 @@
 #include "cv/pipeline.hpp"
 
 const double DEFAULT_MATCHING_THRESHOLD = 0.5;
-const std::string matchingModelPath = "../bin/target_siamese_1.pt";
+const char matchingModelPath[] = "../bin/target_siamese_1.pt";
 
 // TODO: eventually we will need to invoke non-default constructors for all the
 // modules of the pipeline (to customize model filepath, etc...)
 // TODO: I also want to have a way to customize if the model will use
 // matching vs segmentation/classification
 Pipeline::Pipeline(std::array<Bottle, NUM_AIRDROP_BOTTLES>
-    competitionObjectives, std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages) : 
+    competitionObjectives, std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages) :
     // assumes reference images passed to pipeline from not_stolen
-        matcher(competitionObjectives, DEFAULT_MATCHING_THRESHOLD, referenceImages, matchingModelPath) {}
+        matcher(competitionObjectives, DEFAULT_MATCHING_THRESHOLD, referenceImages,
+                matchingModelPath) {}
 
 /*
  *  Entrypoint of CV Pipeline. At a high level, it will include the following
@@ -44,7 +45,8 @@ PipelineResults Pipeline::run(const ImageData &imageData) {
     for (CroppedTarget target : saliencyResults) {
         MatchResult potentialMatch = this->matcher.match(target);
 
-        GPSCoord* targetPosition = new GPSCoord(this->localizer.localize(imageData.getTelemetry(), target.bbox));
+        GPSCoord* targetPosition = new GPSCoord(this->localizer.localize(imageData.getTelemetry(),
+                                                target.bbox));
 
         AirdropTarget airdropTarget;
         // TODO: Call set_index using a BottleDropIndex type instead of uint8.

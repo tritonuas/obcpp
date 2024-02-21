@@ -2,6 +2,7 @@
 #define INCLUDE_CV_PIPELINE_HPP_
 
 #include <vector>
+#include <utility>
 
 #include <opencv2/opencv.hpp>
 
@@ -30,7 +31,7 @@ struct PipelineResults {
 
 // Pipeline handles all infrastructure within the CV pipeline
 class Pipeline {
-    public:
+ public:
         Pipeline(std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives,
             std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages);
 
