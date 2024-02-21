@@ -22,6 +22,9 @@
  *     Starts up a server which will listen on the socket for any packet, then ack it. 
  */
 
+const uint16_t SERVER_LISTEN_PORT = 50000;
+const uint16_t CLIENT_LISTEN_PORT = 50001;
+
 int main(int argc, char* argv[]) {
     if (argc != 2) {
         fprintf(stderr, "Incorrect usage. See airdrop_sockets.c for an explanation.\n");
@@ -29,32 +32,29 @@ int main(int argc, char* argv[]) {
     }
 
     ad_socket_result_t sr;
-
-    sr = make_ad_socket();
-    ASSERT_SR_ERROR(sr);
-
-    int socket = sr.data.res; // successfully made the socket
-
-    printf("socket: %d\n", socket);
-
-    // This test is doing things single threaded, so these are in the same thread.
-    set_send_thread();
-    set_recv_thread();
-
     const size_t BUF_LEN = sizeof(ad_packet_t);
     char buf[BUF_LEN];
 
     if (strcmp(argv[1], "client") == 0) {
+        sr = make_ad_socket(CLIENT_LISTEN_PORT);
+        ASSERT_SR_ERROR(sr);
+
+        int socket = sr.data.res; // successfully made the socket
+
         sr = set_socket_nonblocking(socket);
         ASSERT_SR_ERROR(sr);
         // successfully set the socket into nonblocking mode
 
+        // This test is doing things single threaded, so these are in the same thread.
+        set_send_thread();
+        set_recv_thread();
+
         while (1) {
-            sr = send_ad_packet(socket, make_ad_packet(SET_MODE, INDIRECT_DROP));
+            sr = send_ad_packet(socket, make_ad_packet(SET_MODE, INDIRECT_DROP), SERVER_LISTEN_PORT);
             ASSERT_SR_ERROR(sr);        
             printf("Client sent packet.\n");
 
-            sr = recv_ad_packet(socket, (void*) &buf[0], BUF_LEN);
+            sr = recv_ad_packet(socket, (void*) &buf[0], BUF_LEN, CLIENT_LISTEN_PORT);
             ASSERT_SR_ERROR(sr);
 
             if (sr.data.res == AD_RECV_NOPACKETS) {
@@ -68,16 +68,24 @@ int main(int argc, char* argv[]) {
             exit(0);
         }
     } else if (strcmp(argv[1], "server") == 0) {
+        sr = make_ad_socket(SERVER_LISTEN_PORT);
+        ASSERT_SR_ERROR(sr);
+
+        int socket = sr.data.res; // successfully made the socket
+
+        // This test is doing things single threaded, so these are in the same thread.
+        set_send_thread();
+        set_recv_thread();
         while (1) {
             // block until packet received
             printf("Server waiting for packet...\n");
-            sr = recv_ad_packet(socket, (void*) &buf[0], BUF_LEN);
+            sr = recv_ad_packet(socket, (void*) &buf[0], BUF_LEN, SERVER_LISTEN_PORT);
             ASSERT_SR_ERROR(sr);
 
             ad_packet_t* packet = (ad_packet_t*) buf;
             printf("Server received packet: %hhu %hhu\n", packet->hdr, packet->data);
 
-            sr = send_ad_packet(socket, make_ad_packet(ACK_MODE, packet->data));
+            sr = send_ad_packet(socket, make_ad_packet(ACK_MODE, packet->data), CLIENT_LISTEN_PORT);
             printf("Server sent ack packet.");
         }
     }

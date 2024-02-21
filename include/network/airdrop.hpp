@@ -1,7 +1,7 @@
-#ifndef INCLUDE_AIRDROP_CONTROLS_HPP_
-#define INCLUDE_AIRDROP_CONTROLS_HPP_
+#ifndef INCLUDE_NETWORK_AIRDROP_HPP_
+#define INCLUDE_NETWORK_AIRDROP_HPP_
 
-#include "obc.pb.h"
+#include "protos/obc.pb.h"
 
 class AirdropClient {
  public:
@@ -12,8 +12,6 @@ class AirdropClient {
      *
      */
     void signal(BottleDropIndex bottle) const;
- private:
-
 };
 
-#endif  // INCLUDE_AIRDROP_CONTROLS_HPP_
+#endif  // INCLUDE_NETWORK_AIRDROP_HPP_

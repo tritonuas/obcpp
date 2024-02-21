@@ -22,7 +22,8 @@
  * TODO: write documentation 
  */
 
-#define AD_PORT 45906
+#define AD_OBC_PORT     45906  // OBC listens on this port, so payloads send to this
+#define AD_PAYLOAD_PORT 45907  // Payloads listen on this port, so OBC sends to this
 
 enum ad_packet_hdr {
     // Handshake to establish connection
@@ -47,12 +48,15 @@ enum ad_mode {
     INDIRECT_DROP = 1,
 };
 
+// These currently map directly to their values in the protobuf enum,
+// but they are redefined here so they are explicitly defined for the
+// airdrop communication protocol.
 enum ad_bottle {
-    BOTTLE_A = 0,
-    BOTTLE_B = 1,
-    BOTTLE_C = 2,
-    BOTTLE_D = 3,
-    BOTTLE_E = 4,
+    BOTTLE_A = 1,
+    BOTTLE_B = 2,
+    BOTTLE_C = 3,
+    BOTTLE_D = 4,
+    BOTTLE_E = 5,
 };
 
 // All of the values in here are 1 byte long, which means we do not have to worry about

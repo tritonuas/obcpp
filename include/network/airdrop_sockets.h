@@ -19,11 +19,8 @@ typedef struct ad_socket_result ad_socket_result_t;
 // Instead, it will be free'd when consumed by send_ad_packet.
 ad_packet_t* make_ad_packet(uint8_t hdr, uint8_t data);
 
-
-
-// Makes a socket for sending airdrop packets
-// If the return value is negative, then an error occured
-ad_socket_result_t make_ad_socket();
+// TODO: write documentation
+ad_socket_result_t make_ad_socket(uint16_t recv_port);
 
 // Need to call these two functions from corresponding thread
 // that will be doing the sending or the receiving.
@@ -42,14 +39,14 @@ ad_socket_result_t set_socket_nonblocking(int sock_fd);
 // Send packet on the network through sock_fd and then frees the packet.
 // Either returns an error string or the number of bytes sent.
 // IMPORTANT: must have previously called set_send_thread from curr thread.
-ad_socket_result_t send_ad_packet(int sock_fd, ad_packet_t* packet);
+ad_socket_result_t send_ad_packet(int sock_fd, ad_packet_t* packet, uint16_t send_port);
 
 // Receive packet and place into buf, which is of length buf_len.
 // Either returns an error string or the number of bytes read.
 // Caveat: if the socket is set in nonblocking mode, then number of bytes read will
 // be -1, but is_err will be 0.
 // IMPORTANT: must have previously called set_recv_thread from curr thread.
-ad_socket_result_t recv_ad_packet(int sock_fd, void* buf, size_t buf_len);
+ad_socket_result_t recv_ad_packet(int sock_fd, void* buf, size_t buf_len, uint16_t recv_port);
 #define AD_RECV_NOPACKETS -1
 
 #endif  // INCLUDE_NETWORK_AIRDROP_SOCKETS_H_
