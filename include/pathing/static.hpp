@@ -57,7 +57,7 @@ class RRT {
             goal_coords.push_back(goal);
         }
 
-        PathingPlot plotter("pathing_output", tree.getAirspace().valid_region, {}, goal_coords);
+        // PathingPlot plotter("pathing_output", tree.getAirspace().valid_region, {}, goal_coords);
         int total_goals = tree.getAirspace().getNumGoals();
         int tries = num_iterations / total_goals;
 
@@ -79,7 +79,10 @@ class RRT {
                 std::vector<RRTOption> options = tree.dubins.allOptions(current_head, goal);
 
                 for (const RRTOption &option : options) {
-                    direct_options.emplace_back(std::make_pair(goal, option));
+                    if (!std::isnan(option.length) &&
+                        option.length != std::numeric_limits<double>::infinity()) {
+                        direct_options.emplace_back(std::make_pair(goal, option));
+                    }
                 }
             }
 
@@ -93,19 +96,15 @@ class RRT {
             // if the direct distance is within x of the best option, then just connect to the goal
             // TODO get rid of magic number
             for (const auto &[goal, option] : direct_options) {
-                if (option.length < 1.2 * direct_distance) {
-                    RRTNode *new_node = tree.addNode(tree.getCurrentHead(), goal, option);
+                RRTNode *new_node = tree.addNode(tree.getCurrentHead(), goal, option);
 
-                    if (new_node != nullptr) {
-                        Polyline path =
-                            tree.edge_map.at(std::make_pair(new_node->getParent(), new_node))
-                                .getPath();
-                        plotter.addIntermediatePolyline(path);
-                        tree.setCurrentHead(new_node);
-                        direct_success = true;
-                        break;
-                    }
-                } else {
+                if (new_node != nullptr) {
+                    // Polyline path =
+                    // tree.edge_map.at(std::make_pair(new_node->getParent(), new_node))
+                    // .getPath();
+                    // plotter.addIntermediatePolyline(path);
+                    tree.setCurrentHead(new_node);
+                    direct_success = true;
                     break;
                 }
             }
@@ -127,7 +126,7 @@ class RRT {
                 if (new_node != nullptr) {
                     Polyline path =
                         tree.edge_map.at(std::make_pair(new_node->getParent(), new_node)).getPath();
-                    plotter.addIntermediatePolyline(path);
+                    // plotter.addIntermediatePolyline(path);
                     optimizeTree(new_node);
                 }
             }
@@ -144,7 +143,10 @@ class RRT {
                 std::vector<std::pair<RRTNode *, RRTOption>> options = tree.pathingOptions(goal);
 
                 for (const auto &[node, option] : options) {
-                    all_options.push_back(std::make_pair(goal, std::make_pair(node, option)));
+                    if (!std::isnan(option.length) &&
+                        option.length != std::numeric_limits<double>::infinity()) {
+                        all_options.push_back(std::make_pair(goal, std::make_pair(node, option)));
+                    }
                 }
             }
 
@@ -159,16 +161,16 @@ class RRT {
                 RRTNode *new_node = tree.addNode(anchor_node, goal, option);
 
                 if (new_node != nullptr) {
-                    Polyline path =
-                        tree.edge_map.at(std::make_pair(new_node->getParent(), new_node)).getPath();
-                    plotter.addIntermediatePolyline(path);
+                    // Polyline path =
+                    // tree.edge_map.at(std::make_pair(new_node->getParent(), new_node)).getPath();
+                    // plotter.addIntermediatePolyline(path);
                     tree.setCurrentHead(new_node);
                     break;
                 }
             }
         }
 
-        plotter.output("test_animated", PathOutputType::ANIMATED);
+        // plotter.output("test_animated", PathOutputType::ANIMATED);
     }
 
     /**
@@ -192,7 +194,8 @@ class RRT {
              *  [TODO] - how is it possible that option.length is not a number??
              *
              */
-            if (node == nullptr || node->getPoint() == sample || std::isnan(option.length)) {
+            if (node == nullptr || node->getPoint() == sample || std::isnan(option.length) ||
+                option.length == std::numeric_limits<double>::infinity()) {
                 return nullptr;
             }
 
@@ -221,9 +224,7 @@ class RRT {
      *
      * @return  ==> list of 2-vectors to the goal region
      */
-    std::vector<XYZCoord> getPointsGoal(bool without_cache) {
-        return tree.getPathToGoal(without_cache);
-    }
+    std::vector<XYZCoord> getPointsToGoal() { return tree.getPathToGoal(); }
 
  private:
     RRTTree tree;

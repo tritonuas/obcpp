@@ -215,16 +215,6 @@ class RRTTree {
     void fillOptions(std::vector<std::pair<RRTNode*, RRTOption>>* options, RRTNode* node,
                      const RRTPoint& end);
 
-    /**
-     * Retreives the path to goal after the goal has been found
-     *
-     * TODO - find the goal without cache
-     *
-     * @param without_cache ==> whether or not to use the first generated path when goal is found
-     * @return              ==> the path to the goal
-     */
-    std::vector<XYZCoord> getPathToGoal(bool without_cache = false);
-
     /** DOES RRT* for the program
      *
      * @param sample          ==> the point to used as the base
@@ -249,6 +239,25 @@ class RRTTree {
         }
         current_head = goal;
     }
+
+    /**
+     * Returns a path to the goal from the root
+     *
+     * The currentHead must be the goal for this to properly generate a complete path
+     * @return  ==> list of 2-vectors to the goal region
+     */
+    std::vector<XYZCoord> getPathToGoal() {
+        RRTNode* current_node = current_head;
+        std::vector<XYZCoord> path = {};
+        while (current_node != nullptr && current_node->getParent() != nullptr) {
+            std::vector<XYZCoord> edge_path = getEdge(current_node->getParent()->getPoint(), current_node->getPoint())->getPath();
+            path.insert(path.begin(), edge_path.begin(), edge_path.end());
+            current_node = current_node->getParent();
+        }
+
+        return path;
+    }
+
 
     //  private:
     RRTNode* root;
