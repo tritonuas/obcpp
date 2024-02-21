@@ -15,10 +15,10 @@ int main() {
     // RRTPoint test;
     RRTPoint start{XYZCoord(100, 100, 0), M_PI / 6.0};
     std::vector<XYZCoord> goals{XYZCoord{400, 150, 0}, XYZCoord{400, 500, 0}, XYZCoord{200, 250, 0},
-                                XYZCoord{150, 630, 0}};
-    int num_iterations = 5400;
-    double search_radius = 9999;
-    double rewire_radius = 40;
+                                XYZCoord{150, 630, 0}, XYZCoord{50, 50, 0}};
+    int num_iterations = 800;
+    double search_radius = 200;
+    double rewire_radius = 200;
     Polygon bounds;
     bounds.emplace_back(XYZCoord{0, 0, 0});
     bounds.emplace_back(XYZCoord{500, 0, 0});
@@ -50,10 +50,10 @@ int main() {
     std::cout << path.size() << std::endl;
 
     // plot the path
-    // PathingPlot plotter("pathing_output", bounds, {}, goals);
-    //
-    // plotter.addFinalPolyline(path);
-    // plotter.output("test_final_path", PathOutputType::ANIMATED);
+    PathingPlot plotter("pathing_output", bounds, {}, goals);
+    
+    plotter.addFinalPolyline(path);
+    plotter.output("test_final_path", PathOutputType::BOTH);
 
     for (const XYZCoord& point : path) {
         file << point.x << ", " << point.y << std::endl;
