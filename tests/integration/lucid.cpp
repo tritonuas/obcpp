@@ -8,7 +8,9 @@ using json = nlohmann::json;
 
 int main() 
 {
-    std::ifstream f("./util/config.json");
+    std::ifstream f("home/tritonuas/boris-lucid-obcpp/tests/integration/util/config.json");
+    std::cout << "Reading json file." << std::endl;
+    std::cout << f.rdbuf() << std::endl;
     json config = json::parse(f);
     LucidCameraConfig * lucidConfig = new LucidCameraConfig(config);
 
