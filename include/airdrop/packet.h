@@ -26,9 +26,13 @@
 #define AD_PAYLOAD_PORT 45907  // Payloads listen on this port, so OBC sends to this
 
 enum ad_packet_hdr {
+    // Continually sent by the payloads to confirm they are still operational
+    // and can talk to the OBC
+    HEARTBEAT   = 0,
+
     // Handshake to establish connection
-    SET_MODE    = 0,
-    ACK_MODE    = 1,
+    SET_MODE    = 1,
+    ACK_MODE    = 2,
 
     // Direct Drop
     DROP_NOW    = 100,
