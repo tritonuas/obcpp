@@ -132,7 +132,8 @@ void LucidCamera::configureTrigger()
     {
         std::string key = it.key();
 
-        if (it.value().type() == json::value_t::number_integer)
+
+        if (it.value().type() == json::value_t::number_unsigned)
         {
             int value = it.value();
             Arena::SetNodeValue<int64_t>(
