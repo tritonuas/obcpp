@@ -250,7 +250,8 @@ class RRTTree {
         RRTNode* current_node = current_head;
         std::vector<XYZCoord> path = {};
         while (current_node != nullptr && current_node->getParent() != nullptr) {
-            std::vector<XYZCoord> edge_path = getEdge(current_node->getParent()->getPoint(), current_node->getPoint())->getPath();
+            std::vector<XYZCoord> edge_path =
+                getEdge(current_node->getParent()->getPoint(), current_node->getPoint())->getPath();
             path.insert(path.begin(), edge_path.begin(), edge_path.end());
             current_node = current_node->getParent();
         }
@@ -258,8 +259,7 @@ class RRTTree {
         return path;
     }
 
-
-    //  private:
+ private:
     RRTNode* root;
     RRTNode* current_head;
     std::unordered_map<RRTPoint, RRTNode*, PointHashFunction> node_map{};

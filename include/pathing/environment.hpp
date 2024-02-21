@@ -1,10 +1,10 @@
 #ifndef INCLUDE_PATHING_ENVIRONMENT_HPP_
 #define INCLUDE_PATHING_ENVIRONMENT_HPP_
 
+#include <algorithm>
+#include <cmath>
 #include <utility>
 #include <vector>
-#include <cmath>
-#include <algorithm>
 
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
@@ -22,10 +22,7 @@
 class Environment {
  public:
     Environment(const Polygon valid_region, const std::vector<XYZCoord> goals)
-        : valid_region(valid_region),
-          goals(goals),
-          goals_found(0),
-          bounds(findBounds()) {}
+        : valid_region(valid_region), goals(goals), goals_found(0), bounds(findBounds()) {}
 
     /**
      * Check if a point is in the valid region
@@ -109,7 +106,7 @@ class Environment {
     /**
      * Sets found_goal to true
      *
-     * 
+     *
      */
     void setGoalfound(int index) { goals_found = std::max(goals_found, index); }
 
@@ -120,14 +117,14 @@ class Environment {
      */
     int getNumGoals() const { return goals.size(); }
 
-//  private:
+ private:
     const Polygon valid_region;         // boundary of the valid map
     const std::vector<XYZCoord> goals;  // goal point
 
     int goals_found;  // whether or not the goal has been found, once it becomes ture, it will never
                       // be false again
 
-    std::pair<std::pair<double, double>, std::pair<double, double>> bounds;  // bounds of the valid
+     const std::pair<std::pair<double, double>, std::pair<double, double>> bounds;  // bounds of the valid
                                                                              // region, first pair
                                                                              // is (min x, max x),
                                                                              // second pair is

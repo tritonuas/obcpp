@@ -51,65 +51,15 @@ class RRT {
      * there are
      */
     void run() {
-        // gets the goal coordinates from the environment
-        std::vector<XYZCoord> goal_coords;
-        for (const XYZCoord &goal : tree.getAirspace().goals) {
-            goal_coords.push_back(goal);
-        }
-
-        // PathingPlot plotter("pathing_output", tree.getAirspace().valid_region, {}, goal_coords);
         int total_goals = tree.getAirspace().getNumGoals();
         int tries = num_iterations / total_goals;
 
         for (int current_goal_index = 0; current_goal_index < total_goals; current_goal_index++) {
-            int direct_distance = tree.getGoal(current_goal_index)
-                                      .distanceTo(tree.getCurrentHead()->getPoint().coord);
+            // tries to connect directly to the goal
+            RRTNode *direct_connection = connectDirect(current_goal_index);
 
-            // try to connect to the goal directly
-            // first is the goal version
-            // second is the option
-            std::vector<std::pair<RRTPoint, RRTOption>> direct_options;
-            RRTPoint current_head = tree.getCurrentHead()->getPoint();
-            bool direct_success = false;
-
-            for (const double &angle : angles) {
-                RRTPoint goal(tree.getAirspace().getGoal(current_goal_index), angle);
-
-                // returns all dubins options from the tree to the sample
-                std::vector<RRTOption> options = tree.dubins.allOptions(current_head, goal);
-
-                for (const RRTOption &option : options) {
-                    if (!std::isnan(option.length) &&
-                        option.length != std::numeric_limits<double>::infinity()) {
-                        direct_options.emplace_back(std::make_pair(goal, option));
-                    }
-                }
-            }
-
-            // sort the options by length
-            std::sort(direct_options.begin(), direct_options.end(),
-                      [](const std::pair<RRTPoint, RRTOption> &a,
-                         const std::pair<RRTPoint, RRTOption> &b) {
-                          return compareRRTOptionLength(a.second, b.second);
-                      });
-
-            // if the direct distance is within x of the best option, then just connect to the goal
-            // TODO get rid of magic number
-            for (const auto &[goal, option] : direct_options) {
-                RRTNode *new_node = tree.addNode(tree.getCurrentHead(), goal, option);
-
-                if (new_node != nullptr) {
-                    // Polyline path =
-                    // tree.edge_map.at(std::make_pair(new_node->getParent(), new_node))
-                    // .getPath();
-                    // plotter.addIntermediatePolyline(path);
-                    tree.setCurrentHead(new_node);
-                    direct_success = true;
-                    break;
-                }
-            }
-
-            if (direct_success) {
+            if (direct_connection != nullptr) {
+                tree.setCurrentHead(direct_connection);
                 continue;
             }
 
@@ -124,53 +74,105 @@ class RRT {
                 RRTNode *new_node = parseOptions(options, sample);
 
                 if (new_node != nullptr) {
-                    Polyline path =
-                        tree.edge_map.at(std::make_pair(new_node->getParent(), new_node)).getPath();
-                    // plotter.addIntermediatePolyline(path);
                     optimizeTree(new_node);
                 }
             }
 
-            // attempts to connect to the goal, should always connect
-            std::vector<RRTPoint> goal_points;
-            for (const double angle : angles) {
-                goal_points.push_back(
-                    RRTPoint(tree.getAirspace().getGoal(current_goal_index), angle));
+            // connect to the goal after RRT is finished
+            RRTNode *goal_connection = connectToGoal(current_goal_index);
+
+            if (goal_connection != nullptr) {
+                tree.setCurrentHead(goal_connection);
             }
+        }
+    }
 
-            std::vector<std::pair<RRTPoint, std::pair<RRTNode *, RRTOption>>> all_options;
-            for (const RRTPoint &goal : goal_points) {
-                std::vector<std::pair<RRTNode *, RRTOption>> options = tree.pathingOptions(goal);
+    /**
+     * Tries to connect directly to goal
+     *
+     * @param current_goal_index    ==> index of the goal that we are trying to connect to
+     * @return                      ==> pointer to the node if it was added, nullptr otherwise
+     */
+    RRTNode *connectDirect(int current_goal_index) {
+        // try to connect to the goal directly
+        // first is the goal version
+        // second is the option
+        std::vector<std::pair<RRTPoint, RRTOption>> direct_options;
+        RRTPoint current_head = tree.getCurrentHead()->getPoint();
 
-                for (const auto &[node, option] : options) {
-                    if (!std::isnan(option.length) &&
-                        option.length != std::numeric_limits<double>::infinity()) {
-                        all_options.push_back(std::make_pair(goal, std::make_pair(node, option)));
-                    }
-                }
-            }
+        for (const double &angle : angles) {
+            RRTPoint goal(tree.getAirspace().getGoal(current_goal_index), angle);
 
-            std::sort(all_options.begin(), all_options.end(), [](const auto &a, const auto &b) {
-                return compareRRTOptionLength(a.second.second, b.second.second);
-            });
+            // returns all dubins options from the tree to the sample
+            std::vector<std::pair<RRTNode*, RRTOption>> options = tree.pathingOptions(goal);
 
-            for (const auto &[goal, pair] : all_options) {
-                RRTNode *anchor_node = pair.first;
-                RRTOption option = pair.second;
-
-                RRTNode *new_node = tree.addNode(anchor_node, goal, option);
-
-                if (new_node != nullptr) {
-                    // Polyline path =
-                    // tree.edge_map.at(std::make_pair(new_node->getParent(), new_node)).getPath();
-                    // plotter.addIntermediatePolyline(path);
-                    tree.setCurrentHead(new_node);
-                    break;
+            for (const auto &[head, option] : options) {
+                if (!std::isnan(option.length) &&
+                    option.length != std::numeric_limits<double>::infinity()) {
+                    direct_options.emplace_back(std::make_pair(goal, option));
                 }
             }
         }
 
-        // plotter.output("test_animated", PathOutputType::ANIMATED);
+        // sort the options by length
+        std::sort(direct_options.begin(), direct_options.end(), [](const auto &a, const auto &b) {
+            return compareRRTOptionLength(a.second, b.second);
+        });
+
+        // if the direct distance is within x of the best option, then just connect to the goal
+        // TODO get rid of magic number
+        for (const auto &[goal, option] : direct_options) {
+            RRTNode *new_node = tree.addNode(tree.getCurrentHead(), goal, option);
+
+            if (new_node != nullptr) {
+                return new_node;
+            }
+        }
+
+        return nullptr;
+    }
+
+    /**
+     * Connects to the goal after RRT is finished
+     *
+     * @param current_goal_index    ==> index of the goal that we are trying to connect to
+     * @return                      ==> pointer to the node if it was added, nullptr otherwise
+     */
+    RRTNode *connectToGoal(int current_goal_index) {
+        // attempts to connect to the goal, should always connect
+        std::vector<RRTPoint> goal_points;
+        for (const double angle : angles) {
+            goal_points.push_back(RRTPoint(tree.getAirspace().getGoal(current_goal_index), angle));
+        }
+
+        std::vector<std::pair<RRTPoint, std::pair<RRTNode *, RRTOption>>> all_options;
+        for (const RRTPoint &goal : goal_points) {
+            std::vector<std::pair<RRTNode *, RRTOption>> options = tree.pathingOptions(goal);
+
+            for (const auto &[node, option] : options) {
+                if (!std::isnan(option.length) &&
+                    option.length != std::numeric_limits<double>::infinity()) {
+                    all_options.push_back(std::make_pair(goal, std::make_pair(node, option)));
+                }
+            }
+        }
+
+        std::sort(all_options.begin(), all_options.end(), [](const auto &a, const auto &b) {
+            return compareRRTOptionLength(a.second.second, b.second.second);
+        });
+
+        for (const auto &[goal, pair] : all_options) {
+            RRTNode *anchor_node = pair.first;
+            RRTOption option = pair.second;
+
+            RRTNode *new_node = tree.addNode(anchor_node, goal, option);
+
+            if (new_node != nullptr) {
+                return new_node;
+            }
+        }
+
+        return nullptr;
     }
 
     /**
@@ -178,8 +180,8 @@ class RRT {
      *
      * @param options   ==> list of options to connect the sample to the tree
      * @param sample    ==> sampled point
-     * @return          ==> whether or not the sample was successfully added to the tree (nullptr if
-     * not added)
+     * @return          ==> whether or not the sample was successfully added to the tree
+     * (nullptr if not added)
      */
     RRTNode *parseOptions(const std::vector<std::pair<RRTNode *, RRTOption>> &options,
                           const RRTPoint &sample) {
@@ -189,6 +191,7 @@ class RRT {
              *  1. the node is null
              *  2. the node is the same as the sample
              *  3. the option length is not a number
+             *  4. the option length is infinity
              *
              *  The idea is that any further options will have the same if not more issues
              *  [TODO] - how is it possible that option.length is not a number??
