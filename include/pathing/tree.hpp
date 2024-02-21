@@ -203,7 +203,7 @@ class RRTTree {
      * @return                  ==> mininum sorted list of pairs of <node, path>
      */
     std::vector<std::pair<RRTNode*, RRTOption>> pathingOptions(const RRTPoint& end,
-                                                               int quantity_options = 32);
+                                                               int quantity_options = 64);
 
     /**
      * traverses the tree, and puts in all RRTOptions from dubins into a list

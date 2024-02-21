@@ -68,7 +68,8 @@ class RRT {
                 const RRTPoint sample = generateSamplePoint();
 
                 // returns all dubins options from the tree to the sample
-                std::vector<std::pair<RRTNode *, RRTOption>> options = tree.pathingOptions(sample);
+                std::vector<std::pair<RRTNode *, RRTOption>> options =
+                    tree.pathingOptions(sample, 128);
 
                 // returns true if the node is successfully added to the tree
                 RRTNode *new_node = parseOptions(options, sample);
@@ -104,13 +105,15 @@ class RRT {
             RRTPoint goal(tree.getAirspace().getGoal(current_goal_index), angle);
 
             // returns all dubins options from the tree to the sample
-            std::vector<std::pair<RRTNode*, RRTOption>> options = tree.pathingOptions(goal);
+            std::vector<std::pair<RRTNode *, RRTOption>> options = tree.pathingOptions(goal);
 
             for (const auto &[head, option] : options) {
-                if (!std::isnan(option.length) &&
-                    option.length != std::numeric_limits<double>::infinity()) {
-                    direct_options.emplace_back(std::make_pair(goal, option));
+                if (std::isnan(option.length) ||
+                    option.length == std::numeric_limits<double>::infinity()) {
+                    continue;
                 }
+
+                direct_options.emplace_back(std::make_pair(goal, option));
             }
         }
 
@@ -150,15 +153,18 @@ class RRT {
             std::vector<std::pair<RRTNode *, RRTOption>> options = tree.pathingOptions(goal);
 
             for (const auto &[node, option] : options) {
-                if (!std::isnan(option.length) &&
-                    option.length != std::numeric_limits<double>::infinity()) {
-                    all_options.push_back(std::make_pair(goal, std::make_pair(node, option)));
+                if (std::isnan(option.length) ||
+                    option.length == std::numeric_limits<double>::infinity()) {
+                    continue;
                 }
+
+                all_options.push_back(std::make_pair(goal, std::make_pair(node, option)));
             }
         }
 
         std::sort(all_options.begin(), all_options.end(), [](const auto &a, const auto &b) {
-            return compareRRTOptionLength(a.second.second, b.second.second);
+            return a.second.second.length + a.second.first->getCost() <
+                   b.second.second.length + b.second.first->getCost();
         });
 
         for (const auto &[goal, pair] : all_options) {

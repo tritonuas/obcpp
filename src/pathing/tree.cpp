@@ -54,13 +54,9 @@ void RRTNode::removeReachable(RRTNode* old_node) {
 
 const RRTNodeList& RRTNode::getReachable() { return (this->reachable); }
 
-double RRTNode::getCost() const {
-    return this->cost;
-}
+double RRTNode::getCost() const { return this->cost; }
 
-void RRTNode::setCost(double new_cost) {
-    this->cost = new_cost;
-}
+void RRTNode::setCost(double new_cost) { this->cost = new_cost; }
 
 RRTNode* RRTNode::getParent() const { return this->parent; }
 
@@ -239,6 +235,7 @@ RRTPoint RRTTree::getRandomPoint(double search_radius) {
     // return RRTPoint(sample.coord, random(0, TWO_PI));
 }
 
+// TODO, do options by absolute length, not by relative length
 std::vector<std::pair<RRTNode*, RRTOption>> RRTTree::pathingOptions(const RRTPoint& end,
                                                                     int quantity_options) {
     // fills the options list with valid values
@@ -246,15 +243,17 @@ std::vector<std::pair<RRTNode*, RRTOption>> RRTTree::pathingOptions(const RRTPoi
     fillOptions(&options, current_head, end);
 
     // sorts the list
-    std::sort(options.begin(), options.end(),
-              [](auto a, auto b) { return compareRRTOptionLength(a.second, b.second); });
+    std::sort(options.begin(), options.end(), [](auto a, auto b) {
+        return a.second.length + a.first->getCost() < b.second.length + b.first->getCost();
+    });
 
     // if there are less options than needed amount, then just reurn the xisting list, else,
     // return a truncated list.
     if (options.size() < quantity_options) {
         return options;
     }
-    // erases everythin after the last wanted element
+
+    // erases everything after the last wanted element
     options.erase(options.begin() + quantity_options, options.end());
 
     return options;
@@ -274,9 +273,10 @@ void RRTTree::fillOptions(std::vector<std::pair<RRTNode*, RRTOption>>* options, 
 
     // filters out the options that are not valid
     for (const RRTOption& option : local_options) {
-        if (option.length != std::numeric_limits<double>::infinity()) {
-            options->emplace_back(std::pair<RRTNode*, RRTOption>{node, option});
+        if (std::isnan(option.length) || option.length == std::numeric_limits<double>::infinity()) {
+            continue;
         }
+        options->emplace_back(std::pair<RRTNode*, RRTOption>{node, option});
     }
 
     // recursively calls the function for all reachable nodes

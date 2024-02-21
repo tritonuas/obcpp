@@ -12,13 +12,12 @@ int main() {
     std::ofstream file;
     file.open("path_coordinates.txt");
 
-    // RRTPoint test;
     RRTPoint start{XYZCoord(100, 100, 0), M_PI / 6.0};
     std::vector<XYZCoord> goals{XYZCoord{400, 150, 0}, XYZCoord{400, 500, 0}, XYZCoord{200, 250, 0},
                                 XYZCoord{150, 630, 0}, XYZCoord{50, 50, 0}};
-    int num_iterations = 800;
-    double search_radius = 200;
-    double rewire_radius = 200;
+    int num_iterations = 300;
+    double search_radius = 999;
+    double rewire_radius = 999;
     Polygon bounds;
     bounds.emplace_back(XYZCoord{0, 0, 0});
     bounds.emplace_back(XYZCoord{500, 0, 0});
