@@ -124,11 +124,12 @@ class Environment {
     int goals_found;  // whether or not the goal has been found, once it becomes ture, it will never
                       // be false again
 
-     const std::pair<std::pair<double, double>, std::pair<double, double>> bounds;  // bounds of the valid
-                                                                             // region, first pair
-                                                                             // is (min x, max x),
-                                                                             // second pair is
-                                                                             // (min y, max y)
+    const std::pair<std::pair<double, double>, std::pair<double, double>>
+        bounds;  // bounds of the valid
+                 // region, first pair
+                 // is (min x, max x),
+                 // second pair is
+                 // (min y, max y)
 
     /**
      * Find the bounds of the valid region (i.e. the max/min x and y values).

@@ -54,9 +54,13 @@ void RRTNode::removeReachable(RRTNode* old_node) {
 
 const RRTNodeList& RRTNode::getReachable() { return (this->reachable); }
 
-double RRTNode::getCost() const { return this->cost; }
+double RRTNode::getCost() const {
+    return this->cost;
+}
 
-void RRTNode::setCost(double new_cost) { this->cost = new_cost; }
+void RRTNode::setCost(double new_cost) {
+    this->cost = new_cost;
+}
 
 RRTNode* RRTNode::getParent() const { return this->parent; }
 
@@ -95,6 +99,7 @@ RRTTree::RRTTree(RRTPoint root_point, Environment airspace, Dubins dubins)
     root = new_node;
     current_head = new_node;
     node_map.insert(std::make_pair(root_point, new_node));
+    root->setCost(0);
 }
 
 // TODO - seems a bit sketchy
