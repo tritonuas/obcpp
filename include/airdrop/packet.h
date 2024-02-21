@@ -44,7 +44,7 @@ enum ad_packet_hdr {
     ACK_REVOKE  = 203,
 
     // Direct & Indirect
-    DROPPED     = 255,
+    ABOUT_TO_RELEASE = 255,
 };
 
 enum ad_mode {
