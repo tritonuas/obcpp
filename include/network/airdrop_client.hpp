@@ -1,22 +1,21 @@
-#ifndef INCLUDE_NETWORK_AIRDROP_HPP_
-#define INCLUDE_NETWORK_AIRDROP_HPP_
-
-extern "C" {
-    #include "airdrop/packet.h"
-    #include "network/airdrop_sockets.h"
-}
+#ifndef INCLUDE_NETWORK_AIRDROP_CLIENT_HPP_
+#define INCLUDE_NETWORK_AIRDROP_CLIENT_HPP_
 
 #include <optional>
 #include <queue>
 #include <mutex>
 #include <atomic>
 
+extern "C" {
+    #include "airdrop/packet.h"
+    #include "network/airdrop_sockets.h"
+}
 #include "protos/obc.pb.h"
 
 class AirdropClient {
  public:
     // Blocking until we receive SET_MODE packets from the payloads
-    AirdropClient(ad_socket_t socket);
+    explicit AirdropClient(ad_socket_t socket);
     ~AirdropClient();
 
     void establishConnection();
@@ -40,4 +39,4 @@ class AirdropClient {
     ad_packet_t _receiveBlocking();
 };
 
-#endif  // INCLUDE_NETWORK_AIRDROP_HPP_
+#endif  // INCLUDE_NETWORK_AIRDROP_CLIENT_HPP_

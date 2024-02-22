@@ -1,19 +1,18 @@
 #include "network/airdrop_client.hpp"
 
+#include <future>
+
 extern "C" {
     #include "airdrop/packet.h"
     #include "network/airdrop_sockets.h"
 }
-
-#include <future>
-
 #include "utilities/locks.hpp"
 #include "utilities/logging.hpp"
 #include "airdrop_client.hpp"
 
 AirdropClient::AirdropClient(ad_socket_t socket) {
     this->socket = socket;
-    set_send_thread(); // send from same thread as the client is created in
+    set_send_thread();  // send from same thread as the client is created in
 }
 
 AirdropClient::~AirdropClient() {
@@ -95,7 +94,7 @@ ad_packet_t AirdropClient::_receiveBlocking() {
         // that should cause this function to return an invalid packet.
 
         if (this->stopWorker) {
-            return packet; // dummy packet
+            return packet;  // dummy packet
         }
 
         if (result.is_err) {
@@ -107,7 +106,7 @@ ad_packet_t AirdropClient::_receiveBlocking() {
         // size of a packet. If this happens, we probably just read in some
         // garbage data that shouldn't have been read by this program.
         if (result.data.res != sizeof(ad_packet_t)) {
-            LOG_F(ERROR, "recv read %d bytes, when a packet should be %d. Ignoring...", 
+            LOG_F(ERROR, "recv read %d bytes, when a packet should be %d. Ignoring...",
                 result.data.res, sizeof(ad_packet_t));
             continue;
         }
@@ -125,10 +124,10 @@ void AirdropClient::_receiveWorker() {
         ad_packet_t packet = this->_receiveBlocking();
 
         if (this->stopWorker) {
-            return; // kill worker :o
+            return;  // kill worker :o
         }
 
-        Lock lock (this->recv_mut);
+        Lock lock(this->recv_mut);
         this->recv_queue.emplace(packet);
     }
 }
