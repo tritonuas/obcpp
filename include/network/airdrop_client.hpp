@@ -7,7 +7,7 @@ extern "C" {
 }
 
 #include <optional>
-#include <deque>
+#include <queue>
 #include <mutex>
 #include <condition_variable>
 
@@ -17,18 +17,17 @@ class AirdropClient {
  public:
     AirdropClient(ad_socket_t socket);
 
-    void send(ad_packet_t packet);
+    bool send(ad_packet_t packet);
     std::optional<ad_packet_t> receive();
 
  private:
     std::optional<ad_mode> mode {};
     ad_socket_t socket {};
 
-    std::deque<ad_packet_t> recv_deque;
+    std::queue<ad_packet_t> recv_queue;
     std::mutex recv_mut;
 
-    // Functions to run in their own thread
-    void sendWorker();
+    // Function to run in its own thread
     void receiveWorker();
 };
 
