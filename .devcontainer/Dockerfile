@@ -91,56 +91,51 @@ RUN wget https://github.com/mavlink/MAVSDK/releases/download/v1.4.17/libmavsdk-d
 ARG LIBTORCH_VERSION=2.1.0
 ARG LIBTORCH_INSTALL_DIR=/libtorch-tmp
 WORKDIR ${LIBTORCH_INSTALL_DIR}
-# RUN git clone -b main --recurse-submodule https://github.com/pytorch/pytorch.git
-# RUN mkdir pytorch-build
-# RUN cd pytorch-build
-# RUN cmake \
-#     # don't need cuda, for now...
-#     -DUSE_CUDA=0 \
-#     # disable cudnn
-#     -DUSE_CUDNN=0 \
-#     # disable multigpu
-#     -DUSE_NCCL=0 \
-#     # -DUSE_MKLDNN=0 \
-#     # -DBLAS=Eigen \
-#     -D_GLIBCXX_USE_CXX11_ABI=1 \
-#     -DBUILD_SHARED_LIBS:BOOL=ON \
-#     -DCMAKE_BUILD_TYPE:STRING=Release \
-#     -DPYTHON_EXECUTABLE:PATH=`which python3` \
-#     -DCMAKE_PREFIX_PATH=../pytorch-install \
-#     ${LIBTORCH_INSTALL_DIR}/pytorch
-# RUN cmake --build . --target install
-
-RUN git clone --recurse-submodules https://github.com/pytorch/pytorch.git &&\
-    cd pytorch && git checkout ${PYTORCH_COMMIT_ID} && \
-    # git submodule update --init --recursive  &&\
-    # pip3 install pyyaml==3.13 &&\
-    pip3 install -r requirements.txt &&\
-    USE_OPENCV=1 \
+RUN git clone -b main --recurse-submodule https://github.com/pytorch/pytorch.git
+RUN mkdir pytorch-build
+RUN cd pytorch-build
+RUN USE_CUDA=0 \
+    USE_CUDNN=0 \
+    USE_NCCL=0 \
     BUILD_TORCH=ON \
-    CMAKE_PREFIX_PATH="/usr/bin/" \
-    # LD_LIBRARY_PATH=/usr/local/cuda/lib64:/usr/local/lib:$LD_LIBRARY_PATH \
-    LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH \
-    # CUDA_BIN_PATH=/usr/local/cuda/bin \
-    # CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda/ \
-    # CUDNN_LIB_DIR=/usr/local/cuda/lib64 \
-    # CUDA_HOST_COMPILER=cc \
-    USE_CUDA=0 \
+    USE_MKLDNN=0 \
     USE_ROCM=0 \
     USE_KINETO=0 \
     USE_NNPACK=1 \
-    CC=cc \
-    CXX=c++ \
-    # TORCH_CUDA_ARCH_LIST="3.5 5.2 6.0 6.1+PTX" \
-    # TORCH_NVCC_FLAGS="-Xfatbin -compress-all" \
-    python3 setup.py bdist_wheel
+    BUILD_CAFFE2_OPS=0 \
+    BUILD_CAFFE2=0 \
+    cmake \
+    # don't need cuda, for now...
+    -DUSE_CUDA=0 \
+    # disable cudnn
+    -DUSE_CUDNN=0 \
+    # disable multigpu
+    -DUSE_NCCL=0 \
+    -DBUILD_TORCH=ON \
+    -DUSE_MKLDNN=0 \
+    -DUSE_ROCM=0 \
+    -DUSE_KINETO=0 \
+    -DUSE_NNPACK=1 \
+    -DBUILD_CAFFE2_OPS=0 \
+    -DBUILD_CAFFE2=0 \
+    -D_GLIBCXX_USE_CXX11_ABI=1 \
+    -DBUILD_SHARED_LIBS:BOOL=ON \
+    -DCMAKE_BUILD_TYPE:STRING=Release \
+    -DPYTHON_EXECUTABLE:PATH=`which python3` \
+    -DCMAKE_PREFIX_PATH=../pytorch-install \
+    ${LIBTORCH_INSTALL_DIR}/pytorch
+RUN USE_CUDA=0 \
+    USE_CUDNN=0 \
+    USE_NCCL=0 \
+    BUILD_TORCH=ON \
+    USE_MKLDNN=0 \
+    USE_ROCM=0 \
+    USE_KINETO=0 \
+    USE_NNPACK=1 \
+    BUILD_CAFFE2_OPS=0 \
+    BUILD_CAFFE2=0 \
+    cmake --build . --target install
 
-RUN pip3 install dist/*.whl
-RUN rm -fr pytorch
-
-# RUN wget "https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-${LIBTORCH_VERSION}%2Bcpu.zip" \
-#     && unzip "libtorch-cxx11-abi-shared-with-deps-${LIBTORCH_VERSION}+cpu.zip"
-# needed to build torchvision below and to build targets that use libtorch inside the container
 ENV CMAKE_PREFIX_PATH="${LIBTORCH_INSTALL_DIR}/libtorch"
 
 # pull and build torchvision
