@@ -9,13 +9,18 @@ extern "C" {
 #include <optional>
 #include <queue>
 #include <mutex>
-#include <condition_variable>
+#include <atomic>
 
 #include "protos/obc.pb.h"
 
 class AirdropClient {
  public:
+    // Blocking until we receive SET_MODE packets from the payloads
     AirdropClient(ad_socket_t socket);
+    ~AirdropClient();
+
+    void establishConnection();
+    bool isConnectionEstablished() const;
 
     bool send(ad_packet_t packet);
     std::optional<ad_packet_t> receive();
@@ -27,8 +32,12 @@ class AirdropClient {
     std::queue<ad_packet_t> recv_queue;
     std::mutex recv_mut;
 
+    std::atomic_bool stopWorker;
+    std::future<void> workerFuture;
+
     // Function to run in its own thread
-    void receiveWorker();
+    void _receiveWorker();
+    ad_packet_t _receiveBlocking();
 };
 
 #endif  // INCLUDE_NETWORK_AIRDROP_HPP_

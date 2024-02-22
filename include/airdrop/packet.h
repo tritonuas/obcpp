@@ -25,6 +25,18 @@
 #define AD_OBC_PORT     45906  // OBC listens on this port, so payloads send to this
 #define AD_PAYLOAD_PORT 45907  // Payloads listen on this port, so OBC sends to this
 
+// All of the values in here are 1 byte long, which means we do not have to worry about
+// the endianness of the information as it is sent over the wire. If we ever add values more
+// than one byte long, we'll have to worry about this.
+
+// gcc specific packing syntax. Technically this should already be packed because it is just
+// two one-byte values, but just making sure.
+struct __attribute__ ((packed)) ad_packet {
+    uint8_t hdr;
+    uint8_t data;
+};
+typedef struct ad_packet ad_packet_t;
+
 enum ad_packet_hdr {
     // Continually sent by the payloads to confirm they are still operational
     // and can talk to the OBC
@@ -63,16 +75,33 @@ enum ad_bottle {
     BOTTLE_E = 5,
 };
 
-// All of the values in here are 1 byte long, which means we do not have to worry about
-// the endianness of the information as it is sent over the wire. If we ever add values more
-// than one byte long, we'll have to worry about this.
+// Validate that a packet is of header hdr and is valid
+inline int validate_packet_as(enum ad_packet_hdr hdr, ad_packet_t packet) {
+    if (packet.hdr != hdr) {
+        return 0;
+    }
 
-// gcc specific packing syntax. Technically this should already be packed because it is just
-// two one-byte values, but just making sure.
-struct __attribute__ ((packed)) ad_packet {
-    uint8_t hdr;
-    uint8_t data;
-};
-typedef struct ad_packet ad_packet_t;
+    switch (packet.hdr) {
+        case HEARTBEAT:
+        case ACK_MODE:
+            return 1;
+        case SET_MODE:
+            return (packet.data == DIRECT_DROP || packet.data == INDIRECT_DROP);
+        case DROP_NOW:
+        case SIGNAL:
+        case ACK_SIGNAL:
+        case REVOKE:
+        case ACK_REVOKE:
+        case ABOUT_TO_RELEASE:
+            return (packet.data >= BOTTLE_A && packet.data <= BOTTLE_E);
+        default:
+            return 0;
+    }
+}
+
+// Validate that any arbitrary packet is in the correct format
+inline int validate_packet_any(ad_packet_t packet) {
+    return validate_packet_as((enum ad_packet_hdr) packet.hdr, packet);
+}
 
 #endif  // INCLUDE_AIRDROP_PACKET_H_

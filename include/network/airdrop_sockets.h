@@ -62,4 +62,6 @@ ad_int_result_t send_ad_packet(ad_socket_t socket, ad_packet_t* packet);
 ad_int_result_t recv_ad_packet(ad_socket_t socket, void* buf, size_t buf_len);
 #define AD_RECV_NOPACKETS -1
 
+ad_int_result_t close_ad_socket(ad_socket_t socket);
+
 #endif  // INCLUDE_NETWORK_AIRDROP_SOCKETS_H_

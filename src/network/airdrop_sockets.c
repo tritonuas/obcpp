@@ -156,3 +156,14 @@ ad_int_result_t recv_ad_packet(ad_socket_t socket, void* buf, size_t buf_len) {
 
     AD_RETURN_SUCC_RESULT(int, bytes_read);
 }
+
+ad_int_result_t close_ad_socket(ad_socket_t socket) {
+    static char err[AD_ERR_LEN];
+    if (close(socket.fd) < 0) {
+        snprintf(&err[0], AD_ERR_LEN, "close failed: %s", strerror(errno));
+
+        AD_RETURN_ERR_RESULT(int, err);
+    }
+
+    AD_RETURN_SUCC_RESULT(int, 0);
+}
