@@ -23,7 +23,6 @@
 #define TRACE 4
 #define DEBUG 5
 
-time_t getUnixTime();
 
 std::pair<std::string, std::string> getLoggingFilenames(int argc, char* argv[]);
 

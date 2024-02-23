@@ -9,10 +9,7 @@
 #include <filesystem>
 #include <utility>
 
-time_t getUnixTime() {
-    const auto now = std::chrono::system_clock::now();
-    return std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
-}
+#include "utilities/common.hpp"
 
 /*
  * Gets the correct relative filepath to save the log
@@ -33,7 +30,7 @@ std::pair<std::string, std::string> getLoggingFilenames(int argc, char* argv[]) 
     // enables support for std::format so we don't have
     // to do stream bullshit just to format a string
     // Also can just convert getUnixTime() into getTimeString()
-    auto time = getUnixTime();
+    auto time = getUnixTime().count();
     std::ostringstream sstream_main;
     sstream_main <<  repo_root_path.string() << "/logs/" << time << ".log";
     std::ostringstream sstream_mav;

@@ -8,7 +8,7 @@ extern "C" {
 }
 #include "utilities/locks.hpp"
 #include "utilities/logging.hpp"
-#include "airdrop_client.hpp"
+#include "utilities/common.hpp"
 
 AirdropClient::AirdropClient(ad_socket_t socket) {
     this->socket = socket;
@@ -80,6 +80,21 @@ std::optional<ad_packet_t> AirdropClient::receive() {
     return packet;
 }
 
+std::list<std::pair<BottleDropIndex, std::chrono::seconds>>
+    AirdropClient::getLostConnections(std::chrono::seconds threshold) {
+    std::list<std::pair<BottleDropIndex, std::chrono::seconds>> list;
+    auto time = getUnixTime();
+
+    for (int i = 0; i < this->lastHeartbeat.size(); i++) {
+        auto time_since_last_heartbeat = time - this->lastHeartbeat[i];
+        if (time_since_last_heartbeat >= threshold) {
+            list.push_back({static_cast<BottleDropIndex>(i + 1), time_since_last_heartbeat});
+        }
+    }
+
+    return list;
+}
+
 ad_packet_t AirdropClient::_receiveBlocking() {
     ad_packet_t packet = { 0 };
 
@@ -106,13 +121,14 @@ ad_packet_t AirdropClient::_receiveBlocking() {
         // size of a packet. If this happens, we probably just read in some
         // garbage data that shouldn't have been read by this program.
         if (result.data.res != sizeof(ad_packet_t)) {
-            LOG_F(ERROR, "recv read %d bytes, when a packet should be %d. Ignoring...",
+            LOG_F(ERROR, "recv read %d bytes, when a packet should be %lu. Ignoring...",
                 result.data.res, sizeof(ad_packet_t));
             continue;
         }
 
         // TODO: helper to go from packet -> str
         LOG_F(INFO, "received airdrop packet: %hhu %hhu", packet.hdr, packet.data);
+
         return packet;
     }
 }
@@ -127,7 +143,24 @@ void AirdropClient::_receiveWorker() {
             return;  // kill worker :o
         }
 
+        if (this->_parseHeartbeats(packet)) {
+            continue;  // heartbeat, so we should not put it in the queue
+        }
+
         Lock lock(this->recv_mut);
         this->recv_queue.emplace(packet);
     }
+}
+
+bool AirdropClient::_parseHeartbeats(ad_packet_t packet) {
+    if (!validate_packet_as(HEARTBEAT, packet)) {
+        return false;
+    }
+
+    // Valid heartbeat packet, so packet.data is within
+    // [1, 5] and corresponds to a bottle index, so we can
+    // subtract 1 to get the index into the lastHeartbeat array.
+    this->lastHeartbeat[packet.data - 1] = getUnixTime();
+
+    return true;
 }

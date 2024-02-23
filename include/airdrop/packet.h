@@ -31,7 +31,7 @@
 
 // gcc specific packing syntax. Technically this should already be packed because it is just
 // two one-byte values, but just making sure.
-struct __attribute__ ((packed)) ad_packet {
+struct __attribute__((packed)) ad_packet {
     uint8_t hdr;
     uint8_t data;
 };
