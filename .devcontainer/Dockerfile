@@ -94,12 +94,48 @@ WORKDIR ${LIBTORCH_INSTALL_DIR}
 RUN git clone -b main --recurse-submodule https://github.com/pytorch/pytorch.git
 RUN mkdir pytorch-build
 RUN cd pytorch-build
-RUN cmake -D_GLIBCXX_USE_CXX11_ABI=1 -DBUILD_SHARED_LIBS:BOOL=ON -DCMAKE_BUILD_TYPE:STRING=Release -DPYTHON_EXECUTABLE:PATH=`which python3` -DCMAKE_PREFIX_PATH=../pytorch-install ${LIBTORCH_INSTALL_DIR}/pytorch
-RUN cmake --build . --target install
+RUN USE_CUDA=0 \
+    USE_CUDNN=0 \
+    USE_NCCL=0 \
+    BUILD_TORCH=ON \
+    USE_MKLDNN=0 \
+    USE_ROCM=0 \
+    USE_KINETO=0 \
+    USE_NNPACK=1 \
+    BUILD_CAFFE2_OPS=0 \
+    BUILD_CAFFE2=0 \
+    cmake \
+    # don't need cuda, for now...
+    -DUSE_CUDA=0 \
+    # disable cudnn
+    -DUSE_CUDNN=0 \
+    # disable multigpu
+    -DUSE_NCCL=0 \
+    -DBUILD_TORCH=ON \
+    -DUSE_MKLDNN=0 \
+    -DUSE_ROCM=0 \
+    -DUSE_KINETO=0 \
+    -DUSE_NNPACK=1 \
+    -DBUILD_CAFFE2_OPS=0 \
+    -DBUILD_CAFFE2=0 \
+    -D_GLIBCXX_USE_CXX11_ABI=1 \
+    -DBUILD_SHARED_LIBS:BOOL=ON \
+    -DCMAKE_BUILD_TYPE:STRING=Release \
+    -DPYTHON_EXECUTABLE:PATH=`which python3` \
+    -DCMAKE_PREFIX_PATH=../pytorch-install \
+    ${LIBTORCH_INSTALL_DIR}/pytorch
+RUN USE_CUDA=0 \
+    USE_CUDNN=0 \
+    USE_NCCL=0 \
+    BUILD_TORCH=ON \
+    USE_MKLDNN=0 \
+    USE_ROCM=0 \
+    USE_KINETO=0 \
+    USE_NNPACK=1 \
+    BUILD_CAFFE2_OPS=0 \
+    BUILD_CAFFE2=0 \
+    cmake --build . --target install
 
-# RUN wget "https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-${LIBTORCH_VERSION}%2Bcpu.zip" \
-#     && unzip "libtorch-cxx11-abi-shared-with-deps-${LIBTORCH_VERSION}+cpu.zip"
-# needed to build torchvision below and to build targets that use libtorch inside the container
 ENV CMAKE_PREFIX_PATH="${LIBTORCH_INSTALL_DIR}/libtorch"
 
 # pull and build torchvision
