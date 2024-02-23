@@ -43,7 +43,7 @@ ad_int_result_t send_ad_packet(ad_socket_t socket, ad_packet_t* packet) {
     if (socket.send_port == AD_OBC_PORT) {
         q = &obc_queue;
     } else { // assume payload otherwise for the purposes of simple testing
-        q = &obc_queue;
+        q = &payload_queue;
     }
 
     if (pqueue_full(q)) {
@@ -60,6 +60,22 @@ ad_int_result_t send_ad_packet(ad_socket_t socket, ad_packet_t* packet) {
 }
 
 ad_int_result_t recv_ad_packet(ad_socket_t socket, void* buf, size_t buf_len) {
+    static char err[1] = "";
+
+    packet_queue_t* q;
+    if (socket.recv_port == AD_OBC_PORT) {
+        q = &obc_queue;
+    } else { // assume payload otherwise for the purposes of simple testing
+        q = &payload_queue;
+    }
+
+    if (buf_len < sizeof(ad_packet_t)) {
+        AD_RETURN_ERR_RESULT(int, err);
+    }
+
+    ad_packet_t packet = pqueue_wait_pop(q);
+    memcpy(buf, &packet, sizeof(ad_packet_t));
+
     AD_RETURN_SUCC_RESULT(int, sizeof(ad_packet_t));
 }
 
