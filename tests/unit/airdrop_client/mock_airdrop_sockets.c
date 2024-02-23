@@ -37,7 +37,24 @@ ad_socket_result_t make_ad_socket(uint16_t recv_port, uint16_t send_port) {
 }
 
 ad_int_result_t send_ad_packet(ad_socket_t socket, ad_packet_t* packet) {
-    // TODO: send packet
+    static char err[1] = "";
+
+    packet_queue_t* q;
+    if (socket.send_port == AD_OBC_PORT) {
+        q = &obc_queue;
+    } else { // assume payload otherwise for the purposes of simple testing
+        q = &obc_queue;
+    }
+
+    if (pqueue_full(q)) {
+        AD_RETURN_ERR_RESULT(int, err);
+    }
+
+    ad_packet_t p = {
+        .data = packet->data,
+        .hdr = packet->hdr,
+    };
+    pqueue_push(q, p);
 
     AD_RETURN_SUCC_RESULT(int, sizeof(ad_packet_t));
 }
