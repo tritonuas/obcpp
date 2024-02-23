@@ -30,6 +30,20 @@ struct ad_int_result {
 };
 typedef struct ad_int_result ad_int_result_t;
 
+#define AD_RETURN_ERR_RESULT(typename, err) \
+    ad_##typename##_result_t result = { \
+        .data = { .err = &err[0] }, \
+        .is_err = 1, \
+    }; \
+    return result
+
+#define AD_RETURN_SUCC_RESULT(typename, value) \
+    ad_##typename##_result_t result = { \
+        .data = { .res = value }, \
+        .is_err = 0, \
+    }; \
+    return result
+
 ad_packet_t make_ad_packet(uint8_t hdr, uint8_t data);
 
 // TODO: write documentation

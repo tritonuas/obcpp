@@ -43,19 +43,6 @@ void set_recv_thread() {
 // Very large just in case strerror(errno) actually ends up being incredibly large
 #define AD_ERR_LEN 999
 
-#define AD_RETURN_ERR_RESULT(typename, err) \
-    ad_##typename##_result_t result = { \
-        .data = { .err = &err[0] }, \
-        .is_err = 1, \
-    }; \
-    return result
-
-#define AD_RETURN_SUCC_RESULT(typename, value) \
-    ad_##typename##_result_t result = { \
-        .data = { .res = value }, \
-        .is_err = 0, \
-    }; \
-    return result
 
 ad_socket_result_t make_ad_socket(uint16_t recv_port, uint16_t send_port) {
     // send socket is simple
