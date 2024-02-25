@@ -54,11 +54,11 @@ RUN apt-get install -y cpplint
 # Update Python to 3.11 so that libtorch can be properly built from source
 ENV PYENV_ROOT="/.pyenv"
 RUN curl https://pyenv.run | bash
-ENV PATH="${PATH}:${PYENV_ROOT}/bin"
+ENV PATH="${PATH}:${PYENV_ROOT}/bin:${HOME}/.local/bin"
 RUN eval "$(pyenv init -)"
 RUN pyenv install 3.11
 RUN pyenv global 3.11
-RUN pip3 install typing-extensions PyYAML
+RUN pip3 install typing-extensions PyYAML gdown
 
 RUN echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME
@@ -150,6 +150,9 @@ RUN wget "https://github.com/pytorch/vision/archive/refs/tags/v${TORCHVISION_VER
     && cmake -DWITH_CUDA=off -D_GLIBCXX_USE_CXX11_ABI=1 -DCMAKE_BUILD_TYPE=Release .. \
     && make -j2 \
     && make install
+
+
+RUN pip3 install gdown
 
 # login as non-root user
 USER $USERNAME
