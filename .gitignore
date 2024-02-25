@@ -13,7 +13,14 @@ _deps/
 Testing/
 imgs/
 
-.vscode
+models/*
+!models/.gitkeep
+
+integrations/images/*
+!integrations/images/.gitkeep
+
+.vscode/*
+!.vscode/c_cpp_properties.json
 
 libcore_library.dylib
 .DS_Store
