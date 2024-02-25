@@ -16,8 +16,8 @@ imgs/
 models/*
 !models/.gitkeep
 
-integrations/images/*
-!integrations/images/.gitkeep
+tests/integration/images/*
+!tests/integration/images/.gitkeep
 
 .vscode/*
 !.vscode/c_cpp_properties.json
