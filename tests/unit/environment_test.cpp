@@ -18,8 +18,11 @@ TEST(EnvironmentTest, PointOutOfBoundsTest) {
     small_square.emplace_back(XYZCoord{0, 1, 0});
     small_square.emplace_back(XYZCoord{0, 0, 0});
     small_square.emplace_back(XYZCoord{1, 0, 0});
+    Polygon obs1 = {
+        {XYZCoord(10, 10, 0), XYZCoord(20, 10, 0), XYZCoord(20, 20, 0), XYZCoord(10, 20, 0)}};
 
-    Environment test{small_square, {XYZCoord(0, 0, 0)}};
+    std::vector<Polygon> obstacles = {obs1};
+    Environment test{small_square, {XYZCoord(0, 0, 0)}, obstacles};
 
     EXPECT_EQ(true, test.isPointInBounds(XYZCoord{0.5, 0.5, 0}));
     EXPECT_EQ(true, test.isPointInBounds(XYZCoord{0.5, 0.5, 99999999}));
@@ -31,7 +34,7 @@ TEST(EnvironmentTest, PointOutOfBoundsTest) {
     EXPECT_EQ(false, test.isPointInBounds(XYZCoord{0.5, -1, 0}));  // down
 
     Polygon no_point_polygon;
-    Environment no_point = {no_point_polygon, {XYZCoord(0, 0, 0)}};
+    Environment no_point = {no_point_polygon, {XYZCoord(0, 0, 0)}, obstacles};
 
     EXPECT_EQ(false, no_point.isPointInBounds(XYZCoord{1, 1, 1}));
     EXPECT_EQ(false, no_point.isPointInBounds(XYZCoord{1, 0, 1}));
@@ -40,7 +43,7 @@ TEST(EnvironmentTest, PointOutOfBoundsTest) {
     Polygon point_polygon;
     point_polygon.emplace_back(XYZCoord{1, 1, 1});
 
-    Environment point = {point_polygon, {XYZCoord(0, 0, 0)}};
+    Environment point = {point_polygon, {XYZCoord(0, 0, 0)}, obstacles};
 
     EXPECT_EQ(false, point.isPointInBounds(XYZCoord{1, 1, 1}));
     EXPECT_EQ(false, point.isPointInBounds(XYZCoord{1, 0, 1}));
@@ -53,7 +56,7 @@ TEST(EnvironmentTest, PointOutOfBoundsTest) {
     quadrateral_polygon.emplace_back(XYZCoord{4, 4, 0});
     quadrateral_polygon.emplace_back(XYZCoord{1, 2, 0});
 
-    Environment quadrilateral = {quadrateral_polygon, {XYZCoord(0, 0, 0)}};
+    Environment quadrilateral = {quadrateral_polygon, {XYZCoord(0, 0, 0)}, obstacles};
 
     EXPECT_EQ(true, quadrilateral.isPointInBounds(XYZCoord{1.5, 1.00, 0}));
     EXPECT_EQ(true, quadrilateral.isPointInBounds(XYZCoord{0.5, 0.90, 0}));
@@ -80,7 +83,12 @@ TEST(EnvironmentTest, PathOutOfBoundsTest) {
     small_square.emplace_back(XYZCoord{0, 0, 0});
     small_square.emplace_back(XYZCoord{1, 0, 0});
 
-    Environment test{small_square,{XYZCoord(0, 0, 0)}};
+    Polygon obs1 = {
+        {XYZCoord(10, 10, 0), XYZCoord(20, 10, 0), XYZCoord(20, 20, 0), XYZCoord(10, 20, 0)}};
+
+    std::vector<Polygon> obstacles = {obs1};
+
+    Environment test{small_square, {XYZCoord(0, 0, 0)}, obstacles};
 
     // TODO --> REALLY SHIT TEST
     std::vector<XYZCoord> path_in_bounds{XYZCoord{0.5, 0.5, 0}, XYZCoord{0.5, 0.5, 99999999},
@@ -94,4 +102,29 @@ TEST(EnvironmentTest, PathOutOfBoundsTest) {
 
     EXPECT_EQ(true, test.isPathInBounds(path_in_bounds));
     EXPECT_EQ(false, test.isPathInBounds(path_out_of_bounds));
+}
+
+/*
+*   test points in bound and in obstacles
+*/
+TEST(EnvironmentTest, InsideObstacleTest) {
+    Polygon square;
+    square.emplace_back(XYZCoord{0, 0, 0});
+    square.emplace_back(XYZCoord{100, 0, 0});
+    square.emplace_back(XYZCoord{100, 100, 0});
+    square.emplace_back(XYZCoord{0, 100, 0});
+
+    Polygon obs1 = {
+        {XYZCoord(10, 10, 0), XYZCoord(20, 10, 0), XYZCoord(20, 20, 0), XYZCoord(10, 20, 0)}};
+
+    std::vector<Polygon> obstacles = {obs1};
+
+    Environment test{square, {XYZCoord(0, 0, 0)}, obstacles};
+    
+    EXPECT_FALSE(test.isPointInBounds(XYZCoord{15, 15, 0}));
+    EXPECT_FALSE(test.isPointInBounds(XYZCoord{10, 10, 0}));
+    EXPECT_FALSE(test.isPointInBounds(XYZCoord{15, 10, 0}));
+
+    // for sanity
+    EXPECT_TRUE(test.isPointInBounds(XYZCoord{1, 1, 0}));
 }

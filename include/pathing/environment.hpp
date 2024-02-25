@@ -21,16 +21,37 @@
  */
 class Environment {
  public:
-    Environment(const Polygon valid_region, const std::vector<XYZCoord> goals)
-        : valid_region(valid_region), goals(goals), goals_found(0), bounds(findBounds()) {}
+    Environment(const Polygon valid_region, const std::vector<XYZCoord> goals,
+                const std::vector<Polygon> obstacles)
+        : valid_region(valid_region),
+          goals(goals),
+          goals_found(0),
+          bounds(findBounds()),
+          obstacles(obstacles) {}
 
     /**
      * Check if a point is in the valid region
+     * 
+     * TODO - analysis if checking all regions for a given point at one time
+     * is optimal. The alternative would be to check each region individually
+     * for all points
      *
      * @param point the point to check
      * @return true if the point is in the valid region, false otherwise
      */
-    bool isPointInBounds(XYZCoord point) const { return isPointInPolygon(valid_region, point); }
+    bool isPointInBounds(XYZCoord point) const {
+        if (!isPointInPolygon(valid_region, point)) {
+            return false;
+        }
+
+        for (const Polygon& obstacle : obstacles) {
+            if (isPointInPolygon(obstacle, point)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 
     /**
      * Check if an entire flight path is in bounds
@@ -118,8 +139,9 @@ class Environment {
     int getNumGoals() const { return goals.size(); }
 
  private:
-    const Polygon valid_region;         // boundary of the valid map
-    const std::vector<XYZCoord> goals;  // goal point
+    const Polygon valid_region;            // boundary of the valid map
+    const std::vector<XYZCoord> goals;     // goal point
+    const std::vector<Polygon> obstacles;  // obstacles in the map
 
     int goals_found;  // whether or not the goal has been found, once it becomes ture, it will never
                       // be false again

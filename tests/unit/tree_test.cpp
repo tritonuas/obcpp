@@ -19,7 +19,12 @@ TEST(SimpleTreeTest, addNodeTest) {
     valid_region.emplace_back(XYZCoord(100, 0, 0));
     valid_region.emplace_back(XYZCoord(100, 100, 0));
     valid_region.emplace_back(XYZCoord(0, 100, 0));
-    Environment env = Environment(valid_region, {XYZCoord(0, 0, 0)});
+
+    Polygon obs1 = {
+        {XYZCoord(10, 10, 0), XYZCoord(20, 10, 0), XYZCoord(20, 20, 0), XYZCoord(10, 20, 0)}};
+
+    std::vector<Polygon> obstacles = {obs1};
+    Environment env = Environment(valid_region, {XYZCoord(0, 0, 0)}, obstacles);
     RRTPoint point1 = RRTPoint(XYZCoord(25, 25, 0), 0);
     RRTPoint point2 = RRTPoint(XYZCoord(50, 75, 0), 0);
     RRTOption option = dubins.allOptions(point1, point2, true)[0];
@@ -47,7 +52,11 @@ TEST(SimpleTreeTest, getNodeTest) {
     valid_region.emplace_back(XYZCoord(100, 0, 0));
     valid_region.emplace_back(XYZCoord(100, 100, 0));
     valid_region.emplace_back(XYZCoord(0, 100, 0));
-    Environment env = Environment(valid_region, {XYZCoord(0, 0, 0)});
+    Polygon obs1 = {
+        {XYZCoord(10, 10, 0), XYZCoord(20, 10, 0), XYZCoord(20, 20, 0), XYZCoord(10, 20, 0)}};
+
+    std::vector<Polygon> obstacles = {obs1};
+    Environment env = Environment(valid_region, {XYZCoord(0, 0, 0)}, obstacles);
     RRTPoint point1 = RRTPoint(XYZCoord(25, 25, 0), 0);
     RRTPoint point2 = RRTPoint(XYZCoord(50, 75, 0), 0);
     RRTOption option = dubins.allOptions(point1, point2, true)[0];
@@ -75,7 +84,11 @@ TEST(SimpleTreeTest, getEdgeTest) {
     valid_region.emplace_back(XYZCoord(100, 0, 0));
     valid_region.emplace_back(XYZCoord(100, 100, 0));
     valid_region.emplace_back(XYZCoord(0, 100, 0));
-    Environment env = Environment(valid_region, {XYZCoord(0, 0, 0)});
+    Polygon obs1 = {
+        {XYZCoord(10, 10, 0), XYZCoord(20, 10, 0), XYZCoord(20, 20, 0), XYZCoord(10, 20, 0)}};
+
+    std::vector<Polygon> obstacles = {obs1};
+    Environment env = Environment(valid_region, {XYZCoord(0, 0, 0)}, obstacles);
     RRTPoint point1 = RRTPoint(XYZCoord(25, 25, 0), 0);
     RRTPoint point2 = RRTPoint(XYZCoord(50, 75, 0), 0);
     RRTOption option = dubins.allOptions(point1, point2, true)[0];
@@ -98,7 +111,11 @@ TEST(SimpleTreeTest, rewireEdgeTest) {
     valid_region.emplace_back(XYZCoord(100, 0, 0));
     valid_region.emplace_back(XYZCoord(100, 100, 0));
     valid_region.emplace_back(XYZCoord(0, 100, 0));
-    Environment env = Environment(valid_region, {XYZCoord(0, 0, 0)});
+    Polygon obs1 = {
+        {XYZCoord(10, 10, 0), XYZCoord(20, 10, 0), XYZCoord(20, 20, 0), XYZCoord(10, 20, 0)}};
+
+    std::vector<Polygon> obstacles = {obs1};
+    Environment env = Environment(valid_region, {XYZCoord(0, 0, 0)}, obstacles);
     RRTPoint point1 = RRTPoint(XYZCoord(25, 25, 0), 0);
     RRTPoint point2 = RRTPoint(XYZCoord(50, 75, 0), HALF_PI);
     RRTPoint point3 = RRTPoint(XYZCoord(50, 80, 1.5), HALF_PI);
@@ -121,7 +138,8 @@ TEST(SimpleTreeTest, rewireEdgeTest) {
     EXPECT_TRUE(add2);
     EXPECT_TRUE(add3);
 
-    simple_tree.rewireEdge(simple_tree.getNode(point3), simple_tree.getNode(point2), simple_tree.getNode(point4), {}, 0);
+    simple_tree.rewireEdge(simple_tree.getNode(point3), simple_tree.getNode(point2),
+                           simple_tree.getNode(point4), {}, 0);
     EXPECT_TRUE(simple_tree.getEdge(point4, point3) != nullptr);
     EXPECT_TRUE(simple_tree.getEdge(point2, point3) == nullptr);
 

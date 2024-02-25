@@ -15,9 +15,15 @@ int main() {
     RRTPoint start{XYZCoord(100, 100, 0), M_PI / 6.0};
     std::vector<XYZCoord> goals{XYZCoord{400, 150, 0}, XYZCoord{400, 500, 0}, XYZCoord{200, 250, 0},
                                 XYZCoord{150, 630, 0}, XYZCoord{50, 50, 0}};
-    int num_iterations = 300;
+    
+    Polygon obs1 = {
+        {XYZCoord(350, 350, 0), XYZCoord(475, 350, 0), XYZCoord(475, 450, 0), XYZCoord(350, 450, 0)}};
+
+    std::vector<Polygon> obstacles = {obs1};
+
+    int num_iterations = 1800;
     double search_radius = 999;
-    double rewire_radius = 999;
+    double rewire_radius = 200;
     Polygon bounds;
     bounds.emplace_back(XYZCoord{0, 0, 0});
     bounds.emplace_back(XYZCoord{500, 0, 0});
@@ -25,10 +31,12 @@ int main() {
     bounds.emplace_back(XYZCoord{0, 800, 0});
     bounds.emplace_back(XYZCoord{0, 600, 0});
     bounds.emplace_back(XYZCoord{300, 600, 0});
-    bounds.emplace_back(XYZCoord{300, 300, 0});
-    bounds.emplace_back(XYZCoord{0, 300, 0});
+    bounds.emplace_back(XYZCoord{300, 200, 0});
+    bounds.emplace_back(XYZCoord{250, 200, 0});
+    bounds.emplace_back(XYZCoord{250, 400, 0});
+    bounds.emplace_back(XYZCoord{0, 400, 0});
 
-    RRT rrt = RRT(start, goals, num_iterations, search_radius, rewire_radius, bounds);
+    RRT rrt = RRT(start, goals, num_iterations, search_radius, rewire_radius, bounds, obstacles, true);
 
     // print out stats
     std::cout << "num_iterations: " << num_iterations << std::endl;
@@ -49,7 +57,7 @@ int main() {
     std::cout << path.size() << std::endl;
 
     // plot the path
-    PathingPlot plotter("pathing_output", bounds, {}, goals);
+    PathingPlot plotter("pathing_output", bounds, obstacles[0], goals);
     
     plotter.addFinalPolyline(path);
     plotter.output("test_final_path", PathOutputType::BOTH);

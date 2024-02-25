@@ -94,7 +94,7 @@ RRTTree::RRTTree(RRTPoint root_point, Environment airspace, Dubins dubins)
     RRTNode* new_node = new RRTNode(root_point, LARGE_COST);
     root = new_node;
     current_head = new_node;
-    node_map.insert(std::make_pair(root_point, new_node));
+    node_map.insert({root_point, new_node});
     root->setCost(0);
 }
 
@@ -203,39 +203,40 @@ RRTPoint RRTTree::getRandomPoint(double search_radius) {
     // gets random point if the goal is not being used
     const RRTPoint& sample = airspace.getRandomPoint();
 
-    // picks the nearest node to the sample, and then returns a point `search_radius` distance away
-    // from tat point in the direction of the sample
-    RRTNode* nearest_node = getNearestNode(sample);
+    // // picks the nearest node to the sample, and then returns a point `search_radius` distance
+    // away
+    // // from tat point in the direction of the sample
+    // RRTNode* nearest_node = getNearestNode(sample);
 
-    // shouldn't happen, it is here for memory safety
-    if (nearest_node == nullptr) {
-        return sample;
-    }
+    // // shouldn't happen, it is here for memory safety
+    // if (nearest_node == nullptr) {
+    //     return sample;
+    // }
 
-    const RRTPoint& nearest_point = nearest_node->getPoint();
+    // const RRTPoint& nearest_point = nearest_node->getPoint();
 
-    const XYZCoord displacement_vector = sample.coord - nearest_point.coord;
+    // const XYZCoord displacement_vector = sample.coord - nearest_point.coord;
 
-    // TODO - use some heuristic to make this angle as optimal as possible
-    const double angle =
-        std::atan2(displacement_vector.y, displacement_vector.x) + random(-M_PI / 2, M_PI / 2);
+    // // TODO - use some heuristic to make this angle as optimal as possible
+    // const double angle =
+    //     std::atan2(displacement_vector.y, displacement_vector.x) + random(-M_PI / 2, M_PI / 2);
 
-    // distance between the vectors, if it is less than the search radius, then it will return the
-    // sample point, otherwise, it will return a point `search_radius` away from the nearest point
-    const double distance = displacement_vector.norm();
+    // // distance between the vectors, if it is less than the search radius, then it will return
+    // the
+    // // sample point, otherwise, it will return a point `search_radius` away from the nearest
+    // point const double distance = displacement_vector.norm();
 
-    if (distance < search_radius) {
-        return RRTPoint(sample.coord, angle);
-    }
+    // if (distance < search_radius) {
+    //     return RRTPoint(sample.coord, angle);
+    // }
 
-    RRTPoint new_point(nearest_point.coord + (search_radius / distance) * displacement_vector,
-                       angle);
+    // RRTPoint new_point(nearest_point.coord + (search_radius / distance) * displacement_vector,
+    //                    angle);
 
-    return new_point;
-    // return RRTPoint(sample.coord, random(0, TWO_PI));
+    // return new_point;
+    return RRTPoint(sample.coord, random(0, TWO_PI));
 }
 
-// TODO, do options by absolute length, not by relative length
 std::vector<std::pair<RRTNode*, RRTOption>> RRTTree::pathingOptions(const RRTPoint& end,
                                                                     int quantity_options) {
     // fills the options list with valid values
@@ -244,17 +245,21 @@ std::vector<std::pair<RRTNode*, RRTOption>> RRTTree::pathingOptions(const RRTPoi
 
     // sorts the list
     std::sort(options.begin(), options.end(), [](auto a, auto b) {
-        return a.second.length + a.first->getCost() < b.second.length + b.first->getCost();
+        auto [a_node, a_option] = a;
+        auto [b_node, b_option] = b;
+        return a_option.length + a_node->getCost() < b_option.length + b_node->getCost();
     });
+
+    // the options are already sorted, why return a truncated list?
 
     // if there are less options than needed amount, then just reurn the xisting list, else,
     // return a truncated list.
-    if (options.size() < quantity_options) {
-        return options;
-    }
+    // if (options.size() < quantity_options) {
+    //     return options;
+    // }
 
     // erases everything after the last wanted element
-    options.erase(options.begin() + quantity_options, options.end());
+    // options.erase(options.begin() + quantity_options, options.end());
 
     return options;
 }
@@ -276,7 +281,7 @@ void RRTTree::fillOptions(std::vector<std::pair<RRTNode*, RRTOption>>* options, 
         if (std::isnan(option.length) || option.length == std::numeric_limits<double>::infinity()) {
             continue;
         }
-        options->emplace_back(std::pair<RRTNode*, RRTOption>{node, option});
+        options->push_back({node, option});
     }
 
     // recursively calls the function for all reachable nodes
@@ -316,19 +321,19 @@ void RRTTree::RRTStarRecursive(RRTNode* current_node, RRTNode* sample, double re
     }
 
     // for all nodes past the current node, attempt to rewire them
-    for (RRTNode* node : current_node->getReachable()) {
+    for (RRTNode* child : current_node->getReachable()) {
         // get the distance between the current node and the nearest node
-        if (node->getPoint().distanceTo(sample->getPoint()) > rewire_radius) {
+        if (child->getPoint().distanceTo(sample->getPoint()) > rewire_radius) {
             continue;
         }
 
-        if (node->getPoint() == sample->getPoint()) {
+        if (child->getPoint() == sample->getPoint()) {
             continue;
         }
 
-        // get the dubins options
+        // get the dubins options (sorted)
         std::vector<RRTOption> options =
-            dubins.allOptions(sample->getPoint(), node->getPoint(), true);
+            dubins.allOptions(sample->getPoint(), child->getPoint(), true);
 
         // for each option
         for (const RRTOption& option : options) {
@@ -338,23 +343,23 @@ void RRTTree::RRTStarRecursive(RRTNode* current_node, RRTNode* sample, double re
                 break;
             }
 
-            // check if new path is valid
-            std::vector<XYZCoord> path = dubins.generatePoints(
-                sample->getPoint(), node->getPoint(), option.dubins_path, option.has_straight);
-
-            if (!airspace.isPathInBounds(path)) {
-                continue;
-            }
-
             // if the node is uncompetitive, continue
             double new_cost = sample->getCost() + option.length;
 
-            double cost = node->getCost();
+            double cost = child->getCost();
 
             // if the new cost is less than the current cost
             if (new_cost < cost) {
+                // check if new path is valid
+                std::vector<XYZCoord> path = dubins.generatePoints(
+                    sample->getPoint(), child->getPoint(), option.dubins_path, option.has_straight);
+
+                if (!airspace.isPathInBounds(path)) {
+                    continue;
+                }
+
                 // rewire the edge
-                rewireEdge(node, current_node, sample, path, option.length);
+                rewireEdge(child, current_node, sample, path, option.length);
             }
         }
     }
