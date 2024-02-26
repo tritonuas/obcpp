@@ -11,7 +11,7 @@ const static char* mission_json_good_1 = R"(
             "AlphanumericColor": 0,
             "Shape": 0,
             "ShapeColor": 0,
-            "Index": 0,
+            "Index": 1,
             "IsMannikin": true
         },
         {
@@ -19,7 +19,7 @@ const static char* mission_json_good_1 = R"(
             "AlphanumericColor": "Red",
             "Shape": "Semicircle",
             "ShapeColor": "Brown",
-            "Index": 1,
+            "Index": 2,
             "IsMannikin": false
         },
         {
@@ -27,7 +27,7 @@ const static char* mission_json_good_1 = R"(
             "AlphanumericColor": "Orange",
             "Shape": "Pentagon",
             "ShapeColor": "Green",
-            "Index": 2,
+            "Index": 3,
             "IsMannikin": false
         },
         {
@@ -35,7 +35,7 @@ const static char* mission_json_good_1 = R"(
             "AlphanumericColor": "Green",
             "Shape": "Circle",
             "ShapeColor": "Purple",
-            "Index": 3,
+            "Index": 4,
             "IsMannikin": false
         },
         {
@@ -43,7 +43,7 @@ const static char* mission_json_good_1 = R"(
             "AlphanumericColor": "Orange",
             "Shape": "Triangle",
             "ShapeColor": "White",
-            "Index": 4,
+            "Index": 5,
             "IsMannikin": false
         }
     ],
@@ -111,7 +111,7 @@ const static char* mission_json_bad_1 = R"(
             "AlphanumericColor": 0,
             "Shape": 0,
             "ShapeColor": 0,
-            "Index": 0,
+            "Index": 1,
             "IsMannikin": true
         },
         {
@@ -119,7 +119,7 @@ const static char* mission_json_bad_1 = R"(
             "AlphanumericColor": "Red",
             "Shape": "Semicircle",
             "ShapeColor": "Brown",
-            "Index": 1,
+            "Index": 2,
             "IsMannikin": false
         },
         {
@@ -127,7 +127,7 @@ const static char* mission_json_bad_1 = R"(
             "AlphanumericColor": "Orange",
             "Shape": "Pentagon",
             "ShapeColor": "Green",
-            "Index": 2,
+            "Index": 3,
             "IsMannikin": false
         },
         {
@@ -135,7 +135,7 @@ const static char* mission_json_bad_1 = R"(
             "AlphanumericColor": "Green",
             "Shape": "Circle",
             "ShapeColor": "Purple",
-            "Index": 3,
+            "Index": 4,
             "IsMannikin": false
         },
         {
@@ -143,7 +143,7 @@ const static char* mission_json_bad_1 = R"(
             "AlphanumericColor": "Orange",
             "Shape": "Triangle",
             "ShapeColor": "White",
-            "Index": 4,
+            "Index": 5,
             "IsMannikin": false
         }
     ],

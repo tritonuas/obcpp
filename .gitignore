@@ -13,7 +13,8 @@ _deps/
 Testing/
 imgs/
 
-.vscode
+.vscode/*
+!.vscode/c_cpp_properties.json
 
 libcore_library.dylib
 .DS_Store
