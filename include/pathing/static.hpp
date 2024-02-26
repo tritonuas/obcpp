@@ -10,6 +10,7 @@
 #include <utility>
 #include <vector>
 
+#include "core/mission_state.hpp"
 #include "pathing/dubins.hpp"
 #include "pathing/environment.hpp"
 #include "pathing/plotting.hpp"
@@ -17,12 +18,6 @@
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
 #include "utilities/rng.hpp"
-
-// std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState>
-// state) {
-//     // do pathing here
-//     return {};
-// }
 
 /*
     TODO - abstract out fnctions
@@ -168,8 +163,7 @@ class RRT {
             auto [a_node, a_option] = a_paths;
             auto [b_goal, b_paths] = b;
             auto [b_node, b_option] = b_paths;
-            return a_option.length + a_node->getCost() <
-                   b_option.length + b_node->getCost();
+            return a_option.length + a_node->getCost() < b_option.length + b_node->getCost();
         });
 
         for (const auto &[goal, pair] : all_options) {
@@ -255,5 +249,7 @@ class RRT {
     const std::vector<double> angles = {0,    M_PI / 4,     M_PI / 2,     3 * M_PI / 4,
                                         M_PI, 5 * M_PI / 4, 3 * M_PI / 2, 7 * M_PI / 4};
 };
+
+std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state);
 
 #endif  // INCLUDE_PATHING_STATIC_HPP_

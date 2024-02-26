@@ -3,7 +3,7 @@
 
 namespace resources {
 
-const char* mission_json_good_1 = R"(
+const static char* mission_json_good_1 = R"(
 {
     "BottleAssignments": [
         {
@@ -103,7 +103,7 @@ const char* mission_json_good_1 = R"(
 })";
 
 // Bad because the flight boundary only has two coordinates
-const char* mission_json_bad_1 = R"(
+const static char* mission_json_bad_1 = R"(
 {
     "BottleAssignments": [
         {
