@@ -67,9 +67,8 @@ void ObstacleEvasionState::evade(void) {
     float param7 = 0.0f;
 
     // TODO:(Samir) KMS, we need to compile mavlink to use plugins
-    int result = ObstacleEvasionState::mav->sendCustomMavlinkCommand(target_sysid, target_compid, command, param1, param2,
+    mavsdk::MavlinkPassthrough::Result result = ObstacleEvasionState::mav->sendCustomMavlinkCommand(target_sysid, target_compid, command, param1, param2,
                                           param3, param4, param5, param6, param7);
-
 }
 
 void ObstacleEvasionState::updateObstaclesList(std::vector<GPSCoord> obstacles) {
