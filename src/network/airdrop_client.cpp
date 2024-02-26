@@ -12,6 +12,11 @@ extern "C" {
 
 AirdropClient::AirdropClient(ad_socket_t socket) {
     this->socket = socket;
+    auto time = getUnixTime();
+    for (auto& i : this->lostConnections) {
+        // TODO: zero out        
+    }
+
     set_send_thread();  // send from same thread as the client is created in
 }
 
@@ -56,7 +61,7 @@ bool AirdropClient::isConnectionEstablished() const {
 }
 
 bool AirdropClient::send(ad_packet_t packet) {
-    auto res = send_ad_packet(this->socket, &packet);
+    auto res = send_ad_packet(this->socket, packet);
     if (res.is_err) {
         LOG_F(ERROR, "%s", res.data.err);
         return false;
@@ -80,10 +85,10 @@ std::optional<ad_packet_t> AirdropClient::receive() {
     return packet;
 }
 
-std::list<std::pair<BottleDropIndex, std::chrono::seconds>>
-    AirdropClient::getLostConnections(std::chrono::seconds threshold) {
-    std::list<std::pair<BottleDropIndex, std::chrono::seconds>> list;
-    auto time = getUnixTime();
+std::list<std::pair<BottleDropIndex, std::chrono::milliseconds>>
+    AirdropClient::getLostConnections(std::chrono::milliseconds threshold) {
+    std::list<std::pair<BottleDropIndex, std::chrono::milliseconds>> list;
+    auto time = getUnixTime_ms();
 
     for (int i = 0; i < this->lastHeartbeat.size(); i++) {
         auto time_since_last_heartbeat = time - this->lastHeartbeat[i];
@@ -93,6 +98,10 @@ std::list<std::pair<BottleDropIndex, std::chrono::seconds>>
     }
 
     return list;
+}
+
+std::optional<ad_mode> AirdropClient::getMode() {
+    return this->mode;
 }
 
 ad_packet_t AirdropClient::_receiveBlocking() {
@@ -160,7 +169,7 @@ bool AirdropClient::_parseHeartbeats(ad_packet_t packet) {
     // Valid heartbeat packet, so packet.data is within
     // [1, 5] and corresponds to a bottle index, so we can
     // subtract 1 to get the index into the lastHeartbeat array.
-    this->lastHeartbeat[packet.data - 1] = getUnixTime();
+    this->lastHeartbeat[packet.data - 1] = getUnixTime_ms();
 
     return true;
 }

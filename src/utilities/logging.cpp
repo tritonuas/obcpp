@@ -30,7 +30,7 @@ std::pair<std::string, std::string> getLoggingFilenames(int argc, char* argv[]) 
     // enables support for std::format so we don't have
     // to do stream bullshit just to format a string
     // Also can just convert getUnixTime() into getTimeString()
-    auto time = getUnixTime().count();
+    auto time = getUnixTime_s().count();
     std::ostringstream sstream_main;
     sstream_main <<  repo_root_path.string() << "/logs/" << time << ".log";
     std::ostringstream sstream_mav;

@@ -3,6 +3,7 @@
 
 #include <chrono>
 
-std::chrono::seconds getUnixTime();
+std::chrono::seconds getUnixTime_s();
+std::chrono::milliseconds getUnixTime_ms();
 
 #endif  // INCLUDE_UTILITIES_COMMON_HPP_

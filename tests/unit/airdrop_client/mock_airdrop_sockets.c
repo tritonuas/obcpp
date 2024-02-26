@@ -36,7 +36,7 @@ ad_socket_result_t make_ad_socket(uint16_t recv_port, uint16_t send_port) {
     AD_RETURN_SUCC_RESULT(socket, 0);
 }
 
-ad_int_result_t send_ad_packet(ad_socket_t socket, ad_packet_t* packet) {
+ad_int_result_t send_ad_packet(ad_socket_t socket, ad_packet_t packet) {
     static char err[1] = "";
 
     packet_queue_t* q;
@@ -50,11 +50,7 @@ ad_int_result_t send_ad_packet(ad_socket_t socket, ad_packet_t* packet) {
         AD_RETURN_ERR_RESULT(int, err);
     }
 
-    ad_packet_t p = {
-        .data = packet->data,
-        .hdr = packet->hdr,
-    };
-    pqueue_push(q, p);
+    pqueue_push(q, packet);
 
     AD_RETURN_SUCC_RESULT(int, sizeof(ad_packet_t));
 }
@@ -74,6 +70,7 @@ ad_int_result_t recv_ad_packet(ad_socket_t socket, void* buf, size_t buf_len) {
     }
 
     ad_packet_t packet = pqueue_wait_pop(q);
+
     memcpy(buf, &packet, sizeof(ad_packet_t));
 
     AD_RETURN_SUCC_RESULT(int, sizeof(ad_packet_t));
@@ -81,14 +78,17 @@ ad_int_result_t recv_ad_packet(ad_socket_t socket, void* buf, size_t buf_len) {
 
 // Everything below here is not very interesting
 
+ad_int_result_t close_ad_socket(ad_socket_t socket) {
+    // tell any threads that are waiting on data to stop
+    sem_post(&obc_queue._recv_sem);
+    sem_post(&payload_queue._recv_sem);
+    AD_RETURN_SUCC_RESULT(int, 0);
+}
 
 ad_int_result_t set_socket_nonblocking(int sock_fd) {
     AD_RETURN_SUCC_RESULT(int, 0);
 }
 
-ad_int_result_t close_ad_socket(ad_socket_t socket) {
-    AD_RETURN_SUCC_RESULT(int, 0);
-}
 
 ad_packet_t make_ad_packet(uint8_t hdr, uint8_t data) {
     ad_packet_t packet = {

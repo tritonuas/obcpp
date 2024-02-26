@@ -66,7 +66,7 @@ ad_int_result_t set_socket_nonblocking(int sock_fd);
 // Send packet on the network through sock_fd
 // Either returns an error string or the number of bytes sent.
 // IMPORTANT: must have previously called set_send_thread from curr thread.
-ad_int_result_t send_ad_packet(ad_socket_t socket, ad_packet_t* packet);
+ad_int_result_t send_ad_packet(ad_socket_t socket, ad_packet_t packet);
 
 // Receive packet and place into buf, which is of length buf_len.
 // Either returns an error string or the number of bytes read.

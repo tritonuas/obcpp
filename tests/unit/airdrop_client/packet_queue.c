@@ -70,8 +70,8 @@ ad_packet_t pqueue_wait_pop(packet_queue_t* q) {
         q->_num_waiting_for_recv++;
         sem_post(&q->_mutex);
         sem_wait(&q->_recv_sem);
-        return pqueue_pop(q);
     } else {
         sem_post(&q->_mutex);
     }
+    return pqueue_pop(q);
 }

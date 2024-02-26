@@ -10,6 +10,7 @@ extern "C" {
     #include "network/airdrop_sockets.h"
 }
 
+// Make sure that the queue starts Empty and Not Full
 TEST(PacketQueueTest, InitEmpty) {
     packet_queue_t q;
     pqueue_init(&q);
@@ -18,6 +19,7 @@ TEST(PacketQueueTest, InitEmpty) {
     EXPECT_FALSE(pqueue_full(&q));
 }
 
+// Make sure that pushing and popping one item works correctly
 TEST(PacketQueueTest, PushThenPopOne) {
     packet_queue_t q;
     pqueue_init(&q);
@@ -34,6 +36,7 @@ TEST(PacketQueueTest, PushThenPopOne) {
     EXPECT_EQ(in_packet.data, out_packet.data);
 }
 
+// Make sure that pushing and popping many times works
 TEST(PacketQueueTest, PushThenPopMany) {
     packet_queue_t q;
     pqueue_init(&q);
@@ -52,6 +55,8 @@ TEST(PacketQueueTest, PushThenPopMany) {
     }
 }
 
+// Make sure that pushing until capacity works, and that we can
+// pop everything afterwards
 TEST(PacketQueueTest, PushUntilFullThenPopUntilEmpty) {
     packet_queue_t q;
     pqueue_init(&q);
@@ -74,6 +79,7 @@ TEST(PacketQueueTest, PushUntilFullThenPopUntilEmpty) {
     ASSERT_TRUE(pqueue_empty(&q));
 }
 
+// Test to make sure a combination of pushes and pops works like you would expect
 TEST(PacketQueueTest, SimulateNormalUse) {
     packet_queue_t q;
     ad_packet_t temp;
@@ -132,6 +138,8 @@ TEST(PacketQueueTest, SimulateNormalUse) {
 // To thoroughly test the multithreaded aspect of the queue we would definitely need a lot more
 // tests. If any expert gamers would like to do so, then that would be epic I think.
 
+// Test to make sure the async aspect of the queue works (i.e. pqueue_wait_pop correctly blocks)
+// and gets unblocked by the semaphores.
 TEST(PacketQueueTest, PopWaitMultiThreaded) {
     // this is just like fortnite
     packet_queue_t q;

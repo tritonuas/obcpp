@@ -98,7 +98,7 @@ ad_int_result_t set_socket_nonblocking(int sock_fd) {
     AD_RETURN_SUCC_RESULT(int, ret);
 }
 
-ad_int_result_t send_ad_packet(ad_socket_t socket, ad_packet_t* packet) {
+ad_int_result_t send_ad_packet(ad_socket_t socket, ad_packet_t packet) {
     struct sockaddr_in SEND_ADDR = {
         .sin_family = AF_INET,
         .sin_port = htons(socket.send_port),
@@ -107,7 +107,7 @@ ad_int_result_t send_ad_packet(ad_socket_t socket, ad_packet_t* packet) {
     };
 
     static char err[AD_ERR_LEN];
-    int bytes_sent = sendto(socket.fd, (void*) packet, sizeof(packet), 0,
+    int bytes_sent = sendto(socket.fd, (void*) &packet, sizeof(ad_packet_t), 0,
                             (struct sockaddr*) &SEND_ADDR, sizeof(SEND_ADDR));
 
     if (bytes_sent < 0) {
