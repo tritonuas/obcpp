@@ -65,7 +65,8 @@ class MavlinkClient {
      * WARNING: There are no compile time checks that you are passing in the right data!
      *          Calls to this MUST be carefully checked!
      */
-    mavsdk::MavlinkPassthrough::Result sendCustomMavlinkCommand(uint8_t target_sysid, uint8_t target_compid, uint16_t command,
+    // TODO: type should be mavsdk::MavlinkPassthrough::Result
+    mavsdk::Mission::Result sendCustomMavlinkCommand(uint8_t target_sysid, uint8_t target_compid, uint16_t command,
                                  float param1, float param2, float param3, float param4, float param5,
                                  float param6, float param7);
 

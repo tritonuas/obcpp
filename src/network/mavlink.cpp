@@ -255,7 +255,8 @@ mavsdk::Telemetry::FlightMode MavlinkClient::flight_mode() {
 
 // to manually send a command which is not implemented by mavsdk
 // You need to use `mavlink_passthrough` which has has a few send_command functions
-mavsdk::MavlinkPassthrough::Result sendCustomMavlinkCommand(uint8_t target_sysid, uint8_t target_compid, uint16_t command,
+/* // TODO: pls fix the import
+mavsdk::MavlinkPassthrough::Result MavlinkClient::sendCustomMavlinkCommand(uint8_t target_sysid, uint8_t target_compid, uint16_t command,
                              float param1, float param2, float param3, float param4, float param5,
                              float param6, float param7) {
     // https://mavsdk.mavlink.io/main/en/cpp/api_reference/structmavsdk_1_1_mavlink_passthrough_1_1_command_long.html
@@ -273,3 +274,10 @@ mavsdk::MavlinkPassthrough::Result sendCustomMavlinkCommand(uint8_t target_sysid
     mavsdk::Result result = this->mavsdk::MavlinkPassthrough::send_command_long(command);
     return result;
 }
+*/
+mavsdk::Mission::Result MavlinkClient::sendCustomMavlinkCommand(uint8_t target_sysid, uint8_t target_compid, uint16_t command,
+                             float param1, float param2, float param3, float param4, float param5,
+                             float param6, float param7) {
+                                return (mavsdk::Mission::Result) NULL;
+                             }
+                             

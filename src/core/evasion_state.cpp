@@ -23,7 +23,8 @@ std::chrono::milliseconds ObstacleEvasionState::doTick() {
 Tick* ObstacleEvasionState::_tick() {
     // Return state change when done evading
     if (ObstacleEvasionState::evasionTimeRemaining <= 0) {
-        return new MissionStartTick(ObstacleEvasionState::tick->state);
+        // TODO: uncomment
+        // return new MissionStartTick(ObstacleEvasionState::tick->state);
     }
 
     // Otherwise, decrement the time remaining to evade
@@ -67,7 +68,8 @@ void ObstacleEvasionState::evade(void) {
     float param7 = 0.0f;
 
     // TODO:(Samir) KMS, we need to compile mavlink to use plugins
-    mavsdk::MavlinkPassthrough::Result result = ObstacleEvasionState::mav->sendCustomMavlinkCommand(target_sysid, target_compid, command, param1, param2,
+    // TODO: type should be mavsdk::MavlinkPassthrough::Result
+    mavsdk::Mission::Result result = ObstacleEvasionState::mav->sendCustomMavlinkCommand(target_sysid, target_compid, command, param1, param2,
                                           param3, param4, param5, param6, param7);
 }
 

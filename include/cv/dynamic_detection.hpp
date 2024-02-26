@@ -5,6 +5,9 @@
 #include <mutex>
 #include <queue>
 #include <chrono>
+#include "utilities/constants.hpp"
+#include "utilities/locks.hpp"
+#include <thread>
 
 /*
 Design:
@@ -12,11 +15,15 @@ Producer-consumer thread communication model so that dynamic detection can run
 asyncronously on its own to detect the forward camera for obstacles ~1Hz.
 
 Steps:
-1. Front camera takes pictures every second, puts into workqueue.
+1. Front camera takes pictures every second, puts into workqueue*.
 2. FastSAM runs on the queue.
 3. dynamic_detection looks at the segmentation output and decides
    whether to enter emergency avoidance.
 4. Tick control gets handed over to the dynamic avoidance state.
+
+(*) Not totally sure if I will end up putting a queue here. Note that
+    if Thread 2 is using the Detection queue, it can lock out Thread 1's
+    execution.
 
 Threads:
 Thread 1: Runs steps 1-3.
@@ -33,6 +40,7 @@ struct Detection {
 
 class ObstacleDetectionQueue {
     public:
+        ObstacleDetectionQueue();
         void add();
         bool isEmpty();
 
@@ -47,6 +55,22 @@ class ObstacleDetectionQueue {
      // program. For example, once emergency evasion is engaged it can
      // poll the queue to make sure there is nothing more to evade.
      std::mutex mutex;
+};
+
+class DynamicDetection {
+    public:
+        DynamicDetection();
+    private:
+        // Take a photo from front facing camera
+        // TODO: this functionality and hardware has not been added
+        void* takeImage();
+        // Run FastSAM on image and add to detection queue
+        void* segmentImage();
+        // Look at queue and decide if avoidance is needed.
+        bool shouldEnterAvoidance();
+        // Main loop. Has similar behavior of Tick in that it will
+        // do scheduling of camera tasks every interval (1 second)
+        void main();
 };
 
 // #endif  // INCLUDE_CV_DYNAMIC_DETECTION_HPP_
