@@ -153,3 +153,6 @@ RUN wget "https://github.com/pytorch/vision/archive/refs/tags/v${TORCHVISION_VER
 
 # login as non-root user
 USER $USERNAME
+
+RUN pip3 install gdown
+ENV PATH="${PATH}:${HOME}/.local/bin"
