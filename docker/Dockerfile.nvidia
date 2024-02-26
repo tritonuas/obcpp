@@ -1,6 +1,8 @@
 #FROM arm64v8/ubuntu:22.04
 #FROM dustynv/l4t-pytorch:r35.3.1
 FROM tritonuas/jetson-base:r35.3.1
+# this base image came from dusty-nv/jetson-containers
+# ./build.sh --name=tritonuas/jetson-base pytorch torchvision opencv 
 
 ARG USERNAME=tuas USER_UID=1000 USER_GID=1000 DEBIAN_FRONTEND=noninteractive
 
@@ -143,7 +145,7 @@ RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 10
 
 WORKDIR /obcpp/build
 RUN GITHUB_ACTIONS=true cmake -DCMAKE_PREFIX_PATH="/usr/local/lib/python3.8/dist-packages/torch/share/cmake/Torch" ..
-RUN make obcpp VERBOSE=1
+RUN make VERBOSE=1
 
 # login as non-root user
 USER $USERNAME
