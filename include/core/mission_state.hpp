@@ -48,6 +48,8 @@ class MissionState {
      */
     std::shared_ptr<MavlinkClient> getMav();
     void setMav(std::shared_ptr<MavlinkClient> mav);
+    std::shared_ptr<AirdropClient> getAirdrop();
+    void setAirdrop(std::shared_ptr<AirdropClient> airdrop);
 
     MissionConfig config;  // has its own mutex
 
@@ -63,6 +65,7 @@ class MissionState {
     bool init_path_validated = false;  // true when the operator has validated the initial path
 
     std::shared_ptr<MavlinkClient> mav;
+    std::shared_ptr<AirdropClient> airdrop;
 
     void _setTick(Tick* newTick);  // does not acquire the tick_mut
 };

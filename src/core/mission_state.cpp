@@ -6,6 +6,7 @@
 #include "ticks/tick.hpp"
 #include "utilities/locks.hpp"
 #include "network/mavlink.hpp"
+#include "network/airdrop_client.hpp"
 #include "utilities/logging.hpp"
 
 // in future might add to this
@@ -83,4 +84,12 @@ std::shared_ptr<MavlinkClient> MissionState::getMav() {
 
 void MissionState::setMav(std::shared_ptr<MavlinkClient> mav) {
     this->mav = mav;
+}
+
+std::shared_ptr<AirdropClient> MissionState::getAirdrop() {
+    return this->airdrop;
+}
+
+void MissionState::setAirdrop(std::shared_ptr<AirdropClient> airdrop) {
+    this->airdrop = airdrop;
 }
