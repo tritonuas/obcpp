@@ -22,6 +22,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_C_COMPILER gcc)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ./bin)
+set(CMAKE_EXPORT_COMPILE_COMMANDS True)
 
 SET(GCC_COMPILE_FLAGS "")
 SET(GCC_LINK_FLAGS    "-lopencv_core -lopencv_highgui -lopencv_features2d -lopencv_flann -lopencv_imgcodecs -lopencv_dnn -lopencv_videoio -lopencv_imgproc -lopencv_ml -lopencv_photo")
@@ -91,11 +92,13 @@ target_add_torch(load_torchvision_model)
 target_add_torchvision(load_torchvision_model)
 
 # saliency
-add_executable(saliency "tests/integration/saliency.cpp")
+add_executable(saliency ${SOURCES} "tests/integration/saliency.cpp")
 target_include_directories(saliency PRIVATE ${INCLUDE_DIRECTORY})
 target_add_torch(saliency)
 target_add_opencv(saliency) 
 target_add_torchvision(saliency)
+target_add_matplot(saliency)
+target_add_json(saliency)
 
 # cv_pipeline 
 add_executable(cv_pipeline ${SOURCES} "tests/integration/cv_pipeline.cpp")

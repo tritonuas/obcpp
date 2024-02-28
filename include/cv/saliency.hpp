@@ -15,6 +15,7 @@
 // model. The training/testing code for the model can be found here:
 // https://github.com/tritonuas/garretts-new-lunchbox
 class Saliency {
+ // private member with model path
  public:
     // saliency takes a full-size aerial image and detects any potential
     // targets within the image. The full-size image can have multiple

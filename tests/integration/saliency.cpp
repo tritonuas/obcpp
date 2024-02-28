@@ -2,7 +2,9 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <memory>
+#include </workspaces/obcpp/include/cv/saliency.hpp>
 
+/*
 auto ToTensor(cv::Mat img, bool show_output = false, bool unsqueeze=false, int unsqueeze_dim = 0)
 {
     std::cout << "image shape: " << img.size() << std::endl;
@@ -41,6 +43,7 @@ std::vector<torch::jit::IValue> ToInput(at::Tensor tensor_image)
     toReturn.push_back(tensorList);           // add c10::List to vector of IValues
     return toReturn;
 }
+*/
 
 int main(int argc, const char* argv[]) {
   if (argc != 2) {
@@ -51,8 +54,14 @@ int main(int argc, const char* argv[]) {
   // convert image to tensor
   std::string msg = "sample image";
   auto currentPath = argv[1];
-  auto img = cv::imread(currentPath);
+  cv::Mat img = cv::imread(currentPath);
+  Saliency sal;
+  sal.salience(img);
+
   // show_image(img, msg);
+
+  // pass img into salience
+  /*
   auto tensor = ToTensor(img);
 
   // convert the tensor into float and scale it 
@@ -85,8 +94,6 @@ int main(int argc, const char* argv[]) {
   auto detections = tuple.elements()[1].toList();
   std::cout << detections << "\n";
 
-  // need to extract values from the tuple
-
   // Is output IValue a tensor? No, it is a tuple.
   // links from 1/31:
   // https://pytorch.org/cppdocs/api/structtorch_1_1jit_1_1_module.html#exhale-struct-structtorch-1-1jit-1-1-module
@@ -96,5 +103,6 @@ int main(int argc, const char* argv[]) {
   // https://dev-discuss.pytorch.org/t/working-with-c10-ivalue-efficiently/585  
   // std::cout << output.isTensor() << "\n";
   std::cout << "ok\n";
+  */
   
 }
