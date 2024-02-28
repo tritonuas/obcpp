@@ -47,8 +47,10 @@ void OBC::connectMavlink() {
 void OBC::connectAirdrop() {
     ad_socket_result_t result;
     while (true) {
+        LOG_F(INFO, "Attempting to create airdrop socket.");
         result = make_ad_socket(AD_OBC_PORT, AD_PAYLOAD_PORT);
         if (!result.is_err) {
+            LOG_F(INFO, "Established airdrop socket.");
             break;
         }
 

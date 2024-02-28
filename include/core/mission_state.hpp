@@ -49,6 +49,13 @@ class MissionState {
      */
     std::shared_ptr<MavlinkClient> getMav();
     void setMav(std::shared_ptr<MavlinkClient> mav);
+
+    /*
+     * Gets a shared_ptr to the airdrop client.
+     * IMPORTANT: need to check that the pointer is not nullptr
+     * before accessing, to make sure the connection has already
+     * been established
+     */
     std::shared_ptr<AirdropClient> getAirdrop();
     void setAirdrop(std::shared_ptr<AirdropClient> airdrop);
 

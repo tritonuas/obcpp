@@ -23,9 +23,6 @@ class AirdropClient {
     explicit AirdropClient(ad_socket_t socket);
     ~AirdropClient();
 
-    void establishConnection();
-    bool isConnectionEstablished() const;
-
     bool send(ad_packet_t packet);
     // Receives oldest packet since last receive() call, ignoring any
     // HEARTBEAT packets as those are parsed by the client itself
@@ -52,6 +49,9 @@ class AirdropClient {
 
     // holds unix timestamp of the last heartbeat received from every payload
     std::array<std::chrono::milliseconds, NUM_AIRDROP_BOTTLES> last_heartbeat;
+
+    // Get initial SET_MODE msg from payloads and set up workers
+    void _establishConnection();
 
     // Function to run in its own thread
     void _receiveWorker();
