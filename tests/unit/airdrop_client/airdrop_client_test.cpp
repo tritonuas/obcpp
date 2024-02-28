@@ -5,6 +5,7 @@ extern "C" {
     #include "network/airdrop_sockets.h"
 }
 #include "utilities/common.hpp"
+#include "core/obc.hpp"
 
 // Helper macro to initialize an airdrop client correctly
 #define INIT_CLIENT() \

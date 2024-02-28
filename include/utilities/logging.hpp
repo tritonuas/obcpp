@@ -24,7 +24,8 @@
 #define DEBUG 5
 
 
-std::pair<std::string, std::string> getLoggingFilenames(std::string directory, int argc, char* argv[]);
+std::pair<std::string, std::string>
+    getLoggingFilenames(std::string directory, int argc, char* argv[]);
 
 // Set up logging for the project inside of directory `directory`
 // The directory string should not include a / at the beginning or end.

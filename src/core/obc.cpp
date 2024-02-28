@@ -23,7 +23,11 @@ OBC::OBC(uint16_t gcs_port) {
 
     this->gcs_server = std::make_unique<GCSServer>(gcs_port, this->state);
 
-    auto _ = std::async(std::launch::async, &OBC::connectMavlink, this);
+    // Don't need to look at these futures at all because the connect functions
+    // will set the global mission state themselves when connected, which everything
+    // else can check.
+    auto _fut1 = std::async(std::launch::async, &OBC::connectMavlink, this);
+    auto _fut2 = std::async(std::launch::async, &OBC::connectAirdrop, this);
 }
 
 void OBC::run() {
@@ -41,8 +45,6 @@ void OBC::connectMavlink() {
 }
 
 void OBC::connectAirdrop() {
-    int attempts = 3; // TODO: config
-
     ad_socket_result_t result;
     while (true) {
         result = make_ad_socket(AD_OBC_PORT, AD_PAYLOAD_PORT);
@@ -50,13 +52,8 @@ void OBC::connectAirdrop() {
             break;
         }
 
-        if (attempts == 1) {
-            LOG_F(FATAL, "Could not establish airdrop socket: %s", result.data.err);
-        }
-
-        attempts--;
-        LOG_F(WARNING, "Failed to establish airdrop socket: %s. %d attempts remaining.",
-            result.data.err, attempts);
+        LOG_F(ERROR, "Failed to establish airdrop socket: %s. Trying again in 3 seconds...",
+            result.data.err);
     }
 
     this->state->setAirdrop(std::make_shared<AirdropClient>(result.data.res));

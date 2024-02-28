@@ -18,7 +18,7 @@
  * 
  * based on the absolute path of the directory in which to save the logs
  * e.g.
- *      "workspaces/obcpp/logs" -> "{workspaces/obcpp/logs/{timestamp}.log,workspaces/obcpp/logs/{timestamp}.log }"
+ *      "workspaces/obcpp/logs" -> "{workspaces/obcpp/logs/{timestamp}.log,workspaces/obcpp/logs/{timestamp}_all.log }"
  */
 std::pair<std::string, std::string> getLoggingFilenames(std::string directory) {
     auto time = getUnixTime_s().count();

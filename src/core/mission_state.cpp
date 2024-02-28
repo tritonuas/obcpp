@@ -55,6 +55,7 @@ void MissionState::_setTick(Tick* newTick) {
 }
 
 TickID MissionState::getTickID() {
+    Lock lock(this->tick_mut);
     return this->tick->getID();
 }
 
