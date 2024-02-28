@@ -47,11 +47,11 @@ class AirdropClient {
     std::queue<ad_packet_t> recv_queue;
     std::mutex recv_mut;
 
-    std::atomic_bool stopWorker;
-    std::future<void> workerFuture;
+    std::atomic_bool stop_worker;
+    std::future<void> worker_future;
 
     // holds unix timestamp of the last heartbeat received from every payload
-    std::array<std::chrono::milliseconds, NUM_AIRDROP_BOTTLES> lastHeartbeat;
+    std::array<std::chrono::milliseconds, NUM_AIRDROP_BOTTLES> last_heartbeat;
 
     // Function to run in its own thread
     void _receiveWorker();

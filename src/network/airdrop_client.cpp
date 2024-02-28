@@ -12,9 +12,9 @@ extern "C" {
 
 AirdropClient::AirdropClient(ad_socket_t socket) {
     this->socket = socket;
-    auto time = getUnixTime();
-    for (auto& i : this->lostConnections) {
-        // TODO: zero out        
+    auto time = getUnixTime_ms();
+    for (int curr_bottle = BOTTLE_A; curr_bottle <= BOTTLE_E; curr_bottle++) {
+        this->last_heartbeat[curr_bottle - 1] = time;
     }
 
     set_send_thread();  // send from same thread as the client is created in
@@ -23,7 +23,7 @@ AirdropClient::AirdropClient(ad_socket_t socket) {
 AirdropClient::~AirdropClient() {
     // Signal before killing the socket so when the worker gets kicked out of the socket
     // it sees that it should stop.
-    this->stopWorker = true;
+    this->stop_worker = true;
 
     auto result = close_ad_socket(this->socket);
     if (result.is_err) {
@@ -32,7 +32,7 @@ AirdropClient::~AirdropClient() {
 
     if (this->mode.has_value()) {
         // the future was started so we should make sure it is stopped
-        this->workerFuture.get();
+        this->worker_future.get();
     }
 }
 
@@ -53,7 +53,7 @@ void AirdropClient::establishConnection() {
     LOG_F(INFO, "Payload connection established in %s mode",
         (this->mode == DIRECT_DROP) ? "Direct" : "Indirect");
 
-    this->workerFuture = std::async(std::launch::async, &AirdropClient::_receiveWorker, this);
+    this->worker_future = std::async(std::launch::async, &AirdropClient::_receiveWorker, this);
 }
 
 bool AirdropClient::isConnectionEstablished() const {
@@ -90,8 +90,8 @@ std::list<std::pair<BottleDropIndex, std::chrono::milliseconds>>
     std::list<std::pair<BottleDropIndex, std::chrono::milliseconds>> list;
     auto time = getUnixTime_ms();
 
-    for (int i = 0; i < this->lastHeartbeat.size(); i++) {
-        auto time_since_last_heartbeat = time - this->lastHeartbeat[i];
+    for (int i = 0; i < this->last_heartbeat.size(); i++) {
+        auto time_since_last_heartbeat = time - this->last_heartbeat[i];
         if (time_since_last_heartbeat >= threshold) {
             list.push_back({static_cast<BottleDropIndex>(i + 1), time_since_last_heartbeat});
         }
@@ -117,7 +117,7 @@ ad_packet_t AirdropClient::_receiveBlocking() {
         // to get kicked out of the recv call with an error. This is the only error
         // that should cause this function to return an invalid packet.
 
-        if (this->stopWorker) {
+        if (this->stop_worker) {
             return packet;  // dummy packet
         }
 
@@ -148,7 +148,7 @@ void AirdropClient::_receiveWorker() {
     while (true) {
         ad_packet_t packet = this->_receiveBlocking();
 
-        if (this->stopWorker) {
+        if (this->stop_worker) {
             return;  // kill worker :o
         }
 
@@ -169,7 +169,7 @@ bool AirdropClient::_parseHeartbeats(ad_packet_t packet) {
     // Valid heartbeat packet, so packet.data is within
     // [1, 5] and corresponds to a bottle index, so we can
     // subtract 1 to get the index into the lastHeartbeat array.
-    this->lastHeartbeat[packet.data - 1] = getUnixTime_ms();
+    this->last_heartbeat[packet.data - 1] = getUnixTime_ms();
 
     return true;
 }

@@ -54,7 +54,7 @@ TEST(AirdropClientTest, HeartbeatConnectionTestConstantHeartbeat) {
     send_ad_packet(payload_socket, make_ad_packet(SET_MODE, DIRECT_DROP));
     _.get();
 
-    // Spawn up a thread to simulate sending heartbeats from payloads every 100 ms
+    // Spawn up a thread to simulate sending heartbeats from payloads every 50ms
     std::atomic_bool send_heartbeats = true;
     _ = std::async(std::launch::async, [payload_socket, &send_heartbeats, HEARTBEAT_INTERVAL]() {
         int times = 0; // bound this so it doesn't go forever in case of bug...
@@ -86,14 +86,13 @@ TEST(AirdropClientTest, HeartbeatConnectionNeverSend) {
     send_ad_packet(payload_socket, make_ad_packet(SET_MODE, DIRECT_DROP));
     _.get();
 
-    // Never send any heartbeat packets, so the times for last heartbeat are default
-    // initialized to 0. So the time since last heartbeat should be a very large value, 
-    // on the order of years.
-    std::cout << "==============================================\n";
-    auto lost_conns = client.getLostConnections(std::chrono::milliseconds(1000));
-    ASSERT_EQ(lost_conns.size(), NUM_AIRDROP_BOTTLES);
 
-    for (const auto& [bottle_index, time_since_last_heartbeat] : lost_conns) {
-        ASSERT_GT(time_since_last_heartbeat, std::chrono::years(10));
+    // never send a heartbeat, wait a second..
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+    auto lost_connections = client.getLostConnections(std::chrono::milliseconds(500));
+    ASSERT_EQ(lost_connections.size(), NUM_AIRDROP_BOTTLES);
+    for (const auto& [bottle_index, time_since_last_heartbeat] : lost_connections) {
+        ASSERT_GT(time_since_last_heartbeat, std::chrono::milliseconds(500));
     }
 }
