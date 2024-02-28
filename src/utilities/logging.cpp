@@ -6,41 +6,35 @@
 #include <sstream>
 #include <iostream>
 #include <chrono>
-#include <filesystem>
 #include <utility>
 
 #include "utilities/common.hpp"
 
 /*
- * Gets the correct relative filepath to save the log
- * in a logs/ directory at the root level of the repository.
- * 
- * Dependent on the fact that the executable is at obcpp/build/bin/obcpp
- * 
  * returns the filenames for
  * 
  * 1) the readable logging file
  * 2) the everything logging file
+ * 
+ * based on the absolute path of the directory in which to save the logs
+ * e.g.
+ *      "workspaces/obcpp/logs" -> "{workspaces/obcpp/logs/{timestamp}.log,workspaces/obcpp/logs/{timestamp}.log }"
  */
-std::pair<std::string, std::string> getLoggingFilenames(int argc, char* argv[]) {
-    auto executable_path = std::filesystem::absolute(argv[0]).lexically_normal();
-    auto repo_root_path = executable_path.parent_path().parent_path().parent_path();
-
-    // TODO: update the container to have G++ 13, which
-    // enables support for std::format so we don't have
-    // to do stream bullshit just to format a string
-    // Also can just convert getUnixTime() into getTimeString()
+std::pair<std::string, std::string> getLoggingFilenames(std::string directory) {
     auto time = getUnixTime_s().count();
     std::ostringstream sstream_main;
-    sstream_main <<  repo_root_path.string() << "/logs/" << time << ".log";
+    sstream_main << directory <<"/" << time << ".log";
     std::ostringstream sstream_mav;
-    sstream_mav <<  repo_root_path.string() << "/logs/" << time << "_all.log";
+    sstream_mav <<  directory << "/" << time << "_all.log";
     return {sstream_main.str(), sstream_mav.str()};
 }
 
-void initLogging(int argc, char* argv[]) {
+void initLogging(std::string directory, bool print_stderr, int argc, char* argv[]) {
+    if (!print_stderr) {
+        loguru::g_stderr_verbosity = loguru::Verbosity_OFF;
+    }
     loguru::init(argc, argv);
-    auto [readable_logs, everything_logs] = getLoggingFilenames(argc, argv);
+    auto [readable_logs, everything_logs] = getLoggingFilenames(directory);
     loguru::add_file(readable_logs.c_str(),
         loguru::Truncate, loguru::Verbosity_INFO);
     loguru::add_file(everything_logs.c_str(),

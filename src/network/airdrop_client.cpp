@@ -136,7 +136,7 @@ ad_packet_t AirdropClient::_receiveBlocking() {
         }
 
         // TODO: helper to go from packet -> str
-        LOG_F(INFO, "received airdrop packet: %hhu %hhu", packet.hdr, packet.data);
+        VLOG_F(TRACE, "received airdrop packet: %hhu %hhu", packet.hdr, packet.data);
 
         return packet;
     }

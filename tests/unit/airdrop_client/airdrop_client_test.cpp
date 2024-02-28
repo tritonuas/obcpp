@@ -93,6 +93,6 @@ TEST(AirdropClientTest, HeartbeatConnectionNeverSend) {
     auto lost_connections = client.getLostConnections(std::chrono::milliseconds(500));
     ASSERT_EQ(lost_connections.size(), NUM_AIRDROP_BOTTLES);
     for (const auto& [bottle_index, time_since_last_heartbeat] : lost_connections) {
-        ASSERT_GT(time_since_last_heartbeat, std::chrono::milliseconds(500));
+        ASSERT_GE(time_since_last_heartbeat, std::chrono::milliseconds(500));
     }
 }

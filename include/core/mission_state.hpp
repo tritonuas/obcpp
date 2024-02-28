@@ -15,6 +15,7 @@
 #include "pathing/cartesian.hpp"
 #include "ticks/ids.hpp"
 #include "network/mavlink.hpp"
+#include "network/airdrop_client.hpp"
 
 class Tick;
 

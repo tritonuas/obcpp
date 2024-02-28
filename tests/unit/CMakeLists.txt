@@ -8,9 +8,6 @@ file(GLOB_RECURSE TEST_SOURCES LIST_DIRECTORIES false *.hpp *.h *.cpp *.c)
 set(SOURCES_CULLED ${SOURCES})
 list(REMOVE_ITEM SOURCES_CULLED ${PROJECT_SOURCE_DIR}/src/network/airdrop_sockets.c)
 
-message(${SOURCES_CULLED})
-message(${TEST_SOURCES})
-
 add_executable(${BINARY} ${TEST_SOURCES} ${SOURCES_CULLED})
 
 set(INCLUDE_DIRECTORY ${PROJECT_SOURCE_DIR}/include)

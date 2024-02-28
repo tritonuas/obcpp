@@ -11,7 +11,8 @@ extern "C" {
 
 
 int main(int argc, char* argv[]) {
-    initLogging(argc, argv);
+    // TODO: pull logging folder from config
+    initLogging("/workspaces/obcpp/logs", true, argc, argv);
 
     // In future, load configs, perhaps command line parameters, and pass
     // into the obc object

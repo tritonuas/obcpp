@@ -24,8 +24,11 @@
 #define DEBUG 5
 
 
-std::pair<std::string, std::string> getLoggingFilenames(int argc, char* argv[]);
+std::pair<std::string, std::string> getLoggingFilenames(std::string directory, int argc, char* argv[]);
 
-void initLogging(int argc, char* argv[]);
+// Set up logging for the project inside of directory `directory`
+// The directory string should not include a / at the beginning or end.
+// E.g. "logs" -> put the logs in a directory called "logs" at the root of the repo
+void initLogging(std::string directory, bool print_stderr, int argc, char* argv[]);
 
 #endif  // INCLUDE_UTILITIES_LOGGING_HPP_

@@ -59,5 +59,5 @@ void OBC::connectAirdrop() {
             result.data.err, attempts);
     }
 
-    this->state->setAirdrop(std::make_shared<AirdropClient>(new AirdropClient(result.data.res)));
+    this->state->setAirdrop(std::make_shared<AirdropClient>(result.data.res));
 }
