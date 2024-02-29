@@ -4,6 +4,8 @@
 #include <stdint.h>
 
 /**********************************************************************************************
+ * LAST UPDATED: 2024/02/29
+ * 
  * This file defines the packet definitions for Airdrop communications. It is used in two
  * separate repositories: 
  * 
