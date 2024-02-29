@@ -30,10 +30,25 @@ static packet_queue_t obc_queue;
 static packet_queue_t payload_queue;
 
 ad_socket_result_t make_ad_socket(uint16_t recv_port, uint16_t send_port) {
-    pqueue_init(&obc_queue);
-    pqueue_init(&payload_queue);
+    if ((recv_port != AD_OBC_PORT) && (recv_port != AD_PAYLOAD_PORT) || 
+        (send_port != AD_OBC_PORT) && (send_port != AD_PAYLOAD_PORT)) {
+        fprintf(stderr, "mock ad socket called with nonvalid ports");
+        exit(1);
+    }
 
-    AD_RETURN_SUCC_RESULT(socket, 0);
+    if (recv_port == AD_OBC_PORT) {
+        pqueue_init(&obc_queue);
+    } else if (recv_port == AD_PAYLOAD_PORT) {
+        pqueue_init(&payload_queue);
+    }
+
+    ad_socket_t s = {
+        .fd = 0,
+        .recv_port = recv_port,
+        .send_port = send_port,
+    };
+
+    AD_RETURN_SUCC_RESULT(socket, s);
 }
 
 ad_int_result_t send_ad_packet(ad_socket_t socket, ad_packet_t packet) {

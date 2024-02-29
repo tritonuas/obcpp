@@ -29,7 +29,8 @@ MavlinkClient::MavlinkClient(const char* link) {
             break;
         }
 
-        LOG_S(WARNING) << "Mavlink connection failed: " << conn_result << ". Trying again in 5 seconds...";
+        LOG_S(WARNING) << "Mavlink connection failed: " << conn_result
+            << ". Trying again in 5 seconds...";
         std::this_thread::sleep_for(std::chrono::seconds(5));
     }
 
