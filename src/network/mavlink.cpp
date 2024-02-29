@@ -19,7 +19,7 @@
 #include "core/mission_state.hpp"
 
 MavlinkClient::MavlinkClient(const char* link) {
-    LOG_SCOPE_F(INFO, "Connecting to Mav at %s", link);
+    LOG_F(INFO, "Connecting to Mav at %s", link);
 
     while (true) {
         LOG_F(INFO, "Attempting to add mav connection...");
@@ -29,14 +29,14 @@ MavlinkClient::MavlinkClient(const char* link) {
             break;
         }
 
-        LOG_S(WARNING) << "Mavlink connection failed: " << conn_result << ". Trying again...";
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        LOG_S(WARNING) << "Mavlink connection failed: " << conn_result << ". Trying again in 5 seconds...";
+        std::this_thread::sleep_for(std::chrono::seconds(5));
     }
 
     // Wait for the system to connect via heartbeat
     while (mavsdk.systems().size() == 0) {
-        LOG_F(WARNING, "No heartbeat. Trying again...");
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        LOG_F(WARNING, "No heartbeat. Trying again in 3 seconds...");
+        std::this_thread::sleep_for(std::chrono::seconds(3));
     }
 
     LOG_F(INFO, "Mavlink heartbeat received");

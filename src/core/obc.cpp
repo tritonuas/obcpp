@@ -38,6 +38,8 @@ void OBC::run() {
 }
 
 void OBC::connectMavlink() {
+    loguru::set_thread_name("mav connect");
+
     // TODO: pull mav ip from config file
     std::shared_ptr<MavlinkClient> mav(new MavlinkClient("serial:///dev/ttyACM0"));
     // std::shared_ptr<MavlinkClient> mav(new MavlinkClient("tcp://172.17.0.1:5760"));
@@ -45,6 +47,8 @@ void OBC::connectMavlink() {
 }
 
 void OBC::connectAirdrop() {
+    loguru::set_thread_name("airdrop connect");
+
     ad_socket_result_t result;
     while (true) {
         LOG_F(INFO, "Attempting to create airdrop socket.");

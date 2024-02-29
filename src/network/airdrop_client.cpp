@@ -16,7 +16,7 @@ AirdropClient::AirdropClient(ad_socket_t socket) {
     for (int curr_bottle = BOTTLE_A; curr_bottle <= BOTTLE_E; curr_bottle++) {
         this->last_heartbeat[curr_bottle - 1] = time;
     }
-    this->_establishConnection(); // block until connection established
+    this->_establishConnection();  // block until connection established
 }
 
 AirdropClient::~AirdropClient() {
@@ -146,6 +146,7 @@ ad_packet_t AirdropClient::_receiveBlocking() {
 
 void AirdropClient::_receiveWorker() {
     set_recv_thread();
+    loguru::set_thread_name("airdrop receiver");
 
     while (true) {
         ad_packet_t packet = this->_receiveBlocking();
