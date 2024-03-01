@@ -142,6 +142,17 @@ target_add_torchvision(cv_matching)
 target_add_loguru(cv_matching)
 target_add_httplib(cv_matching)
 target_add_mavsdk(cv_matching)
+
+# cv_segmentation
+add_executable(cv_segmentation ${SOURCES} "tests/integration/cv_segmentation.cpp")
+target_add_json(cv_segmentation)
+target_add_matplot(cv_segmentation)
+target_add_opencv(cv_segmentation)
+target_add_torch(cv_segmentation)
+target_add_torchvision(cv_segmentation)
+target_add_loguru(cv_segmentation)
+target_add_httplib(cv_segmentation)
+target_add_mavsdk(cv_segmentation)
 # =============================
 
 # =============================
