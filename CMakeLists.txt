@@ -162,6 +162,33 @@ add_subdirectory(${DEPS_DIRECTORY}/google-test)
 # =============================
 
 # =============================
+# Pull models
+add_custom_target(pull_models 
+  DEPENDS pull_saliency pull_matching pull_segmentation
+)
+
+# Saliency model
+add_custom_target(pull_saliency
+  COMMAND gdown https://drive.google.com/uc?id=1S1IfXlGs_pCH49DwZmbD-tZA5YH0A1gx -O ${CMAKE_BINARY_DIR}/../models/torchscript_19.pth
+)
+
+# Matching model 
+add_custom_target(pull_matching
+  COMMAND gdown https://drive.google.com/file/d/1NeFiAfSSLXAZWlehfd0ox7p_jFF4YdrO -O ${CMAKE_BINARY_DIR}/../models/target_siamese_1.pt
+)
+
+# Segmentation model
+add_custom_target(pull_segmentation
+  COMMAND gdown https://drive.google.com/file/d/1U2EbfJFzcjVnjTuD6ud-bIf8YOiEassf -O ${CMAKE_BINARY_DIR}/../models/fcn-model_20-epochs_06-01-2023T21-16-02.pth
+)
+# =============================
+
+# =============================
+# Pull testing images
+# 
+# =============================
+
+# =============================
 # Linting 
 
 # Adding lint target if cpplint executable is found

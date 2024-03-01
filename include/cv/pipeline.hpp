@@ -45,7 +45,8 @@ class Pipeline {
     Segmentation segmentor;
     Classification classifier;
 
-    Localization localizer;
+    ECEFLocalization ecefLocalizer;
+    GSDLocalization gsdLocalizer;
 };
 
 #endif  // INCLUDE_CV_PIPELINE_HPP_
