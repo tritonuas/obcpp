@@ -1,5 +1,23 @@
 #include "pathing/static.hpp"
 
+#include <httplib.h>
+
+#include <algorithm>
+#include <cmath>
+#include <limits>
+#include <memory>
+#include <utility>
+#include <vector>
+
+#include "core/mission_state.hpp"
+#include "pathing/dubins.hpp"
+#include "pathing/environment.hpp"
+#include "pathing/plotting.hpp"
+#include "pathing/tree.hpp"
+#include "utilities/constants.hpp"
+#include "utilities/datatypes.hpp"
+#include "utilities/rng.hpp"
+
 std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
     // first waypoint is start
     RRTPoint start(state->config.getWaypoints().front(), 0);
@@ -15,11 +33,12 @@ std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
     // Copy elements from the second element to the last element of source into destination
     // all other methods of copying over crash???
     for (int i = 1; i < state->config.getWaypoints().size(); i++) {
-        goals.push_back(state->config.getWaypoints()[i]);
+        goals.emplace_back(state->config.getWaypoints()[i]);
     }
 
-    // TODO remove magic numbers
-    RRT rrt(start, goals, 1500, 1000, 200, state->config.getFlightBoundary(), {}, true);
+    RRT rrt(start, goals, MAX_ITERATIONS, SEARCH_RADIUS, REWIRE_RADIUS,
+            state->config.getFlightBoundary(), {}, true);
+
     rrt.run();
 
     std::vector<XYZCoord> path = rrt.getPointsToGoal();

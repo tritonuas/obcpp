@@ -91,11 +91,10 @@ void RRTEdge::setPath(std::vector<XYZCoord> path) { this->path = path; }
 /** RRTTree */
 RRTTree::RRTTree(RRTPoint root_point, Environment airspace, Dubins dubins)
     : airspace{airspace}, dubins{dubins} {
-    RRTNode* new_node = new RRTNode(root_point, LARGE_COST);
+    RRTNode* new_node = new RRTNode(root_point, 0);
     root = new_node;
     current_head = new_node;
     node_map.insert({root_point, new_node});
-    root->setCost(0);
 }
 
 // TODO - seems a bit sketchy
@@ -109,18 +108,6 @@ RRTTree::~RRTTree() {
 RRTNode* RRTTree::addNode(RRTNode* anchor_node, const RRTPoint& new_point,
                           const RRTOption& option) {
     // checking if path is valid
-
-    // debugging text
-    // std::cout << "Anchor: " << anchor_node << std::endl;
-    // std::cout << "Anchor: (" << anchor_node->getPoint().coord.x << ", "
-    //           << anchor_node->getPoint().coord.y << ", " << anchor_node->getPoint().coord.z <<
-    //           ")"
-    //           << "psi: " << anchor_node->getPoint().psi << std::endl;
-    // std::cout << "New: (" << new_point.coord.x << ", " << new_point.coord.y << ", "
-    //           << new_point.coord.z << ")"
-    //           << "psi: " << new_point.psi << std::endl;
-    // std::cout << "Option length: " << option.length << std::endl;
-
     std::vector<XYZCoord> path = dubins.generatePoints(anchor_node->getPoint(), new_point,
                                                        option.dubins_path, option.has_straight);
 
@@ -141,17 +128,16 @@ RRTNode* RRTTree::addNode(RRTNode* anchor_node, const RRTPoint& new_point,
 
     // changing state of its parent
     anchor_node->addReachable(new_node);
-
     return new_node;
 }
 
 void RRTTree::rewireEdge(RRTNode* current_node, RRTNode* previous_parent, RRTNode* new_parent,
-                         const std::vector<XYZCoord>& path, double cost) {
+                         const std::vector<XYZCoord>& path, double path_cost) {
     // if the new_node doesn't have a parent, then this code will crash
     std::pair<RRTNode*, RRTNode*> previous_pair(previous_parent, current_node);
     std::pair<RRTNode*, RRTNode*> new_pair(new_parent, current_node);
 
-    RRTEdge new_edge = RRTEdge(new_parent, current_node, path, cost);
+    RRTEdge new_edge = RRTEdge(new_parent, current_node, path, path_cost);
     // replace prev node in "from" node's neighbor list with new node
 
     // ORDER MATTERS, REMOVE THEN ADD TO PRESERVE THE CURR_NODE HAS A PARENT
@@ -161,13 +147,13 @@ void RRTTree::rewireEdge(RRTNode* current_node, RRTNode* previous_parent, RRTNod
     // remove old edge from edge_map, add the new edge
     edge_map.erase(previous_pair);
     edge_map.emplace(new_pair, new_edge);
-    current_node->setCost(new_parent->getCost() + cost);
+    current_node->setCost(new_parent->getCost() + path_cost);
 
     reassignCosts(current_node);
 }
 
 // ALSO BROKEN
-RRTNode* RRTTree::getNode(const RRTPoint& point) {
+RRTNode* RRTTree::getNode(const RRTPoint& point) const {
     if (node_map.count(point) > 0) {
         return node_map.at(point);
     } else {
@@ -176,18 +162,29 @@ RRTNode* RRTTree::getNode(const RRTPoint& point) {
 }
 
 // BROKEN
-RRTEdge* RRTTree::getEdge(const RRTPoint& from, const RRTPoint& to) {
-    RRTNode* node1 = getNode(from);
-    RRTNode* node2 = getNode(to);
-    if (node1 == nullptr || node2 == nullptr) {
-        return nullptr;
-    }
+// RRTEdge* RRTTree::getEdge(const RRTPoint& from, const RRTPoint& to) {
+//     RRTNode* node1 = getNode(from);
+//     RRTNode* node2 = getNode(to);
+//     if (node1 == nullptr || node2 == nullptr) {
+//         return nullptr;
+//     }
 
-    std::pair<RRTNode*, RRTNode*> edgePair(node1, node2);
+//     std::pair<RRTNode*, RRTNode*> edgePair(node1, node2);
+//     if (edge_map.count(edgePair) > 0) {
+//         return &(edge_map.at(edgePair));
+//     } else {
+//         return nullptr;
+//     }
+// }
+
+// TODO decide if this should return a pointer or not
+RRTEdge RRTTree::getEdge(RRTNode* from, RRTNode* to) const {
+    std::pair<RRTNode*, RRTNode*> edgePair(from, to);
+
     if (edge_map.count(edgePair) > 0) {
-        return &(edge_map.at(edgePair));
+        return edge_map.at(edgePair);
     } else {
-        return nullptr;
+        return RRTEdge(nullptr, nullptr, {}, std::numeric_limits<double>::infinity());
     }
 }
 
@@ -199,7 +196,7 @@ XYZCoord RRTTree::getGoal(int index) const { return airspace.getGoal(index); }
 
 Environment RRTTree::getAirspace() const { return this->airspace; }
 
-RRTPoint RRTTree::getRandomPoint(double search_radius) {
+RRTPoint RRTTree::getRandomPoint(double search_radius) const {
     // gets random point if the goal is not being used
     const RRTPoint& sample = airspace.getRandomPoint();
 
@@ -238,10 +235,10 @@ RRTPoint RRTTree::getRandomPoint(double search_radius) {
 }
 
 std::vector<std::pair<RRTNode*, RRTOption>> RRTTree::pathingOptions(const RRTPoint& end,
-                                                                    int quantity_options) {
+                                                                    int quantity_options) const {
     // fills the options list with valid values
     std::vector<std::pair<RRTNode*, RRTOption>> options;
-    fillOptions(&options, current_head, end);
+    fillOptions(options, current_head, end);
 
     // sorts the list
     std::sort(options.begin(), options.end(), [](auto a, auto b) {
@@ -264,8 +261,8 @@ std::vector<std::pair<RRTNode*, RRTOption>> RRTTree::pathingOptions(const RRTPoi
     return options;
 }
 
-void RRTTree::fillOptions(std::vector<std::pair<RRTNode*, RRTOption>>* options, RRTNode* node,
-                          const RRTPoint& end) {
+void RRTTree::fillOptions(std::vector<std::pair<RRTNode*, RRTOption>>& options, RRTNode* node,
+                          const RRTPoint& end) const {
     /*
        TODO - try to limit the scope of the search to prevent too many calls to dubins
     */
@@ -281,7 +278,8 @@ void RRTTree::fillOptions(std::vector<std::pair<RRTNode*, RRTOption>>* options, 
         if (std::isnan(option.length) || option.length == std::numeric_limits<double>::infinity()) {
             continue;
         }
-        options->push_back({node, option});
+
+        options.push_back({node, option});
     }
 
     // recursively calls the function for all reachable nodes
@@ -294,7 +292,33 @@ void RRTTree::RRTStar(RRTNode* sample, double rewire_radius) {
     RRTStarRecursive(current_head, sample, rewire_radius);
 }
 
-RRTNode* RRTTree::getNearestNode(const RRTPoint& point) {
+void RRTTree::setCurrentHead(RRTNode* goal) {
+    if (goal == nullptr || node_map[goal->getPoint()] == nullptr) {
+        std::cout << "FAILURE: Goal is not in the tree\n" << std::endl;
+        return;
+    }
+    current_head = goal;
+}
+
+std::vector<XYZCoord> RRTTree::getPathToGoal() const {
+    RRTNode* current_node = current_head;
+    std::vector<XYZCoord> path = {};
+
+    while (current_node != nullptr && current_node->getParent() != nullptr) {
+        std::vector<XYZCoord> edge_path =
+            getEdge(current_node->getParent(), current_node).getPath();
+
+        // TODO - misses first node
+        path.insert(path.begin(), edge_path.begin() + 1, edge_path.end());
+        current_node = current_node->getParent();
+    }
+
+    return path;
+}
+
+/* RRTTree Private */
+
+RRTNode* RRTTree::getNearestNode(const RRTPoint& point) const {
     RRTNode* nearest = nullptr;
     double min_distance = std::numeric_limits<double>::infinity();
 
@@ -327,7 +351,8 @@ void RRTTree::RRTStarRecursive(RRTNode* current_node, RRTNode* sample, double re
             continue;
         }
 
-        if (child->getPoint() == sample->getPoint()) {
+        //  may need to change this to compare a point
+        if (child == sample) {
             continue;
         }
 
@@ -345,22 +370,48 @@ void RRTTree::RRTStarRecursive(RRTNode* current_node, RRTNode* sample, double re
 
             // if the node is uncompetitive, continue
             double new_cost = sample->getCost() + option.length;
-
             double cost = child->getCost();
 
-            // if the new cost is less than the current cost
-            if (new_cost < cost) {
-                // check if new path is valid
-                std::vector<XYZCoord> path = dubins.generatePoints(
-                    sample->getPoint(), child->getPoint(), option.dubins_path, option.has_straight);
-
-                if (!airspace.isPathInBounds(path)) {
-                    continue;
-                }
-
-                // rewire the edge
-                rewireEdge(child, current_node, sample, path, option.length);
+            if (new_cost >= cost) {
+                break;
             }
+
+            // if the new cost is less than the current cost
+            // check if new path is valid
+            std::vector<XYZCoord> path = dubins.generatePoints(
+                sample->getPoint(), child->getPoint(), option.dubins_path, option.has_straight);
+
+            if (!airspace.isPathInBounds(path)) {
+                continue;
+            }
+
+            // rewire the edge
+            rewireEdge(child, current_node, sample, path, option.length);
         }
+    }
+}
+
+void RRTTree::reassignCosts(RRTNode* changed_node) {
+    if (changed_node == nullptr) {
+        return;
+    }
+
+    for (RRTNode* child : changed_node->getReachable()) {
+        reassignCostsRecursive(changed_node, child, changed_node->getCost());
+    }
+}
+
+void RRTTree::reassignCostsRecursive(RRTNode* parent, RRTNode* current_node, double path_cost) {
+    if (current_node == nullptr) {
+        return;
+    }
+
+    // get edge cost
+    // const double edge_cost = getEdge(parent->getPoint(), node->getPoint())->getCost();
+    const double edge_cost = edge_map.at({parent, current_node}).getCost();
+
+    current_node->setCost(path_cost + edge_cost);
+    for (RRTNode* neighbor : current_node->getReachable()) {
+        reassignCostsRecursive(current_node, neighbor, current_node->getCost());
     }
 }

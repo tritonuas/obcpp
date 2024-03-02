@@ -42,7 +42,9 @@ TEST(SimpleTreeTest, addNodeTest) {
     EXPECT_TRUE(simple_tree.getNode(point1) != nullptr);
     EXPECT_TRUE(simple_tree.getNode(point2) != nullptr);
 
-    EXPECT_TRUE(simple_tree.getEdge(point1, point2) != nullptr);
+    EXPECT_TRUE(
+        simple_tree.getEdge(simple_tree.getNode(point1), simple_tree.getNode(point2)).getCost() !=
+        0);
 }
 
 TEST(SimpleTreeTest, getNodeTest) {
@@ -100,7 +102,9 @@ TEST(SimpleTreeTest, getEdgeTest) {
     // simpleTree.addNode(root, point1);
     bool added_point = simple_tree.addNode(root, point2, option);
 
-    EXPECT_TRUE(simple_tree.getEdge(point1, point2) != nullptr);
+    EXPECT_TRUE(
+        simple_tree.getEdge(simple_tree.getNode(point1), simple_tree.getNode(point2)).getCost() !=
+        0);
     // EXPECT_TRUE(*(simple_tree.getEdge(point1, point2)) == edge);
 }
 
@@ -139,9 +143,13 @@ TEST(SimpleTreeTest, rewireEdgeTest) {
     EXPECT_TRUE(add3);
 
     simple_tree.rewireEdge(simple_tree.getNode(point3), simple_tree.getNode(point2),
-                           simple_tree.getNode(point4), {}, 0);
-    EXPECT_TRUE(simple_tree.getEdge(point4, point3) != nullptr);
-    EXPECT_TRUE(simple_tree.getEdge(point2, point3) == nullptr);
+                           simple_tree.getNode(point4), {}, 2);
+    EXPECT_TRUE(
+        simple_tree.getEdge(simple_tree.getNode(point4), simple_tree.getNode(point3)).getCost() !=
+        0);
+    EXPECT_TRUE(
+        simple_tree.getEdge(simple_tree.getNode(point2), simple_tree.getNode(point3)).getCost() ==
+        std::numeric_limits<double>::infinity());
 
     EXPECT_TRUE(simple_tree.getNode(point3)->getParent() == simple_tree.getNode(point4));
     EXPECT_TRUE(simple_tree.getNode(point2)->getParent() == root);

@@ -11,6 +11,7 @@
 #include "network/gcs.hpp"
 #include "network/gcs_macros.hpp"
 #include "network/gcs_routes.hpp"
+#include "pathing/plotting.hpp"
 #include "pathing/static.hpp"
 #include "resources/json_snippets.hpp"
 #include "ticks/mission_prep.hpp"
@@ -24,13 +25,38 @@
     httplib::Request REQ;                                                   \
     httplib::Response RESP
 
-// Might have to change this later on if we preload
-// mission from file
-TEST(StaticPathingTest, TSETSTSET) {
+
+// copies over code verbatim from the gcs test, and then generates a path
+TEST(StaticPathingTest, RRTTest) {
+    // First upload a mission so that we generate a path
     DECLARE_HANDLER_PARAMS(state, req, resp);
+    req.body = resources::mission_json_2020;
+    state->setTick(new MissionPrepTick(state));
 
-    GCS_HANDLE(Get, mission)(state, req, resp);
+    GCS_HANDLE(Post, mission)(state, req, resp);
 
-    EXPECT_EQ(BAD_REQUEST, resp.status);
-    EXPECT_EQ(state->config.getCachedMission(), std::nullopt);
+    state->doTick();
+    EXPECT_EQ(state->getTickID(), TickID::PathGen);
+    do {  // wait for path to generate
+        auto wait = state->doTick();
+        std::this_thread::sleep_for(wait);
+    } while (state->getInitPath().empty());
+    // have an initial path, but waiting for validation
+    EXPECT_FALSE(state->getInitPath().empty());
+    EXPECT_EQ(state->getTickID(), TickID::PathValidate);
+
+    // actually new test
+    auto path = state->getInitPath();
+
+    PathingPlot plotter("pathing_output", state->config.getFlightBoundary(),
+                        state->config.getAirdropBoundary(), state->config.getWaypoints());
+
+    std::vector<XYZCoord> path_coords;
+
+    for (auto wpt : path) {
+        path_coords.push_back(state->getCartesianConverter().value().toXYZ(wpt));
+    }
+
+    plotter.addFinalPolyline(path_coords);
+    plotter.output("unit_test_path", PathOutputType::BOTH);
 }

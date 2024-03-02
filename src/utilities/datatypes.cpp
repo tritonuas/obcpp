@@ -100,7 +100,7 @@ GPSCoord makeGPSCoord(double lat, double lng, double alt) {
     return coord;
 }
 
-bool isPointInPolygon(Polygon polygon, XYZCoord point) {
+bool isPointInPolygon(const Polygon &polygon, const XYZCoord &point) {
     bool is_inside = false;
 
     // point in polygon

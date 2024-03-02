@@ -11,9 +11,14 @@
 const double TWO_PI = 2 * M_PI;
 const double HALF_PI = M_PI / 2;
 
-// FOR TEST, VALUES DONT MAKE SENSE
+// FROM OBC PYTHON
 const double TURNING_RADIUS = 30;
 const double POINT_SEPARATION = 20;
+
+// RRT CONSTANTS
+const int MAX_ITERATIONS = 1500;
+const double SEARCH_RADIUS = 1000;
+const double REWIRE_RADIUS = 200;
 
 const int TRIES_FOR_RANDOM_POINT = 64;  // for generating random points
 const int MAX_DUBINS_OPTIONS_TO_PARSE = 256;

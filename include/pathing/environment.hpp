@@ -11,9 +11,8 @@
 #include "utilities/rng.hpp"
 
 /*
- *  Abstracction of the environment, which is a polygon
+ *  Abstraction of the environment, which is a polygon
  *  that defines the boundary of the map.
- *
  *
  *  [FUTURE]
  *      - add dynamic shrinking and enlarging of the boundary
@@ -21,8 +20,8 @@
  */
 class Environment {
  public:
-    Environment(const Polygon valid_region, const std::vector<XYZCoord> goals,
-                const std::vector<Polygon> obstacles)
+    Environment(const Polygon &valid_region, const std::vector<XYZCoord> &goals,
+                const std::vector<Polygon> &obstacles)
         : valid_region(valid_region),
           goals(goals),
           goals_found(0),
@@ -39,7 +38,7 @@ class Environment {
      * @param point the point to check
      * @return true if the point is in the valid region, false otherwise
      */
-    bool isPointInBounds(XYZCoord point) const {
+    bool isPointInBounds(const XYZCoord &point) const {
         if (!isPointInPolygon(valid_region, point)) {
             return false;
         }
@@ -55,6 +54,8 @@ class Environment {
 
     /**
      * Check if an entire flight path is in bounds
+     * 
+     * TODO - maybe check based on some interval, to see if the performance increases
      *
      * @param path the path to check
      * @return true if the path is in bound, false otherwise
@@ -70,6 +71,7 @@ class Environment {
 
     /**
      * Get the goal point
+     * can be unsafe if goals_found is not in bounds
      *
      * @return the goal point
      */

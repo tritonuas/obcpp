@@ -17,8 +17,7 @@ typedef XYZCoord Vector;
 class RRTNode {
  public:
     RRTNode(const RRTPoint& point, double cost);
-    RRTNode(const RRTPoint& point, double cost, RRTNodeList& reachable);  // NOLINT
-    //  ~RRTNode();
+    RRTNode(const RRTPoint& point, double cost, RRTNodeList& reachable);
 
     /*
      *  Equality overload method for RRTNode object
@@ -143,19 +142,28 @@ class RRTTree {
 
      */
     void rewireEdge(RRTNode* current_point, RRTNode* previous_connection, RRTNode* new_connection,
-                    const std::vector<Vector>& path, double cost);
+                    const std::vector<Vector>& path, double path_cost);
 
     /*
      *  Returns a pointer to the node in the tree corresponding to the RRTPoint.
      *  If the node doesn't exist in the tree, returns nullptr.
      */
-    RRTNode* getNode(const RRTPoint& point);
+    RRTNode* getNode(const RRTPoint& point) const;
 
     /*
      *  Returns a pointer to the edge in the tree corresponding to the point
      * pair. If the edge doesn't exist in the tree, returns nullptr.
      */
-    RRTEdge* getEdge(const RRTPoint& from, const RRTPoint& to);
+    // RRTEdge* getEdge(const RRTPoint& from, const RRTPoint& to);
+
+    /**
+     * Returns a pointer to the edge in the tree corresponding to the node pair.
+     *
+     * @param from  ==> the starting node
+     * @param to    ==> the ending node
+     * @return      ==> pointer to the edge
+     */
+    RRTEdge getEdge(RRTNode* from, RRTNode* to) const;
 
     /**
      * Returns a pointer to the root node
@@ -190,7 +198,7 @@ class RRTTree {
      *
      * @return RRTPoint random point in environment
      */
-    RRTPoint getRandomPoint(double search_radiusl);
+    RRTPoint getRandomPoint(double search_radiusl) const;
 
     /**
      * Returns a sorted list of the paths to get from a given node to the sampled
@@ -203,7 +211,7 @@ class RRTTree {
      * @return                  ==> mininum sorted list of pairs of <node, path>
      */
     std::vector<std::pair<RRTNode*, RRTOption>> pathingOptions(
-        const RRTPoint& end, int quantity_options = MAX_DUBINS_OPTIONS_TO_PARSE);
+        const RRTPoint& end, int quantity_options = MAX_DUBINS_OPTIONS_TO_PARSE) const;
 
     /**
      * traverses the tree, and puts in all RRTOptions from dubins into a list
@@ -211,9 +219,10 @@ class RRTTree {
      *
      * @param options   ==> The list of options that is meant to be filled
      * @param node      ==> current node that will be traversed (DFS)
+     * @param sample    ==> the end point that the options will be connected to
      */
-    void fillOptions(std::vector<std::pair<RRTNode*, RRTOption>>* options, RRTNode* node,
-                     const RRTPoint& end);
+    void fillOptions(std::vector<std::pair<RRTNode*, RRTOption>>& options, RRTNode* node,
+                     const RRTPoint& sample) const;
 
     /** DOES RRT* for the program
      *
@@ -224,6 +233,8 @@ class RRTTree {
 
     /**
      * Returns the currenthead of the tree
+     *
+     * @return RRTNode* pointer to the current head
      */
     RRTNode* getCurrentHead() const { return current_head; }
 
@@ -232,52 +243,33 @@ class RRTTree {
      *
      * @param goal ==> the goal to change the currentHead to
      */
-    void setCurrentHead(RRTNode* goal) {
-        if (goal == nullptr || node_map[goal->getPoint()] == nullptr) {
-            std::cout << "FAILURE: Goal is not in the tree\n" << std::endl;
-            return;
-        }
-        current_head = goal;
-    }
+    void setCurrentHead(RRTNode* goal);
 
     /**
      * Returns a path to the goal from the root
      *
-     * The currentHead must be the goal for this to properly generate a complete path
+     * The currentHead must be the goal for this to properly
+     * generate a complete path
      * @return  ==> list of 2-vectors to the goal region
      */
-    std::vector<XYZCoord> getPathToGoal() {
-        RRTNode* current_node = current_head;
-        std::vector<XYZCoord> path = {};
-        while (current_node != nullptr && current_node->getParent() != nullptr) {
-            std::vector<XYZCoord> edge_path =
-                getEdge(current_node->getParent()->getPoint(), current_node->getPoint())->getPath();
-            path.insert(path.begin(), edge_path.begin(), edge_path.end());
-            current_node = current_node->getParent();
-        }
-
-        return path;
-    }
+    std::vector<XYZCoord> getPathToGoal() const;
 
  private:
     RRTNode* root;
     RRTNode* current_head;
     std::unordered_map<RRTPoint, RRTNode*, PointHashFunction> node_map{};
     std::unordered_map<std::pair<RRTNode*, RRTNode*>, RRTEdge, EdgeHashFunction> edge_map{};
-    std::vector<XYZCoord> path_to_goal = {};
 
     Environment airspace;
     Dubins dubins;
 
-    double distance_to_goal;  // not used at the moment
-
     /**
-     * Gets the nearest node to a given RRTPoint
+     * Gets the nearest node to a given RRTPoint NOT USED AT THE MOMENT
      *
      * @param point     ==> the point to find the nearest node to
      * @return          ==> the nearest node to the point
      */
-    RRTNode* getNearestNode(const RRTPoint& point);
+    RRTNode* getNearestNode(const RRTPoint& point) const;
 
     /**
      * RRTStar Recursive
@@ -298,29 +290,17 @@ class RRTTree {
      *
      * @param changed_node the node that has been changed
      */
-    void reassignCosts(RRTNode* changed_node) {
-        if (changed_node == nullptr) {
-            return;
-        }
+    void reassignCosts(RRTNode* changed_node);
 
-        for (RRTNode* child : changed_node->getReachable()) {
-            reassignCostsRecursive(changed_node, child, changed_node->getCost());
-        }
-    }
-
-    void reassignCostsRecursive(RRTNode* parent, RRTNode* node, double path_cost) {
-        if (node == nullptr) {
-            return;
-        }
-
-        // get edge cost
-        double edge_cost = getEdge(parent->getPoint(), node->getPoint())->getCost();
-
-        node->setCost(path_cost + edge_cost);
-        for (RRTNode* neighbor : node->getReachable()) {
-            reassignCostsRecursive(node, neighbor, node->getCost());
-        }
-    }
+    /**
+     *  Recurses down the tree to reassign the costs of the nodes
+     * (RECURSIVE HELPER)
+     *
+     * @param parent        ==> the parent node
+     * @param node          ==> the current node
+     * @param path_cost     ==> the cost of the path to the current node
+     */
+    void reassignCostsRecursive(RRTNode* parent, RRTNode* current_node, double path_cost);
 };
 
 #endif  // INCLUDE_PATHING_TREE_HPP_
