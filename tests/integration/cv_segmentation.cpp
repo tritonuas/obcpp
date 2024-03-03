@@ -8,11 +8,11 @@
 
 // target image paths, modify to use your targets
 const std::vector<std::string> targetPaths = {
-    "../tests/integration/images/segmentation/target0.jpg",
-    "../tests/integration/images/segmentation/target1.jpg",
-    "../tests/integration/images/segmentation/target2.jpg",
-    "../tests/integration/images/segmentation/target3.jpg",
-    "../tests/integration/images/segmentation/target4.jpg"
+    "../tests/integration/images/target0.jpg",
+    "../tests/integration/images/target1.jpg",
+    "../tests/integration/images/target2.jpg",
+    "../tests/integration/images/target3.jpg",
+    "../tests/integration/images/target4.jpg"
 };
 
 // model weights path
