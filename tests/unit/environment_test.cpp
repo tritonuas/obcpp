@@ -5,6 +5,62 @@
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
 
+
+/*
+ *   tests Polygon::pointInBounds
+ */
+TEST(EnvironentTest, PointInBounds) {
+    Polygon test;
+    test.emplace_back(XYZCoord{1, 1, 0});
+    test.emplace_back(XYZCoord{0, 1, 0});
+    test.emplace_back(XYZCoord{0, 0, 0});
+    test.emplace_back(XYZCoord{1, 0, 0});
+    Environment test_env = {test, {XYZCoord(0, 0, 0)}, {}};
+
+    EXPECT_EQ(true, test_env.isPointInPolygon(test, XYZCoord{0.5, 0.5, 0}));
+    EXPECT_EQ(true, test_env.isPointInPolygon(test, XYZCoord{0.5, 0.5, 99999999}));
+
+    EXPECT_EQ(false, test_env.isPointInPolygon(test, XYZCoord{1, 0.5, 0}));   // edge is outside
+    EXPECT_EQ(false, test_env.isPointInPolygon(test, XYZCoord{2, 0.5, 0}));   // right
+    EXPECT_EQ(false, test_env.isPointInPolygon(test, XYZCoord{0.5, 2, 0}));   // top
+    EXPECT_EQ(false, test_env.isPointInPolygon(test, XYZCoord{-1, 0.5, 0}));  // left
+    EXPECT_EQ(false, test_env.isPointInPolygon(test, XYZCoord{0.5, -1, 0}));  // down
+
+    Polygon no_point;
+    Environment no_point_env = {no_point, {XYZCoord(0, 0, 0)}, {}};
+
+    EXPECT_EQ(false, no_point_env.isPointInPolygon(no_point, XYZCoord{1, 1, 1}));
+    EXPECT_EQ(false, no_point_env.isPointInPolygon(no_point, XYZCoord{1, 0, 1}));
+    EXPECT_EQ(false, no_point_env.isPointInPolygon(no_point, XYZCoord{0, 1, 1}));
+
+    Polygon point;
+    point.emplace_back(XYZCoord{1, 1, 1});
+    Environment point_env = {point, {XYZCoord(0, 0, 0)}, {}};
+
+    EXPECT_EQ(false, point_env.isPointInPolygon(point, XYZCoord{1, 1, 1}));
+    EXPECT_EQ(false, point_env.isPointInPolygon(point, XYZCoord{1, 0, 1}));
+    EXPECT_EQ(false, point_env.isPointInPolygon(point, XYZCoord{0, 1, 1}));
+
+    // tests close to diagonals
+    Polygon quadrilateral;
+    quadrilateral.emplace_back(XYZCoord{0, 0, 0});
+    quadrilateral.emplace_back(XYZCoord{2, 1, 0});
+    quadrilateral.emplace_back(XYZCoord{4, 4, 0});
+    quadrilateral.emplace_back(XYZCoord{1, 2, 0});
+    Environment quadrilateral_env = {quadrilateral, {XYZCoord(0, 0, 0)}, {}};
+
+    EXPECT_EQ(true, quadrilateral_env.isPointInPolygon(quadrilateral, XYZCoord{1.5, 1.00, 0}));
+    EXPECT_EQ(true, quadrilateral_env.isPointInPolygon(quadrilateral, XYZCoord{0.5, 0.90, 0}));
+    EXPECT_EQ(true, quadrilateral_env.isPointInPolygon(quadrilateral, XYZCoord{2.5, 2.00, 0}));
+    EXPECT_EQ(true, quadrilateral_env.isPointInPolygon(quadrilateral, XYZCoord{1.5, 2.25, 0}));
+
+    EXPECT_EQ(false, quadrilateral_env.isPointInPolygon(quadrilateral, XYZCoord{1.5, 0.75, 0}));
+    EXPECT_EQ(false, quadrilateral_env.isPointInPolygon(quadrilateral, XYZCoord{0.5, 1.10, 0}));
+    EXPECT_EQ(false, quadrilateral_env.isPointInPolygon(quadrilateral, XYZCoord{2.5, 1.30, 0}));
+    EXPECT_EQ(false, quadrilateral_env.isPointInPolygon(quadrilateral, XYZCoord{1.5, 2.50, 0}));
+}
+
+
 /*
  *  Tests Environment::isPointInBounds
  *

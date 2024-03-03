@@ -6,6 +6,7 @@
 #include <utility>
 #include <vector>
 
+#include "pathing/dubins.hpp"
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
 #include "utilities/rng.hpp"
@@ -205,6 +206,35 @@ class Environment {
      */
     int getNumGoals() const { return goals.size(); }
 
+    /**
+     * Determines whether a point ia in this polygon via raycasting. Points
+     * on the edge are counted as outside the polygon (to be more
+     * conservative)
+     *
+     * Public ONLY for the sake of testing
+     *
+     * @param point ==> given point
+     * @return      ==> whether or not the point is in this polygon object
+     * @see         ==> https://en.wikipedia.org/wiki/Point_in_polygon
+     *  [TODO] make a method to augment the polygon to get similar polygons
+     *  [TODO] something that increases cost based on time in the edge
+     */
+    bool isPointInPolygon(const Polygon& polygon, const XYZCoord& point) const {
+        bool is_inside = false;
+
+        // point in polygon
+        for (int i = 0, j = polygon.size() - 1; i < polygon.size(); j = i++) {
+            if (((polygon[i].y > point.y) != (polygon[j].y > point.y)) &&
+                (point.x < (polygon[j].x - polygon[i].x) * (point.y - polygon[i].y) /
+                                   (polygon[j].y - polygon[i].y) +
+                               polygon[i].x)) {
+                is_inside = !is_inside;
+            }
+        }
+
+        return is_inside;
+    }
+
  private:
     const Polygon valid_region;            // boundary of the valid map
     const std::vector<XYZCoord> goals;     // goal point
@@ -282,33 +312,6 @@ class Environment {
         }
 
         return std::make_pair(x_bounds, y_bounds);
-    }
-
-    /**
-     * Determines whether a point ia in this polygon via raycasting. Points
-     * on the edge are counted as outside the polygon (to be more
-     * conservative)
-     *
-     * @param point ==> given point
-     * @return      ==> whether or not the point is in this polygon object
-     * @see         ==> https://en.wikipedia.org/wiki/Point_in_polygon
-     *  [TODO] make a method to augment the polygon to get similar polygons
-     *  [TODO] something that increases cost based on time in the edge
-     */
-    bool isPointInPolygon(const Polygon& polygon, const XYZCoord& point) const {
-        bool is_inside = false;
-
-        // point in polygon
-        for (int i = 0, j = polygon.size() - 1; i < polygon.size(); j = i++) {
-            if (((polygon[i].y > point.y) != (polygon[j].y > point.y)) &&
-                (point.x < (polygon[j].x - polygon[i].x) * (point.y - polygon[i].y) /
-                                   (polygon[j].y - polygon[i].y) +
-                               polygon[i].x)) {
-                is_inside = !is_inside;
-            }
-        }
-
-        return is_inside;
     }
 
     /**

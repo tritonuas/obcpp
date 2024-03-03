@@ -25,7 +25,6 @@
     httplib::Request REQ;                                                   \
     httplib::Response RESP
 
-
 // copies over code verbatim from the gcs test, and then generates a path
 TEST(StaticPathingTest, RRTTest) {
     // First upload a mission so that we generate a path
@@ -46,17 +45,26 @@ TEST(StaticPathingTest, RRTTest) {
     EXPECT_EQ(state->getTickID(), TickID::PathValidate);
 
     // actually new test
-    auto path = state->getInitPath();
+    // validate the path
+    Environment env(state->config.getFlightBoundary(), {}, {});
 
-    PathingPlot plotter("pathing_output", state->config.getFlightBoundary(),
-                        state->config.getAirdropBoundary(), state->config.getWaypoints());
+    std::vector<GPSCoord> path = state->getInitPath();
 
-    std::vector<XYZCoord> path_coords;
+    for (GPSCoord &point : path) {
+        const XYZCoord xyz_point = state->getCartesianConverter().value().toXYZ(point);
 
-    for (auto wpt : path) {
-        path_coords.push_back(state->getCartesianConverter().value().toXYZ(wpt));
+        EXPECT_TRUE(env.isPointInBounds(xyz_point));
     }
 
-    plotter.addFinalPolyline(path_coords);
-    plotter.output("unit_test_path", PathOutputType::BOTH);
+    // PathingPlot plotter("pathing_output", state->config.getFlightBoundary(),
+    //                     state->config.getAirdropBoundary(), state->config.getWaypoints());
+
+    // std::vector<XYZCoord> path_coords;
+
+    // for (auto wpt : path) {
+    //     path_coords.push_back(state->getCartesianConverter().value().toXYZ(wpt));
+    // }
+
+    // plotter.addFinalPolyline(path_coords);
+    // plotter.output("unit_test_path", PathOutputType::BOTH);
 }
