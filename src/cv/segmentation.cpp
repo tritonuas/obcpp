@@ -1,27 +1,37 @@
 #include "cv/segmentation.hpp"
 
+Segmentation::Segmentation(const std::string &modelPath) {
+            try {
+                this->module = torch::jit::load(modelPath);
+            }
+            catch (const c10::Error& e) {
+                std::cerr << "ERROR: could not load the model\n";
+                throw;
+            }
+        }
+
 SegmentationResults Segmentation::segment(const CroppedTarget &target) {
     auto device = torch::kCPU;
     auto fcn = this->module;
     fcn.to(device);
 
     auto target_tensor = ToTensor(target.croppedImage, false, false, 0);
-    target_tensor = target_tensor.clamp_max(c10::Scalar(50)); 
+    target_tensor = target_tensor.clamp_max(c10::Scalar(50));
     target_tensor = target_tensor.toType(c10::kFloat).div(255);
-    target_tensor = transpose(target_tensor, { (2),(0),(1) });
+    target_tensor = transpose(target_tensor, { (2), (0), (1) });
     target_tensor.unsqueeze_(0);
-    
+
     auto input_to_net = ToInput(target_tensor);
     at::Tensor output = (fcn.forward(input_to_net).toGenericDict().begin()->value()).toTensor();
-    torch::Tensor cpu_tensor = output.to(device); 
+    torch::Tensor cpu_tensor = output.to(device);
     cpu_tensor = cpu_tensor[0];
     cpu_tensor = torch::softmax(cpu_tensor, 0);
 
     auto character_mask = cpu_tensor[1];
     auto shape_mask = cpu_tensor[0];
-    cv::Mat character_mask_mat(character_mask.sizes()[0], character_mask.sizes()[1], 
+    cv::Mat character_mask_mat(character_mask.sizes()[0], character_mask.sizes()[1],
         CV_32FC1, character_mask.data_ptr<float>());
-    cv::Mat shape_mask_mat(shape_mask.sizes()[0], shape_mask.sizes()[1], 
+    cv::Mat shape_mask_mat(shape_mask.sizes()[0], shape_mask.sizes()[1],
         CV_32FC1, shape_mask.data_ptr<float>());
 
     SegmentationResults result;
@@ -32,8 +42,7 @@ SegmentationResults Segmentation::segment(const CroppedTarget &target) {
 
 
 
-std::string get_image_type(const cv::Mat& img, bool more_info=true) 
-{
+std::string get_image_type(const cv::Mat& img, bool more_info = true) {
     std::string r;
     int type = img.type();
     uchar depth = type & CV_MAT_DEPTH_MASK;
@@ -52,62 +61,54 @@ std::string get_image_type(const cv::Mat& img, bool more_info=true)
 
     r += "C";
     r += (chans + '0');
-   
-    if (more_info)
-        std::cout << "depth: " << img.depth() << " channels: " << img.channels() << std::endl;
 
+    if (more_info) {
+        std::cout << "depth: " << img.depth() << " channels: " << img.channels() << std::endl;
+    }
     return r;
 }
 
-void show_image(cv::Mat& img, std::string title)
-{
+void show_image(cv::Mat& img, std::string title) {
     std::string image_type = get_image_type(img);
-    cv::namedWindow(title + " type:" + image_type, cv::WINDOW_NORMAL); // Create a window for display.
+    cv::namedWindow(title + " type:" + image_type, cv::WINDOW_NORMAL);
     cv::imshow(title, img);
     cv::waitKey(0);
 }
 
-at::Tensor transpose(at::Tensor tensor, c10::IntArrayRef dims = { 0, 3, 1, 2 })
-{
+at::Tensor transpose(at::Tensor tensor, c10::IntArrayRef dims = { 0, 3, 1, 2 }) {
     tensor = tensor.permute(dims);
     return tensor;
 }
 
-at::Tensor ToTensor(cv::Mat img, bool show_output = false, bool unsqueeze=false, int unsqueeze_dim = 0)
-{
+at::Tensor ToTensor(cv::Mat img, bool show_output = false, bool unsqueeze = false,
+int unsqueeze_dim = 0) {
     at::Tensor tensor_image = torch::from_blob(img.data, { img.rows, img.cols, 3 }, at::kByte);
 
-    if (unsqueeze)
-    {
+    if (unsqueeze) {
         tensor_image.unsqueeze_(unsqueeze_dim);
     }
-    
-    if (show_output)
-    {
+
+    if (show_output) {
         std::cout << tensor_image.slice(2, 0, 1) << std::endl;
     }
     return tensor_image;
 }
 
-std::vector<torch::jit::IValue> ToInput(at::Tensor tensor_image)
-{
+std::vector<torch::jit::IValue> ToInput(at::Tensor tensor_image) {
     // Create a vector of inputs.
     return std::vector<torch::jit::IValue>{tensor_image};
 }
 
-cv::Mat ToCvImage(at::Tensor tensor)
-{
+cv::Mat ToCvImage(at::Tensor tensor) {
     int width = tensor.sizes()[0];
     int height = tensor.sizes()[1];
-    try
-    {
+    try {
         cv::Mat output_mat(cv::Size{ height, width }, CV_8UC3, tensor.data_ptr<uchar>());
-        
+
         show_image(output_mat, "converted image from tensor");
         return output_mat.clone();
     }
-    catch (const c10::Error& e)
-    {
+    catch (const c10::Error& e) {
         std::cout << "an error has occured : " << e.msg() << std::endl;
     }
     return cv::Mat(height, width, CV_8UC3);

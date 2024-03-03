@@ -1,12 +1,16 @@
 #ifndef INCLUDE_CV_SEGMENTATION_HPP_
 #define INCLUDE_CV_SEGMENTATION_HPP_
 
-#include <opencv2/opencv.hpp>
 
 #include <torch/script.h>
+
 #include <iostream>
 #include <memory>
+#include <string>
+#include <vector>
+#include <utility>
 
+#include <opencv2/opencv.hpp>
 #include "cv/utilities.hpp"
 
 struct SegmentationResults {
@@ -24,22 +28,12 @@ struct SegmentationResults {
 // for segmentation models can be found here:
 // https://github.com/tritonuas/hutzler-571
 class Segmentation {
-    public:
-        Segmentation() {
-            // Initialize without a model or set up default values
-        }
+ public:
+        Segmentation() {}
 
-        Segmentation(const std::string &modelPath) {
-            try {
-                this->module = torch::jit::load(modelPath);
-            }
-            catch (const c10::Error& e) {
-                std::cerr << "ERROR: could not load the model, check if model file is present in /bin\n";
-                throw;
-            }
-        }
+        explicit Segmentation(const std::string &modelPath);
         SegmentationResults segment(const CroppedTarget &target);
-    private:
+ private:
         torch::jit::script::Module module;
 };
 
