@@ -85,19 +85,7 @@ GPSCoord makeGPSCoord(double lat, double lng, double alt);
 using Polygon = std::vector<XYZCoord>;
 using Polyline = std::vector<XYZCoord>;
 
-/**
- * Determines whether a point ia in this polygon via raycasting. Points
- * on the edge are counted as outside the polygon (to be more
- * conservative)
- *
- * @param point ==> given point
- * @return      ==> whether or not the point is in this polygon object
- * @see         ==> https://en.wikipedia.org/wiki/Point_in_polygon
- */
-bool isPointInPolygon(const Polygon &polygon, const XYZCoord &point);
 
-// [TODO] make a method to augment the polygon to get similar polygons
-// [TODO] something that increases cost based on time in the edge
 
 using GPSProtoVec = google::protobuf::RepeatedPtrField<GPSCoord>;
 

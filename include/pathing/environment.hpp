@@ -20,8 +20,8 @@
  */
 class Environment {
  public:
-    Environment(const Polygon &valid_region, const std::vector<XYZCoord> &goals,
-                const std::vector<Polygon> &obstacles)
+    Environment(const Polygon& valid_region, const std::vector<XYZCoord>& goals,
+                const std::vector<Polygon>& obstacles)
         : valid_region(valid_region),
           goals(goals),
           goals_found(0),
@@ -30,7 +30,7 @@ class Environment {
 
     /**
      * Check if a point is in the valid region
-     * 
+     *
      * TODO - analysis if checking all regions for a given point at one time
      * is optimal. The alternative would be to check each region individually
      * for all points
@@ -38,7 +38,7 @@ class Environment {
      * @param point the point to check
      * @return true if the point is in the valid region, false otherwise
      */
-    bool isPointInBounds(const XYZCoord &point) const {
+    bool isPointInBounds(const XYZCoord& point) const {
         if (!isPointInPolygon(valid_region, point)) {
             return false;
         }
@@ -54,18 +54,83 @@ class Environment {
 
     /**
      * Check if an entire flight path is in bounds
-     * 
+     *
      * TODO - maybe check based on some interval, to see if the performance increases
+     *
+     * TODO - do based on dubins curves and not just points
      *
      * @param path the path to check
      * @return true if the path is in bound, false otherwise
      */
     bool isPathInBounds(const std::vector<XYZCoord>& path) const {
-        for (const XYZCoord& point : path) {
-            if (!isPointInBounds(point)) {
+        const int center = path.size() / 2;
+        const int interval = 5;
+
+        if (!isPointInBounds(path[center])) {
+            return false;
+        }
+
+        for (int i = 1; i < interval; i++) {
+            int count = center + i;
+
+            while (count < path.size()) {
+                if (!isPointInBounds(path[count])) {
+                    return false;
+                }
+                count += interval;
+            }
+
+            count = center - i;
+            while (count >= 0) {
+                if (!isPointInBounds(path[count])) {
+                    return false;
+                }
+                count -= interval;
+            }
+        }
+
+        // for (const XYZCoord& point : path) {
+        //     if (!isPointInBounds(point)) {
+        //         return false;
+        //     }
+        // }
+        return true;
+    }
+
+    bool isPathInBoundsAdv(const std::vector<XYZCoord>& path, const RRTOption& option) {
+        if (!option.has_straight) {
+            return isPathInBounds(path);
+        }
+
+        // finds the last point on the first curve, and the first point on the second curve
+        // does this using the option, using arclength and the point separation
+        const int first_curve_end =
+            std::abs(option.dubins_path.beta_0) * TURNING_RADIUS / POINT_SEPARATION;
+        const int second_curve_start =
+            path.size() - std::abs(option.dubins_path.beta_2) * TURNING_RADIUS / POINT_SEPARATION;
+
+        // sanity check
+        if (first_curve_end >= second_curve_start) {
+            return isPathInBounds(path);
+        }
+
+        if (!isLineInBounds(path[first_curve_end], path[second_curve_start])) {
+            return false;
+        }
+
+        // checks the points manually in the curve
+        for (int i = 0; i <= first_curve_end; i++) {
+            if (!isPointInBounds(path[i])) {
                 return false;
             }
         }
+
+        for (int i = second_curve_start; i < path.size(); i++) {
+            if (!isPointInBounds(path[i])) {
+                return false;
+            }
+        }
+
         return true;
     }
 
@@ -156,6 +221,30 @@ class Environment {
                  // (min y, max y)
 
     /**
+     * Checks wheter a line segment is in bounds or not, it must NOT intersect
+     * either the valid region or the obstacles
+     *
+     * ASSUMES THAT THE END POINTS ARE IN THE POLYGON
+     *
+     * @param start_point ==> start point of the line segment
+     * @param end_point   ==> end point of the line segment
+     * @return            ==> whether or not the line segment is in bounds
+     */
+    bool isLineInBounds(const XYZCoord& start_point, const XYZCoord& end_point) const {
+        if (doesLineIntersectPolygon(start_point, end_point, valid_region)) {
+            return false;
+        }
+
+        for (const Polygon& obstacle : obstacles) {
+            if (doesLineIntersectPolygon(start_point, end_point, obstacle)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Find the bounds of the valid region (i.e. the max/min x and y values).
      *
      * ASSUMES valid_region has already been created
@@ -193,6 +282,64 @@ class Environment {
         }
 
         return std::make_pair(x_bounds, y_bounds);
+    }
+
+    /**
+     * Determines whether a point ia in this polygon via raycasting. Points
+     * on the edge are counted as outside the polygon (to be more
+     * conservative)
+     *
+     * @param point ==> given point
+     * @return      ==> whether or not the point is in this polygon object
+     * @see         ==> https://en.wikipedia.org/wiki/Point_in_polygon
+     *  [TODO] make a method to augment the polygon to get similar polygons
+     *  [TODO] something that increases cost based on time in the edge
+     */
+    bool isPointInPolygon(const Polygon& polygon, const XYZCoord& point) const {
+        bool is_inside = false;
+
+        // point in polygon
+        for (int i = 0, j = polygon.size() - 1; i < polygon.size(); j = i++) {
+            if (((polygon[i].y > point.y) != (polygon[j].y > point.y)) &&
+                (point.x < (polygon[j].x - polygon[i].x) * (point.y - polygon[i].y) /
+                                   (polygon[j].y - polygon[i].y) +
+                               polygon[i].x)) {
+                is_inside = !is_inside;
+            }
+        }
+
+        return is_inside;
+    }
+
+    /**
+     * Determines whether a line segment intersects the polygon
+     *
+     *   @param start_point ==> start point of the line segment
+     *   @param end_point   ==> end point of the line segment
+     *   @param polygon     ==> polygon to check
+     */
+    bool doesLineIntersectPolygon(const XYZCoord& start_point, const XYZCoord& end_point,
+                                  const Polygon& polygon) const {
+        for (int i = 0, j = polygon.size() - 1; i < polygon.size(); j = i++) {
+            if (intersect(start_point, end_point, polygon[i], polygon[j])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @see https://stackoverflow.com/questions/3838329/how-can-i-check-if-two-segments-intersect
+     * @see https://bryceboe.com/2006/10/23/line-segment-intersection-algorithm/
+     */
+    bool ccw(const XYZCoord& A, const XYZCoord& B, const XYZCoord& C) const {
+        return (C.y - A.y) * (B.x - A.x) > (B.y - A.y) * (C.x - A.x);
+    }
+
+    bool intersect(const XYZCoord& A, const XYZCoord& B, const XYZCoord& C,
+                   const XYZCoord& D) const {
+        return ccw(A, C, D) != ccw(B, C, D) && ccw(A, B, C) != ccw(A, B, D);
     }
 };
 

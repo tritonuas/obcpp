@@ -16,7 +16,7 @@ const double TURNING_RADIUS = 30;
 const double POINT_SEPARATION = 20;
 
 // RRT CONSTANTS
-const int MAX_ITERATIONS = 1500;
+const int ITERATIONS_PER_WAYPOINT = 200;
 const double SEARCH_RADIUS = 1000;
 const double REWIRE_RADIUS = 200;
 

@@ -111,7 +111,7 @@ RRTNode* RRTTree::addNode(RRTNode* anchor_node, const RRTPoint& new_point,
     std::vector<XYZCoord> path = dubins.generatePoints(anchor_node->getPoint(), new_point,
                                                        option.dubins_path, option.has_straight);
 
-    if (!airspace.isPathInBounds(path)) {
+    if (!airspace.isPathInBoundsAdv(path, option)) {
         return nullptr;
     }
 
@@ -381,7 +381,7 @@ void RRTTree::RRTStarRecursive(RRTNode* current_node, RRTNode* sample, double re
             std::vector<XYZCoord> path = dubins.generatePoints(
                 sample->getPoint(), child->getPoint(), option.dubins_path, option.has_straight);
 
-            if (!airspace.isPathInBounds(path)) {
+            if (!airspace.isPathInBoundsAdv(path, option)) {
                 continue;
             }
 

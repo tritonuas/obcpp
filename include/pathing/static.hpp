@@ -21,11 +21,11 @@
 
 class RRT {
  public:
-    RRT(RRTPoint start, std::vector<XYZCoord> goals, int num_iterations, double search_radius,
+    RRT(RRTPoint start, std::vector<XYZCoord> goals, int iterations_per_waypoint, double search_radius,
         double rewire_radius, Polygon bounds, std::vector<Polygon> obstacles = {},
         bool optimize = false)
 
-        : num_iterations(num_iterations),
+        : iterations_per_waypoint(iterations_per_waypoint),
           search_radius(search_radius),
           rewire_radius(rewire_radius),
           tree(start, Environment(bounds, goals, obstacles),
@@ -42,7 +42,6 @@ class RRT {
      */
     void run() {
         const int total_goals = tree.getAirspace().getNumGoals();
-        const int tries = num_iterations / total_goals;
 
         for (int current_goal_index = 0; current_goal_index < total_goals; current_goal_index++) {
             // tries to connect directly to the goal
@@ -53,7 +52,7 @@ class RRT {
             }
 
             // run the RRT algorithm if it can not connect
-            RRTIteration(tries);
+            RRTIteration(iterations_per_waypoint);
 
             // connect to the goal after RRT is finished
             RRTNode *goal_connection = connectToGoal(current_goal_index);
@@ -73,13 +72,29 @@ class RRT {
  private:
     RRTTree tree;
 
-    bool optimize;
-    int num_iterations;
-    double search_radius;
-    double rewire_radius;
+    const bool optimize;
+    const int iterations_per_waypoint;
+    const double search_radius;
+    const double rewire_radius;
 
-    const std::vector<double> angles = {0,    M_PI / 4,     M_PI / 2,     3 * M_PI / 4,
-                                        M_PI, 5 * M_PI / 4, 3 * M_PI / 2, 7 * M_PI / 4};
+    const std::vector<double> angles = {
+        0,
+        M_PI / 6,
+        M_PI / 4,
+        M_PI / 3,
+        M_PI / 2,
+        2 * M_PI / 3,
+        3 * M_PI / 4,
+        5 * M_PI / 6,
+        M_PI,
+        7 * M_PI / 6,
+        5 * M_PI / 4,
+        4 * M_PI / 3,
+        3 * M_PI / 2,
+        5 * M_PI / 3,
+        7 * M_PI / 4,
+        11 * M_PI / 6,
+    }; 
 
     /**
      * Does a single iteration of the RRT(star) algoritm to connect two waypoints
@@ -154,6 +169,7 @@ class RRT {
             auto &[anchor_node, option] = pair;
 
             RRTNode *new_node = tree.addNode(anchor_node, goal, option);
+
             if (new_node != nullptr) {
                 return new_node;
             }

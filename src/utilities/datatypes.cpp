@@ -99,19 +99,3 @@ GPSCoord makeGPSCoord(double lat, double lng, double alt) {
     coord.set_altitude(alt);
     return coord;
 }
-
-bool isPointInPolygon(const Polygon &polygon, const XYZCoord &point) {
-    bool is_inside = false;
-
-    // point in polygon
-    for (int i = 0, j = polygon.size() - 1; i < polygon.size(); j = i++) {
-        if (((polygon[i].y > point.y) != (polygon[j].y > point.y)) &&
-            (point.x < (polygon[j].x - polygon[i].x) * (point.y - polygon[i].y) /
-                               (polygon[j].y - polygon[i].y) +
-                           polygon[i].x)) {
-            is_inside = !is_inside;
-        }
-    }
-
-    return is_inside;
-}

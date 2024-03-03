@@ -243,8 +243,7 @@ int main() {
     // have an initial path, but waiting for validation
 
     std::ofstream file;
-    file.open("path_coordinates.txt");
-
+    file.open("times.txt");
 
     std::vector<XYZCoord> goals;
 
@@ -257,52 +256,77 @@ int main() {
     std::vector<XYZCoord> obs1 = {XYZCoord(-250, 150, 0), XYZCoord(100, 75, 0),
                                   XYZCoord(-125, 300, 0), XYZCoord(-300, 300, 0)};
 
-
     std::vector<Polygon> obstacles = {obs1};
 
     RRTPoint start = RRTPoint(state->config.getWaypoints()[0], 0);
 
-    int num_iterations = goals.size() * 100;
+    int num_iterations = 750;
     double search_radius = 9999;
     double rewire_radius = 9999;
 
-    std::cout << "Start Running" << std::endl;
+    auto s_time = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < 250; i++) {
+        std::cout << "Iteration: " << i << std::endl;
+        // std::cout << "Start Running" << std::endl;
+        auto start_time = std::chrono::high_resolution_clock::now();
+        RRT rrt = RRT(start, goals, num_iterations, search_radius, rewire_radius,
+                      state->config.getFlightBoundary(), obstacles, true);
+
+        // print out stats
+        // std::cout << "num_iterations: " << num_iterations << std::endl;
+        // std::cout << "search_radius: " << search_radius << std::endl;
+        // std::cout << "rewire_radius: " << rewire_radius << std::endl;
+
+        rrt.run();
+
+        // time the following function3000
+
+        auto end_time = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed = end_time - start_time;
+        file << elapsed.count() << std::endl;
+    }
+    auto e_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_total = e_time - s_time;
+    std::cout << "Total time: " << elapsed_total.count() << "s" << std::endl;
+
+    // std::cout << "Time to run: " << elapsed.count() << "s" << std::endl;
+    // std::cout << "End Running" << std::endl;
+
+    // std::vector<XYZCoord> path = rrt.getPointsToGoal();
+    // std::cout << "Path size: " << path.size() << std::endl;
+    // std::cout << "Path length: " << (path.size() * POINT_SEPARATION) << std::endl;
+
+    // std::cout << "Start Plotting" << std::endl;
+    // start_time = std::chrono::high_resolution_clock::now();
+    // plot the path
     auto start_time = std::chrono::high_resolution_clock::now();
     RRT rrt = RRT(start, goals, num_iterations, search_radius, rewire_radius,
                   state->config.getFlightBoundary(), obstacles, true);
 
     // print out stats
-    std::cout << "num_iterations: " << num_iterations << std::endl;
-    std::cout << "search_radius: " << search_radius << std::endl;
-    std::cout << "rewire_radius: " << rewire_radius << std::endl;
+    // std::cout << "num_iterations: " << num_iterations << std::endl;
+    // std::cout << "search_radius: " << search_radius << std::endl;
+    // std::cout << "rewire_radius: " << rewire_radius << std::endl;
 
     rrt.run();
 
-    // time the following function
+    // time the following function3000
+
     auto end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end_time - start_time;
-    std::cout << "Time to run: " << elapsed.count() << "s" << std::endl;
-    std::cout << "End Running" << std::endl;
+    file << elapsed.count() << std::endl;
 
-    std::vector<XYZCoord> path = rrt.getPointsToGoal();
-    std::cout << "Path size: " << path.size() << std::endl;
-    std::cout << "Path length: " << (path.size() * POINT_SEPARATION) << std::endl;
-
-    std::cout << "Start Plotting" << std::endl;
-    start_time = std::chrono::high_resolution_clock::now();
-    // plot the path
     PathingPlot plotter("pathing_output", state->config.getFlightBoundary(), obstacles[0], goals);
 
-    plotter.addFinalPolyline(path);
+    plotter.addFinalPolyline(rrt.getPointsToGoal());
     plotter.output("test_final_path", PathOutputType::BOTH);
+    // end_time = std::chrono::high_resolution_clock::now();
+    // elapsed = end_time - start_time;
+    // std::cout << "Time to plot: " << elapsed.count() << "s" << std::endl;
 
-    end_time = std::chrono::high_resolution_clock::now();
-    elapsed = end_time - start_time;
-    std::cout << "Time to plot: " << elapsed.count() << "s" << std::endl;
-
-    for (const XYZCoord& point : path) {
-        file << point.x << ", " << point.y << std::endl;
-    }
+    // for (const XYZCoord& point : path) {
+    //     file << point.x << ", " << point.y << std::endl;
+    // }
 
     file.close();
     return 0;
