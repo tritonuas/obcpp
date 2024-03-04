@@ -10,7 +10,11 @@
 #include "ticks/mission_prep.hpp"
 #include "network/gcs.hpp"
 #include "network/mavlink.hpp"
+#include "network/airdrop_client.hpp"
 #include "utilities/logging.hpp"
+extern "C" {
+    #include "network/airdrop_sockets.h"
+}
 
 // TODO: allow specifying config filename
 OBC::OBC(uint16_t gcs_port) {
@@ -19,7 +23,11 @@ OBC::OBC(uint16_t gcs_port) {
 
     this->gcs_server = std::make_unique<GCSServer>(gcs_port, this->state);
 
-    auto _ = std::async(std::launch::async, &OBC::connectMavlink, this);
+    // Don't need to look at these futures at all because the connect functions
+    // will set the global mission state themselves when connected, which everything
+    // else can check.
+    auto _fut1 = std::async(std::launch::async, &OBC::connectMavlink, this);
+    auto _fut2 = std::async(std::launch::async, &OBC::connectAirdrop, this);
 }
 
 void OBC::run() {
@@ -30,10 +38,29 @@ void OBC::run() {
 }
 
 void OBC::connectMavlink() {
+    loguru::set_thread_name("mav connect");
+
     // TODO: pull mav ip from config file
     std::shared_ptr<MavlinkClient> mav(new MavlinkClient("serial:///dev/ttyACM0"));
     // std::shared_ptr<MavlinkClient> mav(new MavlinkClient("tcp://172.17.0.1:5760"));
     this->state->setMav(mav);
+}
 
-    mav->airspeed_m_s();
+void OBC::connectAirdrop() {
+    loguru::set_thread_name("airdrop connect");
+
+    ad_socket_result_t result;
+    while (true) {
+        LOG_F(INFO, "Attempting to create airdrop socket.");
+        result = make_ad_socket(AD_OBC_PORT, AD_PAYLOAD_PORT);
+        if (!result.is_err) {
+            LOG_F(INFO, "Established airdrop socket.");
+            break;
+        }
+
+        LOG_F(ERROR, "Failed to establish airdrop socket: %s. Trying again in 3 seconds...",
+            result.data.err);
+    }
+
+    this->state->setAirdrop(std::make_shared<AirdropClient>(result.data.res));
 }

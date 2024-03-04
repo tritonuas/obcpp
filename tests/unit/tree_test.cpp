@@ -2,6 +2,8 @@
 #include "utilities/datatypes.hpp"
 #include <gtest/gtest.h>
 
+#include <iostream>
+
 TEST(SimpleTreeTest, addNodeTest) {
     RRTPoint point1 = RRTPoint(XYZCoord(1, 2, 0), 0);
     RRTPoint point2 = RRTPoint(XYZCoord(0, 2, 0), 0);
