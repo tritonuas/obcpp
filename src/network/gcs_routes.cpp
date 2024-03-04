@@ -94,8 +94,9 @@ DEF_GCS_HANDLE(Get, path, initial) {
 DEF_GCS_HANDLE(Get, path, initial, new) {
     LOG_REQUEST("GET", "/path/initial/new");
 
-    if (state->sendTickMsg(TickMessage(TickID::PathValidate, PathValidateTick::Message::Rejected))) {
-
+    if (!state->sendTickMsg<PathValidateTick>(PathValidateTick::Message::Rejected)) {
+        LOG_RESPONSE(WARNING, "Not currently in PathValidate Tick", BAD_REQUEST);
+        return;
     }
 
     LOG_RESPONSE(INFO, "Started generating new initial path", OK);
@@ -106,10 +107,15 @@ DEF_GCS_HANDLE(Post, path, initial, validate) {
 
     if (state->getInitPath().empty()) {
         LOG_RESPONSE(WARNING, "No initial path generated", BAD_REQUEST);
-    } else {
-        state->validateInitPath();
-        LOG_RESPONSE(INFO, "Initial path validated", OK);
+        return;
     }
+
+    if (!state->sendTickMsg<PathValidateTick>(PathValidateTick::Message::Validated)) {
+        LOG_RESPONSE(WARNING, "Not currently in PathValidate Tick", BAD_REQUEST);
+        return;
+    }
+
+    LOG_RESPONSE(INFO, "Initial path validated", OK);
 }
 
 DEF_GCS_HANDLE(Get, camera, status) {

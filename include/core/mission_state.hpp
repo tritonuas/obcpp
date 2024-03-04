@@ -12,36 +12,14 @@
 #include "core/mission_config.hpp"
 #include "utilities/datatypes.hpp"
 #include "utilities/constants.hpp"
+#include "utilities/locks.hpp"
 #include "protos/obc.pb.h"
 #include "pathing/cartesian.hpp"
 #include "ticks/ids.hpp"
-#include "ticks/message.hpp"
 #include "network/mavlink.hpp"
 #include "network/airdrop_client.hpp"
 
 class Tick;
-
-template<typename T>
-class TickRef {
- public:
-    TickRef(Tick& tick, std::mutex& mut) {
-        this->mut = mut;
-        this->mut.lock();
-
-        try {
-            this->tick = dynamic_cast<T&>(tick);
-        } catch (std::bad_cast err) {
-            LOG_F(ERROR, "Bad TickRef creation: %s", err.what)
-        }
-    }
-    ~TickRef() {
-        this->mut.unlock();
-    }
-
-    T& tick;
- private:
-    std::mutex& mut;
-};
 
 class MissionState {
  public:
@@ -53,8 +31,34 @@ class MissionState {
 
     std::chrono::milliseconds doTick();
     TickID getTickID();
-    bool sendTickMsg(TickMessage msg); // return false if TickMessage not addressed to curr tick
-    std::optional<TickMessage> recvTickMsg();
+
+    template<typename TickSubClass>
+    bool sendTickMsg(TickSubClass::Message msg) {
+        TickSubClass* tick = dynamic_cast<TickSubClass*>(this->tick.get());
+        if (tick == nullptr) {
+            return false;
+        }
+
+        Lock lock(this->tick_msgs_mut);
+        this->tick_msgs.push(static_cast<int>(msg));
+        return true;
+    }
+
+    // Would have liked to use std::optional for return type, but this does not work
+    // because TickSubClass::Message can't be passed into the std::optional as a further
+    // template argument because it isn't a defined type at this point
+    template<typename TickSubClass>
+    bool recvTickMsg(TickSubClass::Message& msg) {
+        Lock lock(this->tick_msgs_mut);
+        if (this->tick_msgs.empty()) {
+            return false;
+        }
+
+        int msg_int = this->tick_msgs.front();
+        this->tick_msgs.pop();
+        msg = static_cast<TickSubClass::Message>(msg_int);
+        return true;
+    }
 
     void setInitPath(std::vector<GPSCoord> init_path);
     const std::vector<GPSCoord>& getInitPath();
@@ -86,7 +90,7 @@ class MissionState {
     std::mutex tick_mut;  // for reading/writing tick
     std::unique_ptr<Tick> tick;
     std::mutex tick_msgs_mut;
-    std::queue<TickMessage> tick_msgs;
+    std::queue<int> tick_msgs;
 
     std::mutex init_path_mut;  // for reading/writing the initial path
     std::vector<GPSCoord> init_path;

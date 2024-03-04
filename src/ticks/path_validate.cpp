@@ -16,26 +16,19 @@ std::chrono::milliseconds PathValidateTick::getWait() const {
 }
 
 Tick* PathValidateTick::tick() {
-    switch (this->status) {
+    Message status;
+    if (!this->state->recvTickMsg<PathValidateTick>(status)) {
+        return nullptr;
+    }
+
+    switch (status) {
         case Message::Rejected:
             return new PathGenTick(this->state);
         case Message::Validated:
             if (this->state->getMav() != nullptr) {
                 return new MissionUploadTick(this->state);
             }
-            break;
     }
 
     return nullptr;
-}
-
-
-PathValidateTick::Message PathValidateTick::getStatus() {
-    Lock lock(this->status_mut);
-    return this->status;
-}
-
-void PathValidateTick::setStatus(PathValidateTick::Message status) {
-    Lock lock(this->status_mut);
-    this->status = status;
 }

@@ -4,7 +4,6 @@
 #include "core/mission_config.hpp"
 #include "core/mission_state.hpp"
 #include "ticks/tick.hpp"
-#include "ticks/message.hpp"
 #include "utilities/locks.hpp"
 #include "network/mavlink.hpp"
 #include "network/airdrop_client.hpp"
@@ -47,33 +46,13 @@ void MissionState::_setTick(Tick* newTick) {
     LOG_F(INFO, "%s -> %s", old_tick_name.c_str(), new_tick_name.c_str());
 
     tick.reset(newTick);
+    std::queue<int> empty;
+    std::swap(this->tick_msgs, empty);
 }
 
 TickID MissionState::getTickID() {
     Lock lock(this->tick_mut);
     return this->tick->getID();
-}
-
-bool MissionState::sendTickMsg(TickMessage msg) {
-    Lock lock(this->tick_msgs_mut);
-
-    if (msg.id != this->tick->getID()) {
-        return false;
-    }
-
-    this->tick_msgs.push(msg);
-    return true;
-}
-
-std::optional<TickMessage> MissionState::recvTickMsg() {
-    Lock lock(this->tick_msgs_mut);
-    if (this->tick_msgs.empty()) {
-        return {};
-    }
-
-    auto msg = this->tick_msgs.front();
-    this->tick_msgs.pop();
-    return msg;
 }
 
 void MissionState::setInitPath(std::vector<GPSCoord> init_path) {
