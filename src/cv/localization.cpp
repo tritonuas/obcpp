@@ -31,7 +31,7 @@ ECEFLocalization::ECEFCoordinates ECEFLocalization::ENUtoECEF(ENUCoordinates off
 // Converts ECEF coordinates to GPS coordinates using Heikkinen's procedure
 GPSCoord ECEFLocalization::ECEFtoGPS(ECEFCoordinates ecef) {
     GPSCoord gps;
-    double a = 6378137;
+    double a = EARTH_RADIUS_METERS;
     double b = 6356752;
     double e2 = 1 - ((b*b)/(a*a));
     double ep2 = ((a*a)/(b*b)) - 1;
@@ -107,5 +107,44 @@ GPSCoord ECEFLocalization::localize(const ImageTelemetry& telemetry, const Bbox&
 }
 
 GPSCoord GSDLocalization::localize(const ImageTelemetry& telemetry, const Bbox& targetBbox) {
-    return GPSCoord();
+    GPSCoord gps;
+
+    float GSD = (SENSOR_WIDTH * (telemetry.altitude)) / (FOCAL_LENGTH_MM * IMG_WIDTH_PX);
+
+    float img_mid_x = IMG_WIDTH_PX / 2;
+    float img_mid_y = IMG_HEIGHT_PX / 2;
+
+    float length = (sqrt(pow((plane_data[4] - img_mid_x), 2) + pow((plane_data[5] - img_mid_y), 2) * GSD));
+
+    float target_camera_cord_x = plane_data[4] - img_mid_x;
+    float target_camera_cord_y = plane_data[5] - img_mid_y;
+
+    float thetaB = plane_data[3] + atan(target_camera_cord_x / target_camera_cord_y);
+
+    float calc_cam_offset_x = target_camera_cord_x * GSD * 0.001; //mm to M
+    float calc_cam_offset_y = target_camera_cord_y * GSD * 0.001; //mm to M
+
+    std::vector<float> input {calc_cam_offset_x, calc_cam_offset_y, telemetry.latitude, telemetry.longitude};
+
+    GPSCoord calc_coord = calc_offset(input);
+
+    // for (const float& f : floats) {
+    //     integers.push_back(static_cast<int>(f));
+    // }   
+    return calc_coord;
+}
+
+GPSCoord GSDLocalization::CalcOffset(const std::vector<float>& param)  {
+    float dLat = param[0] / EARTH_RADIUS_M;
+    float dLon = param[1] / (EARTH_RADIUS_M * cos(M_PI * param[2] / 180));
+
+    float latO = param[2] + dLat * 180/M_PI;
+    float lonO = param[3] + dLon * 180/M_PI;
+
+    GPDCoord output;
+
+    output.set_latitude(latO);
+    output.set_longitude(lonO);
+
+    return output;
 }
