@@ -14,6 +14,7 @@
 #include "network/gcs_macros.hpp"
 #include "ticks/tick.hpp"
 #include "ticks/path_gen.hpp"
+#include "ticks/path_validate.hpp"
 
 /*
  * This file defines all of the GCS handler functions for every route
@@ -93,7 +94,9 @@ DEF_GCS_HANDLE(Get, path, initial) {
 DEF_GCS_HANDLE(Get, path, initial, new) {
     LOG_REQUEST("GET", "/path/initial/new");
 
-    state->setTick(new PathGenTick(state));
+    if (state->sendTickMsg(TickMessage(TickID::PathValidate, PathValidateTick::Message::Rejected))) {
+
+    }
 
     LOG_RESPONSE(INFO, "Started generating new initial path", OK);
 }

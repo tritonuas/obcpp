@@ -4,6 +4,7 @@
 #include "core/mission_config.hpp"
 #include "core/mission_state.hpp"
 #include "ticks/tick.hpp"
+#include "ticks/message.hpp"
 #include "utilities/locks.hpp"
 #include "network/mavlink.hpp"
 #include "network/airdrop_client.hpp"
@@ -39,12 +40,6 @@ std::chrono::milliseconds MissionState::doTick() {
     return this->tick->getWait();
 }
 
-void MissionState::setTick(Tick* newTick) {
-    Lock lock(this->tick_mut);
-
-    this->_setTick(newTick);
-}
-
 void MissionState::_setTick(Tick* newTick) {
     std::string old_tick_name = (this->tick) ? this->tick->getName() : "Null";
     std::string new_tick_name = (newTick) ? newTick->getName() : "Null";
@@ -59,6 +54,28 @@ TickID MissionState::getTickID() {
     return this->tick->getID();
 }
 
+bool MissionState::sendTickMsg(TickMessage msg) {
+    Lock lock(this->tick_msgs_mut);
+
+    if (msg.id != this->tick->getID()) {
+        return false;
+    }
+
+    this->tick_msgs.push(msg);
+    return true;
+}
+
+std::optional<TickMessage> MissionState::recvTickMsg() {
+    Lock lock(this->tick_msgs_mut);
+    if (this->tick_msgs.empty()) {
+        return {};
+    }
+
+    auto msg = this->tick_msgs.front();
+    this->tick_msgs.pop();
+    return msg;
+}
+
 void MissionState::setInitPath(std::vector<GPSCoord> init_path) {
     Lock lock(this->init_path_mut);
     this->init_path = init_path;
@@ -67,16 +84,6 @@ void MissionState::setInitPath(std::vector<GPSCoord> init_path) {
 const std::vector<GPSCoord>& MissionState::getInitPath() {
     Lock lock(this->init_path_mut);
     return this->init_path;
-}
-
-bool MissionState::isInitPathValidated() {
-    Lock lock(this->init_path_mut);
-    return this->init_path_validated;
-}
-
-void MissionState::validateInitPath() {
-    Lock lock(this->init_path_mut);
-    this->init_path_validated = true;
 }
 
 std::shared_ptr<MavlinkClient> MissionState::getMav() {

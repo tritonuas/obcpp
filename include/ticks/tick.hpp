@@ -4,12 +4,13 @@
 #include <memory>
 #include <chrono>
 #include <string>
+#include <mutex>
 
 #include "core/mission_state.hpp"
 #include "ticks/ids.hpp"
+#include "utilities/logging.hpp"
 
-// When writing tick functions... Absolutely do not do not do not
-// delete the pointer that is being passed in.
+
 
 class Tick {
  public:

@@ -5,6 +5,8 @@
 #include "core/mission_state.hpp"
 #include "ticks/ids.hpp"
 #include "ticks/mission_upload.hpp"
+#include "ticks/path_gen.hpp"
+#include "utilities/locks.hpp"
 
 PathValidateTick::PathValidateTick(std::shared_ptr<MissionState> state)
     :Tick(state, TickID::PathValidate) {}
@@ -14,9 +16,26 @@ std::chrono::milliseconds PathValidateTick::getWait() const {
 }
 
 Tick* PathValidateTick::tick() {
-    if (this->state->isInitPathValidated() && this->state->getMav() != nullptr) {
-        return new MissionUploadTick(this->state);
-    } else {
-        return nullptr;
+    switch (this->status) {
+        case Message::Rejected:
+            return new PathGenTick(this->state);
+        case Message::Validated:
+            if (this->state->getMav() != nullptr) {
+                return new MissionUploadTick(this->state);
+            }
+            break;
     }
+
+    return nullptr;
+}
+
+
+PathValidateTick::Message PathValidateTick::getStatus() {
+    Lock lock(this->status_mut);
+    return this->status;
+}
+
+void PathValidateTick::setStatus(PathValidateTick::Message status) {
+    Lock lock(this->status_mut);
+    this->status = status;
 }

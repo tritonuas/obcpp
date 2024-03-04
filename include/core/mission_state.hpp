@@ -7,6 +7,7 @@
 #include <chrono>
 #include <vector>
 #include <optional>
+#include <queue>
 
 #include "core/mission_config.hpp"
 #include "utilities/datatypes.hpp"
@@ -14,10 +15,33 @@
 #include "protos/obc.pb.h"
 #include "pathing/cartesian.hpp"
 #include "ticks/ids.hpp"
+#include "ticks/message.hpp"
 #include "network/mavlink.hpp"
 #include "network/airdrop_client.hpp"
 
 class Tick;
+
+template<typename T>
+class TickRef {
+ public:
+    TickRef(Tick& tick, std::mutex& mut) {
+        this->mut = mut;
+        this->mut.lock();
+
+        try {
+            this->tick = dynamic_cast<T&>(tick);
+        } catch (std::bad_cast err) {
+            LOG_F(ERROR, "Bad TickRef creation: %s", err.what)
+        }
+    }
+    ~TickRef() {
+        this->mut.unlock();
+    }
+
+    T& tick;
+ private:
+    std::mutex& mut;
+};
 
 class MissionState {
  public:
@@ -28,18 +52,12 @@ class MissionState {
     void setCartesianConverter(CartesianConverter<GPSProtoVec>);
 
     std::chrono::milliseconds doTick();
-    // For external use, acquires the tick mutex
-    // In contrast to the private version of the function,
-    // which is for internal use and does not acquire
-    // the mutex. This version should not be called from
-    // within another function that already acquires the tick_mut
-    void setTick(Tick* newTick);
     TickID getTickID();
+    bool sendTickMsg(TickMessage msg); // return false if TickMessage not addressed to curr tick
+    std::optional<TickMessage> recvTickMsg();
 
     void setInitPath(std::vector<GPSCoord> init_path);
     const std::vector<GPSCoord>& getInitPath();
-    bool isInitPathValidated();
-    void validateInitPath();
 
     /*
      * Gets a shared_ptr to the mavlink client. 
@@ -67,13 +85,15 @@ class MissionState {
 
     std::mutex tick_mut;  // for reading/writing tick
     std::unique_ptr<Tick> tick;
+    std::mutex tick_msgs_mut;
+    std::queue<TickMessage> tick_msgs;
 
     std::mutex init_path_mut;  // for reading/writing the initial path
     std::vector<GPSCoord> init_path;
-    bool init_path_validated = false;  // true when the operator has validated the initial path
 
     std::shared_ptr<MavlinkClient> mav;
     std::shared_ptr<AirdropClient> airdrop;
+    
 
     void _setTick(Tick* newTick);  // does not acquire the tick_mut
 };
