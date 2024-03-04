@@ -1,7 +1,15 @@
 #ifndef INCLUDE_CV_SEGMENTATION_HPP_
 #define INCLUDE_CV_SEGMENTATION_HPP_
 
+
 #include <opencv2/opencv.hpp>
+#include <torch/script.h>
+
+#include <iostream>
+#include <memory>
+#include <string>
+#include <vector>
+#include <utility>
 
 #include "cv/utilities.hpp"
 
@@ -21,7 +29,19 @@ struct SegmentationResults {
 // https://github.com/tritonuas/hutzler-571
 class Segmentation {
  public:
-    SegmentationResults segment(const CroppedTarget &target);
+        Segmentation() {}
+
+        explicit Segmentation(const std::string &modelPath);
+        SegmentationResults segment(const CroppedTarget &target);
+ private:
+        torch::jit::script::Module module;
 };
+
+std::string get_image_type(const cv::Mat& img, bool more_info);
+void show_image(cv::Mat& img, std::string title);
+at::Tensor transpose(at::Tensor tensor, c10::IntArrayRef dims);
+std::vector<torch::jit::IValue> ToInput(at::Tensor tensor_image);
+at::Tensor ToTensor(cv::Mat img, bool show_output, bool unsqueeze, int unsqueeze_dim);
+cv::Mat ToCvImage(at::Tensor tensor);
 
 #endif  // INCLUDE_CV_SEGMENTATION_HPP_
