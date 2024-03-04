@@ -21,9 +21,7 @@ const double SEARCH_RADIUS = 1000;
 const double REWIRE_RADIUS = 200;
 
 const int TRIES_FOR_RANDOM_POINT = 64;  // for generating random points
-const int MAX_DUBINS_OPTIONS_TO_PARSE = 256;
-
-const double LARGE_COST = 999999999999.0;
+const int MAX_DUBINS_OPTIONS_TO_PARSE = 16;
 
 const int DEFAULT_GCS_PORT = 5010;
 

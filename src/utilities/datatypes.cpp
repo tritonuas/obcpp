@@ -52,14 +52,10 @@ XYZCoord operator*(double scalar, const XYZCoord &vector) {
 
 XYZCoord operator*(const XYZCoord &vector, double scalar) { return scalar * vector; }
 
-double XYZCoord::distanceTo(const XYZCoord &other) const {
-    return (*this - other).norm();
-}
+double XYZCoord::distanceTo(const XYZCoord &other) const { return (*this - other).norm(); }
 
 double XYZCoord::norm() const {
-    return sqrt(this->x * this->x    //
-                + this->y * this->y  //
-                + this->z * this->z);
+    return sqrt(this->x * this->x + this->y * this->y + this->z * this->z);
 }
 
 XYZCoord XYZCoord::normalized() const {
@@ -69,7 +65,7 @@ XYZCoord XYZCoord::normalized() const {
         return *this;
     }
 
-    return (1 / this->norm()) * (*this);
+    return (1 / norm) * (*this);
 }
 
 std::size_t PointHashFunction::operator()(const RRTPoint &point) const {

@@ -108,10 +108,11 @@ RRTTree::~RRTTree() {
 RRTNode* RRTTree::addNode(RRTNode* anchor_node, const RRTPoint& new_point,
                           const RRTOption& option) {
     // checking if path is valid
-    std::vector<XYZCoord> path = dubins.generatePoints(anchor_node->getPoint(), new_point,
-                                                       option.dubins_path, option.has_straight);
+    const std::vector<XYZCoord>& path = dubins.generatePoints(
+        anchor_node->getPoint(), new_point, option.dubins_path, option.has_straight);
 
     if (!airspace.isPathInBoundsAdv(path, option)) {
+        // if (!airspace.isPathInBounds(path)) {
         return nullptr;
     }
 
@@ -198,13 +199,20 @@ Environment RRTTree::getAirspace() const { return this->airspace; }
 
 RRTPoint RRTTree::getRandomPoint(double search_radius) const {
     // gets random point if the goal is not being used
-    const RRTPoint& sample = airspace.getRandomPoint();
+    XYZCoord sample = airspace.getRandomPoint();
 
     // // picks the nearest node to the sample, and then returns a point `search_radius` distance
     // away
     // // from tat point in the direction of the sample
-    // RRTNode* nearest_node = getNearestNode(sample);
+    // std::pair<RRTNode*, double> nearest_node = getNearestNode(sample);
 
+    // int count = 0;
+
+    // while (nearest_node.second < search_radius && count < TRIES_FOR_RANDOM_POINT) {
+    //     sample = airspace.getRandomPoint();
+    //     nearest_node = getNearestNode(sample);
+    //     count++;
+    // }
     // // shouldn't happen, it is here for memory safety
     // if (nearest_node == nullptr) {
     //     return sample;
@@ -231,7 +239,7 @@ RRTPoint RRTTree::getRandomPoint(double search_radius) const {
     //                    angle);
 
     // return new_point;
-    return RRTPoint(sample.coord, random(0, TWO_PI));
+    return RRTPoint(sample, random(0, TWO_PI));
 }
 
 std::vector<std::pair<RRTNode*, RRTOption>> RRTTree::pathingOptions(const RRTPoint& end,
@@ -242,8 +250,8 @@ std::vector<std::pair<RRTNode*, RRTOption>> RRTTree::pathingOptions(const RRTPoi
 
     // sorts the list
     std::sort(options.begin(), options.end(), [](auto a, auto b) {
-        auto [a_node, a_option] = a;
-        auto [b_node, b_option] = b;
+        auto& [a_node, a_option] = a;
+        auto& [b_node, b_option] = b;
         return a_option.length + a_node->getCost() < b_option.length + b_node->getCost();
     });
 
@@ -271,7 +279,7 @@ void RRTTree::fillOptions(std::vector<std::pair<RRTNode*, RRTOption>>& options, 
     }
 
     // gets all dubins curves from the current node to the end point
-    std::vector<RRTOption> local_options = dubins.allOptions(node->getPoint(), end);
+    const std::vector<RRTOption>& local_options = dubins.allOptions(node->getPoint(), end);
 
     // filters out the options that are not valid
     for (const RRTOption& option : local_options) {
@@ -281,6 +289,12 @@ void RRTTree::fillOptions(std::vector<std::pair<RRTNode*, RRTOption>>& options, 
 
         options.push_back({node, option});
     }
+
+    // RRTOption best_option = dubins.bestOption(node->getPoint(), end);
+    // if (!std::isnan(best_option.length) &&
+    //     best_option.length != std::numeric_limits<double>::infinity()) {
+    //     options.push_back({node, best_option});
+    // }
 
     // recursively calls the function for all reachable nodes
     for (RRTNode* child : node->getReachable()) {
@@ -318,30 +332,25 @@ std::vector<XYZCoord> RRTTree::getPathToGoal() const {
 
 /* RRTTree Private */
 
-RRTNode* RRTTree::getNearestNode(const RRTPoint& point) const {
+std::pair<RRTNode*, double> RRTTree::getNearestNode(const XYZCoord& point) const {
     RRTNode* nearest = nullptr;
     double min_distance = std::numeric_limits<double>::infinity();
 
     for (auto& [key, value] : node_map) {
-        double distance = point.distanceTo(key);
+        double distance = point.distanceTo(key.coord);
         if (distance < min_distance) {
             min_distance = distance;
             nearest = value;
         }
     }
 
-    return nearest;
+    return {nearest, min_distance};
 }
 
 void RRTTree::RRTStarRecursive(RRTNode* current_node, RRTNode* sample, double rewire_radius) {
     // base case
     if (current_node == nullptr) {
         return;
-    }
-
-    // recurse
-    for (RRTNode* child : current_node->getReachable()) {
-        RRTStarRecursive(child, sample, rewire_radius);
     }
 
     // for all nodes past the current node, attempt to rewire them
@@ -351,14 +360,15 @@ void RRTTree::RRTStarRecursive(RRTNode* current_node, RRTNode* sample, double re
             continue;
         }
 
-        //  may need to change this to compare a point
+        // the child shouldn't have any children
         if (child == sample) {
-            continue;
+            return;
         }
 
         // get the dubins options (sorted)
-        std::vector<RRTOption> options =
+        const std::vector<RRTOption>& options =
             dubins.allOptions(sample->getPoint(), child->getPoint(), true);
+        // RRTOption option = dubins.bestOption(sample->getPoint(), child->getPoint());
 
         // for each option
         for (const RRTOption& option : options) {
@@ -378,16 +388,22 @@ void RRTTree::RRTStarRecursive(RRTNode* current_node, RRTNode* sample, double re
 
             // if the new cost is less than the current cost
             // check if new path is valid
-            std::vector<XYZCoord> path = dubins.generatePoints(
+            const std::vector<XYZCoord>& path = dubins.generatePoints(
                 sample->getPoint(), child->getPoint(), option.dubins_path, option.has_straight);
 
             if (!airspace.isPathInBoundsAdv(path, option)) {
+                // if (!airspace.isPathInBounds(path)) {
                 continue;
             }
 
             // rewire the edge
             rewireEdge(child, current_node, sample, path, option.length);
         }
+    }
+
+    // recurse
+    for (RRTNode* child : current_node->getReachable()) {
+        RRTStarRecursive(child, sample, rewire_radius);
     }
 }
 

@@ -21,9 +21,9 @@
 
 class RRT {
  public:
-    RRT(RRTPoint start, std::vector<XYZCoord> goals, int iterations_per_waypoint, double search_radius,
-        double rewire_radius, Polygon bounds, std::vector<Polygon> obstacles = {},
-        bool optimize = false)
+    RRT(RRTPoint start, std::vector<XYZCoord> goals, int iterations_per_waypoint,
+        double search_radius, double rewire_radius, Polygon bounds,
+        std::vector<Polygon> obstacles = {}, bool optimize = false)
 
         : iterations_per_waypoint(iterations_per_waypoint),
           search_radius(search_radius),
@@ -94,7 +94,7 @@ class RRT {
         5 * M_PI / 3,
         7 * M_PI / 4,
         11 * M_PI / 6,
-    }; 
+    };
 
     /**
      * Does a single iteration of the RRT(star) algoritm to connect two waypoints
@@ -107,7 +107,8 @@ class RRT {
             const RRTPoint sample = generateSamplePoint();
 
             // returns all dubins options from the tree to the sample
-            std::vector<std::pair<RRTNode *, RRTOption>> options = tree.pathingOptions(sample);
+            const std::vector<std::pair<RRTNode *, RRTOption>> &options =
+                tree.pathingOptions(sample);
 
             // returns true if the node is successfully added to the tree
             RRTNode *new_node = parseOptions(options, sample);
@@ -149,7 +150,7 @@ class RRT {
         const int NUMBER_OPTIONS_TOTAL = 512;
         const int NUMBER_OPTIONS_EACH = NUMBER_OPTIONS_TOTAL / angles.size();
         for (const RRTPoint &goal : goal_points) {
-            std::vector<std::pair<RRTNode *, RRTOption>> options =
+            const std::vector<std::pair<RRTNode *, RRTOption>> &options =
                 tree.pathingOptions(goal, NUMBER_OPTIONS_EACH);
 
             for (const auto &[node, option] : options) {
@@ -158,10 +159,10 @@ class RRT {
         }
 
         std::sort(all_options.begin(), all_options.end(), [](const auto &a, const auto &b) {
-            auto [a_goal, a_paths] = a;
-            auto [a_node, a_option] = a_paths;
-            auto [b_goal, b_paths] = b;
-            auto [b_node, b_option] = b_paths;
+            auto &[a_goal, a_paths] = a;
+            auto &[a_node, a_option] = a_paths;
+            auto &[b_goal, b_paths] = b;
+            auto &[b_node, b_option] = b_paths;
             return a_option.length + a_node->getCost() < b_option.length + b_node->getCost();
         });
 
@@ -202,7 +203,7 @@ class RRT {
              *
              *  The idea is that any further options will have the same if not more
              * issues
-             *  
+             *
              * This shouldn't ever happen?
              */
             // if (node == nullptr || node->getPoint() == sample) {

@@ -39,7 +39,14 @@ int sign(T number) {
 }
 
 double mod(double dividend, double divisor) {
-    return std::fmod(std::fmod(dividend, divisor) + divisor, divisor);
+    const double cpp_mod = std::fmod(dividend, divisor);
+
+    if (cpp_mod < -0.001) {
+        return cpp_mod + divisor;
+    }
+
+    return cpp_mod;
+    // return std::fmod(std::fmod(dividend, divisor) + divisor, divisor);
 }
 
 bool compareRRTOptionLength(const RRTOption &first, const RRTOption &second) {
@@ -48,10 +55,6 @@ bool compareRRTOptionLength(const RRTOption &first, const RRTOption &second) {
 
 Vector findOrthogonalVector2D(const Vector &vector) {
     return Vector{-vector.y, vector.x, vector.z};
-}
-
-double distanceBetween(const Vector &vector1, const Vector &vector2) {
-    return (vector1 - vector2).norm();
 }
 
 Vector halfDisplacement(const Vector &vector1, const Vector &vector2) {
@@ -119,7 +122,7 @@ std::vector<Vector> Dubins::generatePointsStraight(const RRTPoint &start, const 
         final_terminal_point = Vector{end.coord.x, end.coord.y, 0};
     }
 
-    double distance_straight = distanceBetween(initial_terminal_point, final_terminal_point);
+    double distance_straight = initial_terminal_point.distanceTo(final_terminal_point);
 
     //  generates the points for the entire curve.
     std::vector<Vector> points_list;
@@ -171,7 +174,7 @@ std::vector<Vector> Dubins::generatePointsCurve(const RRTPoint &start, const RRT
     Vector center_0 = findCenter(start, (path.beta_0 > 0) ? 'L' : 'R');
     Vector center_2 = findCenter(end, (path.beta_2 > 0) ? 'L' : 'R');
 
-    double half_intercenter_distance = distanceBetween(center_0, center_2) / 2;
+    double half_intercenter_distance = center_0.distanceTo(center_2) / 2;
     // uses pythagorean theorem to determine the center
     Vector center_1 =
         0.5 * (center_0 + center_2)  // midpoint
@@ -226,7 +229,7 @@ std::vector<Vector> Dubins::generatePoints(const RRTPoint &start, const RRTPoint
 
 RRTOption Dubins::lsl(const RRTPoint &start, const RRTPoint &end, const Vector &center_0,
                       const Vector &center_2) const {
-    double straight_distance = distanceBetween(center_0, center_2);
+    double straight_distance = center_0.distanceTo(center_2);
 
     // angle relative to horizontal
     double alpha = std::atan2(center_2.y - center_0.y, center_2.x - center_0.x);
@@ -242,7 +245,7 @@ RRTOption Dubins::lsl(const RRTPoint &start, const RRTPoint &end, const Vector &
 
 RRTOption Dubins::rsr(const RRTPoint &start, const RRTPoint &end, const Vector &center_0,
                       const Vector &center_2) const {
-    double straight_distance = distanceBetween(center_0, center_2);
+    double straight_distance = center_0.distanceTo(center_2);
 
     // angle relative to horizontal
     double alpha = std::atan2(center_2.y - center_0.y, center_2.x - center_0.x);
@@ -324,7 +327,7 @@ RRTOption Dubins::rsl(const RRTPoint &start, const RRTPoint &end, const Vector &
 
 RRTOption Dubins::lrl(const RRTPoint &start, const RRTPoint &end, const Vector &center_0,
                       const Vector &center_2) const {
-    double intercenter_distance = distanceBetween(center_0, center_2);
+    double intercenter_distance = center_0.distanceTo(center_2);
     Vector half_displacement = halfDisplacement(center_2, center_0);
     double psi_0 = std::atan2(half_displacement.y, half_displacement.x);
 
@@ -354,7 +357,7 @@ RRTOption Dubins::lrl(const RRTPoint &start, const RRTPoint &end, const Vector &
 
 RRTOption Dubins::rlr(const RRTPoint &start, const RRTPoint &end, const Vector &center_0,
                       const Vector &center_2) const {
-    double intercenter_distance = distanceBetween(center_0, center_2);
+    double intercenter_distance = center_0.distanceTo(center_2);
     Vector half_displacement = halfDisplacement(center_2, center_0);
     double psi_0 = std::atan2(half_displacement.y, half_displacement.x);
 
@@ -390,12 +393,44 @@ std::vector<RRTOption> Dubins::allOptions(const RRTPoint &start, const RRTPoint 
     Vector center_2_left = findCenter(end, 'L');
     Vector center_2_right = findCenter(end, 'R');
 
-    std::vector<RRTOption> options = {lsl(start, end, center_0_left, center_2_left),
-                                      rsr(start, end, center_0_right, center_2_right),
-                                      rsl(start, end, center_0_right, center_2_left),
-                                      lsr(start, end, center_0_left, center_2_right),
-                                      rlr(start, end, center_0_right, center_2_right),
-                                      lrl(start, end, center_0_left, center_2_left)};
+    // try to add each option to the list of options, if the distance is not
+    // a number or infinite, don't add it
+    // std::vector<RRTOption> options;
+    // RRTOption lsl_option = lsl(start, end, center_0_left, center_2_left);
+    // if (std::isnan(lsl_option.length) || std::isfinite(lsl_option.length)) {
+    //     options.emplace_back(lsl_option);
+    // }
+
+    // RRTOption rsr_option = rsr(start, end, center_0_right, center_2_right);
+    // if (std::isnan(rsr_option.length) || std::isfinite(rsr_option.length)) {
+    //     options.emplace_back(rsr_option);
+    // }
+
+    // RRTOption lsr_option = lsr(start, end, center_0_left, center_2_right);
+    // if (std::isnan(lsr_option.length) || std::isfinite(lsr_option.length)) {
+    //     options.emplace_back(lsr_option);
+    // }
+
+    // RRTOption rsl_option = rsl(start, end, center_0_right, center_2_left);
+    // if (std::isnan(rsl_option.length) || std::isfinite(rsl_option.length)) {
+    //     options.emplace_back(rsl_option);
+    // }
+
+    std::vector<RRTOption> options = {
+        lsl(start, end, center_0_left, center_2_left),
+        rsr(start, end, center_0_right, center_2_right),
+        rsl(start, end, center_0_right, center_2_left),
+        lsr(start, end, center_0_left, center_2_right)
+        //   ,
+        //   lrl(start, end, center_0_left, center_2_left),
+        //   rlr(start, end, center_0_right, center_2_right)
+    };
+
+    // const double intercenter_distance = center_0_left.distanceTo(center_2_left);
+    // if (intercenter_distance > 2 * _radius || intercenter_distance < 4 * _radius) {
+    //     options.push_back(lrl(start, end, center_0_left, center_2_left));
+    //     options.push_back(rlr(start, end, center_0_right, center_2_right));
+    // }
 
     if (sort) {
         std::sort(options.begin(), options.end(), compareRRTOptionLength);
@@ -409,4 +444,9 @@ std::vector<Vector> Dubins::dubinsPath(const RRTPoint &start, const RRTPoint &en
     RRTOption optimal_option =
         *std::min_element(options.begin(), options.end(), compareRRTOptionLength);
     return generatePoints(start, end, optimal_option.dubins_path, optimal_option.has_straight);
+}
+
+RRTOption Dubins::bestOption(const RRTPoint &start, const RRTPoint &end) const {
+    std::vector<RRTOption> options = allOptions(start, end);
+    return *std::min_element(options.begin(), options.end(), compareRRTOptionLength);
 }

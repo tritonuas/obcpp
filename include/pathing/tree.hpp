@@ -198,7 +198,7 @@ class RRTTree {
      *
      * @return RRTPoint random point in environment
      */
-    RRTPoint getRandomPoint(double search_radiusl) const;
+    RRTPoint getRandomPoint(double search_radius) const;
 
     /**
      * Returns a sorted list of the paths to get from a given node to the sampled
@@ -269,7 +269,7 @@ class RRTTree {
      * @param point     ==> the point to find the nearest node to
      * @return          ==> the nearest node to the point
      */
-    RRTNode* getNearestNode(const RRTPoint& point) const;
+    std::pair<RRTNode*, double> getNearestNode(const XYZCoord& point) const;
 
     /**
      * RRTStar Recursive

@@ -98,15 +98,15 @@ class Environment {
         return true;
     }
 
-    bool isPathInBoundsAdv(const std::vector<XYZCoord>& path, const RRTOption& option) {
-        if (!option.has_straight) {
-            return isPathInBounds(path);
-        }
+    bool isPathInBoundsAdv(const std::vector<XYZCoord>& path, const RRTOption& option) const {
+        // if (!option.has_straight) {
+        //     return isPathInBounds(path);
+        // }
 
         // finds the last point on the first curve, and the first point on the second curve
         // does this using the option, using arclength and the point separation
         const int first_curve_end =
-            std::abs(option.dubins_path.beta_0) * TURNING_RADIUS / POINT_SEPARATION;
+            std::abs(option.dubins_path.beta_0) * TURNING_RADIUS / POINT_SEPARATION + 1;
         const int second_curve_start =
             path.size() - std::abs(option.dubins_path.beta_2) * TURNING_RADIUS / POINT_SEPARATION;
 
@@ -158,9 +158,9 @@ class Environment {
      *
      * @param start_point the startpoint used to generate a random point
      * @param search_radius the radius of the search region
-     * @return a random RRTPoint in the valid region
+     * @return a random XYZCoord in the valid region
      */
-    RRTPoint getRandomPoint() const {
+    XYZCoord getRandomPoint() const {
         // TODO - use some heuristic to more efficiently generate direction
         // vector (and make it toggleable)
 
@@ -171,11 +171,11 @@ class Environment {
 
             if (isPointInBounds(generated_point)) {
                 // print out the random point
-                return RRTPoint(generated_point, 0);
+                return generated_point;
             }
         }
 
-        return RRTPoint(goals[goals_found], random(0, TWO_PI));
+        return goals[goals_found];
     }
 
     /**
