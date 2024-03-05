@@ -302,12 +302,12 @@ class Dubins {
 
     /**
      * Returns the optimal RRTOption from the list of options
-     * 
+     *
      * @param start     ==> vector at start position
      * @param end       ==> vector at end position
      * @return          ==> the optimal RRTOption from the list of options
-    */
-   RRTOption bestOption(const RRTPoint &start, const RRTPoint &end) const;
+     */
+    RRTOption bestOption(const RRTPoint &start, const RRTPoint &end) const;
 
  private:
     const double _radius;

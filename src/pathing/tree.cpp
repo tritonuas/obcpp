@@ -248,7 +248,7 @@ std::vector<std::pair<RRTNode*, RRTOption>> RRTTree::pathingOptions(const RRTPoi
     std::vector<std::pair<RRTNode*, RRTOption>> options;
     // fillOptions(options, current_head, end);
 
-    const std::vector<RRTNode*>& nodes = getKRandomNodes(end, 100);
+    const std::vector<RRTNode*>& nodes = getKClosestNodes(end, 100);
     fillOptionsNodes(options, nodes, end);
 
     // sorts the list

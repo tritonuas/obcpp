@@ -1,7 +1,8 @@
 #ifndef INCLUDE_PATHING_TREE_HPP_
 #define INCLUDE_PATHING_TREE_HPP_
 
-#include <queue>
+#include <algorithm>
+#include <limits>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -14,16 +15,6 @@
 class RRTNode;
 typedef std::vector<RRTNode*> RRTNodeList;
 typedef XYZCoord Vector;
-
-// Define a custom comparison function
-struct CustomCompare {
-    CustomCompare() = default;
-    bool operator()(const std::pair<double, RRTNode*>& a, const std::pair<double, RRTNode*>& b) {
-        // Define your custom comparison logic here
-        // For example, let's say we want a max heap
-        return a.first < b.first;  // Change to a > b for max heap
-    }
-};
 
 class RRTNode {
  public:
@@ -266,7 +257,7 @@ class RRTTree {
     std::vector<XYZCoord> getPathToGoal() const;
 
     std::vector<RRTNode*> getKRandomNodes(const RRTPoint& sample, int k) const {
-        std::vector<RRTNode*> nodes;   
+        std::vector<RRTNode*> nodes;
         std::vector<RRTNode*> random_nodes;
         getKRandomNodesRecursive(nodes, current_head, k);
 
@@ -295,7 +286,8 @@ class RRTTree {
         return random_nodes;
     }
 
-    void getKRandomNodesRecursive(std::vector<RRTNode*>& nodes, RRTNode* current_node, int k) const {
+    void getKRandomNodesRecursive(std::vector<RRTNode*>& nodes, RRTNode* current_node,
+                                  int k) const {
         if (current_node == nullptr) {
             return;
         }

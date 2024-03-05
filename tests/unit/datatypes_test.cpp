@@ -142,6 +142,36 @@ TEST(XYZCoordOperations, scalarMultiplication) {
 }
 
 /*
+ *   Tests XYZCoord::distanceTo()
+ */
+TEST(DubinsUtilTest, DistanceBetweenVectors) {
+    // 3-4-5 right triangle
+    XYZCoord start_vector1{3.0, 0.0, 0};
+    XYZCoord end_vector1{0.0, 4.0, 0};
+
+    // trivial case
+    XYZCoord start_vector2{0.0, 0.0, 0};
+    XYZCoord end_vector2{0.0, 0.0, 0};
+
+    // scalar multiples
+    XYZCoord start_vector3{1.0, 0.0, 0};
+    XYZCoord end_vector3{2.0, 0.0, 0};
+
+    XYZCoord start_vector4{3.0, 4.0, 0};
+    XYZCoord end_vector4{0.0, 0.0, 0};
+
+    XYZCoord start_vector5{102.5, -125.5, 0};
+    XYZCoord end_vector5{1825.0, 2389.8, 0};
+
+    EXPECT_DOUBLE_EQ(start_vector1.distanceTo(end_vector1), 5.0);
+    EXPECT_DOUBLE_EQ(start_vector2.distanceTo(end_vector2), 0.0);
+    EXPECT_DOUBLE_EQ(start_vector3.distanceTo(end_vector3), 1.0);
+    EXPECT_DOUBLE_EQ(start_vector4.distanceTo(end_vector4), 5.0);
+    EXPECT_NEAR(start_vector5.distanceTo(end_vector5), 3048.56, 0.1);
+}
+
+
+/*
  *   tests XYZCoord::norm()
  */
 TEST(XYZCoordOperations, norm) {

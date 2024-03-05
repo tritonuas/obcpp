@@ -42,12 +42,7 @@ XYZCoord operator-(const XYZCoord &lhs, const XYZCoord &rhs) {
 }
 
 XYZCoord operator*(double scalar, const XYZCoord &vector) {
-    XYZCoord result{
-        vector.x * scalar, vector.y * scalar,
-        vector.z * scalar  //
-    };
-
-    return result;
+    return {vector.x * scalar, vector.y * scalar, vector.z * scalar};
 }
 
 XYZCoord operator*(const XYZCoord &vector, double scalar) { return scalar * vector; }
@@ -57,9 +52,7 @@ double XYZCoord::distanceToSquared(const XYZCoord &other) const {
     return (*this - other).normSquared();
 }
 
-double XYZCoord::norm() const {
-    return sqrt(this->x * this->x + this->y * this->y + this->z * this->z);
-}
+double XYZCoord::norm() const { return sqrt(this->normSquared()); }
 
 double XYZCoord::normSquared() const {
     return this->x * this->x + this->y * this->y + this->z * this->z;
@@ -85,10 +78,11 @@ std::size_t PointHashFunction::operator()(const RRTPoint &point) const {
 
     return c2;
 }
+
 RRTPoint::RRTPoint(XYZCoord point, double psi) : coord{point}, psi{psi} {}
 
 bool RRTPoint::operator==(const RRTPoint &otherPoint) const {
-    return (this->coord == otherPoint.coord && this->psi == otherPoint.psi);
+    return this->coord == otherPoint.coord && floatingPointEquals(this->psi, otherPoint.psi);
 }
 
 double RRTPoint::distanceTo(const RRTPoint &otherPoint) const {

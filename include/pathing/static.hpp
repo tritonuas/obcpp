@@ -45,7 +45,7 @@ class RRT {
 
         for (int current_goal_index = 0; current_goal_index < total_goals; current_goal_index++) {
             // tries to connect directly to the goal
-            if (connectToGoal(current_goal_index) ) {
+            if (connectToGoal(current_goal_index)) {
                 continue;
             }
 
@@ -72,6 +72,8 @@ class RRT {
     const double search_radius;
     const double rewire_radius;
 
+    // the different of final approaches to the goal
+    // yes, this is the default unit circle diagram used in High-School
     const std::vector<double> angles = {
         0,
         M_PI / 6,

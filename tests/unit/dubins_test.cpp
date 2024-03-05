@@ -76,35 +76,6 @@ TEST(DubinsUtilTest, Orthogonal2D) {
 }
 
 /*
- *   Tests dubins ==> distanceBetween()
- */
-TEST(DubinsUtilTest, DistanceBetweenVectors) {
-    // 3-4-5 right triangle
-    Vector start_vector1{3.0, 0.0, 0};
-    Vector end_vector1{0.0, 4.0, 0};
-
-    // trivial case
-    Vector start_vector2{0.0, 0.0, 0};
-    Vector end_vector2{0.0, 0.0, 0};
-
-    // scalar multiples
-    Vector start_vector3{1.0, 0.0, 0};
-    Vector end_vector3{2.0, 0.0, 0};
-
-    Vector start_vector4{3.0, 4.0, 0};
-    Vector end_vector4{0.0, 0.0, 0};
-
-    Vector start_vector5{102.5, -125.5, 0};
-    Vector end_vector5{1825.0, 2389.8, 0};
-
-    EXPECT_DOUBLE_EQ(start_vector1.distanceTo(end_vector1), 5.0);
-    EXPECT_DOUBLE_EQ(start_vector2.distanceTo(end_vector2), 0.0);
-    EXPECT_DOUBLE_EQ(start_vector3.distanceTo(end_vector3), 1.0);
-    EXPECT_DOUBLE_EQ(start_vector4.distanceTo(end_vector4), 5.0);
-    EXPECT_NEAR(start_vector5.distanceTo(end_vector5), 3048.56, 0.1);
-}
-
-/*
  *   tests dubins ==> halfDisplacement()
  */
 TEST(DubinsUtilTest, HalfDisplacement) {
