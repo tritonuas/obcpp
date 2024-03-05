@@ -53,9 +53,16 @@ XYZCoord operator*(double scalar, const XYZCoord &vector) {
 XYZCoord operator*(const XYZCoord &vector, double scalar) { return scalar * vector; }
 
 double XYZCoord::distanceTo(const XYZCoord &other) const { return (*this - other).norm(); }
+double XYZCoord::distanceToSquared(const XYZCoord &other) const {
+    return (*this - other).normSquared();
+}
 
 double XYZCoord::norm() const {
     return sqrt(this->x * this->x + this->y * this->y + this->z * this->z);
+}
+
+double XYZCoord::normSquared() const {
+    return this->x * this->x + this->y * this->y + this->z * this->z;
 }
 
 XYZCoord XYZCoord::normalized() const {
@@ -86,6 +93,10 @@ bool RRTPoint::operator==(const RRTPoint &otherPoint) const {
 
 double RRTPoint::distanceTo(const RRTPoint &otherPoint) const {
     return this->coord.distanceTo(otherPoint.coord);
+}
+
+double RRTPoint::distanceToSquared(const RRTPoint &otherPoint) const {
+    return this->coord.distanceToSquared(otherPoint.coord);
 }
 
 GPSCoord makeGPSCoord(double lat, double lng, double alt) {

@@ -1,6 +1,7 @@
 #ifndef INCLUDE_PATHING_TREE_HPP_
 #define INCLUDE_PATHING_TREE_HPP_
 
+#include <queue>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -13,6 +14,16 @@
 class RRTNode;
 typedef std::vector<RRTNode*> RRTNodeList;
 typedef XYZCoord Vector;
+
+// Define a custom comparison function
+struct CustomCompare {
+    CustomCompare() = default;
+    bool operator()(const std::pair<double, RRTNode*>& a, const std::pair<double, RRTNode*>& b) {
+        // Define your custom comparison logic here
+        // For example, let's say we want a max heap
+        return a.first < b.first;  // Change to a > b for max heap
+    }
+};
 
 class RRTNode {
  public:
@@ -253,6 +264,96 @@ class RRTTree {
      * @return  ==> list of 2-vectors to the goal region
      */
     std::vector<XYZCoord> getPathToGoal() const;
+
+    std::vector<RRTNode*> getKRandomNodes(const RRTPoint& sample, int k) const {
+        std::vector<RRTNode*> nodes;   
+        std::vector<RRTNode*> random_nodes;
+        getKRandomNodesRecursive(nodes, current_head, k);
+
+        int size = nodes.size();
+
+        if (size <= k) {
+            return nodes;
+        }
+
+        double chance = k / size;
+
+        for (int i = 0; i < size; i++) {
+            if (size - i > k - random_nodes.size()) {
+                random_nodes.emplace_back(nodes[i]);
+            } else {
+                if (random(0, 1) < chance) {
+                    random_nodes.emplace_back(nodes[i]);
+                }
+            }
+
+            if (random_nodes.size() == k) {
+                break;
+            }
+        }
+
+        return random_nodes;
+    }
+
+    void getKRandomNodesRecursive(std::vector<RRTNode*>& nodes, RRTNode* current_node, int k) const {
+        if (current_node == nullptr) {
+            return;
+        }
+
+        nodes.emplace_back(current_node);
+
+        for (RRTNode* node : current_node->getReachable()) {
+            getKRandomNodesRecursive(nodes, node, k);
+        }
+    }
+
+    std::vector<RRTNode*> getKClosestNodes(const RRTPoint& sample, int k) const {
+        std::vector<RRTNode*> closest_nodes;
+        std::vector<std::pair<double, RRTNode*>> nodes_by_distance;
+        getKClosestNodesRecursive(nodes_by_distance, sample, current_head);
+        // Get the k closest nodes from the priority queue
+        std::sort(nodes_by_distance.begin(), nodes_by_distance.end(),
+                  [](auto& left, auto& right) { return left.first < right.first; });
+
+        int size = nodes_by_distance.size();
+        int stop_condition = std::min(k, size);
+        for (int i = 0; i < stop_condition; i++) {
+            closest_nodes.emplace_back(nodes_by_distance[i].second);
+        }
+
+        return closest_nodes;
+    }
+
+    void getKClosestNodesRecursive(std::vector<std::pair<double, RRTNode*>>& nodes_by_distance,
+                                   const RRTPoint& sample, RRTNode* current_node) const {
+        if (current_node == nullptr) {
+            return;
+        }
+
+        double distance = sample.coord.distanceToSquared(current_node->getPoint().coord);
+        nodes_by_distance.push_back({distance, current_node});
+
+        for (RRTNode* node : current_node->getReachable()) {
+            getKClosestNodesRecursive(nodes_by_distance, sample, node);
+        }
+    }
+
+    void fillOptionsNodes(std::vector<std::pair<RRTNode*, RRTOption>>& options,
+                          const std::vector<RRTNode*>& nodes, const RRTPoint& sample) const {
+        for (RRTNode* node : nodes) {
+            const std::vector<RRTOption>& local_options =
+                dubins.allOptions(node->getPoint(), sample);
+
+            for (const RRTOption& option : local_options) {
+                if (std::isnan(option.length) ||
+                    option.length == std::numeric_limits<double>::infinity()) {
+                    continue;
+                }
+
+                options.push_back({node, option});
+            }
+        }
+    }
 
  private:
     RRTNode* root;

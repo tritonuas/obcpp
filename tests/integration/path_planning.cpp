@@ -259,7 +259,7 @@ int main() {
     Polygon obs2 = {XYZCoord(-200, -600, 0), XYZCoord(100, -600, 0), XYZCoord(250, -300, 0),
                     XYZCoord(0, -300, 0)};
 
-    std::vector<Polygon> obstacles = {obs1};
+    std::vector<Polygon> obstacles = {obs1, obs2};
 
     RRTPoint start = RRTPoint(state->config.getWaypoints()[0], 0);
 
@@ -319,7 +319,12 @@ int main() {
 
     std::cout << "Start Plotting" << std::endl;
 
-    PathingPlot plotter("pathing_output", state->config.getFlightBoundary(), obstacles[1], goals);
+    // for (const XYZCoord& point : path) {
+    //     file << point.x << ", " << point.y << std::endl;
+    // }
+
+
+    PathingPlot plotter("pathing_output", state->config.getFlightBoundary(), obstacles[0], goals);
 
     plotter.addFinalPolyline(rrt.getPointsToGoal());
     plotter.output("test_final_path", PathOutputType::BOTH);
@@ -327,10 +332,7 @@ int main() {
     elapsed = end_time - start_time;
     std::cout << "Time to plot: " << elapsed.count() << "s" << std::endl;
 
-    for (const XYZCoord& point : path) {
-        file << point.x << ", " << point.y << std::endl;
-    }
-
+    
     file.close();
     return 0;
 }

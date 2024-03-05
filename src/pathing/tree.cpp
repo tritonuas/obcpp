@@ -246,7 +246,10 @@ std::vector<std::pair<RRTNode*, RRTOption>> RRTTree::pathingOptions(const RRTPoi
                                                                     int quantity_options) const {
     // fills the options list with valid values
     std::vector<std::pair<RRTNode*, RRTOption>> options;
-    fillOptions(options, current_head, end);
+    // fillOptions(options, current_head, end);
+
+    const std::vector<RRTNode*>& nodes = getKRandomNodes(end, 100);
+    fillOptionsNodes(options, nodes, end);
 
     // sorts the list
     std::sort(options.begin(), options.end(), [](auto a, auto b) {
@@ -269,6 +272,7 @@ std::vector<std::pair<RRTNode*, RRTOption>> RRTTree::pathingOptions(const RRTPoi
     return options;
 }
 
+// only get the first 10 nodes
 void RRTTree::fillOptions(std::vector<std::pair<RRTNode*, RRTOption>>& options, RRTNode* node,
                           const RRTPoint& end) const {
     /*
@@ -311,6 +315,21 @@ void RRTTree::setCurrentHead(RRTNode* goal) {
         std::cout << "FAILURE: Goal is not in the tree\n" << std::endl;
         return;
     }
+
+    // prune the tree
+    RRTNode* current_node = goal;
+    RRTNode* parent_node = goal->getParent();
+    while (parent_node != nullptr) {
+        for (RRTNode* child : parent_node->getReachable()) {
+            if (child != current_node) {
+                parent_node->removeReachable(child);
+            }
+        }
+
+        current_node = parent_node;
+        parent_node = parent_node->getParent();
+    }
+
     current_head = goal;
 }
 
@@ -337,7 +356,7 @@ std::pair<RRTNode*, double> RRTTree::getNearestNode(const XYZCoord& point) const
     double min_distance = std::numeric_limits<double>::infinity();
 
     for (auto& [key, value] : node_map) {
-        double distance = point.distanceTo(key.coord);
+        double distance = point.distanceToSquared(key.coord);
         if (distance < min_distance) {
             min_distance = distance;
             nearest = value;
@@ -356,7 +375,8 @@ void RRTTree::RRTStarRecursive(RRTNode* current_node, RRTNode* sample, double re
     // for all nodes past the current node, attempt to rewire them
     for (RRTNode* child : current_node->getReachable()) {
         // get the distance between the current node and the nearest node
-        if (child->getPoint().distanceTo(sample->getPoint()) > rewire_radius) {
+        if (child->getPoint().distanceToSquared(sample->getPoint()) >
+            rewire_radius * rewire_radius) {
             continue;
         }
 

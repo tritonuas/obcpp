@@ -41,12 +41,14 @@ struct XYZCoord {
      * @param other point to calculate distance to
     */
     double distanceTo(const XYZCoord& other) const;
+    double distanceToSquared(const XYZCoord& other) const;
 
     /**
      * @returns the magnitude of a vector
      * @see https://mathworld.wolfram.com/VectorNorm.html
      */
     double norm() const;
+    double normSquared() const;
 
     XYZCoord normalized() const;
 
@@ -63,6 +65,7 @@ struct RRTPoint {
     bool operator==(const RRTPoint &otherPoint) const;
 
     double distanceTo(const RRTPoint &otherPoint) const;
+    double distanceToSquared(const RRTPoint& otherPoint) const;
 
     XYZCoord coord;
     double psi;

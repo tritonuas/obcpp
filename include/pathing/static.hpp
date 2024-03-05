@@ -45,9 +45,7 @@ class RRT {
 
         for (int current_goal_index = 0; current_goal_index < total_goals; current_goal_index++) {
             // tries to connect directly to the goal
-            RRTNode *direct_connection = connectToGoal(current_goal_index);
-            if (direct_connection != nullptr) {
-                tree.setCurrentHead(direct_connection);
+            if (connectToGoal(current_goal_index) ) {
                 continue;
             }
 
@@ -55,10 +53,7 @@ class RRT {
             RRTIteration(iterations_per_waypoint);
 
             // connect to the goal after RRT is finished
-            RRTNode *goal_connection = connectToGoal(current_goal_index);
-            if (goal_connection != nullptr) {
-                tree.setCurrentHead(goal_connection);
-            }
+            connectToGoal(current_goal_index);
         }
     }
 
@@ -134,7 +129,7 @@ class RRT {
      * @return                      ==> pointer to the node if it was added,
      * nullptr otherwise
      */
-    RRTNode *connectToGoal(int current_goal_index) {
+    bool connectToGoal(int current_goal_index) {
         // attempts to connect to the goal, should always connect
         std::vector<RRTPoint> goal_points;
         for (const double angle : angles) {
@@ -172,11 +167,13 @@ class RRT {
             RRTNode *new_node = tree.addNode(anchor_node, goal, option);
 
             if (new_node != nullptr) {
-                return new_node;
+                // print out coordinate of new_node
+                tree.setCurrentHead(new_node);
+                return true;
             }
         }
 
-        return nullptr;
+        return false;
     }
 
     /**
