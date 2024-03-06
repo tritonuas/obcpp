@@ -32,6 +32,31 @@ class MissionState {
     std::chrono::milliseconds doTick();
     TickID getTickID();
 
+    void setTick(Tick* newTick);
+
+    void setInitPath(std::vector<GPSCoord> init_path);
+    const std::vector<GPSCoord>& getInitPath();
+
+    /*
+     * Gets a shared_ptr to the mavlink client. 
+     * IMPORTANT: need to check that the pointer is not nullptr
+     * before accessing, to make sure the connection has already
+     * been established
+     */
+    std::shared_ptr<MavlinkClient> getMav();
+    void setMav(std::shared_ptr<MavlinkClient> mav);
+
+    /*
+     * Gets a shared_ptr to the airdrop client.
+     * IMPORTANT: need to check that the pointer is not nullptr
+     * before accessing, to make sure the connection has already
+     * been established
+     */
+    std::shared_ptr<AirdropClient> getAirdrop();
+    void setAirdrop(std::shared_ptr<AirdropClient> airdrop);
+
+    MissionConfig config;  // has its own mutex
+
     template<typename TickSubClass>
     bool sendTickMsg(TickSubClass::Message msg) {
         TickSubClass* tick = dynamic_cast<TickSubClass*>(this->tick.get());
@@ -60,29 +85,6 @@ class MissionState {
         return true;
     }
 
-    void setInitPath(std::vector<GPSCoord> init_path);
-    const std::vector<GPSCoord>& getInitPath();
-
-    /*
-     * Gets a shared_ptr to the mavlink client. 
-     * IMPORTANT: need to check that the pointer is not nullptr
-     * before accessing, to make sure the connection has already
-     * been established
-     */
-    std::shared_ptr<MavlinkClient> getMav();
-    void setMav(std::shared_ptr<MavlinkClient> mav);
-
-    /*
-     * Gets a shared_ptr to the airdrop client.
-     * IMPORTANT: need to check that the pointer is not nullptr
-     * before accessing, to make sure the connection has already
-     * been established
-     */
-    std::shared_ptr<AirdropClient> getAirdrop();
-    void setAirdrop(std::shared_ptr<AirdropClient> airdrop);
-
-    MissionConfig config;  // has its own mutex
-
  private:
     std::mutex converter_mut;
     std::optional<CartesianConverter<GPSProtoVec>> converter;
@@ -97,10 +99,8 @@ class MissionState {
 
     std::shared_ptr<MavlinkClient> mav;
     std::shared_ptr<AirdropClient> airdrop;
-    
 
     void _setTick(Tick* newTick);  // does not acquire the tick_mut
 };
-
 
 #endif  // INCLUDE_CORE_MISSION_STATE_HPP_

@@ -17,17 +17,24 @@ std::chrono::milliseconds PathValidateTick::getWait() const {
 
 Tick* PathValidateTick::tick() {
     Message status;
-    if (!this->state->recvTickMsg<PathValidateTick>(status)) {
+    if (!this->already_validated && !this->state->recvTickMsg<PathValidateTick>(status)) {
+        // haven't already received a validated msg & there is no current msg
         return nullptr;
     }
 
-    switch (status) {
-        case Message::Rejected:
-            return new PathGenTick(this->state);
-        case Message::Validated:
-            if (this->state->getMav() != nullptr) {
-                return new MissionUploadTick(this->state);
-            }
+    if (this->already_validated || status == Message::Validated) {
+        if (this->state->getMav() != nullptr) {
+            return new MissionUploadTick(this->state);
+        } else {
+            this->already_validated = true;
+            LOG_F(WARNING, "Path Validated, but cannot continue because mavlink not connected.");
+            return nullptr;
+        }
+    } else if (status == Message::Rejected) {
+        return new PathGenTick(this->state);
+    } else {
+        LOG_F(ERROR, "Invalid id %d passed into PathValidateTick::tick()",
+            static_cast<int>(status));
     }
 
     return nullptr;
