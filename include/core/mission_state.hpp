@@ -73,7 +73,7 @@ class MissionState {
     // because TickSubClass::Message can't be passed into the std::optional as a further
     // template argument because it isn't a defined type at this point
     template<typename TickSubClass>
-    bool recvTickMsg(TickSubClass::Message& msg) {
+    bool recvTickMsg(TickSubClass::Message* msg) {
         Lock lock(this->tick_msgs_mut);
         if (this->tick_msgs.empty()) {
             return false;
@@ -81,7 +81,7 @@ class MissionState {
 
         int msg_int = this->tick_msgs.front();
         this->tick_msgs.pop();
-        msg = static_cast<TickSubClass::Message>(msg_int);
+        *msg = static_cast<TickSubClass::Message>(msg_int);
         return true;
     }
 

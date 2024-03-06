@@ -15,8 +15,8 @@
 class PathValidateTick : public Tick {
  public:
     enum class Message {
-        Rejected = -1, // user rejects the path, return to path generation and try again
-        Validated = 1, // user accepts the path, continue to mission upload
+        Rejected = -1,  // user rejects the path, return to path generation and try again
+        Validated = 1,  // user accepts the path, continue to mission upload
     };
 
     explicit PathValidateTick(std::shared_ptr<MissionState> state);

@@ -17,7 +17,7 @@ std::chrono::milliseconds PathValidateTick::getWait() const {
 
 Tick* PathValidateTick::tick() {
     Message status;
-    if (!this->already_validated && !this->state->recvTickMsg<PathValidateTick>(status)) {
+    if (!this->already_validated && !this->state->recvTickMsg<PathValidateTick>(&status)) {
         // haven't already received a validated msg & there is no current msg
         return nullptr;
     }

@@ -31,14 +31,10 @@ void MissionState::setCartesianConverter(CartesianConverter<GPSProtoVec> new_con
 std::chrono::milliseconds MissionState::doTick() {
     Lock lock(this->tick_mut);
 
-    VLOG_F(TRACE, "in do tick");
-
     Tick* newTick = this->tick->tick();
     if (newTick) {
         this->_setTick(newTick);
     }
-    
-    VLOG_F(TRACE, "bottom do tick");
 
     return this->tick->getWait();
 }
