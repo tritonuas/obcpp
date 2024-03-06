@@ -259,13 +259,13 @@ int main() {
     Polygon obs2 = {XYZCoord(-200, -600, 0), XYZCoord(100, -600, 0), XYZCoord(250, -300, 0),
                     XYZCoord(0, -300, 0)};
 
-    std::vector<Polygon> obstacles = {obs1, obs2};
+    std::vector<Polygon> obstacles = {obs1};
 
     RRTPoint start = RRTPoint(state->config.getWaypoints()[0], 0);
 
-    int num_iterations = 750;
+    int num_iterations = 100;
     double search_radius = 9999;
-    double rewire_radius = 9999;
+    double rewire_radius = 100;
 
     auto s_time = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < 100; i++) {
@@ -323,7 +323,6 @@ int main() {
     //     file << point.x << ", " << point.y << std::endl;
     // }
 
-
     PathingPlot plotter("pathing_output", state->config.getFlightBoundary(), obstacles[0], goals);
 
     plotter.addFinalPolyline(rrt.getPointsToGoal());
@@ -332,7 +331,6 @@ int main() {
     elapsed = end_time - start_time;
     std::cout << "Time to plot: " << elapsed.count() << "s" << std::endl;
 
-    
     file.close();
     return 0;
 }

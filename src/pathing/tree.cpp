@@ -94,15 +94,26 @@ RRTTree::RRTTree(RRTPoint root_point, Environment airspace, Dubins dubins)
     RRTNode* new_node = new RRTNode(root_point, 0);
     root = new_node;
     current_head = new_node;
-    node_map.insert({root_point, new_node});
 }
 
 // TODO - seems a bit sketchy
 RRTTree::~RRTTree() {
-    for (std::pair<RRTPoint, RRTNode*> node : node_map) {
-        delete node.second;
-    }
+    deleteTree(root);
 }
+
+void RRTTree::deleteTree(RRTNode* node) {
+    if (node == nullptr) {
+        return;
+    }
+
+    for (RRTNode* child : node->getReachable()) {
+        deleteTree(child);
+    }
+
+    delete node;
+}
+
+
 
 // TODO - convert from old to new
 RRTNode* RRTTree::addNode(RRTNode* anchor_node, const RRTPoint& new_point,
@@ -124,8 +135,6 @@ RRTNode* RRTTree::addNode(RRTNode* anchor_node, const RRTPoint& new_point,
     RRTEdge new_edge = RRTEdge(anchor_node, new_node, path, option.length);
     edge_map.emplace(edgePair, new_edge);
 
-    // inserting the node into the tree
-    node_map.emplace(new_node->getPoint(), new_node);
 
     // changing state of its parent
     anchor_node->addReachable(new_node);
@@ -153,15 +162,6 @@ void RRTTree::rewireEdge(RRTNode* current_node, RRTNode* previous_parent, RRTNod
     reassignCosts(current_node);
 }
 
-// ALSO BROKEN
-RRTNode* RRTTree::getNode(const RRTPoint& point) const {
-    if (node_map.count(point) > 0) {
-        return node_map.at(point);
-    } else {
-        return nullptr;
-    }
-}
-
 // BROKEN
 // RRTEdge* RRTTree::getEdge(const RRTPoint& from, const RRTPoint& to) {
 //     RRTNode* node1 = getNode(from);
@@ -178,7 +178,12 @@ RRTNode* RRTTree::getNode(const RRTPoint& point) const {
 //     }
 // }
 
-// TODO decide if this should return a pointer or not
+RRTNode* RRTTree::getRoot() const { return this->root; }
+
+XYZCoord RRTTree::getGoal() const { return airspace.getGoal(); }
+
+XYZCoord RRTTree::getGoal(int index) const { return airspace.getGoal(index); }
+
 RRTEdge RRTTree::getEdge(RRTNode* from, RRTNode* to) const {
     std::pair<RRTNode*, RRTNode*> edgePair(from, to);
 
@@ -188,12 +193,6 @@ RRTEdge RRTTree::getEdge(RRTNode* from, RRTNode* to) const {
         return RRTEdge(nullptr, nullptr, {}, std::numeric_limits<double>::infinity());
     }
 }
-
-RRTNode* RRTTree::getRoot() const { return this->root; }
-
-XYZCoord RRTTree::getGoal() const { return airspace.getGoal(); }
-
-XYZCoord RRTTree::getGoal(int index) const { return airspace.getGoal(index); }
 
 Environment RRTTree::getAirspace() const { return this->airspace; }
 
@@ -311,7 +310,7 @@ void RRTTree::RRTStar(RRTNode* sample, double rewire_radius) {
 }
 
 void RRTTree::setCurrentHead(RRTNode* goal) {
-    if (goal == nullptr || node_map[goal->getPoint()] == nullptr) {
+    if (goal == nullptr) {
         std::cout << "FAILURE: Goal is not in the tree\n" << std::endl;
         return;
     }
@@ -351,20 +350,20 @@ std::vector<XYZCoord> RRTTree::getPathToGoal() const {
 
 /* RRTTree Private */
 
-std::pair<RRTNode*, double> RRTTree::getNearestNode(const XYZCoord& point) const {
-    RRTNode* nearest = nullptr;
-    double min_distance = std::numeric_limits<double>::infinity();
+// std::pair<RRTNode*, double> RRTTree::getNearestNode(const XYZCoord& point) const {
+//     RRTNode* nearest = nullptr;
+//     double min_distance = std::numeric_limits<double>::infinity();
 
-    for (auto& [key, value] : node_map) {
-        double distance = point.distanceToSquared(key.coord);
-        if (distance < min_distance) {
-            min_distance = distance;
-            nearest = value;
-        }
-    }
+//     for (auto& node : node_set) {
+//         double distance = point.distanceToSquared(node->getPoint().coord);
+//         if (distance < min_distance) {
+//             min_distance = distance;
+//             nearest = node;
+//         }
+//     }
 
-    return {nearest, min_distance};
-}
+//     return {nearest, min_distance};
+// }
 
 void RRTTree::RRTStarRecursive(RRTNode* current_node, RRTNode* sample, double rewire_radius) {
     // base case

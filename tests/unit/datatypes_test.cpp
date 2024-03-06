@@ -144,7 +144,7 @@ TEST(XYZCoordOperations, scalarMultiplication) {
 /*
  *   Tests XYZCoord::distanceTo()
  */
-TEST(DubinsUtilTest, DistanceBetweenVectors) {
+TEST(XYZCoordOperations, DistanceBetweenVectors) {
     // 3-4-5 right triangle
     XYZCoord start_vector1{3.0, 0.0, 0};
     XYZCoord end_vector1{0.0, 4.0, 0};

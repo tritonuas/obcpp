@@ -140,33 +140,6 @@ class RRTTree {
      */
     RRTNode* addNode(RRTNode* anchor_node, const RRTPoint& new_point, const RRTOption& option);
 
-    /*
-
-     */
-    void rewireEdge(RRTNode* current_point, RRTNode* previous_connection, RRTNode* new_connection,
-                    const std::vector<Vector>& path, double path_cost);
-
-    /*
-     *  Returns a pointer to the node in the tree corresponding to the RRTPoint.
-     *  If the node doesn't exist in the tree, returns nullptr.
-     */
-    RRTNode* getNode(const RRTPoint& point) const;
-
-    /*
-     *  Returns a pointer to the edge in the tree corresponding to the point
-     * pair. If the edge doesn't exist in the tree, returns nullptr.
-     */
-    // RRTEdge* getEdge(const RRTPoint& from, const RRTPoint& to);
-
-    /**
-     * Returns a pointer to the edge in the tree corresponding to the node pair.
-     *
-     * @param from  ==> the starting node
-     * @param to    ==> the ending node
-     * @return      ==> pointer to the edge
-     */
-    RRTEdge getEdge(RRTNode* from, RRTNode* to) const;
-
     /**
      * Returns a pointer to the root node
      *
@@ -187,6 +160,15 @@ class RRTTree {
      * @return RRTPoint goal point
      */
     XYZCoord getGoal(int index) const;
+
+    /**
+     * ONLY FOR TESTING
+     * 
+     * @param from
+     * @param to
+     * @return edge
+    */
+    RRTEdge getEdge(RRTNode* from, RRTNode* to) const;
 
     /**
      * returns the Environment object
@@ -215,30 +197,12 @@ class RRTTree {
     std::vector<std::pair<RRTNode*, RRTOption>> pathingOptions(
         const RRTPoint& end, int quantity_options = MAX_DUBINS_OPTIONS_TO_PARSE) const;
 
-    /**
-     * traverses the tree, and puts in all RRTOptions from dubins into a list
-     * (DFS)
-     *
-     * @param options   ==> The list of options that is meant to be filled
-     * @param node      ==> current node that will be traversed (DFS)
-     * @param sample    ==> the end point that the options will be connected to
-     */
-    void fillOptions(std::vector<std::pair<RRTNode*, RRTOption>>& options, RRTNode* node,
-                     const RRTPoint& sample) const;
-
     /** DOES RRT* for the program
      *
      * @param sample          ==> the point to used as the base
      * @param rewire_radius   ==> the radius to search for nodes to rewire
      */
     void RRTStar(RRTNode* sample, double rewire_radius);
-
-    /**
-     * Returns the currenthead of the tree
-     *
-     * @return RRTNode* pointer to the current head
-     */
-    RRTNode* getCurrentHead() const { return current_head; }
 
     /**
      * Changes the currentHead to the given goal
@@ -255,6 +219,12 @@ class RRTTree {
      * @return  ==> list of 2-vectors to the goal region
      */
     std::vector<XYZCoord> getPathToGoal() const;
+
+    /*
+
+     */
+    void rewireEdge(RRTNode* current_point, RRTNode* previous_connection, RRTNode* new_connection,
+                    const std::vector<Vector>& path, double path_cost);
 
     std::vector<RRTNode*> getKRandomNodes(const RRTPoint& sample, int k) const {
         std::vector<RRTNode*> nodes;
@@ -322,6 +292,7 @@ class RRTTree {
             return;
         }
 
+        // Euclidian distance is weighted much more heavily
         double distance = sample.coord.distanceToSquared(current_node->getPoint().coord);
         nodes_by_distance.push_back({distance, current_node});
 
@@ -350,11 +321,28 @@ class RRTTree {
  private:
     RRTNode* root;
     RRTNode* current_head;
-    std::unordered_map<RRTPoint, RRTNode*, PointHashFunction> node_map{};
     std::unordered_map<std::pair<RRTNode*, RRTNode*>, RRTEdge, EdgeHashFunction> edge_map{};
 
     Environment airspace;
     Dubins dubins;
+
+    /**
+     * Helper that deletes the tree
+     *
+     * @param node ==> the root of the tree to delete
+     */
+    void deleteTree(RRTNode* node);
+
+    /**
+     * traverses the tree, and puts in all RRTOptions from dubins into a list
+     * (DFS)
+     *
+     * @param options   ==> The list of options that is meant to be filled
+     * @param node      ==> current node that will be traversed (DFS)
+     * @param sample    ==> the end point that the options will be connected to
+     */
+    void fillOptions(std::vector<std::pair<RRTNode*, RRTOption>>& options, RRTNode* node,
+                     const RRTPoint& sample) const;
 
     /**
      * Gets the nearest node to a given RRTPoint NOT USED AT THE MOMENT
@@ -362,7 +350,7 @@ class RRTTree {
      * @param point     ==> the point to find the nearest node to
      * @return          ==> the nearest node to the point
      */
-    std::pair<RRTNode*, double> getNearestNode(const XYZCoord& point) const;
+    // std::pair<RRTNode*, double> getNearestNode(const XYZCoord& point) const;
 
     /**
      * RRTStar Recursive
