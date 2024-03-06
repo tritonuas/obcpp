@@ -11,6 +11,7 @@
  *   very bad tests, was too lazy to check if every parameter was correct, aka didn't bother to find
  *   the hardcoded values for the expected values.
  */
+#include <iostream>
 
 TEST(SimpleTreeTest, addNodeTest) {
     Dubins dubins{5, 0.1};

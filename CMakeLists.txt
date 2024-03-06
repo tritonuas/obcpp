@@ -20,6 +20,7 @@ endif(CCACHE)
 set(CMAKE_CXX_COMPILER g++)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_C_COMPILER gcc)
+set(CMAKE_C_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ./bin)
 set(CMAKE_EXPORT_COMPILE_COMMANDS True)
@@ -29,6 +30,8 @@ SET(GCC_LINK_FLAGS    "-lprotobuf -lopencv_core -lopencv_highgui -lopencv_featur
 
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COMPILE_FLAGS}")
 SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${GCC_LINK_FLAGS}")
+
+SET(CMAKE_C_FLAGS "-D_GNU_SOURCE")
 
 project(obcpp VERSION 1.0)
 
@@ -75,9 +78,9 @@ find_package(ImageMagick COMPONENTS Magick++ REQUIRED)
 
 # =============================
 # obcpp executable
-file(GLOB_RECURSE SOURCES "src/*.cpp" "build/gen_protos/*.pb.cc")
+file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.c" "build/gen_protos/*.pb.cc")
 list(REMOVE_ITEM SOURCES "${CMAKE_SOURCE_DIR}/src/main.cpp")
-file(GLOB_RECURSE HEADERS "include/*.hpp" "build/gen_protos/*.pb.h")
+file(GLOB_RECURSE HEADERS "include/*.hpp" "include/*.h" "build/gen_protos/*.pb.h")
 
 set(INCLUDE_DIRECTORY ${PROJECT_SOURCE_DIR}/include)
 set(GEN_PROTOS_DIRECTORY ${PROJECT_SOURCE_DIR}/build/gen_protos)
@@ -162,6 +165,10 @@ target_add_loguru(path_planning)
 
 target_include_directories(path_planning PRIVATE ${ImageMagick_INCLUDE_DIRS})
 target_link_libraries(path_planning PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
+# airdrop_sockets
+add_executable(airdrop_sockets src/network/airdrop_sockets.c tests/integration/airdrop_sockets.c)
+target_include_directories(airdrop_sockets PRIVATE ${INCLUDE_DIRECTORY})
+
 # =============================
 
 # =============================
