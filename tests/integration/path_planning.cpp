@@ -259,16 +259,16 @@ int main() {
     Polygon obs2 = {XYZCoord(-200, -600, 0), XYZCoord(100, -600, 0), XYZCoord(250, -300, 0),
                     XYZCoord(0, -300, 0)};
 
-    std::vector<Polygon> obstacles = {obs1, obs2};
+    std::vector<Polygon> obstacles = {obs1};
 
     RRTPoint start = RRTPoint(state->config.getWaypoints()[0], 0);
 
-    int num_iterations = 600;
+    int num_iterations = 100;
     double search_radius = 9999;
-    double rewire_radius = 200;
+    double rewire_radius = 100;
 
     auto s_time = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 2; i++) {
         std::cout << "Iteration: " << i << std::endl;
         // std::cout << "Start Running" << std::endl;
         RRT rrt = RRT(start, goals, num_iterations, search_radius, rewire_radius,
@@ -296,7 +296,7 @@ int main() {
     auto start_time = std::chrono::high_resolution_clock::now();
     RRT rrt = RRT(start, goals, num_iterations, search_radius, rewire_radius,
                   state->config.getFlightBoundary(), obstacles,
-                  OptimizationOptions{false, PATH_OPTIONS::NONE});
+                  OptimizationOptions{true, PATH_OPTIONS::NEAREST});
 
     // print out stats
     std::cout << "num_iterations: " << num_iterations << std::endl;

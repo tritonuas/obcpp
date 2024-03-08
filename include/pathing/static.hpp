@@ -24,7 +24,7 @@ class RRT {
     RRT(RRTPoint start, std::vector<XYZCoord> goals, int iterations_per_waypoint,
         double search_radius, double rewire_radius, Polygon bounds,
         std::vector<Polygon> obstacles = {},
-        OptimizationOptions options = {true, PATH_OPTIONS::NEAREST})
+        OptimizationOptions options = {true, PATH_OPTIONS::NONE})
 
         : iterations_per_waypoint(iterations_per_waypoint),
           search_radius(search_radius),
@@ -32,7 +32,7 @@ class RRT {
           point_fetch_choice(options.path_option),
           tree(start, Environment(bounds, goals, obstacles),
                Dubins(TURNING_RADIUS, POINT_SEPARATION)),
-          optimize(options.optimize) {}
+          optimize(options.optimize) {};
 
     /**
      * RRT algorithm
@@ -101,16 +101,13 @@ class RRT {
      * @param tries ==> number of points it attempts to sample
      */
     void RRTIteration(const int tries, const int current_goal_index) {
-
         int epoch_interval = tries / 5;
         int current_epoch = epoch_interval;
 
         double distance = std::numeric_limits<double>::infinity();
         int angle = 0;
 
-
         for (int i = 0; i < tries; i++) {
-
             if (i == current_epoch) {
                 current_epoch += epoch_interval;
             }
@@ -119,7 +116,7 @@ class RRT {
 
             // returns all dubins options from the tree to the sample
             const std::vector<std::pair<RRTNode *, RRTOption>> &options =
-                tree.pathingOptions(sample);
+                tree.pathingOptions(sample, point_fetch_choice);
 
             // returns true if the node is successfully added to the tree
             RRTNode *new_node = parseOptions(options, sample);
@@ -164,7 +161,7 @@ class RRT {
         const int NUMBER_OPTIONS_EACH = NUMBER_OPTIONS_TOTAL / angles.size();
         for (const RRTPoint &goal : goal_points) {
             const std::vector<std::pair<RRTNode *, RRTOption>> &options =
-                tree.pathingOptions(goal, NUMBER_OPTIONS_EACH);
+                tree.pathingOptions(goal, point_fetch_choice, NUMBER_OPTIONS_EACH);
 
             for (const auto &[node, option] : options) {
                 all_options.push_back({goal, {node, option}});

@@ -76,9 +76,8 @@ void RRTNode::setPathLength(double new_path_length) { this->path_length = new_pa
 
 */
 
-RRTTree::RRTTree(RRTPoint root_point, Environment airspace, Dubins dubins,
-                 PATH_OPTIONS point_fetch_choice)
-    : airspace(airspace), dubins(dubins), point_fetch_choice(point_fetch_choice) {
+RRTTree::RRTTree(RRTPoint root_point, Environment airspace, Dubins dubins)
+    : airspace(airspace), dubins(dubins) {
     RRTNode* new_node = new RRTNode(root_point, 0, 0, {});
     root = new_node;
     current_head = new_node;
@@ -132,10 +131,6 @@ RRTNode* RRTTree::addSample(RRTNode* anchor_node, const RRTPoint& new_point,
     RRTNode* new_node =
         new RRTNode(new_point, anchor_node->getCost() + option.length, option.length, path);
 
-    if (std::isnan(new_node->getCost())) {
-        std::cout << "Cost is nan" << std::endl;
-    }
-
     // changing state of its parent
     anchor_node->addReachable(new_node);
     return new_node;
@@ -149,25 +144,10 @@ void RRTTree::rewireEdge(RRTNode* current_node, RRTNode* previous_parent, RRTNod
     new_parent->addReachable(current_node);
 
     current_node->setCost(new_parent->getCost() + path_cost);
+    current_node->setPathLength(path_cost);
 
     reassignCosts(current_node);
 }
-
-// BROKEN
-// RRTEdge* RRTTree::getEdge(const RRTPoint& from, const RRTPoint& to) {
-//     RRTNode* node1 = getNode(from);
-//     RRTNode* node2 = getNode(to);
-//     if (node1 == nullptr || node2 == nullptr) {
-//         return nullptr;
-//     }
-
-//     std::pair<RRTNode*, RRTNode*> edgePair(node1, node2);
-//     if (edge_map.count(edgePair) > 0) {
-//         return &(edge_map.at(edgePair));
-//     } else {
-//         return nullptr;
-//     }
-// }
 
 RRTNode* RRTTree::getRoot() const { return this->root; }
 
@@ -223,17 +203,18 @@ RRTPoint RRTTree::getRandomPoint(double search_radius) const {
 }
 
 std::vector<std::pair<RRTNode*, RRTOption>> RRTTree::pathingOptions(const RRTPoint& end,
+                                                                    PATH_OPTIONS path_option,
                                                                     int quantity_options) const {
     // fills the options list with valid values
     std::vector<std::pair<RRTNode*, RRTOption>> options;
 
-    switch (point_fetch_choice) {
+    switch (path_option) {
         case PATH_OPTIONS::RANDOM: {
             const std::vector<RRTNode*>& nodes = getKRandomNodes(end, 100);
             fillOptionsNodes(options, nodes, end);
         } break;
         case PATH_OPTIONS::NEAREST: {
-            const std::vector<RRTNode*>& nodes = getKClosestNodes(end, 100);
+            const std::vector<RRTNode*>& nodes = getKClosestNodes(end, 150);
             fillOptionsNodes(options, nodes, end);
         } break;
             // actually uses switch statements functionality, it should default to doing

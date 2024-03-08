@@ -18,8 +18,10 @@ typedef XYZCoord Vector;
 
 class RRTNode {
  public:
-    RRTNode(const RRTPoint& point, double cost, double path_length, const std::vector<XYZCoord> path);
-    RRTNode(const RRTPoint& point, double cost, double path_length, const std::vector<XYZCoord> path, RRTNodeList reachable);
+    RRTNode(const RRTPoint& point, double cost, double path_length,
+            const std::vector<XYZCoord> path);
+    RRTNode(const RRTPoint& point, double cost, double path_length,
+            const std::vector<XYZCoord> path, RRTNodeList reachable);
 
     /*
      *  Equality overload method for RRTNode object
@@ -116,8 +118,7 @@ class RRTNode {
 
 class RRTTree {
  public:
-    RRTTree(RRTPoint root_point, Environment airspace, Dubins dubins,
-            PATH_OPTIONS point_fetch_choice = {PATH_OPTIONS::NONE});
+    RRTTree(RRTPoint root_point, Environment airspace, Dubins dubins);
     ~RRTTree();
 
     /**
@@ -183,7 +184,8 @@ class RRTTree {
      * @return                  ==> mininum sorted list of pairs of <node, path>
      */
     std::vector<std::pair<RRTNode*, RRTOption>> pathingOptions(
-        const RRTPoint& end, int quantity_options = MAX_DUBINS_OPTIONS_TO_PARSE) const;
+        const RRTPoint& end, PATH_OPTIONS path_option = PATH_OPTIONS::NONE,
+        int quantity_options = MAX_DUBINS_OPTIONS_TO_PARSE) const;
 
     /** DOES RRT* for the program
      *
@@ -311,7 +313,6 @@ class RRTTree {
     RRTNode* current_head;
     Environment airspace;
     Dubins dubins;
-    const PATH_OPTIONS point_fetch_choice;
 
     /**
      * Helper that deletes the tree
