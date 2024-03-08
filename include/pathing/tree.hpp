@@ -18,13 +18,13 @@ typedef XYZCoord Vector;
 
 class RRTNode {
  public:
-    RRTNode(const RRTPoint& point, double cost);
-    RRTNode(const RRTPoint& point, double cost, RRTNodeList& reachable);
+    RRTNode(const RRTPoint& point, double cost, double path_length, const std::vector<XYZCoord> path);
+    RRTNode(const RRTPoint& point, double cost, double path_length, const std::vector<XYZCoord> path, RRTNodeList reachable);
 
     /*
      *  Equality overload method for RRTNode object
      */
-    bool operator==(const RRTNode& other_node) const;
+    // bool operator==(const RRTNode& other_node) const;
 
     /*
      *  Get the RRTPoint associated with this RRTNode object
@@ -77,68 +77,63 @@ class RRTNode {
      */
     void setParent(RRTNode* new_parent);
 
+    /**
+     * Get the path associated with this node
+     *
+     * @return std::vector<XYZCoord> path
+     */
+    const std::vector<XYZCoord>& getPath() const;
+
+    /**
+     * Set the path associated with this node
+     *
+     * @param path std::vector<XYZCoord> path
+     */
+    void setPath(const std::vector<XYZCoord>& path);
+
+    /**
+     * Get the path length associated with this node
+     *
+     * @return double path length
+     */
+    double getPathLength() const;
+
+    /**
+     * Set the path length associated with this node
+     *
+     * @param path_length double path length
+     */
+    void setPathLength(double path_length);
+
  private:
     RRTPoint point;
     RRTNodeList reachable{};
     double cost;
+    double path_length;
     RRTNode* parent{};
-};
-
-class EdgeHashFunction {
- public:
-    /*
-     *  Hashes RRTNode* pair using the Cantor Pairing Function and RRTPoint hash
-     * function. Used to add elements to unordered_map edgeMap in RRTTree.
-     */
-    std::size_t operator()(const std::pair<RRTNode*, RRTNode*>& node_pair) const;
-};
-
-class RRTEdge {
- public:
-    RRTEdge(RRTNode* from, RRTNode* to, const std::vector<Vector>& path, double cost);
-
-    /*
-     *  Equality overload method for RRTEdge comparison
-     */
-    bool operator==(const RRTEdge& other_edge) const;
-
-    /*
-     *  Set the cost of this edge
-     */
-    void setCost(double new_cost);
-
-    /*
-     *  Get the cost associated with this edge
-     */
-    double getCost() const;
-
-    /*
-     *  Get the path vector associated with this edge
-     */
-    const std::vector<Vector>& getPath();
-
-    /*
-     *  Set the path vector associated with this edge
-     */
-    void setPath(std::vector<Vector> path);
-
- private:
-    RRTNode* from;
-    RRTNode* to;
-    double cost;
-    std::vector<Vector> path{};
+    std::vector<XYZCoord> path{};
 };
 
 class RRTTree {
  public:
-    RRTTree(RRTPoint root_point, Environment airspace, Dubins dubins);
+    RRTTree(RRTPoint root_point, Environment airspace, Dubins dubins,
+            PATH_OPTIONS point_fetch_choice = {PATH_OPTIONS::NONE});
     ~RRTTree();
+
+    /**
+     * Generates node without adding it to the tree
+     */
+    RRTNode* generateNode(RRTNode* anchor_node, const RRTPoint& new_point,
+                          const RRTOption& option) const;
+
+    bool addNode(RRTNode* anchor_node, RRTNode* new_node, const RRTOption& option,
+                 const std::vector<XYZCoord>& path) const;
 
     /*
      *  Add a node to the RRTTree.
      *  If adding the first node to the tree, connectTo can be anything.
      */
-    RRTNode* addNode(RRTNode* anchor_node, const RRTPoint& new_point, const RRTOption& option);
+    RRTNode* addSample(RRTNode* anchor_node, const RRTPoint& new_point, const RRTOption& option);
 
     /**
      * Returns a pointer to the root node
@@ -162,15 +157,6 @@ class RRTTree {
     XYZCoord getGoal(int index) const;
 
     /**
-     * ONLY FOR TESTING
-     * 
-     * @param from
-     * @param to
-     * @return edge
-    */
-    RRTEdge getEdge(RRTNode* from, RRTNode* to) const;
-
-    /**
      * returns the Environment object
      *
      * @return Environment object
@@ -183,6 +169,8 @@ class RRTTree {
      * @return RRTPoint random point in environment
      */
     RRTPoint getRandomPoint(double search_radius) const;
+
+    bool validatePath(const std::vector<Vector>& path, const RRTOption& options) const;
 
     /**
      * Returns a sorted list of the paths to get from a given node to the sampled
@@ -321,10 +309,9 @@ class RRTTree {
  private:
     RRTNode* root;
     RRTNode* current_head;
-    std::unordered_map<std::pair<RRTNode*, RRTNode*>, RRTEdge, EdgeHashFunction> edge_map{};
-
     Environment airspace;
     Dubins dubins;
+    const PATH_OPTIONS point_fetch_choice;
 
     /**
      * Helper that deletes the tree
@@ -381,7 +368,7 @@ class RRTTree {
      * @param node          ==> the current node
      * @param path_cost     ==> the cost of the path to the current node
      */
-    void reassignCostsRecursive(RRTNode* parent, RRTNode* current_node, double path_cost);
+    void reassignCostsRecursive(RRTNode* parent, RRTNode* current_node, double cost_difference);
 };
 
 #endif  // INCLUDE_PATHING_TREE_HPP_

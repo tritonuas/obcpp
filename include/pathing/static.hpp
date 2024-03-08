@@ -23,14 +23,16 @@ class RRT {
  public:
     RRT(RRTPoint start, std::vector<XYZCoord> goals, int iterations_per_waypoint,
         double search_radius, double rewire_radius, Polygon bounds,
-        std::vector<Polygon> obstacles = {}, bool optimize = false)
+        std::vector<Polygon> obstacles = {},
+        OptimizationOptions options = {true, PATH_OPTIONS::NEAREST})
 
         : iterations_per_waypoint(iterations_per_waypoint),
           search_radius(search_radius),
           rewire_radius(rewire_radius),
+          point_fetch_choice(options.path_option),
           tree(start, Environment(bounds, goals, obstacles),
                Dubins(TURNING_RADIUS, POINT_SEPARATION)),
-          optimize(optimize) {}
+          optimize(options.optimize) {}
 
     /**
      * RRT algorithm
@@ -50,10 +52,9 @@ class RRT {
             }
 
             // run the RRT algorithm if it can not connect
-            RRTIteration(iterations_per_waypoint);
+            RRTIteration(iterations_per_waypoint, current_goal_index);
 
             // connect to the goal after RRT is finished
-            connectToGoal(current_goal_index);
         }
     }
 
@@ -71,6 +72,7 @@ class RRT {
     const int iterations_per_waypoint;
     const double search_radius;
     const double rewire_radius;
+    const PATH_OPTIONS point_fetch_choice;
 
     // the different of final approaches to the goal
     // yes, this is the default unit circle diagram used in High-School
@@ -98,8 +100,20 @@ class RRT {
      *
      * @param tries ==> number of points it attempts to sample
      */
-    void RRTIteration(int tries) {
-        for (int _ = 0; _ < tries; _++) {
+    void RRTIteration(const int tries, const int current_goal_index) {
+
+        int epoch_interval = tries / 5;
+        int current_epoch = epoch_interval;
+
+        double distance = std::numeric_limits<double>::infinity();
+        int angle = 0;
+
+
+        for (int i = 0; i < tries; i++) {
+
+            if (i == current_epoch) {
+                current_epoch += epoch_interval;
+            }
             // generate a sample point
             const RRTPoint sample = generateSamplePoint();
 
@@ -114,6 +128,8 @@ class RRT {
                 optimizeTree(new_node);
             }
         }
+
+        connectToGoal(current_goal_index);
     }
 
     /**
@@ -166,7 +182,7 @@ class RRT {
         for (const auto &[goal, pair] : all_options) {
             auto &[anchor_node, option] = pair;
 
-            RRTNode *new_node = tree.addNode(anchor_node, goal, option);
+            RRTNode *new_node = tree.addSample(anchor_node, goal, option);
 
             if (new_node != nullptr) {
                 // print out coordinate of new_node
@@ -210,7 +226,7 @@ class RRT {
             // }
 
             // else, attempt to add the node to the tree
-            RRTNode *sucessful_addition = tree.addNode(node, sample, option);
+            RRTNode *sucessful_addition = tree.addSample(node, sample, option);
 
             if (sucessful_addition != nullptr) {
                 return sucessful_addition;

@@ -37,7 +37,8 @@ std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
     }
 
     RRT rrt(start, goals, ITERATIONS_PER_WAYPOINT, SEARCH_RADIUS, REWIRE_RADIUS,
-            state->config.getFlightBoundary(), {}, true);
+            state->config.getFlightBoundary(), {},
+            OptimizationOptions{true, PATH_OPTIONS::NONE});
 
     rrt.run();
 

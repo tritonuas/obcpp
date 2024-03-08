@@ -88,8 +88,17 @@ GPSCoord makeGPSCoord(double lat, double lng, double alt);
 using Polygon = std::vector<XYZCoord>;
 using Polyline = std::vector<XYZCoord>;
 
-
-
 using GPSProtoVec = google::protobuf::RepeatedPtrField<GPSCoord>;
+
+enum PATH_OPTIONS {
+    NONE, 
+    RANDOM,
+    NEAREST
+};
+
+struct OptimizationOptions {
+    bool optimize;
+    PATH_OPTIONS path_option;
+};
 
 #endif  // INCLUDE_UTILITIES_DATATYPES_HPP_

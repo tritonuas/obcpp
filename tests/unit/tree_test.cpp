@@ -35,7 +35,7 @@ TEST(SimpleTreeTest, addNodeTest) {
     RRTNode* root = simple_tree.getRoot();
 
     // simpleTree.addNode(root, point1);
-    RRTNode* added_point = simple_tree.addNode(root, point2, option);
+    RRTNode* added_point = simple_tree.addSample(root, point2, option);
 
     EXPECT_TRUE(added_point != nullptr);
     EXPECT_TRUE(root->getReachable().size() == 1);
@@ -69,19 +69,19 @@ TEST(SimpleTreeTest, rewireEdgeTest) {
     RRTNode* root = simple_tree.getRoot();
 
     // these two should add
-    RRTNode* node2 = simple_tree.addNode(root, point2, option1);
-    RRTNode* node3 = simple_tree.addNode(node2, point3, option2);
-    RRTNode* node4 = simple_tree.addNode(root, point4, option3);
+    RRTNode* node2 = simple_tree.addSample(root, point2, option1);
+    RRTNode* node3 = simple_tree.addSample(node2, point3, option2);
+    RRTNode* node4 = simple_tree.addSample(root, point4, option3);
     EXPECT_TRUE(node2 != nullptr);
     EXPECT_TRUE(node3 != nullptr);
     EXPECT_TRUE(node4 != nullptr);
 
     simple_tree.rewireEdge(node3, node2, node4, {}, 2);
 
-    EXPECT_TRUE(simple_tree.getEdge(node4, node3).getCost() != 0);
+    EXPECT_TRUE(node3->getPathLength() != 0);
 
-    EXPECT_TRUE(simple_tree.getEdge(node2, node3).getCost() ==
-                std::numeric_limits<double>::infinity());
+    // EXPECT_TRUE(simple_tree.getEdge(node2, node3).getCost() ==
+                // std::numeric_limits<double>::infinity());
 
     EXPECT_TRUE(node3->getParent() == node4);
     EXPECT_TRUE(node2->getParent() == root);
