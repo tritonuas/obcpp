@@ -106,40 +106,63 @@ GPSCoord ECEFLocalization::localize(const ImageTelemetry& telemetry, const Bbox&
     return targetCoord;
 }
 
+
 GPSCoord GSDLocalization::localize(const ImageTelemetry& telemetry, const Bbox& targetBbox) {
     GPSCoord gps;
 
+    // Ground Sample Distance (mm/pixel), 1.0~2.5cm per px is ideal aka 10mm~25mm ppx
     float GSD = (SENSOR_WIDTH * (telemetry.altitude)) / (FOCAL_LENGTH_MM * IMG_WIDTH_PX);
 
+    // Midpoints of the image
     float img_mid_x = IMG_WIDTH_PX / 2;
     float img_mid_y = IMG_HEIGHT_PX / 2;
 
-    float length = (sqrt(pow((plane_data[4] - img_mid_x), 2) + pow((plane_data[5] - img_mid_y), 2) * GSD));
+    //midpoints of bounding box around the target
+    float target_x = (targetBbox.x1 + targetBbox.x2)/2;
+    float target_y = (targetBbox.y1 + targetBbox.y2)/2;
 
-    float target_camera_cord_x = plane_data[4] - img_mid_x;
-    float target_camera_cord_y = plane_data[5] - img_mid_y;
+    // calculations of bearing
+    // L = (distance(middle, bbox))*GSD  
+    float length = (sqrt(pow((target_x - img_mid_x), 2) + pow((target_y - img_mid_y), 2) * GSD));
 
+    //Translate Image Cordinates to Camera Cordinate Frame (Origin to Center of Image instead of Top Left)
+    float target_camera_cord_x = target_x - (IMG_WIDTH_PX / 2);
+    float target_camera_cord_y = (IMG_HEIGHT_PX / 2) - target_y;
+
+    //Angle of Bearing (Angle from north to target)
     float thetaB = plane_data[3] + atan(target_camera_cord_x / target_camera_cord_y);
 
+    //Translate bearing to the 3 quadrant if applicable
+    if (target_camera_cord_x < 0 && target_camera_cord_y < 0){
+        thetaB = 180.0 + thetaB;
+    }
+
+    //Finds the offset of the bbox 
     float calc_cam_offset_x = target_camera_cord_x * GSD * 0.001; //mm to M
     float calc_cam_offset_y = target_camera_cord_y * GSD * 0.001; //mm to M
 
-    std::vector<float> input {calc_cam_offset_x, calc_cam_offset_y, telemetry.latitude, telemetry.longitude};
+    //Calculates the cordinates using the offset
+    GPSCoord calc_coord = calc_offset(calc_cam_offset_y, calc_cam_offset_x, telemetry.latitude, telemetry.longitude);
 
-    GPSCoord calc_coord = calc_offset(input);
-
-    // for (const float& f : floats) {
-    //     integers.push_back(static_cast<int>(f));
-    // }   
     return calc_coord;
 }
 
-GPSCoord GSDLocalization::CalcOffset(const std::vector<float>& param)  {
-    float dLat = param[0] / EARTH_RADIUS_M;
-    float dLon = param[1] / (EARTH_RADIUS_M * cos(M_PI * param[2] / 180));
+/*
+Takes the position of the camera in blender and the position of the generated target in meters
 
-    float latO = param[2] + dLat * 180/M_PI;
-    float lonO = param[3] + dLon * 180/M_PI;
+Parameters:
+-image_offset_x/y - meters from center of plane (0,0)
+-cam_lat/lon - Set cordinates of plane
+
+@returns true (mostly) world cordinate of target 
+*/
+
+GPSCoord GSDLocalization::CalcOffset(const float offset_x, const float offset_y, const float lat, const float lon)  {
+    float dLat = offset_y / EARTH_RADIUS_M;
+    float dLon = offset_x / (EARTH_RADIUS_M * cos(M_PI * lat / 180));
+
+    float latO = lat + dLat * 180/M_PI;
+    float lonO = lon + dLon * 180/M_PI;
 
     GPDCoord output;
 
