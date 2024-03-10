@@ -21,6 +21,11 @@ int main (int argc, char *argv[]) {
         return 1;
     }
 
+    if (torch::cuda::is_available()) {
+	    module.to(torch::kCUDA);
+	    std::cout << "successfully moved model to GPU (CUDA)" << std::endl;
+    }
+
     std::cout << "loaded model without crashing" << std::endl;
     return 0;
 }
