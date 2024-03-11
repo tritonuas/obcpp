@@ -77,14 +77,14 @@ void RRTNode::setPathLength(double new_path_length) { this->path_length = new_pa
 */
 
 RRTTree::RRTTree(RRTPoint root_point, Environment airspace, Dubins dubins)
-    : airspace(airspace), dubins(dubins) {
+    : airspace(airspace), dubins(dubins), tree_size(1) {
     RRTNode* new_node = new RRTNode(root_point, 0, 0, {});
     root = new_node;
     current_head = new_node;
 }
 
 // TODO - seems a bit sketchy
-RRTTree::~RRTTree() { deleteTree(root); }
+// RRTTree::~RRTTree() { deleteTree(root); }
 
 void RRTTree::deleteTree(RRTNode* node) {
     if (node == nullptr) {
@@ -112,28 +112,34 @@ RRTNode* RRTTree::generateNode(RRTNode* anchor_node, const RRTPoint& new_point,
         return nullptr;
     }
 
-    return new RRTNode(new_point, anchor_node->getCost() + option.length, option.length, path);
+    // needs to add the node to the tree
+    RRTNode* new_node =
+        new RRTNode(new_point, anchor_node->getCost() + option.length, option.length, path);
+    new_node->setParent(anchor_node);
+
+    return new_node;
+}
+
+bool RRTTree::addNode(RRTNode* anchor_node, RRTNode *new_node) {
+    if (new_node == nullptr || anchor_node == nullptr) {
+        return false;
+    }
+
+    anchor_node->addReachable(new_node);
+    tree_size++;
+    return true;
 }
 
 // TODO - convert from old to new
 RRTNode* RRTTree::addSample(RRTNode* anchor_node, const RRTPoint& new_point,
                             const RRTOption& option) {
-    // checking if path is valid
-    const std::vector<XYZCoord>& path = dubins.generatePoints(
-        anchor_node->getPoint(), new_point, option.dubins_path, option.has_straight);
+    RRTNode* new_node = generateNode(anchor_node, new_point, option);
 
-    if (!validatePath(path, option)) {
-        // if (!airspace.isPathInBounds(path)) {
-        return nullptr;
+    if (addNode(anchor_node, new_node)) {
+        return new_node;
     }
 
-    // if a valid path was found, it will add the node to the tree
-    RRTNode* new_node =
-        new RRTNode(new_point, anchor_node->getCost() + option.length, option.length, path);
-
-    // changing state of its parent
-    anchor_node->addReachable(new_node);
-    return new_node;
+    return nullptr;
 }
 
 void RRTTree::rewireEdge(RRTNode* current_node, RRTNode* previous_parent, RRTNode* new_parent,
@@ -208,6 +214,7 @@ std::vector<std::pair<RRTNode*, RRTOption>> RRTTree::pathingOptions(const RRTPoi
     // fills the options list with valid values
     std::vector<std::pair<RRTNode*, RRTOption>> options;
 
+
     switch (path_option) {
         case PATH_OPTIONS::RANDOM: {
             const std::vector<RRTNode*>& nodes = getKRandomNodes(end, 100);
@@ -226,9 +233,6 @@ std::vector<std::pair<RRTNode*, RRTOption>> RRTTree::pathingOptions(const RRTPoi
             fillOptions(options, current_head, end);
             break;
     }
-
-    const std::vector<RRTNode*>& nodes = getKClosestNodes(end, 100);
-    fillOptionsNodes(options, nodes, end);
 
     // sorts the list
     std::sort(options.begin(), options.end(), [](auto a, auto b) {
@@ -296,19 +300,21 @@ void RRTTree::setCurrentHead(RRTNode* goal) {
     }
 
     // prune the tree
-    RRTNode* current_node = goal;
-    RRTNode* parent_node = goal->getParent();
-    while (parent_node != nullptr) {
-        for (RRTNode* child : parent_node->getReachable()) {
-            if (child != current_node) {
-                parent_node->removeReachable(child);
-            }
-        }
+    // RRTNode* current_node = goal;
+    // RRTNode* parent_node = goal->getParent();
+    // while (parent_node != nullptr) {
+    //     for (RRTNode* child : parent_node->getReachable()) {
+    //         if (child != current_node) {
+    //             parent_node->removeReachable(child);
+    //         }
+    //     }
 
-        current_node = parent_node;
-        parent_node = parent_node->getParent();
-    }
+    //     current_node = parent_node;
+    //     parent_node = parent_node->getParent();
+    // }
 
+
+    tree_size = 1;
     current_head = goal;
 }
 
@@ -316,10 +322,9 @@ std::vector<XYZCoord> RRTTree::getPathToGoal() const {
     RRTNode* current_node = current_head;
     std::vector<XYZCoord> path = {};
 
-    std::cout << "Getting path to goal" << std::endl;
 
     while (current_node != nullptr && current_node->getParent() != nullptr) {
-        std::vector<XYZCoord> edge_path = current_node->getPath();
+        const std::vector<XYZCoord>& edge_path = current_node->getPath();
 
         // TODO - misses first node
         path.insert(path.begin(), edge_path.begin() + 1, edge_path.end());

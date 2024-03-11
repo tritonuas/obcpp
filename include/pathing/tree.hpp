@@ -119,7 +119,7 @@ class RRTNode {
 class RRTTree {
  public:
     RRTTree(RRTPoint root_point, Environment airspace, Dubins dubins);
-    ~RRTTree();
+    // ~RRTTree();
 
     /**
      * Generates node without adding it to the tree
@@ -127,8 +127,7 @@ class RRTTree {
     RRTNode* generateNode(RRTNode* anchor_node, const RRTPoint& new_point,
                           const RRTOption& option) const;
 
-    bool addNode(RRTNode* anchor_node, RRTNode* new_node, const RRTOption& option,
-                 const std::vector<XYZCoord>& path) const;
+    bool addNode(RRTNode* anchor_node, RRTNode* new_node);
 
     /*
      *  Add a node to the RRTTree.
@@ -218,44 +217,24 @@ class RRTTree {
 
     std::vector<RRTNode*> getKRandomNodes(const RRTPoint& sample, int k) const {
         std::vector<RRTNode*> nodes;
-        std::vector<RRTNode*> random_nodes;
-        getKRandomNodesRecursive(nodes, current_head, k);
+        double chance = 1.0 * k / tree_size;
+        getKRandomNodesRecursive(nodes, current_head, k, chance);
 
-        int size = nodes.size();
-
-        if (size <= k) {
-            return nodes;
-        }
-
-        double chance = k / size;
-
-        for (int i = 0; i < size; i++) {
-            if (size - i > k - random_nodes.size()) {
-                random_nodes.emplace_back(nodes[i]);
-            } else {
-                if (random(0, 1) < chance) {
-                    random_nodes.emplace_back(nodes[i]);
-                }
-            }
-
-            if (random_nodes.size() == k) {
-                break;
-            }
-        }
-
-        return random_nodes;
+        return nodes;
     }
 
     void getKRandomNodesRecursive(std::vector<RRTNode*>& nodes, RRTNode* current_node,
-                                  int k) const {
+                                  int k, double chance) const {
         if (current_node == nullptr) {
             return;
         }
 
-        nodes.emplace_back(current_node);
+        if (random(0,1) < chance) {
+            nodes.emplace_back(current_node);
+        }
 
         for (RRTNode* node : current_node->getReachable()) {
-            getKRandomNodesRecursive(nodes, node, k);
+            getKRandomNodesRecursive(nodes, node, k, chance);
         }
     }
 
@@ -313,6 +292,7 @@ class RRTTree {
     RRTNode* current_head;
     Environment airspace;
     Dubins dubins;
+    int tree_size;
 
     /**
      * Helper that deletes the tree

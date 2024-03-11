@@ -32,7 +32,7 @@ class RRT {
           point_fetch_choice(options.path_option),
           tree(start, Environment(bounds, goals, obstacles),
                Dubins(TURNING_RADIUS, POINT_SEPARATION)),
-          optimize(options.optimize) {};
+          optimize(options.optimize){};
 
     /**
      * RRT algorithm
@@ -53,9 +53,8 @@ class RRT {
 
             // run the RRT algorithm if it can not connect
             RRTIteration(iterations_per_waypoint, current_goal_index);
-
-            // connect to the goal after RRT is finished
         }
+
     }
 
     /**
@@ -101,14 +100,33 @@ class RRT {
      * @param tries ==> number of points it attempts to sample
      */
     void RRTIteration(const int tries, const int current_goal_index) {
-        int epoch_interval = tries / 5;
+        int epoch_interval = tries / 5; 
         int current_epoch = epoch_interval;
 
-        double distance = std::numeric_limits<double>::infinity();
-        int angle = 0;
+        RRTNode *goal_node = nullptr;
 
         for (int i = 0; i < tries; i++) {
             if (i == current_epoch) {
+                // generates a new node (not connect), and adds and breaks if it is within 5% of the
+                // last generation
+                if (goal_node == nullptr) {
+                    goal_node = sampleToGoal(current_goal_index);
+                } else {
+                    RRTNode *new_node = sampleToGoal(current_goal_index);
+
+                    if (new_node != nullptr) {
+                        if (new_node->getCost() > 0.99 * goal_node->getCost()) {
+                            delete (goal_node);
+                            tree.addNode(new_node->getParent(), new_node);
+                            tree.setCurrentHead(new_node);
+                            return;
+                        }
+
+                        delete (goal_node);
+                        goal_node = new_node;
+                    }
+                }
+
                 current_epoch += epoch_interval;
             }
             // generate a sample point
@@ -126,6 +144,7 @@ class RRT {
             }
         }
 
+        delete (goal_node);
         connectToGoal(current_goal_index);
     }
 
@@ -136,15 +155,8 @@ class RRT {
      */
     RRTPoint generateSamplePoint() { return tree.getRandomPoint(search_radius); }
 
-    /**
-     * Connects to the goal after RRT is finished
-     *
-     * @param current_goal_index    ==> index of the goal that we are trying to
-     * connect to
-     * @return                      ==> pointer to the node if it was added,
-     * nullptr otherwise
-     */
-    bool connectToGoal(int current_goal_index) {
+    std::vector<std::pair<RRTPoint, std::pair<RRTNode *, RRTOption>>> getOptionsToGoal(
+        int current_goal_index) const {
         // attempts to connect to the goal, should always connect
         std::vector<RRTPoint> goal_points;
         for (const double angle : angles) {
@@ -157,8 +169,10 @@ class RRT {
         // RRTOPtion Node-->Point
         std::vector<std::pair<RRTPoint, std::pair<RRTNode *, RRTOption>>> all_options;
 
+        // limit amount of options to sort, max 512
         const int NUMBER_OPTIONS_TOTAL = 512;
         const int NUMBER_OPTIONS_EACH = NUMBER_OPTIONS_TOTAL / angles.size();
+
         for (const RRTPoint &goal : goal_points) {
             const std::vector<std::pair<RRTNode *, RRTOption>> &options =
                 tree.pathingOptions(goal, point_fetch_choice, NUMBER_OPTIONS_EACH);
@@ -176,19 +190,44 @@ class RRT {
             return a_option.length + a_node->getCost() < b_option.length + b_node->getCost();
         });
 
+        return all_options;
+    }
+
+    RRTNode *sampleToGoal(int current_goal_index) {
+        const std::vector<std::pair<RRTPoint, std::pair<RRTNode *, RRTOption>>> &all_options =
+            getOptionsToGoal(current_goal_index);
+
         for (const auto &[goal, pair] : all_options) {
             auto &[anchor_node, option] = pair;
 
-            RRTNode *new_node = tree.addSample(anchor_node, goal, option);
+            RRTNode *new_node = tree.generateNode(anchor_node, goal, option);
 
             if (new_node != nullptr) {
-                // print out coordinate of new_node
-                tree.setCurrentHead(new_node);
-                return true;
+                return new_node;
             }
         }
 
-        return false;
+        return nullptr;
+    }
+
+    /**
+     * Connects to the goal after RRT is finished
+     *
+     * @param current_goal_index    ==> index of the goal that we are trying to
+     * connect to
+     * @return                      ==> pointer to the node if it was added,
+     * nullptr otherwise
+     */
+    bool connectToGoal(int current_goal_index) {
+        RRTNode *goal_node = sampleToGoal(current_goal_index);
+
+        if (goal_node == nullptr) {
+            return false;
+        }
+
+        tree.addNode(goal_node->getParent(), goal_node);
+        tree.setCurrentHead(goal_node);
+        return true;
     }
 
     /**
