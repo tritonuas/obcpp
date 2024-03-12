@@ -154,14 +154,14 @@ class RRTTree {
      *
      * @return RRTPoint goal point
      */
-    XYZCoord getGoal() const;
+    const XYZCoord& getGoal() const;
 
     /**
      * Get goal point
      *
      * @return RRTPoint goal point
      */
-    XYZCoord getGoal(int index) const;
+    const XYZCoord& getGoal(int index) const;
 
     /**
      * returns the Environment object

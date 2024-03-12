@@ -13,7 +13,7 @@ const double HALF_PI = M_PI / 2;
 
 // FROM OBC PYTHON
 const double TURNING_RADIUS = 30;
-const double POINT_SEPARATION = 20;
+const double POINT_SEPARATION = 50;
 
 // RRT CONSTANTS
 const int ITERATIONS_PER_WAYPOINT = 200;
@@ -24,6 +24,10 @@ const double REWIRE_RADIUS = 200;
 const int TOTAL_OPTIONS_FOR_GOAL_CONNECTION =
     2048;  // TODO - MUST SCALE WITH ITERATIONS OR ELSE CANT FIND GOAL
 const double EPOCH_TEST_MARGIN = 0.97;
+const int ENV_PATH_VALIDATION_STEP_SIZE = 5;
+const int K_RANDOM_NODES = 100;
+const int K_CLOESEST_NODES = 30;
+
 
 const int TRIES_FOR_RANDOM_POINT = 64;  // for generating random points
 const int MAX_DUBINS_OPTIONS_TO_PARSE = 16;

@@ -130,7 +130,7 @@ std::vector<std::pair<RRTPoint, std::pair<RRTNode *, RRTOption>>> RRT::getOption
     // Generates goal specific points based on current Waypoints and list og
     // Angles
     for (const double angle : angles) {
-        const XYZCoord goal = tree.getAirspace().getGoal(current_goal_index);
+        const XYZCoord& goal = tree.getAirspace().getGoal(current_goal_index);
         goal_points.push_back(RRTPoint(goal, angle));
     }
 

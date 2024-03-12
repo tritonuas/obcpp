@@ -265,7 +265,7 @@ int main() {
 
     int num_iterations = 750;
     double search_radius = 9999;
-    double rewire_radius = 200;
+    double rewire_radius = 500;
 
     auto s_time = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < 2; i++) {
@@ -296,7 +296,7 @@ int main() {
     auto start_time = std::chrono::high_resolution_clock::now();
     RRT rrt = RRT(start, goals, num_iterations, search_radius, rewire_radius,
                   state->config.getFlightBoundary(), obstacles,
-                  OptimizationOptions{true, PATH_OPTIONS::NEAREST});
+                  OptimizationOptions{false, PATH_OPTIONS::NEAREST});
 
     // print out stats
     std::cout << "num_iterations: " << num_iterations << std::endl;

@@ -229,9 +229,9 @@ void RRTTree::fillOptionsNodes(std::vector<std::pair<RRTNode*, RRTOption>>& opti
 
 RRTNode* RRTTree::getRoot() const { return this->root; }
 
-XYZCoord RRTTree::getGoal() const { return airspace.getGoal(); }
+const XYZCoord& RRTTree::getGoal() const { return airspace.getGoal(); }
 
-XYZCoord RRTTree::getGoal(int index) const { return airspace.getGoal(index); }
+const XYZCoord& RRTTree::getGoal(int index) const { return airspace.getGoal(index); }
 
 const Environment& RRTTree::getAirspace() const { return this->airspace; }
 
@@ -291,11 +291,11 @@ std::vector<std::pair<RRTNode*, RRTOption>> RRTTree::pathingOptions(const RRTPoi
 
     switch (path_option) {
         case PATH_OPTIONS::RANDOM: {
-            const std::vector<RRTNode*>& nodes = getKRandomNodes(100);
+            const std::vector<RRTNode*>& nodes = getKRandomNodes(K_RANDOM_NODES);
             fillOptionsNodes(options, nodes, end);
         } break;
         case PATH_OPTIONS::NEAREST: {
-            const std::vector<RRTNode*>& nodes = getKClosestNodes(end, 50);
+            const std::vector<RRTNode*>& nodes = getKClosestNodes(end, K_CLOESEST_NODES);
             fillOptionsNodes(options, nodes, end);
         } break;
         case PATH_OPTIONS::NONE:
