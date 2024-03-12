@@ -30,7 +30,7 @@ std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
 
     std::vector<XYZCoord> goals;
 
-    // Copy elements from the second element to the last element of source into destination
+    // Copy elements (reference) from the second element to the last element of source into destination
     // all other methods of copying over crash???
     for (int i = 1; i < state->config.getWaypoints().size(); i++) {
         goals.emplace_back(state->config.getWaypoints()[i]);

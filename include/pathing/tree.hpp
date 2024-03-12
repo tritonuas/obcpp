@@ -209,83 +209,68 @@ class RRTTree {
      */
     std::vector<XYZCoord> getPathToGoal() const;
 
-    /*
-
+    /**
+     * Rewires an edge from an old path to a new path.
+     * preserves ALL elements of the tree (i.e. NO elements are removed).
+     *
+     * @param current_point         ==> the current/end point to be rewired
+     * @param previous_parent       ==> the previous parent to the current point
+     * @param new_parent            ==> the new parent to the current point
+     * @param path                  ==> the new path new_parrent --> current_point
+     * @param path_cost             ==> the cost of the new path
      */
-    void rewireEdge(RRTNode* current_point, RRTNode* previous_connection, RRTNode* new_connection,
+    void rewireEdge(RRTNode* current_point, RRTNode* previous_parent, RRTNode* new_parent,
                     const std::vector<Vector>& path, double path_cost);
 
-    std::vector<RRTNode*> getKRandomNodes(const RRTPoint& sample, int k) const {
-        std::vector<RRTNode*> nodes;
-        double chance = 1.0 * k / tree_size;
-        getKRandomNodesRecursive(nodes, current_head, k, chance);
+    /**
+     * Gets K random nodes from the tree, starting at the current head
+     *
+     * @param k ==> the number of nodes to get
+     * @return  ==> list of k random nodes (unordered)
+     */
+    std::vector<RRTNode*> getKRandomNodes(int k) const;
 
-        return nodes;
-    }
-
+    /**
+     * __Recursive Helper__
+     * Gets K random nodes from the tree, starting at the current head
+     *
+     * @param nodes         ==> the list (reference) of nodes to add to
+     * @param current_node  ==> the current node that is being accessed
+     * @param k             ==> the number of nodes to get
+     * @param chance        ==> the chance to add the current node to the list
+     */
     void getKRandomNodesRecursive(std::vector<RRTNode*>& nodes, RRTNode* current_node,
-                                  int k, double chance) const {
-        if (current_node == nullptr) {
-            return;
-        }
+                                  double chance) const;
 
-        if (random(0,1) < chance) {
-            nodes.emplace_back(current_node);
-        }
+    /**
+     * Gets the k closest nodes to a given point
+     *
+     * @param sample    ==> the point to find the closest nodes to
+     * @param k         ==> the number of nodes to get
+     * @return          ==> list (ordered) of k closest nodes
+     */
+    std::vector<RRTNode*> getKClosestNodes(const RRTPoint& sample, int k) const;
 
-        for (RRTNode* node : current_node->getReachable()) {
-            getKRandomNodesRecursive(nodes, node, k, chance);
-        }
-    }
-
-    std::vector<RRTNode*> getKClosestNodes(const RRTPoint& sample, int k) const {
-        std::vector<RRTNode*> closest_nodes;
-        std::vector<std::pair<double, RRTNode*>> nodes_by_distance;
-        getKClosestNodesRecursive(nodes_by_distance, sample, current_head);
-        // Get the k closest nodes from the priority queue
-        std::sort(nodes_by_distance.begin(), nodes_by_distance.end(),
-                  [](auto& left, auto& right) { return left.first < right.first; });
-
-        int size = nodes_by_distance.size();
-        int stop_condition = std::min(k, size);
-        for (int i = 0; i < stop_condition; i++) {
-            closest_nodes.emplace_back(nodes_by_distance[i].second);
-        }
-
-        return closest_nodes;
-    }
-
+    /**
+     * __Recursive Helper__
+     * Gets the k closest nodes to a given point
+     *
+     * @param nodes_by_distance ==> the list (reference) of {distance, node} to add to
+     * @param sample            ==> the point to find the closest nodes to
+     * @param current_node      ==> the current node that is being accessed
+     */
     void getKClosestNodesRecursive(std::vector<std::pair<double, RRTNode*>>& nodes_by_distance,
-                                   const RRTPoint& sample, RRTNode* current_node) const {
-        if (current_node == nullptr) {
-            return;
-        }
+                                   const RRTPoint& sample, RRTNode* current_node) const;
 
-        // Euclidian distance is weighted much more heavily
-        double distance = sample.coord.distanceToSquared(current_node->getPoint().coord);
-        nodes_by_distance.push_back({distance, current_node});
-
-        for (RRTNode* node : current_node->getReachable()) {
-            getKClosestNodesRecursive(nodes_by_distance, sample, node);
-        }
-    }
-
+    /**
+     * Fills in a list of options from an existing list of nodes
+     * 
+     * @param options   ==> the list of options to fill
+     * @param nodes     ==> the list of nodes to parse
+     * @param sample    ==> the end point that the options will be connected to
+    */
     void fillOptionsNodes(std::vector<std::pair<RRTNode*, RRTOption>>& options,
-                          const std::vector<RRTNode*>& nodes, const RRTPoint& sample) const {
-        for (RRTNode* node : nodes) {
-            const std::vector<RRTOption>& local_options =
-                dubins.allOptions(node->getPoint(), sample);
-
-            for (const RRTOption& option : local_options) {
-                if (std::isnan(option.length) ||
-                    option.length == std::numeric_limits<double>::infinity()) {
-                    continue;
-                }
-
-                options.push_back({node, option});
-            }
-        }
-    }
+                          const std::vector<RRTNode*>& nodes, const RRTPoint& sample) const;
 
  private:
     RRTNode* root;

@@ -120,7 +120,7 @@ RRTNode* RRTTree::generateNode(RRTNode* anchor_node, const RRTPoint& new_point,
     return new_node;
 }
 
-bool RRTTree::addNode(RRTNode* anchor_node, RRTNode *new_node) {
+bool RRTTree::addNode(RRTNode* anchor_node, RRTNode* new_node) {
     if (new_node == nullptr || anchor_node == nullptr) {
         return false;
     }
@@ -144,15 +144,93 @@ RRTNode* RRTTree::addSample(RRTNode* anchor_node, const RRTPoint& new_point,
 
 void RRTTree::rewireEdge(RRTNode* current_node, RRTNode* previous_parent, RRTNode* new_parent,
                          const std::vector<XYZCoord>& path, double path_cost) {
-    // remove old edge from edge_map, add the new edge
     // ORDER MATTERS, REMOVE THEN ADD TO PRESERVE THE CURR_NODE HAS A PARENT
     previous_parent->removeReachable(current_node);
     new_parent->addReachable(current_node);
 
+    // bubbles down the tree to reassign the costs
     current_node->setCost(new_parent->getCost() + path_cost);
     current_node->setPathLength(path_cost);
-
     reassignCosts(current_node);
+}
+
+std::vector<RRTNode*> RRTTree::getKRandomNodes(int k) const {
+    std::vector<RRTNode*> nodes;
+    // proabability that any given node should be added
+    double chance = 1.0 * k / tree_size;
+    getKRandomNodesRecursive(nodes, current_head, chance);
+
+    return nodes;
+}
+
+void RRTTree::getKRandomNodesRecursive(std::vector<RRTNode*>& nodes, RRTNode* current_node,
+                                       double chance) const {
+    if (current_node == nullptr) {
+        return;
+    }
+
+    // if the chance is less than the random number, then add the node to the list
+    // TODO maybe make some check that prevents the random calls if the tree is small enough
+    if (random(0, 1) < chance) {
+        nodes.emplace_back(current_node);
+    }
+
+    for (RRTNode* node : current_node->getReachable()) {
+        getKRandomNodesRecursive(nodes, node, chance);
+    }
+}
+
+std::vector<RRTNode*> RRTTree::getKClosestNodes(const RRTPoint& sample, int k) const {
+    std::vector<RRTNode*> closest_nodes;
+
+    // helper vector that associates nodes with distances
+    // TODO - do some benchmakrs with max-heaps to see which one is more efficient
+    std::vector<std::pair<double, RRTNode*>> nodes_by_distance;
+    getKClosestNodesRecursive(nodes_by_distance, sample, current_head);
+
+    // sorts the nodes by distance
+    std::sort(nodes_by_distance.begin(), nodes_by_distance.end(),
+              [](auto& left, auto& right) { return left.first < right.first; });
+
+    // gets either the k closest nodes, or the entire list
+    int size = nodes_by_distance.size();
+    int stop_condition = std::min(k, size);
+    for (int i = 0; i < stop_condition; i++) {
+        closest_nodes.emplace_back(nodes_by_distance[i].second);
+    }
+
+    return closest_nodes;
+}
+
+void RRTTree::getKClosestNodesRecursive(std::vector<std::pair<double, RRTNode*>>& nodes_by_distance,
+                                        const RRTPoint& sample, RRTNode* current_node) const {
+    if (current_node == nullptr) {
+        return;
+    }
+
+    // ONLY considers the distance, and not the path length required to get to the node
+    double distance = sample.coord.distanceToSquared(current_node->getPoint().coord);
+    nodes_by_distance.push_back({distance, current_node});
+
+    for (RRTNode* node : current_node->getReachable()) {
+        getKClosestNodesRecursive(nodes_by_distance, sample, node);
+    }
+}
+
+void RRTTree::fillOptionsNodes(std::vector<std::pair<RRTNode*, RRTOption>>& options,
+                               const std::vector<RRTNode*>& nodes, const RRTPoint& sample) const {
+    for (RRTNode* node : nodes) {
+        const std::vector<RRTOption>& local_options = dubins.allOptions(node->getPoint(), sample);
+
+        for (const RRTOption& option : local_options) {
+            if (std::isnan(option.length) ||
+                option.length == std::numeric_limits<double>::infinity()) {
+                continue;
+            }
+
+            options.push_back({node, option});
+        }
+    }
 }
 
 RRTNode* RRTTree::getRoot() const { return this->root; }
@@ -214,18 +292,15 @@ std::vector<std::pair<RRTNode*, RRTOption>> RRTTree::pathingOptions(const RRTPoi
     // fills the options list with valid values
     std::vector<std::pair<RRTNode*, RRTOption>> options;
 
-
     switch (path_option) {
         case PATH_OPTIONS::RANDOM: {
-            const std::vector<RRTNode*>& nodes = getKRandomNodes(end, 100);
+            const std::vector<RRTNode*>& nodes = getKRandomNodes(100);
             fillOptionsNodes(options, nodes, end);
         } break;
         case PATH_OPTIONS::NEAREST: {
-            const std::vector<RRTNode*>& nodes = getKClosestNodes(end, 150);
+            const std::vector<RRTNode*>& nodes = getKClosestNodes(end, 50);
             fillOptionsNodes(options, nodes, end);
         } break;
-            // actually uses switch statements functionality, it should default to doing
-            // the most accurate but slow method
         case PATH_OPTIONS::NONE:
             fillOptions(options, current_head, end);
             break;
@@ -245,12 +320,12 @@ std::vector<std::pair<RRTNode*, RRTOption>> RRTTree::pathingOptions(const RRTPoi
 
     // if there are less options than needed amount, then just reurn the xisting list, else,
     // return a truncated list.
-    // if (options.size() < quantity_options) {
-    //     return options;
-    // }
+    if (options.size() < quantity_options) {
+        return options;
+    }
 
     // erases everything after the last wanted element
-    // options.erase(options.begin() + quantity_options, options.end());
+    options.erase(options.begin() + quantity_options, options.end());
 
     return options;
 }
@@ -300,19 +375,18 @@ void RRTTree::setCurrentHead(RRTNode* goal) {
     }
 
     // prune the tree
-    // RRTNode* current_node = goal;
-    // RRTNode* parent_node = goal->getParent();
-    // while (parent_node != nullptr) {
-    //     for (RRTNode* child : parent_node->getReachable()) {
-    //         if (child != current_node) {
-    //             parent_node->removeReachable(child);
-    //         }
-    //     }
+    RRTNode* current_node = goal;
+    RRTNode* parent_node = goal->getParent();
+    while (parent_node != nullptr) {
+        for (RRTNode* child : parent_node->getReachable()) {
+            if (child != current_node) {
+                parent_node->removeReachable(child);
+            }
+        }
 
-    //     current_node = parent_node;
-    //     parent_node = parent_node->getParent();
-    // }
-
+        current_node = parent_node;
+        parent_node = parent_node->getParent();
+    }
 
     tree_size = 1;
     current_head = goal;
@@ -321,7 +395,6 @@ void RRTTree::setCurrentHead(RRTNode* goal) {
 std::vector<XYZCoord> RRTTree::getPathToGoal() const {
     RRTNode* current_node = current_head;
     std::vector<XYZCoord> path = {};
-
 
     while (current_node != nullptr && current_node->getParent() != nullptr) {
         const std::vector<XYZCoord>& edge_path = current_node->getPath();
