@@ -17,11 +17,17 @@ RRTNode::RRTNode(const RRTPoint& point, double cost, double path_length,
                  const std::vector<XYZCoord> path, RRTNodeList reachable)
     : point{point}, cost{cost}, path_length(path_length), path(path), reachable{reachable} {}
 
+RRTNode::~RRTNode() {
+    for (RRTNode* node : reachable) {
+        delete node;
+    }
+}
+
 // bool RRTNode::operator==(const RRTNode& other_node) const {
 //     return this->point == other_node.point && this->cost == other_node.cost;
 // }
 
-RRTPoint RRTNode::getPoint() { return this->point; }
+RRTPoint& RRTNode::getPoint() { return this->point; }
 
 void RRTNode::setReachable(const RRTNodeList& reachable) {
     this->reachable = reachable;
@@ -84,19 +90,7 @@ RRTTree::RRTTree(RRTPoint root_point, Environment airspace, Dubins dubins)
 }
 
 // TODO - seems a bit sketchy
-// RRTTree::~RRTTree() { deleteTree(root); }
-
-void RRTTree::deleteTree(RRTNode* node) {
-    if (node == nullptr) {
-        return;
-    }
-
-    for (RRTNode* child : node->getReachable()) {
-        deleteTree(child);
-    }
-
-    delete node;
-}
+RRTTree::~RRTTree() { delete root; }
 
 bool RRTTree::validatePath(const std::vector<XYZCoord>& path, const RRTOption& option) const {
     return airspace.isPathInBoundsAdv(path, option);
@@ -184,7 +178,7 @@ std::vector<RRTNode*> RRTTree::getKClosestNodes(const RRTPoint& sample, int k) c
     std::vector<RRTNode*> closest_nodes;
 
     // helper vector that associates nodes with distances
-    // TODO - do some benchmakrs with max-heaps to see which one is more efficient
+    // TODO - do some benchmarks with max-heaps to see which one is more efficient
     std::vector<std::pair<double, RRTNode*>> nodes_by_distance;
     getKClosestNodesRecursive(nodes_by_distance, sample, current_head);
 
@@ -239,11 +233,11 @@ XYZCoord RRTTree::getGoal() const { return airspace.getGoal(); }
 
 XYZCoord RRTTree::getGoal(int index) const { return airspace.getGoal(index); }
 
-Environment RRTTree::getAirspace() const { return this->airspace; }
+const Environment& RRTTree::getAirspace() const { return this->airspace; }
 
 RRTPoint RRTTree::getRandomPoint(double search_radius) const {
     // gets random point if the goal is not being used
-    XYZCoord sample = airspace.getRandomPoint();
+    const XYZCoord& sample = airspace.getRandomPoint();
 
     // // picks the nearest node to the sample, and then returns a point `search_radius` distance
     // away
@@ -286,6 +280,9 @@ RRTPoint RRTTree::getRandomPoint(double search_radius) const {
     return RRTPoint(sample, random(0, TWO_PI));
 }
 
+/*
+    TODO - investigate whether a max heap is better or worse
+*/
 std::vector<std::pair<RRTNode*, RRTOption>> RRTTree::pathingOptions(const RRTPoint& end,
                                                                     PATH_OPTIONS path_option,
                                                                     int quantity_options) const {
@@ -310,13 +307,15 @@ std::vector<std::pair<RRTNode*, RRTOption>> RRTTree::pathingOptions(const RRTPoi
     }
 
     // sorts the list
-    std::sort(options.begin(), options.end(), [](auto a, auto b) {
+    std::sort(options.begin(), options.end(), [](auto& a, auto& b) {
         auto& [a_node, a_option] = a;
         auto& [b_node, b_option] = b;
         return a_option.length + a_node->getCost() < b_option.length + b_node->getCost();
     });
 
     // the options are already sorted, why return a truncated list?
+    // 2024-03-11 : because pathing to goal req a certain amount, you can change this later if you
+    // want, idk c++ memory management well enough to know if tht is a good idea (for speed)
 
     // if there are less options than needed amount, then just reurn the xisting list, else,
     // return a truncated list.
@@ -330,7 +329,6 @@ std::vector<std::pair<RRTNode*, RRTOption>> RRTTree::pathingOptions(const RRTPoi
     return options;
 }
 
-// only get the first 10 nodes
 void RRTTree::fillOptions(std::vector<std::pair<RRTNode*, RRTOption>>& options, RRTNode* node,
                           const RRTPoint& end) const {
     /*
@@ -365,7 +363,8 @@ void RRTTree::fillOptions(std::vector<std::pair<RRTNode*, RRTOption>>& options, 
 }
 
 void RRTTree::RRTStar(RRTNode* sample, double rewire_radius) {
-    RRTStarRecursive(current_head, sample, rewire_radius);
+    // last element takes in the squared value of rewire_radius to prevent the need for sqrt()
+    RRTStarRecursive(current_head, sample, rewire_radius * rewire_radius);
 }
 
 void RRTTree::setCurrentHead(RRTNode* goal) {
@@ -375,19 +374,21 @@ void RRTTree::setCurrentHead(RRTNode* goal) {
     }
 
     // prune the tree
-    RRTNode* current_node = goal;
-    RRTNode* parent_node = goal->getParent();
-    while (parent_node != nullptr) {
-        for (RRTNode* child : parent_node->getReachable()) {
-            if (child != current_node) {
-                parent_node->removeReachable(child);
-            }
-        }
+    // TODO - is this even useful?
+    // RRTNode* current_node = goal;
+    // RRTNode* parent_node = goal->getParent();
+    // while (parent_node != nullptr) {
+    //     for (RRTNode* child : parent_node->getReachable()) {
+    //         if (child != current_node) {
+    //             parent_node->removeReachable(child);
+    //         }
+    //     }
 
-        current_node = parent_node;
-        parent_node = parent_node->getParent();
-    }
+    //     current_node = parent_node;
+    //     parent_node = parent_node->getParent();
+    // }
 
+    // update local parametters
     tree_size = 1;
     current_head = goal;
 }
@@ -399,11 +400,12 @@ std::vector<XYZCoord> RRTTree::getPathToGoal() const {
     while (current_node != nullptr && current_node->getParent() != nullptr) {
         const std::vector<XYZCoord>& edge_path = current_node->getPath();
 
-        // TODO - misses first node
         path.insert(path.begin(), edge_path.begin() + 1, edge_path.end());
         current_node = current_node->getParent();
     }
 
+    // loop above misses the first node, this adds it manually
+    path.insert(path.begin(), current_node->getPoint().coord);
     return path;
 }
 
@@ -424,7 +426,8 @@ std::vector<XYZCoord> RRTTree::getPathToGoal() const {
 //     return {nearest, min_distance};
 // }
 
-void RRTTree::RRTStarRecursive(RRTNode* current_node, RRTNode* sample, double rewire_radius) {
+void RRTTree::RRTStarRecursive(RRTNode* current_node, RRTNode* sample,
+                               double rewire_radius_squared) {
     // base case
     if (current_node == nullptr) {
         return;
@@ -433,8 +436,7 @@ void RRTTree::RRTStarRecursive(RRTNode* current_node, RRTNode* sample, double re
     // for all nodes past the current node, attempt to rewire them
     for (RRTNode* child : current_node->getReachable()) {
         // get the distance between the current node and the nearest node
-        if (child->getPoint().distanceToSquared(sample->getPoint()) >
-            rewire_radius * rewire_radius) {
+        if (child->getPoint().distanceToSquared(sample->getPoint()) > rewire_radius_squared) {
             continue;
         }
 
@@ -481,7 +483,7 @@ void RRTTree::RRTStarRecursive(RRTNode* current_node, RRTNode* sample, double re
 
     // recurse
     for (RRTNode* child : current_node->getReachable()) {
-        RRTStarRecursive(child, sample, rewire_radius);
+        RRTStarRecursive(child, sample, rewire_radius_squared);
     }
 }
 
@@ -500,6 +502,7 @@ void RRTTree::reassignCostsRecursive(RRTNode* parent, RRTNode* current_node, dou
         return;
     }
 
+    // reassigns the cost: cost to get to the parent + known path length between parent and child
     current_node->setCost(path_cost + current_node->getPathLength());
     for (RRTNode* neighbor : current_node->getReachable()) {
         reassignCostsRecursive(current_node, neighbor, current_node->getCost());

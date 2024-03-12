@@ -23,6 +23,13 @@ class RRTNode {
     RRTNode(const RRTPoint& point, double cost, double path_length,
             const std::vector<XYZCoord> path, RRTNodeList reachable);
 
+   /**
+    * Destructor for RRTNode object
+    * 
+    * Removes the subtree below it (recursively)
+   */
+    ~RRTNode();
+
     /*
      *  Equality overload method for RRTNode object
      */
@@ -31,7 +38,7 @@ class RRTNode {
     /*
      *  Get the RRTPoint associated with this RRTNode object
      */
-    RRTPoint getPoint();
+    RRTPoint& getPoint();
 
     /*
      *  Set the reachable (neighbors) list for this RRTNode object
@@ -119,7 +126,7 @@ class RRTNode {
 class RRTTree {
  public:
     RRTTree(RRTPoint root_point, Environment airspace, Dubins dubins);
-    // ~RRTTree();
+    ~RRTTree();
 
     /**
      * Generates node without adding it to the tree
@@ -161,7 +168,7 @@ class RRTTree {
      *
      * @return Environment object
      */
-    Environment getAirspace() const;
+    const Environment& getAirspace() const;
 
     /**
      * Gets a random point in the environment
@@ -264,11 +271,11 @@ class RRTTree {
 
     /**
      * Fills in a list of options from an existing list of nodes
-     * 
+     *
      * @param options   ==> the list of options to fill
      * @param nodes     ==> the list of nodes to parse
      * @param sample    ==> the end point that the options will be connected to
-    */
+     */
     void fillOptionsNodes(std::vector<std::pair<RRTNode*, RRTOption>>& options,
                           const std::vector<RRTNode*>& nodes, const RRTPoint& sample) const;
 
