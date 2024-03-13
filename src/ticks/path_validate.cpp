@@ -9,33 +9,27 @@
 #include "utilities/locks.hpp"
 
 PathValidateTick::PathValidateTick(std::shared_ptr<MissionState> state)
-    :Tick(state, TickID::PathValidate) {}
+    :Tick(state, TickID::PathValidate), status(PathValidateTick::Status::None) {}
 
 std::chrono::milliseconds PathValidateTick::getWait() const {
     return PATH_VALIDATE_TICK_WAIT;
 }
 
 Tick* PathValidateTick::tick() {
-    Message status;
-    if (!this->already_validated && !this->state->recvTickMsg<PathValidateTick>(&status)) {
-        // haven't already received a validated msg & there is no current msg
-        return nullptr;
-    }
-
-    if (this->already_validated || status == Message::Validated) {
+    if (status == Status::Validated) {
         if (this->state->getMav() != nullptr) {
             return new MissionUploadTick(this->state);
         } else {
-            this->already_validated = true;
             LOG_F(WARNING, "Path Validated, but cannot continue because mavlink not connected.");
             return nullptr;
         }
-    } else if (status == Message::Rejected) {
+    } else if (status == Status::Rejected) {
         return new PathGenTick(this->state);
-    } else {
-        LOG_F(ERROR, "Invalid id %d passed into PathValidateTick::tick()",
-            static_cast<int>(status));
     }
 
     return nullptr;
+}
+
+void PathValidateTick::setStatus(PathValidateTick::Status status) {
+    this->status = status;
 }

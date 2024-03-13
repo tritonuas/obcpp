@@ -52,8 +52,6 @@ void MissionState::_setTick(Tick* newTick) {
     LOG_F(INFO, "%s -> %s", old_tick_name.c_str(), new_tick_name.c_str());
 
     tick.reset(newTick);
-    std::queue<int> empty;
-    std::swap(this->tick_msgs, empty);
 }
 
 TickID MissionState::getTickID() {

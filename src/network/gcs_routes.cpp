@@ -94,10 +94,12 @@ DEF_GCS_HANDLE(Get, path, initial) {
 DEF_GCS_HANDLE(Get, path, initial, new) {
     LOG_REQUEST("GET", "/path/initial/new");
 
-    if (!state->sendTickMsg<PathValidateTick>(PathValidateTick::Message::Rejected)) {
+    auto lock_ptr = state->getTickLockPtr<PathValidateTick>();
+    if (!lock_ptr.has_value()) {
         LOG_RESPONSE(WARNING, "Not currently in PathValidate Tick", BAD_REQUEST);
         return;
     }
+    lock_ptr->ptr->setStatus(PathValidateTick::Status::Rejected);
 
     LOG_RESPONSE(INFO, "Started generating new initial path", OK);
 }
@@ -110,10 +112,12 @@ DEF_GCS_HANDLE(Post, path, initial, validate) {
         return;
     }
 
-    if (!state->sendTickMsg<PathValidateTick>(PathValidateTick::Message::Validated)) {
+    auto lock_ptr = state->getTickLockPtr<PathValidateTick>();
+    if (!lock_ptr.has_value()) {
         LOG_RESPONSE(WARNING, "Not currently in PathValidate Tick", BAD_REQUEST);
         return;
     }
+    lock_ptr->ptr->setStatus(PathValidateTick::Status::Validated);
 
     LOG_RESPONSE(INFO, "Initial path validated", OK);
 }
