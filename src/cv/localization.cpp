@@ -130,7 +130,7 @@ GPSCoord GSDLocalization::localize(const ImageTelemetry& telemetry, const Bbox& 
     float target_camera_cord_y = (IMG_HEIGHT_PX / 2) - target_y;
 
     //Angle of Bearing (Angle from north to target)
-    float thetaB = plane_data[3] + atan(target_camera_cord_x / target_camera_cord_y);
+    float thetaB = telemetry.bearing + atan(target_camera_cord_x / target_camera_cord_y);
 
     //Translate bearing to the 3 quadrant if applicable
     if (target_camera_cord_x < 0 && target_camera_cord_y < 0){
@@ -142,7 +142,7 @@ GPSCoord GSDLocalization::localize(const ImageTelemetry& telemetry, const Bbox& 
     float calc_cam_offset_y = target_camera_cord_y * GSD * 0.001; //mm to M
 
     //Calculates the cordinates using the offset
-    GPSCoord calc_coord = calc_offset(calc_cam_offset_y, calc_cam_offset_x, telemetry.latitude, telemetry.longitude);
+    GPSCoord calc_coord = calc_offset(calc_cam_offset_x, calc_cam_offset_y, telemetry.latitude, telemetry.longitude);
 
     return calc_coord;
 }
