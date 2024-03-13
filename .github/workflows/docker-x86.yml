@@ -1,4 +1,4 @@
-name: Push Docker Image
+name: Push x86 Docker Image
 
 on:
   push:
@@ -8,6 +8,8 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  TAG: "x86"
+  DOCKERFILE_PATH: 'docker/Dockerfile.x86'
 
 jobs:
   changes:
@@ -21,7 +23,7 @@ jobs:
       with:
         filters: |
           dockerfile:
-            - '.devcontainer/Dockerfile'
+            - ${DOCKERFILE_PATH}
 
   build-and-push-image:
     needs: changes
@@ -50,9 +52,9 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
         with:
-          file: .devcontainer/Dockerfile
+          file: ${DOCKERFILE_PATH} 
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${TAG} 
           labels: ${{ steps.meta.outputs.labels }}
 
