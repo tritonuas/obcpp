@@ -23,7 +23,7 @@ jobs:
       with:
         filters: |
           dockerfile:
-            - ${DOCKERFILE_PATH}
+            - ${{ env.DOCKERFILE_PATH }}
 
   build-and-push-image:
     needs: changes
@@ -52,9 +52,9 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
         with:
-          file: ${DOCKERFILE_PATH} 
+          file: ${{ env.DOCKERFILE_PATH }} 
           context: .
           push: true
-          tags: ${TAG} 
+          tags: ${{ env.TAG }} 
           labels: ${{ steps.meta.outputs.labels }}
 

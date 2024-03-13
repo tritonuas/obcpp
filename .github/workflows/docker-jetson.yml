@@ -24,7 +24,7 @@ jobs:
       with:
         filters: |
           dockerfile:
-            - ${DOCKERFILE_PATH} 
+            - ${{ env.DOCKERFILE_PATH }}
 
   build-and-push-image:
     needs: changes
@@ -60,9 +60,9 @@ jobs:
         uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
         with:
           platforms: linux/arm64
-          file: ${DOCKERFILE_JETSON} 
+          file: ${{ env.DOCKERFILE_PATH }} 
           context: .
           push: true
-          tags: ${TAG} 
+          tags: ${{ env.TAG }} 
           labels: ${{ steps.meta.outputs.labels }}
 
