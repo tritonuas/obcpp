@@ -92,7 +92,7 @@ WORKDIR /obcpp/build
 ENV CMAKE_PREFIX_PATH="/usr/local/lib/python3.8/dist-packages/torch/share/cmake/Torch;/usr/local/share/cmake/TorchVision"
 RUN GITHUB_ACTIONS=true cmake -DCMAKE_PREFIX_PATH="/usr/local/lib/python3.8/dist-packages/torch/share/cmake/Torch;/usr/local/share/cmake/TorchVision" -DCMAKE_MODULE_PATH="/usr/local/share/cmake/TorchVision" -DCMAKE_BUILD_TYPE="Release" ..
 
-RUN make load_torchvision_model VERBOSE=1
+RUN make obcpp cuda_check load_torchvision_model VERBOSE=1
 
 # login as non-root user
 # USER $USERNAME
