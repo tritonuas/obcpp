@@ -16,7 +16,7 @@
  */
 class OBC {
  public:
-    explicit OBC(uint16_t gcs_port);
+    explicit OBC(const char* mavlink_url, uint16_t gcs_port);
 
     void run();
 
@@ -25,7 +25,7 @@ class OBC {
 
     std::unique_ptr<GCSServer> gcs_server;
 
-    void connectMavlink();
+    void connectMavlink(const char* mavlink_url);
     void connectAirdrop();
 };
 

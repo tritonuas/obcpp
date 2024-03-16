@@ -34,14 +34,14 @@ int main(int argc, char* argv[]) {
     }
 
     // Get values
-    std::string mavlinkIP = config["network"]["mavlink"]["connect"];
+    std::string mavlinkURL = config["network"]["mavlink"]["connect"];
     int gcsPORTInt = config["network"]["gcs"]["port"];
-    LOG_F(INFO, mavlinkIP.c_str());
+    LOG_F(INFO, mavlinkURL.c_str());
     LOG_F(INFO, std::to_string(gcsPORTInt).c_str());
     // END: My Code
 
     // In future, load configs, perhaps command line parameters, and pass
     // into the obc object
-    OBC obc(DEFAULT_GCS_PORT);
+    OBC obc(mavlinkURL.c_str(), gcsPORTInt);
     obc.run();
 }
