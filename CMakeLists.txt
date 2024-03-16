@@ -118,6 +118,11 @@ target_add_matplot(playground)
 target_add_protobuf(playground)
 target_add_loguru(playground)
 
+# for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
+# target_add_imagemagick(${PROJECT_NAME})
+target_include_directories(playground PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(playground PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
+
 # load_torchvision_model
 add_executable(load_torchvision_model tests/integration/load_torchvision_model.cpp)
 target_add_torch(load_torchvision_model)
@@ -135,6 +140,11 @@ target_add_httplib(mavlink_client)
 target_add_mavsdk(mavlink_client)
 target_add_matplot(mavlink_client)
 target_add_loguru(mavlink_client)
+
+# for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
+# target_add_imagemagick(${PROJECT_NAME})
+target_include_directories(mavlink_client PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(mavlink_client PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
 # path_plotting 
 add_executable(path_plotting ${SOURCES} tests/integration/path_plotting.cpp)

@@ -1,0 +1,10 @@
+{
+    "network": {
+        "mavlink": {
+            "connect": "tcp://172.17.0.1:5760"
+        },
+        "gcs": {
+            "port": 5010
+        }
+    }
+}
