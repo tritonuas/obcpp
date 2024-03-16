@@ -20,16 +20,25 @@ int main(int argc, char* argv[]) {
     // START: My Code 
     LOG_F(INFO, "HEEEELLLLLOOOOOOOOO");
 
-    // Load user specified config json
-    std::string fileName = argv[1];
-    std::ifstream configStream("/workspaces/obcpp/configs/" + fileName);
-    json config = json::parse(configStream);
+    // Load user specified config json, or make a new one
+    json config;
+    try{
+        std::string fileName = argv[1];
+        std::ifstream configStream("/workspaces/obcpp/configs/" + fileName);
+        config = json::parse(configStream);
+    } catch (...){
+        config["network"]["mavlink"]["connect"] = "tcp://172.17.0.1:5760";
+        config["network"]["gcs"]["port"] = 5010;
+        std::ofstream configFile("/workspaces/obcpp/configs/default-config.json");
+        configFile << config.dump(4);
+    }
 
     // Get values
     std::string mavlinkIP = config["network"]["mavlink"]["connect"];
     int gcsPORTInt = config["network"]["gcs"]["port"];
     LOG_F(INFO, mavlinkIP.c_str());
     LOG_F(INFO, std::to_string(gcsPORTInt).c_str());
+    // END: My Code
 
     // In future, load configs, perhaps command line parameters, and pass
     // into the obc object
