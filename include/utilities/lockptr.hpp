@@ -1,5 +1,5 @@
-#ifndef INCLUDE_UTILITIES_LOCKREF_HPP_
-#define INCLUDE_UTILITIES_LOCKREF_HPP_
+#ifndef INCLUDE_UTILITIES_LOCKPTR_HPP_
+#define INCLUDE_UTILITIES_LOCKPTR_HPP_
 
 #include <memory>
 #include <mutex>
@@ -9,17 +9,16 @@ class LockPtr {
  public:
     std::shared_ptr<T> ptr;
 
-    LockPtr(std::shared_ptr<T> ptr, std::mutex& mut): mut {mut} {
-        mut.lock();
-        this->ptr = ptr;
+    LockPtr(std::shared_ptr<T> ptr, std::mutex* mut): mut {mut}, ptr {ptr} {
+        mut->lock();
     }
 
     ~LockPtr() {
-        this->mut.unlock();
+        this->mut->unlock();
     }
 
  private:
-    std::mutex& mut;
+    std::mutex* mut;
 };
 
-#endif  // INCLUDE_UTILITIES_LOCKREF_HPP_
+#endif  // INCLUDE_UTILITIES_LOCKPTR_HPP_

@@ -48,7 +48,7 @@ class MissionState {
     template <typename T>
     std::optional<LockPtr<T>> getTickLockPtr() {
         try {
-            return LockPtr(std::dynamic_pointer_cast<T>(this->tick), this->tick_mut);
+            return LockPtr(std::dynamic_pointer_cast<T>(this->tick), &this->tick_mut);
         } catch (std::bad_cast ex) {
             LOG_F(ERROR, "Error creating TickLockRef: %s", ex.what());
             return {};
@@ -74,6 +74,7 @@ class MissionState {
     void setAirdrop(std::shared_ptr<AirdropClient> airdrop);
 
     MissionConfig config;  // has its own mutex
+
  private:
     std::mutex converter_mut;
     std::optional<CartesianConverter<GPSProtoVec>> converter;
