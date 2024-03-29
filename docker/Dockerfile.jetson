@@ -34,6 +34,7 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
                            # Need these to install Python 3.11 from pyenv
                            python3-pip \
                            libssl-dev \
+                           libjpeg-dev \
                            zlib1g-dev \
                            libbz2-dev \
                            libreadline-dev \
@@ -66,16 +67,31 @@ RUN wget https://github.com/mavlink/MAVSDK/releases/download/v${MAVSDK_VERSION}/
 
 # pull and build torchvision
 # refer to this page for version compatibilty with pytorch (libtorch) https://github.com/pytorch/pytorch/wiki/PyTorch-Versions
+# ARG TORCHVISION_VERSION=0.16.0
+# ENV TORCH_NVCC_FLAGS="-D__CUDA_NO_HALF_OPERATORS__" 
+# RUN wget "https://github.com/pytorch/vision/archive/refs/tags/v${TORCHVISION_VERSION}.zip" \
+#     && unzip "v${TORCHVISION_VERSION}.zip" \
+#     && cd "vision-${TORCHVISION_VERSION}" \
+#     && mkdir build \
+#     && cd build \
+#     && cmake -DWITH_CUDA=1 -DCUDA_HAS_FP16=1 -DCUDA_NO_HALF_OPERATORS=1 -DCUDA_NO_HALF_CONVERSIONS=1 -DCUDA_NO_HALF2_OPERATORS=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/usr/local/lib/python3.8/dist-packages/torch/share/cmake/Torch" .. \
+#     && make -j2 \
+#     && make install
+
+# attempt to copy dusty-nv torchvision installation https://github.com/dusty-nv/jetson-containers/blob/master/packages/pytorch/torchvision/Dockerfile
 ARG TORCHVISION_VERSION=0.16.0
-ENV TORCH_NVCC_FLAGS="-D__CUDA_NO_HALF_OPERATORS__" 
-RUN wget "https://github.com/pytorch/vision/archive/refs/tags/v${TORCHVISION_VERSION}.zip" \
-    && unzip "v${TORCHVISION_VERSION}.zip" \
-    && cd "vision-${TORCHVISION_VERSION}" \
-    && mkdir build \
-    && cd build \
-    && cmake -DWITH_CUDA=1 -DCUDA_HAS_FP16=1 -DCUDA_NO_HALF_OPERATORS=1 -DCUDA_NO_HALF_CONVERSIONS=1 -DCUDA_NO_HALF2_OPERATORS=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/usr/local/lib/python3.8/dist-packages/torch/share/cmake/Torch" .. \
-    && make -j2 \
-    && make install
+ENV PYTORCH_VERSION=2.1
+ENV FORCE_CUDA=1
+RUN git clone --branch "v${TORCHVISION_VERSION}" --recursive --depth=1 https://github.com/pytorch/vision /opt/torchvision && \
+    cd /opt/torchvision && \
+    git checkout "v${TORCHVISION_VERSION}" && \
+    python3 setup.py bdist_wheel && \
+    cp dist/torchvision*.whl /opt && \
+    cd ../ && \
+    rm -rf torchvision && \
+    \
+    pip3 install --no-cache-dir --verbose /opt/torchvision*.whl && \
+    python3 -c 'import torchvision; print(torchvision.__version__);'
 
 # Install g++10 and replace the older version. For some reason some c++ 20 features aren't working with g++9 even though
 # we have CMake configured to use c++ 20 https://stackoverflow.com/questions/69037873/why-am-i-missing-c20-headers-and-how-do-i-fix-this
