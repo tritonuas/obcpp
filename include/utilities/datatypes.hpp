@@ -9,15 +9,10 @@
 
 struct XYZCoord {
     XYZCoord(double x, double y, double z)
-        :x(x), y(y), z(z), color(matplot::color::black) {}
-
-    XYZCoord(double x, double y, double z, matplot::color color)
-        :x(x), y(y), z(z), color(color) {}
+        :x(x), y(y), z(z) {}
 
     /**
      * Checks whether the coordinates of the XYZCoords are identtical
-     * 
-     * DOES NOT CHECK XYZCoord.color
     */
     bool operator== (const XYZCoord &other_point) const;
 
@@ -50,7 +45,6 @@ struct XYZCoord {
     double x;
     double y;
     double z;
-    matplot::color color;
 };
 
 // Because this is a protos class, mildly inconvenient to construct it

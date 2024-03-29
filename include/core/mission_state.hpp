@@ -15,6 +15,7 @@
 #include "pathing/cartesian.hpp"
 #include "ticks/ids.hpp"
 #include "network/mavlink.hpp"
+#include "network/airdrop_client.hpp"
 
 class Tick;
 
@@ -49,6 +50,15 @@ class MissionState {
     std::shared_ptr<MavlinkClient> getMav();
     void setMav(std::shared_ptr<MavlinkClient> mav);
 
+    /*
+     * Gets a shared_ptr to the airdrop client.
+     * IMPORTANT: need to check that the pointer is not nullptr
+     * before accessing, to make sure the connection has already
+     * been established
+     */
+    std::shared_ptr<AirdropClient> getAirdrop();
+    void setAirdrop(std::shared_ptr<AirdropClient> airdrop);
+
     MissionConfig config;  // has its own mutex
 
  private:
@@ -63,6 +73,7 @@ class MissionState {
     bool init_path_validated = false;  // true when the operator has validated the initial path
 
     std::shared_ptr<MavlinkClient> mav;
+    std::shared_ptr<AirdropClient> airdrop;
 
     void _setTick(Tick* newTick);  // does not acquire the tick_mut
 };

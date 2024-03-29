@@ -20,8 +20,10 @@ endif(CCACHE)
 set(CMAKE_CXX_COMPILER g++)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_C_COMPILER gcc)
+set(CMAKE_C_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ./bin)
+set(CMAKE_EXPORT_COMPILE_COMMANDS True)
 
 SET(GCC_COMPILE_FLAGS "")
 SET(GCC_LINK_FLAGS    "-lprotobuf -lopencv_core -lopencv_highgui -lopencv_features2d -lopencv_flann -lopencv_imgcodecs -lopencv_dnn -lopencv_videoio -lopencv_imgproc -lopencv_ml -lopencv_photo -lprotobuf")
@@ -29,7 +31,11 @@ SET(GCC_LINK_FLAGS    "-lprotobuf -lopencv_core -lopencv_highgui -lopencv_featur
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COMPILE_FLAGS}")
 SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${GCC_LINK_FLAGS}")
 
+SET(CMAKE_C_FLAGS "-D_GNU_SOURCE")
+
 project(obcpp VERSION 1.0)
+
+set(LOGURU_WITH_STREAMS TRUE)
 
 # =============================
 # Dependencies 
@@ -46,8 +52,7 @@ include(${DEPS_DIRECTORY}/mavsdk/mavsdk.cmake)
 include(${DEPS_DIRECTORY}/matplot/matplot.cmake)
 include(${DEPS_DIRECTORY}/protobuf/protobuf.cmake)
 include(${DEPS_DIRECTORY}/loguru/loguru.cmake)
-
-
+include(${DEPS_DIRECTORY}/imagemagick/imagemagick.cmake)
 # =============================
 
 # =============================
@@ -64,10 +69,18 @@ endif()
 # =============================
 
 # =============================
+# Set up imagemagick
+add_definitions( -DMAGICKCORE_QUANTUM_DEPTH=16 )
+add_definitions( -DMAGICKCORE_HDRI_ENABLE=0 )
+
+find_package(ImageMagick COMPONENTS Magick++ REQUIRED)
+# =============================
+
+# =============================
 # obcpp executable
-file(GLOB_RECURSE SOURCES "src/*.cpp" "build/gen_protos/*.pb.cc")
+file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.c" "build/gen_protos/*.pb.cc")
 list(REMOVE_ITEM SOURCES "${CMAKE_SOURCE_DIR}/src/main.cpp")
-file(GLOB_RECURSE HEADERS "include/*.hpp" "build/gen_protos/*.pb.h")
+file(GLOB_RECURSE HEADERS "include/*.hpp" "include/*.h" "build/gen_protos/*.pb.h")
 
 set(INCLUDE_DIRECTORY ${PROJECT_SOURCE_DIR}/include)
 set(GEN_PROTOS_DIRECTORY ${PROJECT_SOURCE_DIR}/build/gen_protos)
@@ -83,6 +96,10 @@ target_add_httplib(${PROJECT_NAME})
 target_add_mavsdk(${PROJECT_NAME})
 target_add_matplot(${PROJECT_NAME})
 target_add_loguru(${PROJECT_NAME})
+# for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
+# target_add_imagemagick(${PROJECT_NAME})
+target_include_directories(${PROJECT_NAME} PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 # =============================
 
 # =============================
@@ -153,6 +170,25 @@ target_add_torchvision(cv_segmentation)
 target_add_loguru(cv_segmentation)
 target_add_httplib(cv_segmentation)
 target_add_mavsdk(cv_segmentation)
+# path_plotting 
+add_executable(path_plotting ${SOURCES} tests/integration/path_plotting.cpp)
+target_add_torch(path_plotting)
+target_add_json(path_plotting)
+target_add_httplib(path_plotting)
+target_add_mavsdk(path_plotting)
+target_add_matplot(path_plotting)
+target_add_protobuf(path_plotting)
+target_add_opencv(path_plotting) 
+target_add_loguru(path_plotting)
+# for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
+# target_add_imagemagick(path_plotting)
+target_include_directories(path_plotting PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(path_plotting PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
+
+# airdrop_sockets
+add_executable(airdrop_sockets src/network/airdrop_sockets.c tests/integration/airdrop_sockets.c)
+target_include_directories(airdrop_sockets PRIVATE ${INCLUDE_DIRECTORY})
+
 # =============================
 
 # =============================
