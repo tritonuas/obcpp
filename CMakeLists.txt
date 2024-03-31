@@ -148,6 +148,10 @@ target_add_torch(cv_pipeline)
 target_add_torchvision(cv_pipeline)
 target_add_mavsdk(cv_pipeline)
 target_add_loguru(cv_pipeline)
+# for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
+# target_add_imagemagick(path_plotting)
+target_include_directories(cv_pipeline PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(cv_pipeline PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
 # cv_matching
 add_executable(cv_matching ${SOURCES} "tests/integration/cv_matching.cpp")
