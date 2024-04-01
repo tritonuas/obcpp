@@ -47,10 +47,10 @@ PipelineResults Pipeline::run(const ImageData &imageData) {
     for (CroppedTarget target : saliencyResults) {
         MatchResult potentialMatch = this->matcher.match(target);
 
-        GPSCoord* targetPosition = new GPSCoord(this->ecefLocalizer.localize(imageData.getTelemetry(),
-                                                target.bbox));
-        // GPSCoord* targetPosition = new GPSCoord(this->gsdLocalizer.localize(imageData.getTelemetry(),
-        //                                         target.bbox));
+        GPSCoord* targetPosition = new GPSCoord(this->ecefLocalizer.localize(
+            imageData.getTelemetry(), target.bbox));
+        // GPSCoord* targetPosition = new GPSCoord(this->gsdLocalizer.localize(
+        //    imageData.getTelemetry(), target.bbox));
 
         AirdropTarget airdropTarget;
         // TODO: Call set_index using a BottleDropIndex type instead of uint8.

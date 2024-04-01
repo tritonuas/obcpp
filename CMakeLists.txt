@@ -266,7 +266,8 @@ if(CPPLINT)
   add_custom_target(lint
     COMMAND cpplint
     # Do not require licenses, TODO assignment, Google versions of C++ libs
-    --filter=-legal,-readability/todo,-build/c++11
+    # also don't check for runtime/references since Google's public style guidelines are behind https://github.com/cpplint/cpplint/issues/148
+    --filter=-legal,-readability/todo,-build/c++11,-runtime/references
     --linelength=100
     --recursive
     ../src
