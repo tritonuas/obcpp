@@ -117,11 +117,16 @@ target_add_mavsdk(playground)
 target_add_matplot(playground)
 target_add_protobuf(playground)
 target_add_loguru(playground)
+# for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
+# target_add_imagemagick(path_plotting)
+target_include_directories(playground PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(playground PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
 # load_torchvision_model
 add_executable(load_torchvision_model "tests/integration/load_torchvision_model.cpp")
 target_add_torch(load_torchvision_model)
 target_add_torchvision(load_torchvision_model)
+target_add_loguru(load_torchvision_model)
 
 # mavlink-client
 add_executable(mavlink_client ${SOURCES} "tests/integration/mavlink_client.cpp")
@@ -135,6 +140,10 @@ target_add_httplib(mavlink_client)
 target_add_mavsdk(mavlink_client)
 target_add_matplot(mavlink_client)
 target_add_loguru(mavlink_client)
+# for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
+# target_add_imagemagick(path_plotting)
+target_include_directories(mavlink_client PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(mavlink_client PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
 # cv_pipeline 
 add_executable(cv_pipeline ${SOURCES} "tests/integration/cv_pipeline.cpp")
@@ -163,6 +172,11 @@ target_add_torchvision(cv_matching)
 target_add_loguru(cv_matching)
 target_add_httplib(cv_matching)
 target_add_mavsdk(cv_matching)
+# for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
+# target_add_imagemagick(path_plotting)
+target_include_directories(cv_matching PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(cv_matching PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
+
 
 # cv_segmentation
 add_executable(cv_segmentation ${SOURCES} "tests/integration/cv_segmentation.cpp")
@@ -174,6 +188,11 @@ target_add_torchvision(cv_segmentation)
 target_add_loguru(cv_segmentation)
 target_add_httplib(cv_segmentation)
 target_add_mavsdk(cv_segmentation)
+# for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
+# target_add_imagemagick(path_plotting)
+target_include_directories(cv_segmentation PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(cv_segmentation PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
+
 # path_plotting 
 add_executable(path_plotting ${SOURCES} tests/integration/path_plotting.cpp)
 target_add_torch(path_plotting)
