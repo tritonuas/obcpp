@@ -33,7 +33,9 @@ struct PipelineResults {
 class Pipeline {
  public:
         Pipeline(std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives,
-            std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages);
+            std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages,
+            const std::string &matchingModelPath,
+            const std::string &segmentationModelPath);
 
     PipelineResults run(const ImageData& imageData);
 

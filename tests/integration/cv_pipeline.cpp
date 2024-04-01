@@ -5,6 +5,9 @@
 
 #include "cv/pipeline.hpp"
 
+// Download these test images from one of the zips here https://drive.google.com/drive/u/1/folders/1opXBWx6bBF7J3-JSFtrhfFIkYis9qhGR
+// Or, any cropped not-stolen images will work
+
 // this image should be located at a relative path to the CMake build dir
 const std::string imagePath = "mock_image.jpg";
 
@@ -13,6 +16,11 @@ const std::string refImagePath1 = "../bin/test/test/000000920.jpg";
 const std::string refImagePath2 = "../bin/test/test/000000003.jpg";
 const std::string refImagePath3 = "../bin/test/test/000000004.jpg";
 const std::string refImagePath4 = "../bin/test/test/000000005.jpg";
+
+// matching model can be downloaded from here: https://drive.google.com/drive/folders/1ciDfycNyJiLvRhJhwQZoeKH7vgV6dGHJ?usp=drive_link
+const std::string matchingModelPath = "../models/target_siamese_1.pt";
+// segmentation model can be downloaded from here: https://drive.google.com/file/d/1U2EbfJFzcjVnjTuD6ud-bIf8YOiEassf/view?usp=drive_link
+const std::string segmentationModelPath = "../models/fcn.pth";
 
 // mock telemetry data
 const double latitude = 38.31568;
@@ -80,7 +88,7 @@ int main() {
     cv::Mat ref4 = cv::imread(refImagePath4);
     referenceImages.push_back(std::make_pair(ref4, BottleDropIndex(0)));
 
-    Pipeline pipeline(bottlesToDrop, referenceImages);
+    Pipeline pipeline(bottlesToDrop, referenceImages, matchingModelPath, segmentationModelPath);
 
     PipelineResults output = pipeline.run(imageData);
 

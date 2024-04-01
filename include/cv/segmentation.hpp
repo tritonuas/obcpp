@@ -29,8 +29,6 @@ struct SegmentationResults {
 // https://github.com/tritonuas/hutzler-571
 class Segmentation {
  public:
-        Segmentation() {}
-
         explicit Segmentation(const std::string &modelPath);
         SegmentationResults segment(const CroppedTarget &target);
  private:
