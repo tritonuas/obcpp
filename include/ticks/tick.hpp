@@ -4,18 +4,18 @@
 #include <memory>
 #include <chrono>
 #include <string>
+#include <mutex>
 
 #include "core/mission_state.hpp"
 #include "ticks/ids.hpp"
-
-// When writing tick functions... Absolutely do not do not do not
-// delete the pointer that is being passed in.
+#include "utilities/logging.hpp"
 
 class Tick {
  public:
-    explicit Tick(std::shared_ptr<MissionState> state, TickID id) {
+    Tick(std::shared_ptr<MissionState> state, TickID id) {
         this->state = state;
         this->id = id;
+        this->already_validated = false;
     }
     virtual ~Tick() = default;
 
@@ -32,8 +32,7 @@ class Tick {
  protected:
     std::shared_ptr<MissionState> state;
     TickID id;
+    bool already_validated;
 };
-
-
 
 #endif  // INCLUDE_TICKS_TICK_HPP_

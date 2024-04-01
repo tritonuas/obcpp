@@ -168,13 +168,34 @@ target_link_libraries(path_planning PRIVATE -Wl,--copy-dt-needed-entries ${Image
 # airdrop_sockets
 add_executable(airdrop_sockets src/network/airdrop_sockets.c tests/integration/airdrop_sockets.c)
 target_include_directories(airdrop_sockets PRIVATE ${INCLUDE_DIRECTORY})
-
 # =============================
 
 # =============================
 # Unit tests
 add_subdirectory(tests/unit)
 add_subdirectory(${DEPS_DIRECTORY}/google-test)
+# =============================
+
+# =============================
+# Integration tests
+add_executable(camera_playground tests/integration/camera_playground.cpp)
+target_include_directories(camera_playground PRIVATE ${INCLUDE_DIRECTORY})
+target_add_arena(camera_playground)
+add_custom_target(
+    run_camera_playground
+    ${CMAKE_COMMAND}
+    -E env LD_LIBRARY_s/target_siamese_1.pt
+)
+
+# Segmentation model
+add_custom_target(pull_segmentation
+  COMMAND gdown https://drive.google.com/file/d/1U2EbfJFzcjVnjTuD6ud-bIf8YOiEassf -O ${CMAKE_BINARY_DIR}/../models/fcn-model_20-epochs_06-01-2023T21-16-02.pth
+)
+# =============================
+
+# =============================
+# Pull testing images
+# 
 # =============================
 
 # =============================
@@ -186,6 +207,7 @@ if(CPPLINT)
   # define lint target
   add_custom_target(lint
     COMMAND cpplint
+    # Do not require licenses, TODO assignment, Google versions of C++ libs, 
     # https://github.com/cpplint/cpplint/issues/148
     --filter=-legal,-readability/todo,-build/c++11,-runtime/references
     --linelength=100
