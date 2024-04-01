@@ -26,7 +26,7 @@ TEST(EnvironentTest, PointInBounds) {
     EXPECT_EQ(false, test_env.isPointInPolygon(test, XYZCoord{-1, 0.5, 0}));  // left
     EXPECT_EQ(false, test_env.isPointInPolygon(test, XYZCoord{0.5, -1, 0}));  // down
 
-    Polygon no_point;
+    Polygon no_point = {};
     Environment no_point_env = {no_point, {XYZCoord(0, 0, 0)}, {}};
 
     EXPECT_EQ(false, no_point_env.isPointInPolygon(no_point, XYZCoord{1, 1, 1}));
@@ -183,4 +183,29 @@ TEST(EnvironmentTest, InsideObstacleTest) {
 
     // for sanity
     EXPECT_TRUE(test.isPointInBounds(XYZCoord{1, 1, 0}));
+}
+
+/*
+*   tests Environment::intersect()
+*/
+TEST(EnvironmentTest, IntersectTest) {
+    Environment test({}, {}, {});
+
+    // test intersect
+    std::vector<XYZCoord> path1 = {XYZCoord{0, 0, 0}, XYZCoord{100, 100, 0}};
+    std::vector<XYZCoord> path1_5 = {XYZCoord{0, 0, 0}, XYZCoord{-1, -1, 0}}; 
+    std::vector<XYZCoord> path2 = {XYZCoord{-1, -1, 0}, XYZCoord{5, 5, 0}};
+    std::vector<XYZCoord> path3 = {XYZCoord{0, 0, 0}, XYZCoord{15, 15, 0}};
+    std::vector<XYZCoord> path4 = {XYZCoord{2, 1, 0}, XYZCoord{1, 2, 0}};
+
+    EXPECT_TRUE(test.intersect(path1[0], path1[1], path2[0], path2[1]));
+    EXPECT_TRUE(test.intersect(path1[0], path1[1], path1_5[0], path1_5[1]));
+
+    EXPECT_TRUE(test.intersect(path1[0], path1[1], path3[0], path3[1]));
+    EXPECT_TRUE(test.intersect(path2[0], path2[1], path3[0], path3[1]));
+
+    EXPECT_TRUE(test.intersect(path1[0], path1[1], path4[0], path4[1]));
+    EXPECT_FALSE(test.intersect(path1_5[0], path1_5[1], path4[0], path4[1]));
+
+
 }

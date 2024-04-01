@@ -111,21 +111,6 @@ class Environment {
      */
     bool isPointInPolygon(const Polygon& polygon, const XYZCoord& point) const;
 
- private:
-    const Polygon valid_region;            // boundary of the valid map
-    const std::vector<XYZCoord> goals;     // goal point
-    const std::vector<Polygon> obstacles;  // obstacles in the map
-
-    int goals_found;  // whether or not the goal has been found, once it becomes ture, it will never
-                      // be false again
-
-    const std::pair<std::pair<double, double>, std::pair<double, double>>
-        bounds;  // bounds of the valid
-                 // region, first pair
-                 // is (min x, max x),
-                 // second pair is
-                 // (min y, max y)
-
     /**
      * Checks wheter a line segment is in bounds or not, it must NOT intersect
      * either the valid region or the obstacles
@@ -159,22 +144,48 @@ class Environment {
                                   const Polygon& polygon) const;
 
     /**
-     * @see https://stackoverflow.com/questions/3838329/how-can-i-check-if-two-segments-intersect
-     * @see https://bryceboe.com/2006/10/23/line-segment-intersection-algorithm/
+     * Given three colinear points p, q, r, the function checks if
+     * point q lies on line segment 'pr'
+     *
+     * @param p ==> point to check
+     * @param q ==> first point on line
+     * @param r ==> second point on line
      */
-    bool ccw(const XYZCoord& A, const XYZCoord& B, const XYZCoord& C) const;
+    bool onSegment(XYZCoord p, XYZCoord q, XYZCoord r) const;
 
     /**
-     * Determines if two line segments intersect
-     * 
-     * @param A ==> start point of the first line segment
-     * @param B ==> end point of the first line segment
-     * @param C ==> start point of the second line segment
-     * @param D ==> end point of the second line segment
-     * @return  ==> true if intersect, false if not
-    */
-    bool intersect(const XYZCoord& A, const XYZCoord& B, const XYZCoord& C,
-                   const XYZCoord& D) const;
+     *  Find the orintation of the ordered triplet (p, q, r)
+     *
+     * @param p ==> point 1
+     * @param q ==> point 2
+     * @param r ==> point 3
+     */
+    int orientation(XYZCoord p, XYZCoord q, XYZCoord r) const;
+
+    /**
+     * The main function that returns true if the line segment 'p1q1' and 'p2q2' intersect.
+     *
+     * @param p1 ==> start point of line segment 1
+     * @param q1 ==> end point of line segment 1
+     * @param p2 ==> start point of line segment 2
+     * @param q2 ==> end point of line segment 2
+     */
+    bool intersect(XYZCoord p1, XYZCoord q1, XYZCoord p2, XYZCoord q2) const;
+
+ private:
+    const Polygon valid_region;            // boundary of the valid map
+    const std::vector<XYZCoord> goals;     // goal point
+    const std::vector<Polygon> obstacles;  // obstacles in the map
+
+    int goals_found;  // whether or not the goal has been found, once it becomes ture, it will never
+                      // be false again
+
+    const std::pair<std::pair<double, double>, std::pair<double, double>>
+        bounds;  // bounds of the valid
+                 // region, first pair
+                 // is (min x, max x),
+                 // second pair is
+                 // (min y, max y)
 };
 
 #endif  // INCLUDE_PATHING_ENVIRONMENT_HPP_

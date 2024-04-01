@@ -263,31 +263,31 @@ int main() {
 
     RRTPoint start = RRTPoint(state->config.getWaypoints()[0], 0);
 
-    int num_iterations = 750;
+    int num_iterations = 500;
     double search_radius = 9999;
-    double rewire_radius = 500;
+    double rewire_radius = 200;
 
     auto s_time = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < 2; i++) {
-        std::cout << "Iteration: " << i << std::endl;
-        // std::cout << "Start Running" << std::endl;
-        RRT rrt = RRT(start, goals, num_iterations, search_radius, rewire_radius,
-                      state->config.getFlightBoundary(), obstacles,
-                      OptimizationOptions{true, PATH_OPTIONS::RANDOM});
+    // for (int i = 0; i < 2; i++) {
+    //     std::cout << "Iteration: " << i << std::endl;
+    //     // std::cout << "Start Running" << std::endl;
+    //     RRT rrt = RRT(start, goals, num_iterations, search_radius, rewire_radius,
+    //                   state->config.getFlightBoundary(), obstacles,
+    //                   OptimizationOptions{true, PATH_OPTIONS::RANDOM});
 
-        // print out stats
-        auto start_time = std::chrono::high_resolution_clock::now();
-        rrt.run();
+    //     // print out stats
+    //     auto start_time = std::chrono::high_resolution_clock::now();
+    //     rrt.run();
 
-        // time the following function3000
+    //     // time the following function
 
-        auto end_time = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> elapsed = end_time - start_time;
-        file << elapsed.count() << std::endl;
-        std::cout << "Time to run: " << elapsed.count() << "s" << std::endl;
-        std::vector<XYZCoord> path = rrt.getPointsToGoal();
-        std::cout << "Nodes: " << path.size() << std::endl;
-    }
+    //     auto end_time = std::chrono::high_resolution_clock::now();
+    //     std::chrono::duration<double> elapsed = end_time - start_time;
+    //     file << elapsed.count() << std::endl;
+    //     std::cout << "Time to run: " << elapsed.count() << "s" << std::endl;
+    //     std::vector<XYZCoord> path = rrt.getPointsToGoal();
+    //     std::cout << "Nodes: " << path.size() << std::endl;
+    // }
     auto e_time = std::chrono::high_resolution_clock::now();
     std::cout << "Total time: " << (e_time - s_time).count() << "s" << std::endl;
 
@@ -296,7 +296,7 @@ int main() {
     auto start_time = std::chrono::high_resolution_clock::now();
     RRT rrt = RRT(start, goals, num_iterations, search_radius, rewire_radius,
                   state->config.getFlightBoundary(), obstacles,
-                  OptimizationOptions{false, PATH_OPTIONS::NEAREST});
+                  OptimizationOptions{true, PATH_OPTIONS::NEAREST});
 
     // print out stats
     std::cout << "num_iterations: " << num_iterations << std::endl;
@@ -325,7 +325,7 @@ int main() {
     //     file << point.x << ", " << point.y << std::endl;
     // }
 
-    PathingPlot plotter("pathing_output", state->config.getFlightBoundary(), obstacles[1], goals);
+    PathingPlot plotter("pathing_output", state->config.getFlightBoundary(), obstacles[0], goals);
 
     plotter.addFinalPolyline(path);
     plotter.output("test_final_path", PathOutputType::BOTH);

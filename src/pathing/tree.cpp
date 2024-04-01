@@ -93,6 +93,7 @@ RRTTree::RRTTree(RRTPoint root_point, Environment airspace, Dubins dubins)
 RRTTree::~RRTTree() { delete root; }
 
 bool RRTTree::validatePath(const std::vector<XYZCoord>& path, const RRTOption& option) const {
+    // return airspace.isPathInBounds(path);
     return airspace.isPathInBoundsAdv(path, option);
 }
 
@@ -102,7 +103,6 @@ RRTNode* RRTTree::generateNode(RRTNode* anchor_node, const RRTPoint& new_point,
         anchor_node->getPoint(), new_point, option.dubins_path, option.has_straight);
 
     if (!validatePath(path, option)) {
-        // if (!airspace.isPathInBounds(path)) {
         return nullptr;
     }
 
@@ -143,6 +143,7 @@ void RRTTree::rewireEdge(RRTNode* current_node, RRTNode* previous_parent, RRTNod
     new_parent->addReachable(current_node);
 
     // bubbles down the tree to reassign the costs
+    current_node->setPath(path);
     current_node->setCost(new_parent->getCost() + path_cost);
     current_node->setPathLength(path_cost);
     reassignCosts(current_node);
@@ -350,12 +351,6 @@ void RRTTree::fillOptions(std::vector<std::pair<RRTNode*, RRTOption>>& options, 
         options.push_back({node, option});
     }
 
-    // RRTOption best_option = dubins.bestOption(node->getPoint(), end);
-    // if (!std::isnan(best_option.length) &&
-    //     best_option.length != std::numeric_limits<double>::infinity()) {
-    //     options.push_back({node, best_option});
-    // }
-
     // recursively calls the function for all reachable nodes
     for (RRTNode* child : node->getReachable()) {
         fillOptions(options, child, end);
@@ -372,21 +367,6 @@ void RRTTree::setCurrentHead(RRTNode* goal) {
         std::cout << "FAILURE: Goal is not in the tree\n" << std::endl;
         return;
     }
-
-    // prune the tree
-    // TODO - is this even useful?
-    // RRTNode* current_node = goal;
-    // RRTNode* parent_node = goal->getParent();
-    // while (parent_node != nullptr) {
-    //     for (RRTNode* child : parent_node->getReachable()) {
-    //         if (child != current_node) {
-    //             parent_node->removeReachable(child);
-    //         }
-    //     }
-
-    //     current_node = parent_node;
-    //     parent_node = parent_node->getParent();
-    // }
 
     // update local parametters
     tree_size = 1;
@@ -409,7 +389,9 @@ std::vector<XYZCoord> RRTTree::getPathToGoal() const {
     return path;
 }
 
+/*-----------------*/
 /* RRTTree Private */
+/*-----------------*/
 
 // std::pair<RRTNode*, double> RRTTree::getNearestNode(const XYZCoord& point) const {
 //     RRTNode* nearest = nullptr;
@@ -440,7 +422,7 @@ void RRTTree::RRTStarRecursive(RRTNode* current_node, RRTNode* sample,
             continue;
         }
 
-        // the child shouldn't have any children
+        // the sample shouldn't have any children
         if (child == sample) {
             return;
         }
@@ -448,17 +430,15 @@ void RRTTree::RRTStarRecursive(RRTNode* current_node, RRTNode* sample,
         // get the dubins options (sorted)
         const std::vector<RRTOption>& options =
             dubins.allOptions(sample->getPoint(), child->getPoint(), true);
-        // RRTOption option = dubins.bestOption(sample->getPoint(), child->getPoint());
 
         // for each option
         for (const RRTOption& option : options) {
-            // get the new cost
             if (std::isnan(option.length) ||
                 option.length == std::numeric_limits<double>::infinity()) {
                 break;
             }
 
-            // if the node is uncompetitive, continue
+            // if the node is uncompetitive, move onto the next node
             double new_cost = sample->getCost() + option.length;
             double cost = child->getCost();
 
@@ -471,8 +451,7 @@ void RRTTree::RRTStarRecursive(RRTNode* current_node, RRTNode* sample,
             const std::vector<XYZCoord>& path = dubins.generatePoints(
                 sample->getPoint(), child->getPoint(), option.dubins_path, option.has_straight);
 
-            if (!airspace.isPathInBoundsAdv(path, option)) {
-                // if (!airspace.isPathInBounds(path)) {
+            if (!validatePath(path, option)) {
                 continue;
             }
 

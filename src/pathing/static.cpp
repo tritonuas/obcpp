@@ -88,7 +88,10 @@ void RRT::RRTIteration(int tries, int current_goal_index) {
 
     // frees memory
     delete (goal_node);
-    connectToGoal(current_goal_index);
+    if (!connectToGoal(current_goal_index)) {
+        std::cout << "Failed to connect to goal on iteration: [" << current_goal_index << "]"
+                  << std::endl;
+    }
 }
 
 bool RRT::epochEvaluation(RRTNode *goal_node, int current_goal_index) {
@@ -130,7 +133,7 @@ std::vector<std::pair<RRTPoint, std::pair<RRTNode *, RRTOption>>> RRT::getOption
     // Generates goal specific points based on current Waypoints and list og
     // Angles
     for (const double angle : angles) {
-        const XYZCoord& goal = tree.getAirspace().getGoal(current_goal_index);
+        const XYZCoord &goal = tree.getAirspace().getGoal(current_goal_index);
         goal_points.push_back(RRTPoint(goal, angle));
     }
 

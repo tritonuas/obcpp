@@ -132,15 +132,15 @@ class PathingPlot {
     // internal counter to keep track of which frame we're on
     int currFrame = 0;
 
-    float lineWidth = 4.0f;
+    float lineWidth = 2.0f;
     float coordSize = 10.0f;
 
     // Time in 1/100ths of a second which must expire before
     // displaying the next image in an animated sequence.
-    size_t animationDelayCentiSec = 0.0001;
+    size_t animationDelayCentiSec = 0.001;
 
     // how many frames to generate per each unit of distance in a path
-    double framesPerDistanceUnit = 0.1f;
+    double framesPerDistanceUnit = 0.2f;
 
     // helper function to find the smallest and largest coordinates
     // from both intermediate and final objects.
