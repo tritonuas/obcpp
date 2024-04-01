@@ -242,6 +242,7 @@ add_custom_target(pull_saliency
 # Matching model 
 add_custom_target(pull_matching
   COMMAND gdown https://drive.google.com/file/d/1NeFiAfSSLXAZWlehfd0ox7p_jFF4YdrO -O ${CMAKE_BINARY_DIR}/../models/target_siamese_1.pt
+)
 
 
 # Segmentation model
