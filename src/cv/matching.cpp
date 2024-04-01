@@ -1,5 +1,7 @@
 #include "cv/matching.hpp"
 
+#include <loguru.hpp>
+
 /*
 * IMPORTANT NOTE:
 * Using torch::from_blob to convert cv::Mat to torch::Tensor results in NaN tensors 
@@ -35,8 +37,11 @@ auto toInput(cv::Mat img, bool show_output = false, bool unsqueeze = false, int 
     if (unsqueeze)
         tensor_image.unsqueeze_(unsqueeze_dim);
 
-    if (show_output)
-        std::cout << tensor_image.slice(2, 0, 1) << std::endl;
+    if (show_output) {
+        std::ostringstream stream;
+        stream << tensor_image.slice(2, 0, 1);
+        LOG_F(INFO, stream.str().c_str());
+    }
 
     return std::vector<torch::jit::IValue>{tensor_image};
 }
@@ -53,12 +58,12 @@ Matching::Matching(std::array<Bottle, NUM_AIRDROP_BOTTLES>
         this->module = torch::jit::load(modelPath);
     }
     catch (const c10::Error& e) {
-        std::cerr << "ERROR: could not load the model, check if model file is present in /bin\n";
+        LOG_F(ERROR, "ERROR: could not load the model, check if model file is present in /bin\n");
         throw;
     }
 
     if (referenceImages.size() == 0) {
-        std::cerr << "WARNING: Empty reference image vector passed as argument\n";
+        LOG_F(ERROR, "WARNING: Empty reference image vector passed as argument\n");
     }
 
     // Populate referenceFeatures by putting each refImg through model

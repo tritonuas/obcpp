@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include <opencv2/opencv.hpp>
+#include <loguru.hpp>
 
 #include "cv/pipeline.hpp"
 
@@ -22,6 +23,8 @@ const double yaw = 100;
 const double pitch = 5;
 const double roll = 3;
 
+// integration test to test all stages of the CV pipeline
+// with an arbitrary image as input
 int main() {
     cv::Mat image = cv::imread(imagePath);
     ImageTelemetry mockTelemetry(latitude, longitude, altitude, airspeed,
@@ -85,11 +88,10 @@ int main() {
         output.unmatchedTargets.size();
     size_t numMatches = output.matchedTargets.size();
 
-    std::cout << "Found " << numTargets << " targets" << std::endl;
-    std::cout << "Found " << numMatches << " matches" << std::endl;
+    LOG_F(INFO, "Found %ld targets", numTargets);
+    LOG_F(INFO, "Found %ld matches", numMatches);
 
     for (AirdropTarget& match: output.matchedTargets) {
-        std::cout << "Found match assigned to bottle index " << 
-            match.index() << std::endl;
+        LOG_F(INFO, "Found match assigned to bottle index %d\n", match.index());
     }
 }

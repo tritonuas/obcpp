@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include <opencv2/opencv.hpp>
+#include <loguru.hpp>
 
 #include "protos/obc.pb.h"
 
@@ -86,18 +87,18 @@ int main(int argc, char* argv[]) {
     };
 
     MatchResult result = matcher.match(cropped);
-    std::cout << "TRUE MATCH TEST:" << std::endl;
-    std::cout << "Found a match with bottle at index " << int(result.bottleDropIndex) << std::endl;
-    std::cout << "Expected bottle " << matchIndex << std::endl;
-    std::cout << "foundMatch is " << result.foundMatch << std::endl;
-    std::cout << "The similarity is " << result.similarity << std::endl;
+    LOG_F(INFO, "TRUE MATCH TEST:\n");
+    LOG_F(INFO, "Found a match with bottle at index %d\n", int(result.bottleDropIndex));
+    LOG_F(INFO, "Expected bottle %d\n", matchIndex);
+    LOG_F(INFO, "foundMatch is %d\n", result.foundMatch);
+    LOG_F(INFO, "The similarity is %.3f\n", result.similarity);
 
 
     MatchResult resultFalse = matcher.match(croppedFalse);
-    std::cout << "\nFALSE MATCH TEST:" << std::endl;
-    std::cout << "Closest is bottle at index " << int(resultFalse.bottleDropIndex) << std::endl;
-    std::cout << "foundMatch is " << resultFalse.foundMatch << std::endl;
-    std::cout << "The similarity is " << resultFalse.similarity << std::endl;
+    LOG_F(INFO, "\nFALSE MATCH TEST:\n");
+    LOG_F(INFO, "Closest is bottle at index %d\n", int(resultFalse.bottleDropIndex));
+    LOG_F(INFO, "foundMatch is %d\n", resultFalse.foundMatch);
+    LOG_F(INFO, "The similarity is %.3f\n", resultFalse.similarity);
 
     return 0;
 }
