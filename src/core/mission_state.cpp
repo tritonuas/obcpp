@@ -69,16 +69,6 @@ const std::vector<GPSCoord>& MissionState::getInitPath() {
     return this->init_path;
 }
 
-bool MissionState::isInitPathValidated() {
-    Lock lock(this->init_path_mut);
-    return this->init_path_validated;
-}
-
-void MissionState::validateInitPath() {
-    Lock lock(this->init_path_mut);
-    this->init_path_validated = true;
-}
-
 std::shared_ptr<MavlinkClient> MissionState::getMav() {
     return this->mav;
 }

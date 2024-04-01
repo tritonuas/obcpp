@@ -1,5 +1,4 @@
 set(BINARY ${CMAKE_PROJECT_NAME}_tests)
-set(DEPS_DIRECTORY ${PROJECT_SOURCE_DIR}/deps)
 
 file(GLOB_RECURSE TEST_SOURCES LIST_DIRECTORIES false *.hpp *.h *.cpp *.c)
 
