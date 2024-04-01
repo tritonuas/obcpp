@@ -9,13 +9,12 @@
 #include "utilities/constants.hpp"
 
 struct XYZCoord {
-    XYZCoord(double x, double y, double z)
-        :x(x), y(y), z(z) {}
+    XYZCoord(double x, double y, double z) : x(x), y(y), z(z) {}
 
     /**
      * Checks whether the coordinates of the XYZCoords are identtical
-    */
-    bool operator== (const XYZCoord &other_point) const;
+     */
+    bool operator==(const XYZCoord &other_point) const;
 
     /**
      *  Performes vector addition
@@ -37,11 +36,11 @@ struct XYZCoord {
 
     /**
      * Distance to another XYZCoord
-     * 
+     *
      * @param other point to calculate distance to
-    */
-    double distanceTo(const XYZCoord& other) const;
-    double distanceToSquared(const XYZCoord& other) const;
+     */
+    double distanceTo(const XYZCoord &other) const;
+    double distanceToSquared(const XYZCoord &other) const;
 
     /**
      * @returns the magnitude of a vector
@@ -65,7 +64,7 @@ struct RRTPoint {
     bool operator==(const RRTPoint &otherPoint) const;
 
     double distanceTo(const RRTPoint &otherPoint) const;
-    double distanceToSquared(const RRTPoint& otherPoint) const;
+    double distanceToSquared(const RRTPoint &otherPoint) const;
 
     XYZCoord coord;
     double psi;
@@ -90,11 +89,7 @@ using Polyline = std::vector<XYZCoord>;
 
 using GPSProtoVec = google::protobuf::RepeatedPtrField<GPSCoord>;
 
-enum PATH_OPTIONS {
-    NONE, 
-    RANDOM,
-    NEAREST
-};
+enum PATH_OPTIONS { NONE, RANDOM, NEAREST };
 
 struct OptimizationOptions {
     bool optimize;

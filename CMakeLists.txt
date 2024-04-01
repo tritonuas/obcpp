@@ -186,7 +186,8 @@ if(CPPLINT)
   # define lint target
   add_custom_target(lint
     COMMAND cpplint
-    --filter=-legal,-readability/todo,-build/c++11
+    # https://github.com/cpplint/cpplint/issues/148
+    --filter=-legal,-readability/todo,-build/c++11,-runtime/references
     --linelength=100
     --recursive
     ../src

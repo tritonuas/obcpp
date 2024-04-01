@@ -27,7 +27,7 @@ RRT::RRT(RRTPoint start, std::vector<XYZCoord> goals, int iterations_per_waypoin
 
       point_fetch_choice(options.path_option),
       tree(start, Environment(bounds, goals, obstacles), Dubins(TURNING_RADIUS, POINT_SEPARATION)),
-      optimize(options.optimize){};
+      optimize(options.optimize) {}
 
 void RRT::run() {
     /*
