@@ -89,12 +89,18 @@ using Polyline = std::vector<XYZCoord>;
 
 using GPSProtoVec = google::protobuf::RepeatedPtrField<GPSCoord>;
 
-enum POINT_FETCH_METHODS { NONE, RANDOM, NEAREST };
+enum POINT_FETCH_METHODS {
+    NONE,    // check RRT against every node (path optimal, but incredibly slow)
+    RANDOM,  // check ~k randomly sampled nodes from the tree.
+    NEAREST  // check ~$p$ nodes closest to the sampled node (best performance/time ratio from
+             // rudimentary testing)
+};
 
 struct RRTConfig {
-    bool optimize;
+    bool optimize;  // run RRT* if true
     POINT_FETCH_METHODS point_fetch_method;
-    bool allowed_to_skip_waypoints;
+    bool allowed_to_skip_waypoints;  // if true, will skip waypoints if it can not connect after 1
+                                     // RRT iteration
 };
 
 #endif  // INCLUDE_UTILITIES_DATATYPES_HPP_
