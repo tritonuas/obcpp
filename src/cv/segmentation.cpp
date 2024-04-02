@@ -7,7 +7,7 @@ Segmentation::Segmentation(const std::string &modelPath) {
                 this->module = torch::jit::load(modelPath);
             }
             catch (const c10::Error& e) {
-                LOG_F(ERROR, "ERROR: could not load the model\n");
+                LOG_F(ERROR, "could not load the model, check if model file is present at %s. If the file is present, try to verify that it's contents are valid model weights. Sometimes when pulling from google drive, an error html page will download with the same filename if the model fails to download. \n", modelPath.c_str());
                 throw;
             }
         }

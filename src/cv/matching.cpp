@@ -58,12 +58,12 @@ Matching::Matching(std::array<Bottle, NUM_AIRDROP_BOTTLES>
         this->module = torch::jit::load(modelPath);
     }
     catch (const c10::Error& e) {
-        LOG_F(ERROR, "ERROR: could not load the model, check if model file is present in /bin\n");
+        LOG_F(ERROR, "could not load the model, check if model file is present at %s. If the file is present, try to verify that it's contents are valid model weights. Sometimes when pulling from google drive, an error html page will download with the same filename if the model fails to download. \n", modelPath.c_str());
         throw;
     }
 
     if (referenceImages.size() == 0) {
-        LOG_F(ERROR, "WARNING: Empty reference image vector passed as argument\n");
+        LOG_F(WARNING, "Empty reference image vector passed as argument\n");
     }
 
     // Populate referenceFeatures by putting each refImg through model

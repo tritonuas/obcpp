@@ -8,24 +8,44 @@
 #include "cv/matching.hpp"
 #include "utilities/constants.hpp"
 
-// Download these test images from one of the zips here https://drive.google.com/drive/u/1/folders/1opXBWx6bBF7J3-JSFtrhfFIkYis9qhGR
+// Download these test images from test.zip here https://drive.google.com/drive/u/1/folders/1opXBWx6bBF7J3-JSFtrhfFIkYis9qhGR
 // Or, any cropped not-stolen images will work
 // NOTE: images are given reverse order bottleIndexes, e.g. refImagePath0 -> index 4, etc.
-const std::string refImagePath0 = "../bin/test/test/000000910.jpg"; // bottle 4
-const std::string refImagePath1 = "../bin/test/test/000000920.jpg"; // bottle 3
-const std::string refImagePath2 = "../bin/test/test/000000003.jpg"; // bottle 2
-const std::string refImagePath3 = "../bin/test/test/000000004.jpg"; // bottle 1
-const std::string refImagePath4 = "../bin/test/test/000000005.jpg"; // bottle 0
+const std::string imageTestDir = "../tests/integration/images/matching_cropped/test/";
+const std::string refImagePath0 = imageTestDir + "000000910.jpg"; // bottle 4
+const std::string refImagePath1 = imageTestDir + "000000920.jpg"; // bottle 3
+const std::string refImagePath2 = imageTestDir + "000000003.jpg"; // bottle 2
+const std::string refImagePath3 = imageTestDir + "000000004.jpg"; // bottle 1
+const std::string refImagePath4 = imageTestDir + "000000005.jpg"; // bottle 0
 
 // model can be downloaded from here: https://drive.google.com/drive/folders/1ciDfycNyJiLvRhJhwQZoeKH7vgV6dGHJ?usp=drive_link
-const std::string modelPath = "../bin/target_siamese_1.pt";
+const std::string modelPath = "../models/target_siamese_1.pt";
 
 // These images can also come from the same source as the reference images. To accurately
 // run this test, provide one image that is a positive match and one that doesn't match
 // any of the references.
-const std::string imageMatchPath = "../bin/test/test/000000920.jpg";
+const std::string imageMatchPath = imageTestDir + "000000920.jpg";
 const int matchIndex = 3; 
-const std::string imageNotMatchPath = "../bin/test/test/000000016.jpg";
+const std::string imageNotMatchPath = imageTestDir + "000000016.jpg";
+
+// // Download these test images from test.zip here https://drive.google.com/drive/u/1/folders/1opXBWx6bBF7J3-JSFtrhfFIkYis9qhGR
+// // Or, any cropped not-stolen images will work
+// // NOTE: images are given reverse order bottleIndexes, e.g. refImagePath0 -> index 4, etc.
+// const std::string refImagePath0 = "../tests/integration/images/matching_cropped/test/000000910.jpg"; // bottle 4
+// const std::string refImagePath1 = "../tests/integration/images/matching_cropped/test/000000920.jpg"; // bottle 3
+// const std::string refImagePath2 = "../tests/integration/images/matching_cropped/test/000000003.jpg"; // bottle 2
+// const std::string refImagePath3 = "../tests/integration/images/matching_cropped/test/000000004.jpg"; // bottle 1
+// const std::string refImagePath4 = "../tests/integration/images/matching_cropped/test/000000005.jpg"; // bottle 0
+
+// // model can be downloaded from here: https://drive.google.com/drive/folders/1ciDfycNyJiLvRhJhwQZoeKH7vgV6dGHJ?usp=drive_link
+// const std::string modelPath = "../models/target_siamese_1.pt";
+
+// // These images can also come from the same source as the reference images. To accurately
+// // run this test, provide one image that is a positive match and one that doesn't match
+// // any of the references.
+// const std::string imageMatchPath = "../tests/integration/images/matching_cropped/test/000000920.jpg";
+// const int matchIndex = 3; 
+// const std::string imageNotMatchPath = "../tests/integration/images/matching_cropped/test/000000016.jpg";
 
 int main(int argc, char* argv[]) {
     // purely for the constructor, doesn't do much in matching
@@ -95,18 +115,16 @@ int main(int argc, char* argv[]) {
     };
 
     MatchResult result = matcher.match(cropped);
-    LOG_F(INFO, "TRUE MATCH TEST:\n");
-    LOG_F(INFO, "Found a match with bottle at index %d\n", int(result.bottleDropIndex));
-    LOG_F(INFO, "Expected bottle %d\n", matchIndex);
-    LOG_F(INFO, "foundMatch is %d\n", result.foundMatch);
-    LOG_F(INFO, "The similarity is %.3f\n", result.similarity);
-
+    LOG_F(INFO, "\nTRUE MATCH TEST:\nClosest is bottle at index %d\nfoundMatch is %d\nThe similarity is %.3f\n",
+        int(result.bottleDropIndex),
+        result.foundMatch,
+        result.similarity);
 
     MatchResult resultFalse = matcher.match(croppedFalse);
-    LOG_F(INFO, "\nFALSE MATCH TEST:\n");
-    LOG_F(INFO, "Closest is bottle at index %d\n", int(resultFalse.bottleDropIndex));
-    LOG_F(INFO, "foundMatch is %d\n", resultFalse.foundMatch);
-    LOG_F(INFO, "The similarity is %.3f\n", resultFalse.similarity);
+    LOG_F(INFO, "\nFALSE MATCH TEST:\nClosest is bottle at index %d\nfoundMatch is %d\nThe similarity is %.3f\n",
+        int(resultFalse.bottleDropIndex),
+        resultFalse.foundMatch,
+        resultFalse.similarity);
 
     return 0;
 }

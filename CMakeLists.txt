@@ -253,7 +253,14 @@ add_custom_target(pull_segmentation
 
 # =============================
 # Pull testing images
-# 
+
+# pull cropped images from fraternal_targets testing folder
+add_custom_target(pull_matching_test_images
+  COMMAND gdown 1opxdXw75jSQZu9s61njE6hjQkfHiKvgp -O ${CMAKE_BINARY_DIR}/../tests/integration/images/test.zip && 
+    mkdir -p ${CMAKE_BINARY_DIR}/../tests/integration/images/matching_cropped &&
+    unzip ${CMAKE_BINARY_DIR}/../tests/integration/images/test.zip -d ${CMAKE_BINARY_DIR}/../tests/integration/images/matching_cropped
+)
+ 
 # =============================
 
 # =============================
