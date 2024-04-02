@@ -11,25 +11,6 @@
 #include "ticks/path_validate.hpp"
 #include "utilities/logging.hpp"
 
-std::vector<GPSCoord> tempGenPath(std::shared_ptr<MissionState> state) {
-    // TODO: replace this with the actual path generation function
-    // For now , just returns a path with 1 coord, which is technically
-    // "valid" because it has more than 0 coords
-    LOG_F(INFO, "Dummy path generation...");
-
-    auto cartesian = state->getCartesianConverter().value();
-    auto waypoints = state->config.getWaypoints();
-
-    // Just convert back the waypoints to output path for this test
-    std::vector<GPSCoord> output_coords;
-    output_coords.reserve(waypoints.size());
-    for (auto wpt : waypoints) {
-        output_coords.push_back(cartesian.toLatLng(wpt));
-    }
-
-    return output_coords;
-}
-
 PathGenTick::PathGenTick(std::shared_ptr<MissionState> state) : Tick(state, TickID::PathGen) {
     startPathGeneration();
 }

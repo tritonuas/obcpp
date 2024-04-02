@@ -24,7 +24,9 @@ class RRT {
     RRT(RRTPoint start, std::vector<XYZCoord> goals, int iterations_per_waypoint,
         double search_radius, double rewire_radius, Polygon bounds,
         std::vector<Polygon> obstacles = {},
-        OptimizationOptions options = {true, PATH_OPTIONS::NONE});
+        RRTConfig config = {.optimize = false,
+                                       .point_fetch_method = POINT_FETCH_METHODS::NONE,
+                                       .allowed_to_skip_waypoints = false});
 
     /**
      * RRT(-star) algorithm
@@ -51,15 +53,11 @@ class RRT {
     RRTTree tree;
 
     /* RRT Config Options */
-    const bool optimize;                    // true if RRT-Star is to be used
     const int iterations_per_waypoint;      // number of times to run the RRT algorithm
                                             // for each waypoint
     const double search_radius;             // !!NOT USED!! max radius to move off the tree
     const double rewire_radius;             // ONLY FOR RRT-STAR, max radius from new node to rewire
-    const PATH_OPTIONS point_fetch_choice;  // how to select points for RRT (not
-                                            // -Star) NONE: optimal-every_point,
-                                            // RANDOM: fastest-random,
-                                            // NEAREST: mix-nearest
+    const RRTConfig config;      // optimization options
 
     // the different of final approaches to the goal
     // yes, this is the default unit circle diagram used in High-School
@@ -86,8 +84,9 @@ class RRT {
      * Does a single iteration of the RRT(star) algoritm to connect two waypoints
      *
      * @param tries ==> number of points it attempts to sample
+     * @return      ==> whether or not the goal was reached
      */
-    void RRTIteration(int tries, int current_goal_index);
+    bool RRTIteration(int tries, int current_goal_index);
 
     /**
      * Evaluates a certain interval to determine if the algorithm is making
@@ -109,12 +108,13 @@ class RRT {
      *
      * @param current_goal_index    ==> index of the goal that we are trying to
      * connect to
+     * @param total_options         ==> number of options to try to connect to the goal
      * @return                      ==> list of options to connect to the goal
      *                                  <RRTPoint GOAL, {RRTNode* ANCHOR,
      * RRTOption} >
      */
     std::vector<std::pair<RRTPoint, std::pair<RRTNode *, RRTOption>>> getOptionsToGoal(
-        int current_goal_index) const;
+        int current_goal_index, int total_options) const;
 
     /**
      * Tries to get the optimal  node to the goal, which is NOT connected into the
@@ -122,20 +122,22 @@ class RRT {
      *
      * @param current_goal_index    ==> index of the goal that we are trying to
      * connect to
+     * @param total_options         ==> number of options to try to connect to the goal
      * @return                      ==> pointer to the node if one was found,
      * nullptr otherwise
      */
-    RRTNode *sampleToGoal(int current_goal_index) const;
+    RRTNode *sampleToGoal(int current_goal_index, int total_options) const;
 
     /**
      * Connects to the goal after RRT is finished
      *
      * @param current_goal_index    ==> index of the goal that we are trying to
      * connect to
+     * @param total_options         ==> number of options to try to connect to the goal
      * @return                      ==> pointer to the node if it was added,
      * nullptr otherwise
      */
-    bool connectToGoal(int current_goal_index);
+    bool connectToGoal(int current_goal_index, int total_options = TOTAL_OPTIONS_FOR_GOAL_CONNECTION);
 
     /**
      * Goes through generated options to try to connect the sample to the tree

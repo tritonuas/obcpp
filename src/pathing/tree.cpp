@@ -284,22 +284,21 @@ RRTPoint RRTTree::getRandomPoint(double search_radius) const {
 /*
     TODO - investigate whether a max heap is better or worse
 */
-std::vector<std::pair<RRTNode*, RRTOption>> RRTTree::pathingOptions(const RRTPoint& end,
-                                                                    PATH_OPTIONS path_option,
-                                                                    int quantity_options) const {
+std::vector<std::pair<RRTNode*, RRTOption>> RRTTree::pathingOptions(
+    const RRTPoint& end, POINT_FETCH_METHODS point_fetch_method, int quantity_options) const {
     // fills the options list with valid values
     std::vector<std::pair<RRTNode*, RRTOption>> options;
 
-    switch (path_option) {
-        case PATH_OPTIONS::RANDOM: {
+    switch (point_fetch_method) {
+        case POINT_FETCH_METHODS::RANDOM: {
             const std::vector<RRTNode*>& nodes = getKRandomNodes(K_RANDOM_NODES);
             fillOptionsNodes(options, nodes, end);
         } break;
-        case PATH_OPTIONS::NEAREST: {
+        case POINT_FETCH_METHODS::NEAREST: {
             const std::vector<RRTNode*>& nodes = getKClosestNodes(end, K_CLOESEST_NODES);
             fillOptionsNodes(options, nodes, end);
         } break;
-        case PATH_OPTIONS::NONE:
+        case POINT_FETCH_METHODS::NONE:
             fillOptions(options, current_head, end);
             break;
         default:

@@ -20,14 +20,12 @@
 
 RRT::RRT(RRTPoint start, std::vector<XYZCoord> goals, int iterations_per_waypoint,
          double search_radius, double rewire_radius, Polygon bounds, std::vector<Polygon> obstacles,
-         OptimizationOptions options)
+         RRTConfig config)
     : iterations_per_waypoint(iterations_per_waypoint),
       search_radius(search_radius),
       rewire_radius(rewire_radius),
-
-      point_fetch_choice(options.path_option),
       tree(start, Environment(bounds, goals, obstacles), Dubins(TURNING_RADIUS, POINT_SEPARATION)),
-      optimize(options.optimize) {}
+      config(config) {}
 
 void RRT::run() {
     /*
@@ -55,8 +53,8 @@ void RRT::run() {
 
 std::vector<XYZCoord> RRT::getPointsToGoal() const { return tree.getPathToGoal(); }
 
-void RRT::RRTIteration(int tries, int current_goal_index) {
-    int epoch_interval = tries / 5;
+bool RRT::RRTIteration(int tries, int current_goal_index) {
+    const int epoch_interval = tries / 5;
     int current_epoch = epoch_interval;
 
     RRTNode *goal_node = nullptr;
@@ -66,7 +64,7 @@ void RRT::RRTIteration(int tries, int current_goal_index) {
             // generates a new node (not connect), and adds and breaks if it is
             // within X% of the last generation
             if (epochEvaluation(goal_node, current_goal_index)) {
-                return;
+                return true;
             }
 
             current_epoch += epoch_interval;
@@ -76,12 +74,12 @@ void RRT::RRTIteration(int tries, int current_goal_index) {
 
         // returns all dubins options from the tree to the sample
         const std::vector<std::pair<RRTNode *, RRTOption>> &options =
-            tree.pathingOptions(sample, point_fetch_choice);
+            tree.pathingOptions(sample, config.point_fetch_method);
 
         // returns true if the node is successfully added to the tree
         RRTNode *new_node = parseOptions(options, sample);
 
-        if (new_node != nullptr && optimize) {
+        if (new_node != nullptr && config.optimize) {
             optimizeTree(new_node);
         }
     }
@@ -89,20 +87,31 @@ void RRT::RRTIteration(int tries, int current_goal_index) {
     // frees memory
     delete (goal_node);
     if (!connectToGoal(current_goal_index)) {
-        std::cout << "Failed to connect to goal on iteration: [" << current_goal_index << "]"
-                  << std::endl;
+        loguru::set_thread_name("Static Pathing");
+        LOG_F(WARNING, "Failed to connect to goal on iteration: [%s]. Trying again...",
+              std::to_string(current_goal_index).c_str());
+
+        if (!config.allowed_to_skip_waypoints &&
+            !connectToGoal(current_goal_index, std::numeric_limits<int>::max())) {
+            // will always return true (unless it turns into a pseudo-infinite loop)
+            return RRTIteration(tries, current_goal_index);
+        } else {
+            return false;
+        }
     }
+
+    return true;
 }
 
 bool RRT::epochEvaluation(RRTNode *goal_node, int current_goal_index) {
     // If a single epoch has not been passed, mark this goal as the first
     // benchmark.
     if (goal_node == nullptr) {
-        goal_node = sampleToGoal(current_goal_index);
+        goal_node = sampleToGoal(current_goal_index, TOTAL_OPTIONS_FOR_GOAL_CONNECTION);
         return false;
     }
 
-    RRTNode *new_node = sampleToGoal(current_goal_index);
+    RRTNode *new_node = sampleToGoal(current_goal_index, TOTAL_OPTIONS_FOR_GOAL_CONNECTION);
 
     if (new_node == nullptr) {
         return false;
@@ -126,7 +135,7 @@ bool RRT::epochEvaluation(RRTNode *goal_node, int current_goal_index) {
 RRTPoint RRT::generateSamplePoint() const { return tree.getRandomPoint(search_radius); }
 
 std::vector<std::pair<RRTPoint, std::pair<RRTNode *, RRTOption>>> RRT::getOptionsToGoal(
-    int current_goal_index) const {
+    int current_goal_index, int total_options) const {
     // attempts to connect to the goal, should always connect
     std::vector<RRTPoint> goal_points;
 
@@ -143,14 +152,14 @@ std::vector<std::pair<RRTPoint, std::pair<RRTNode *, RRTOption>>> RRT::getOption
     std::vector<std::pair<RRTPoint, std::pair<RRTNode *, RRTOption>>> all_options;
 
     // limit amount of options to sort, defined in constants.hpp
-    const int NUMBER_OPTIONS_EACH = TOTAL_OPTIONS_FOR_GOAL_CONNECTION / angles.size();
+    const int NUMBER_OPTIONS_EACH = total_options / angles.size();
 
     // gets all options for each of the goals, and puts them into a unified list
     // TODO ? maybe better for a max heap?
     for (const RRTPoint &goal : goal_points) {
         const std::vector<std::pair<RRTNode *, RRTOption>> &options =
             // For now, we use optimal pathing
-            tree.pathingOptions(goal, PATH_OPTIONS::NONE, NUMBER_OPTIONS_EACH);
+            tree.pathingOptions(goal, POINT_FETCH_METHODS::NONE, NUMBER_OPTIONS_EACH);
 
         for (const auto &[node, option] : options) {
             all_options.push_back({goal, {node, option}});
@@ -168,10 +177,9 @@ std::vector<std::pair<RRTPoint, std::pair<RRTNode *, RRTOption>>> RRT::getOption
     return all_options;
 }
 
-RRTNode *RRT::sampleToGoal(int current_goal_index) const {
+RRTNode *RRT::sampleToGoal(int current_goal_index, int total_options) const {
     // gets all options for each of the goals
-    const std::vector<std::pair<RRTPoint, std::pair<RRTNode *, RRTOption>>> &all_options =
-        getOptionsToGoal(current_goal_index);
+    const auto &all_options = getOptionsToGoal(current_goal_index, total_options);
 
     // <RRTPoint GOAL, {RRTNode* ANCHOR, RRTOption} >
     for (const auto &[goal, pair] : all_options) {
@@ -187,8 +195,8 @@ RRTNode *RRT::sampleToGoal(int current_goal_index) const {
     return nullptr;
 }
 
-bool RRT::connectToGoal(int current_goal_index) {
-    RRTNode *goal_node = sampleToGoal(current_goal_index);
+bool RRT::connectToGoal(int current_goal_index, int total_options) {
+    RRTNode *goal_node = sampleToGoal(current_goal_index, total_options);
 
     if (goal_node == nullptr) {
         return false;
@@ -215,7 +223,6 @@ RRTNode *RRT::parseOptions(const std::vector<std::pair<RRTNode *, RRTOption>> &o
          */
         // if (node == nullptr || node->getPoint() == sample) {
         //     return nullptr;
-        // }
 
         // else, attempt to add the node to the tree
         RRTNode *sucessful_addition = tree.addSample(node, sample, option);
@@ -236,7 +243,10 @@ std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
 
     // the other waypoitns is the goals
     if (state->config.getWaypoints().size() < 2) {
-        std::cout << "Not enough waypoints" << std::endl;
+        loguru::set_thread_name("Static Pathing");
+        LOG_F(ERROR,
+              "Not enough waypoints to generate a path, required 2+, existing waypoints: %s",
+              std::to_string(state->config.getWaypoints().size()).c_str());
         return {};
     }
 
@@ -249,7 +259,7 @@ std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
     }
 
     RRT rrt(start, goals, ITERATIONS_PER_WAYPOINT, SEARCH_RADIUS, REWIRE_RADIUS,
-            state->config.getFlightBoundary(), {}, OptimizationOptions{true, PATH_OPTIONS::NONE});
+            state->config.getFlightBoundary(), {}, RRTConfig{true, POINT_FETCH_METHODS::NONE});
 
     rrt.run();
 

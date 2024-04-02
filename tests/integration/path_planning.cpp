@@ -1,6 +1,5 @@
 #include <chrono>
 #include <cmath>
-#include <fstream>
 #include <iostream>
 #include <memory>
 #include <nlohmann/json.hpp>
@@ -232,19 +231,32 @@ const static char* mission_json_2020 = R"(
   ]
 })";
 
+/*
+ * FILE OUTPUT LOCATIONS
+ *  |- build
+ *    |- pathing_output
+ *      |- test_final_path.jpg
+ *      |- test_final_path.gif (if enabled)
+ *    |- path_coordinates.txt
+ *
+ * This integration test runs static path finding once, and generates a plot as
+ * well as returns the coordinates for the path.
+ */
 int main() {
     std::cout << "Messing with RRT*" << std::endl;
     // First upload a mission so that we generate a path
+    // this is roughly the mission from 2020
     DECLARE_HANDLER_PARAMS(state, req, resp);
     req.body = mission_json_2020;
     state->setTick(new MissionPrepTick(state));
 
     GCS_HANDLE(Post, mission)(state, req, resp);
-    // have an initial path, but waiting for validation
 
+    // files to put path_coordinates to
     std::ofstream file;
-    file.open("times.txt");
+    file.open("path_coordinates.txt");
 
+    // infrastructure to set up all the pararmeters of the environment
     std::vector<XYZCoord> goals;
 
     for (const XYZCoord& waypoint : state->config.getWaypoints()) {
@@ -263,76 +275,47 @@ int main() {
 
     RRTPoint start = RRTPoint(state->config.getWaypoints()[0], 0);
 
-    int num_iterations = 500;
+    // RRT settings (manually put in)
+    int num_iterations = 512;
     double search_radius = 9999;
-    double rewire_radius = 200;
+    double rewire_radius = 256;
+    RRTConfig config = RRTConfig { true, POINT_FETCH_METHODS::NONE, false };
 
-    auto s_time = std::chrono::high_resolution_clock::now();
-    // for (int i = 0; i < 2; i++) {
-    //     std::cout << "Iteration: " << i << std::endl;
-    //     // std::cout << "Start Running" << std::endl;
-    //     RRT rrt = RRT(start, goals, num_iterations, search_radius, rewire_radius,
-    //                   state->config.getFlightBoundary(), obstacles,
-    //                   OptimizationOptions{true, PATH_OPTIONS::RANDOM});
-
-    //     // print out stats
-    //     auto start_time = std::chrono::high_resolution_clock::now();
-    //     rrt.run();
-
-    //     // time the following function
-
-    //     auto end_time = std::chrono::high_resolution_clock::now();
-    //     std::chrono::duration<double> elapsed = end_time - start_time;
-    //     file << elapsed.count() << std::endl;
-    //     std::cout << "Time to run: " << elapsed.count() << "s" << std::endl;
-    //     std::vector<XYZCoord> path = rrt.getPointsToGoal();
-    //     std::cout << "Nodes: " << path.size() << std::endl;
-    // }
-    auto e_time = std::chrono::high_resolution_clock::now();
-    std::cout << "Total time: " << (e_time - s_time).count() << "s" << std::endl;
-
-    // start_time = std::chrono::high_resolution_clock::now();
-    // plot the path
-    auto start_time = std::chrono::high_resolution_clock::now();
     RRT rrt = RRT(start, goals, num_iterations, search_radius, rewire_radius,
-                  state->config.getFlightBoundary(), obstacles,
-                  OptimizationOptions{true, PATH_OPTIONS::NEAREST});
+                  state->config.getFlightBoundary(), obstacles, config);
 
     // print out stats
     std::cout << "num_iterations: " << num_iterations << std::endl;
     std::cout << "search_radius: " << search_radius << std::endl;
     std::cout << "rewire_radius: " << rewire_radius << std::endl;
 
+    //run the algoritm, and time it
+    auto start_time = std::chrono::high_resolution_clock::now();
     rrt.run();
-
-    // time the following function3000
-
     auto end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end_time - start_time;
-    file << elapsed.count() << std::endl;
-    std::chrono::duration<double> elapsed_total = e_time - s_time;
-
     std::cout << "Time to run: " << elapsed.count() << "s" << std::endl;
     std::cout << "End Running" << std::endl;
 
+    // get the path, put it into the file
     std::vector<XYZCoord> path = rrt.getPointsToGoal();
     std::cout << "Path size: " << path.size() << std::endl;
     std::cout << "Path length: " << (path.size() * POINT_SEPARATION) << std::endl;
+    for (const XYZCoord& point : path) {
+        file << point.x << ", " << point.y << std::endl;
+    }
 
+    // plot the path
     std::cout << "Start Plotting" << std::endl;
+    PathingPlot plotter("pathing_output", state->config.getFlightBoundary(), obstacles[1], goals);
 
-    // for (const XYZCoord& point : path) {
-    //     file << point.x << ", " << point.y << std::endl;
-    // }
-
-    PathingPlot plotter("pathing_output", state->config.getFlightBoundary(), obstacles[0], goals);
-
+    start_time = std::chrono::high_resolution_clock::now();
     plotter.addFinalPolyline(path);
-    plotter.output("test_final_path", PathOutputType::BOTH);
+    plotter.output("test_final_path", PathOutputType::STATIC);
     end_time = std::chrono::high_resolution_clock::now();
     elapsed = end_time - start_time;
-    std::cout << "Time to plot: " << elapsed.count() << "s" << std::endl;
 
+    std::cout << "Time to plot: " << elapsed.count() << "s" << std::endl;
     file.close();
     return 0;
 }

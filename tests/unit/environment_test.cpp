@@ -9,7 +9,7 @@
 /*
  *   tests Polygon::pointInBounds
  */
-TEST(EnvironentTest, PointInBounds) {
+TEST(EnvironmentTest, PointInBounds) {
     Polygon test;
     test.emplace_back(XYZCoord{1, 1, 0});
     test.emplace_back(XYZCoord{0, 1, 0});

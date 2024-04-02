@@ -23,11 +23,11 @@ class RRTNode {
     RRTNode(const RRTPoint& point, double cost, double path_length,
             const std::vector<XYZCoord> path, RRTNodeList reachable);
 
-   /**
-    * Destructor for RRTNode object
-    * 
-    * Removes the subtree below it (recursively)
-   */
+    /**
+     * Destructor for RRTNode object
+     *
+     * Removes the subtree below it (recursively)
+     */
     ~RRTNode();
 
     /*
@@ -190,7 +190,7 @@ class RRTTree {
      * @return                  ==> mininum sorted list of pairs of <node, path>
      */
     std::vector<std::pair<RRTNode*, RRTOption>> pathingOptions(
-        const RRTPoint& end, PATH_OPTIONS path_option = PATH_OPTIONS::NONE,
+        const RRTPoint& end, POINT_FETCH_METHODS path_option = POINT_FETCH_METHODS::NONE,
         int quantity_options = MAX_DUBINS_OPTIONS_TO_PARSE) const;
 
     /** DOES RRT* for the program

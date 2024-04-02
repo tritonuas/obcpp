@@ -393,44 +393,15 @@ std::vector<RRTOption> Dubins::allOptions(const RRTPoint &start, const RRTPoint 
     Vector center_2_left = findCenter(end, 'L');
     Vector center_2_right = findCenter(end, 'R');
 
-    // try to add each option to the list of options, if the distance is not
-    // a number or infinite, don't add it
-    // std::vector<RRTOption> options;
-    // RRTOption lsl_option = lsl(start, end, center_0_left, center_2_left);
-    // if (std::isnan(lsl_option.length) || std::isfinite(lsl_option.length)) {
-    //     options.emplace_back(lsl_option);
-    // }
-
-    // RRTOption rsr_option = rsr(start, end, center_0_right, center_2_right);
-    // if (std::isnan(rsr_option.length) || std::isfinite(rsr_option.length)) {
-    //     options.emplace_back(rsr_option);
-    // }
-
-    // RRTOption lsr_option = lsr(start, end, center_0_left, center_2_right);
-    // if (std::isnan(lsr_option.length) || std::isfinite(lsr_option.length)) {
-    //     options.emplace_back(lsr_option);
-    // }
-
-    // RRTOption rsl_option = rsl(start, end, center_0_right, center_2_left);
-    // if (std::isnan(rsl_option.length) || std::isfinite(rsl_option.length)) {
-    //     options.emplace_back(rsl_option);
-    // }
-
     std::vector<RRTOption> options = {
         lsl(start, end, center_0_left, center_2_left),
         rsr(start, end, center_0_right, center_2_right),
         rsl(start, end, center_0_right, center_2_left),
         lsr(start, end, center_0_left, center_2_right)
-        //   ,
+        //,
         //   lrl(start, end, center_0_left, center_2_left),
         //   rlr(start, end, center_0_right, center_2_right)
     };
-
-    // const double intercenter_distance = center_0_left.distanceTo(center_2_left);
-    // if (intercenter_distance > 2 * _radius || intercenter_distance < 4 * _radius) {
-    //     options.push_back(lrl(start, end, center_0_left, center_2_left));
-    //     options.push_back(rlr(start, end, center_0_right, center_2_right));
-    // }
 
     if (sort) {
         std::sort(options.begin(), options.end(), compareRRTOptionLength);

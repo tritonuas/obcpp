@@ -182,7 +182,7 @@ std::pair<std::pair<double, double>, std::pair<double, double>> Environment::fin
         max_y = std::max(max_y, point.y);
     }
 
-    return std::make_pair(std::make_pair(min_x, max_x), std::make_pair(min_y, max_y));
+    return {{min_x, max_x}, {min_y, max_y}};
 }
 
 bool Environment::doesLineIntersectPolygon(const XYZCoord& start_point, const XYZCoord& end_point,

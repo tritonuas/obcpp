@@ -89,11 +89,12 @@ using Polyline = std::vector<XYZCoord>;
 
 using GPSProtoVec = google::protobuf::RepeatedPtrField<GPSCoord>;
 
-enum PATH_OPTIONS { NONE, RANDOM, NEAREST };
+enum POINT_FETCH_METHODS { NONE, RANDOM, NEAREST };
 
-struct OptimizationOptions {
+struct RRTConfig {
     bool optimize;
-    PATH_OPTIONS path_option;
+    POINT_FETCH_METHODS point_fetch_method;
+    bool allowed_to_skip_waypoints;
 };
 
 #endif  // INCLUDE_UTILITIES_DATATYPES_HPP_
