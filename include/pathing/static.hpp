@@ -25,8 +25,8 @@ class RRT {
         double search_radius, double rewire_radius, Polygon bounds,
         std::vector<Polygon> obstacles = {},
         RRTConfig config = {.optimize = false,
-                                       .point_fetch_method = POINT_FETCH_METHODS::NONE,
-                                       .allowed_to_skip_waypoints = false});
+                            .point_fetch_method = POINT_FETCH_METHODS::NONE,
+                            .allowed_to_skip_waypoints = false});
 
     /**
      * RRT(-star) algorithm
@@ -53,11 +53,11 @@ class RRT {
     RRTTree tree;
 
     /* RRT Config Options */
-    const int iterations_per_waypoint;      // number of times to run the RRT algorithm
-                                            // for each waypoint
-    const double search_radius;             // !!NOT USED!! max radius to move off the tree
-    const double rewire_radius;             // ONLY FOR RRT-STAR, max radius from new node to rewire
-    const RRTConfig config;      // optimization options
+    const int iterations_per_waypoint;  // number of times to run the RRT algorithm
+                                        // for each waypoint
+    const double search_radius;         // !!NOT USED!! max radius to move off the tree
+    const double rewire_radius;         // ONLY FOR RRT-STAR, max radius from new node to rewire
+    const RRTConfig config;             // optimization options
 
     // the different of final approaches to the goal
     // yes, this is the default unit circle diagram used in High-School
@@ -137,7 +137,8 @@ class RRT {
      * @return                      ==> pointer to the node if it was added,
      * nullptr otherwise
      */
-    bool connectToGoal(int current_goal_index, int total_options = TOTAL_OPTIONS_FOR_GOAL_CONNECTION);
+    bool connectToGoal(int current_goal_index,
+                       int total_options = TOTAL_OPTIONS_FOR_GOAL_CONNECTION);
 
     /**
      * Goes through generated options to try to connect the sample to the tree
