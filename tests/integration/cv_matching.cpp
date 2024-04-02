@@ -8,7 +8,7 @@
 #include "cv/matching.hpp"
 #include "utilities/constants.hpp"
 
-// Download these test images from test.zip here https://drive.google.com/drive/u/1/folders/1opXBWx6bBF7J3-JSFtrhfFIkYis9qhGR
+// Download these test images by running "make pull_matching_test_images" or from the test.zip here https://drive.google.com/drive/u/1/folders/1opXBWx6bBF7J3-JSFtrhfFIkYis9qhGR
 // Or, any cropped not-stolen images will work
 // NOTE: images are given reverse order bottleIndexes, e.g. refImagePath0 -> index 4, etc.
 const std::string imageTestDir = "../tests/integration/images/matching_cropped/test/";
@@ -18,7 +18,7 @@ const std::string refImagePath2 = imageTestDir + "000000003.jpg"; // bottle 2
 const std::string refImagePath3 = imageTestDir + "000000004.jpg"; // bottle 1
 const std::string refImagePath4 = imageTestDir + "000000005.jpg"; // bottle 0
 
-// model can be downloaded from here: https://drive.google.com/drive/folders/1ciDfycNyJiLvRhJhwQZoeKH7vgV6dGHJ?usp=drive_link
+// model can be downloaded by running "make pull_matching" or from here: https://drive.google.com/drive/folders/1ciDfycNyJiLvRhJhwQZoeKH7vgV6dGHJ?usp=drive_link
 const std::string modelPath = "../models/target_siamese_1.pt";
 
 // These images can also come from the same source as the reference images. To accurately

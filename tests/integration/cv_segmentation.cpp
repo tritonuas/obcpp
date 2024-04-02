@@ -16,6 +16,7 @@ const std::vector<std::string> targetPaths = {
 };
 
 // model weights path
+// Can pull model weights by running "make pull_segmentation"
 const std::string modelPath = "../models/fcn.pth";
 
 int main(int argc, char* argv[]) {
