@@ -9,8 +9,10 @@
 #include "ticks/tick.hpp"
 
 /*
- * 
+ * Handles uploading waypoint mission to the Pixhawk flight
+ * controller over Mavlink messages.
  *
+ * See https://tritonuas.github.io/wiki/software/obc/tick_architecture/ticks/missionupload/
  */
 class MissionUploadTick: public Tick {
  public:

@@ -9,8 +9,9 @@
 #include "core/mission_state.hpp"
 
 /*
- * Generates a path, caches the path in the mission state,
- * then waits for it to be validated.
+ * Check validation of the generated path by the GCS. 
+ * 
+ * See https://tritonuas.github.io/wiki/software/obc/tick_architecture/ticks/pathvalidate/
  */
 class PathValidateTick : public Tick {
  public:

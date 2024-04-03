@@ -8,7 +8,7 @@
 #include "core/mission_state.hpp"
 #include "ticks/ids.hpp"
 #include "ticks/mission_prep.hpp"
-#include "ticks/mission_start.hpp"
+#include "ticks/takeoff.hpp"
 #include "network/mavlink.hpp"
 
 MissionUploadTick::MissionUploadTick(std::shared_ptr<MissionState> state)
@@ -29,7 +29,7 @@ Tick* MissionUploadTick::tick() {
         if (!this->mission_uploaded.get()) {
             return new MissionPrepTick(this->state);
         } else {
-            return new MissionStartTick(this->state);
+            return new TakeoffTick(this->state);
         }
     }
 

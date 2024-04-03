@@ -47,7 +47,14 @@ const std::chrono::milliseconds MISSION_PREP_TICK_WAIT = std::chrono::millisecon
 const std::chrono::milliseconds PATH_GEN_TICK_WAIT = std::chrono::milliseconds(1000);
 const std::chrono::milliseconds PATH_VALIDATE_TICK_WAIT = std::chrono::milliseconds(1000);
 const std::chrono::milliseconds MISSION_UPLOAD_TICK_WAIT = std::chrono::milliseconds(1000);
-const std::chrono::milliseconds MISSION_START_TICK_WAIT = std::chrono::milliseconds(100);
+const std::chrono::milliseconds TAKEOFF_TICK_WAIT = std::chrono::milliseconds(100);
+const std::chrono::milliseconds FLY_WAYPOINTS_TICK_WAIT = std::chrono::milliseconds(100);
+const std::chrono::milliseconds FLY_SEARCH_TICK_WAIT = std::chrono::milliseconds(100);
+const std::chrono::milliseconds CV_LOITER_TICK_WAIT = std::chrono::milliseconds(100);
+const std::chrono::milliseconds AIRDROP_APPROACH_TICK_WAIT = std::chrono::milliseconds(100);
+const std::chrono::milliseconds MANUAL_LANDING_TICK_WAIT = std::chrono::milliseconds(100);
+const std::chrono::milliseconds AUTO_LANDING_TICK_WAIT = std::chrono::milliseconds(100);
+const std::chrono::milliseconds MISSION_DONE_TICK_WAIT = std::chrono::milliseconds(100);
 
 const double EARTH_RADIUS_METERS = 6378137.0;
 
