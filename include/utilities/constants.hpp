@@ -3,13 +3,37 @@
 
 #include <matplot/matplot.h>
 
-#include <string>
 #include <chrono>
+#include <string>
 #include <unordered_map>
 
-const int NUM_AIRDROP_BOTTLES = 5;
+// common ratios of pi
+const double TWO_PI = 2 * M_PI;
+const double HALF_PI = M_PI / 2;
+
+// FROM OBC PYTHON
+const double TURNING_RADIUS = 30;
+const double POINT_SEPARATION = 10;
+
+// RRT CONSTANTS
+const int ITERATIONS_PER_WAYPOINT = 200;
+const double SEARCH_RADIUS = 1000;
+const double REWIRE_RADIUS = 200;
+
+// RRT HELPER CONSTANTS
+const double EPOCH_TEST_MARGIN = 0.97;
+const int ENV_PATH_VALIDATION_STEP_SIZE = 5;
+const int K_RANDOM_NODES = 100;
+const int K_CLOESEST_NODES = 50;
+const int TOTAL_OPTIONS_FOR_GOAL_CONNECTION =
+    2048;  // TODO - MUST SCALE WITH ITERATIONS OR ELSE CANT FIND GOAL
+
+const int TRIES_FOR_RANDOM_POINT = 64;  // for generating random points
+const int MAX_DUBINS_OPTIONS_TO_PARSE = 16;
 
 const int DEFAULT_GCS_PORT = 5010;
+
+const int NUM_AIRDROP_BOTTLES = 5;
 
 const char MISSION_CONFIG_PATH[] = "./mission-config.json";
 
