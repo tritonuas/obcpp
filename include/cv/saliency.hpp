@@ -15,7 +15,6 @@
 // model. The training/testing code for the model can be found here:
 // https://github.com/tritonuas/garretts-new-lunchbox
 class Saliency {
- // private member with model path
  public:
     // saliency takes a full-size aerial image and detects any potential
     // targets within the image. The full-size image can have multiple
@@ -23,7 +22,15 @@ class Saliency {
     // it will predict the location within the full-size image (using
     // coordinates of bounding box) and a prediction of whether or not a
     // target is emergent (mannikin) or not.
+    
+    Saliency ();                        // no-argument constructor
+    Saliency (std::string modelPath);   // constructor with model path
+
     std::vector<CroppedTarget> salience(cv::Mat image);
+    
+private:
+    std::string modelPath;  // path to prediction model 
+
 };
 
 #endif  // INCLUDE_CV_SALIENCY_HPP_

@@ -4,105 +4,54 @@
 #include <memory>
 #include </workspaces/obcpp/include/cv/saliency.hpp>
 
-/*
-auto ToTensor(cv::Mat img, bool show_output = false, bool unsqueeze=false, int unsqueeze_dim = 0)
-{
-    std::cout << "image shape: " << img.size() << std::endl;
-    at::Tensor tensor_image = torch::from_blob(img.data, { img.rows, img.cols, 3 }, at::kByte);
+// constructor definition
+Saliency::Saliency () {
+  this->modelPath = "";
+} 
 
-    if (unsqueeze)
-    {
-        tensor_image.unsqueeze_(unsqueeze_dim);
-        std::cout << "tensors new shape: " << tensor_image.sizes() << std::endl;
-    }
-    
-    if (show_output)
-    {
-        std::cout << tensor_image.slice(2, 0, 1) << std::endl;
-    }
-    std::cout << "tenor shape: " << tensor_image.sizes() << std::endl;
-    return tensor_image;
-}
+// constructor definition
+Saliency::Saliency (std::string modelPath) {
+  this->modelPath = modelPath;
+} 
 
-auto transpose(at::Tensor tensor, c10::IntArrayRef dims = { 0, 3, 1, 2 })
-{
-    std::cout << "############### transpose ############" << std::endl;
-    std::cout << "shape before : " << tensor.sizes() << std::endl;
-    tensor = tensor.permute(dims);
-    std::cout << "shape after : " << tensor.sizes() << std::endl;
-    std::cout << "######################################" << std::endl;
-    return tensor;
-}
 
-std::vector<torch::jit::IValue> ToInput(at::Tensor tensor_image)
-{
-    // Create a vector of inputs.
-    std::vector<torch::jit::IValue> toReturn; //c10 List is also IValue
-    c10::List<at::Tensor> tensorList;
-    tensorList.push_back(tensor_image);       // add Tensor to c10::List
-    toReturn.push_back(tensorList);           // add c10::List to vector of IValues
-    return toReturn;
-}
-*/
-
+// expected arguments: <path-to-model> <path-to-image> 
 int main(int argc, const char* argv[]) {
-  if (argc != 2) {
-    std::cerr << "usage: example-app <path-to-exported-script-module>\n";
+  if (argc != 3) {
+    std::cerr << "usage: example-app <path-to-model> <path-to-image>\n";
     return -1;
   }
 
   // convert image to tensor
-  std::string msg = "sample image";
-  auto currentPath = argv[1];
-  cv::Mat img = cv::imread(currentPath);
-  Saliency sal;
-  sal.salience(img);
+  const char* modelPath = argv[1];
+  Saliency sal (modelPath);
+  const char* imgPath = argv[2];
+  cv::Mat img = cv::imread(imgPath, cv::IMREAD_COLOR);
 
-  // show_image(img, msg);
-
-  // pass img into salience
-  /*
-  auto tensor = ToTensor(img);
-
-  // convert the tensor into float and scale it 
-  tensor = tensor.toType(c10::kFloat).div(255);
+  std::vector<CroppedTarget> predictions = sal.salience(img); 
   
-  // swap axis 
-  tensor = transpose(tensor, { (2),(0),(1) });
+  img = cv::imread(imgPath, cv::IMREAD_COLOR);
   
-  //add batch dim (an inplace operation just like in pytorch)
-  // tensor.unsqueeze_(0);
+  for (CroppedTarget ct: predictions) {
+    cv::Rect roi; // setup region of interest (cropped target)
+    roi.x = ct.bbox.x1;
+    roi.y = ct.bbox.y1;
+    roi.width = ct.bbox.x2 - ct.bbox.x1;
+    roi.height = ct.bbox.y2 - ct.bbox.y1;
+    cv::rectangle(img, roi, (cv::Scalar) (0,255,0), 2); 
+  }    
 
-  auto input_to_net = ToInput(tensor);
+  cv::namedWindow("cropped targets", cv::WINDOW_FULLSCREEN);
+  cv::imshow("cropped targets", img);
+  cv::waitKey(0);  
+  cv::imwrite("/workspaces/obcpp/croppedTargets.jpg", img);
+  // testing: save input image to file path (cv::imsave?) with bounding boxes overlayed
 
-  torch::jit::script::Module module;
-  try {
-    // Deserialize the ScriptModule from a file using torch::jit::load().
-    module = torch::jit::load("/workspaces/obcpp/models/default.pth"); // cannot accept .pth?
-    module.eval();
-  }
-  catch (const c10::Error& e) {
-    std::cerr << "error loading the model\n";
-    std::cerr << e.msg() << std::endl; 
-    return -1;
-  }
+  // std::cout << "results:\n";
+  // for (int i = 0; i < targets.size(); i++) {
+  //     std::cout << "box: \n";
+  //     std::cout << targets[i].bbox.x1 << ", " << targets[i].bbox.y1 << ", " << targets[i].bbox.x2 << ", " << targets[i].bbox.y2 << "\n"; 
+  //     std::cout << "isMannikin = " << targets[i].isMannikin;
+  // }
 
-  // making a prediction on the image using our model
-  // at::Tensor output = module.forward(input_to_net).toTensor(); 
-  auto output = module.forward(input_to_net); // vector of IValues which contains c10::List to IValue output
-  c10::ivalue::Tuple& tuple = output.toTupleRef();
-  auto detections = tuple.elements()[1].toList();
-  std::cout << detections << "\n";
-
-  // Is output IValue a tensor? No, it is a tuple.
-  // links from 1/31:
-  // https://pytorch.org/cppdocs/api/structtorch_1_1jit_1_1_module.html#exhale-struct-structtorch-1-1jit-1-1-module
-  // https://pytorch.org/cppdocs/api/structc10_1_1_i_value.html
-  // https://github.com/pytorch/pytorch/blob/main/aten/src/ATen/core/ivalue.h
-  // link from 2/8
-  // https://dev-discuss.pytorch.org/t/working-with-c10-ivalue-efficiently/585  
-  // std::cout << output.isTensor() << "\n";
-  std::cout << "ok\n";
-  */
-  
 }

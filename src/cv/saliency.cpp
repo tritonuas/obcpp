@@ -59,14 +59,20 @@ std::vector<CroppedTarget> Saliency::salience(cv::Mat image) {
     torch::jit::script::Module module;
     try {
         // Deserialize the ScriptModule from a file using torch::jit::load().
-        module = torch::jit::load("/workspaces/obcpp/models/default.pth");
+        std::cout << modelPath << std::endl;
+        module = torch::jit::load(modelPath);
         module.eval();
     }
     catch (const c10::Error& e) {
         std::cerr << "error loading the model\n";
         std::cerr << e.msg() << std::endl; 
+        std::cout << "-----------load failed--------------" << std::endl;
         return {};
     }
+
+    // note: add flag so that forward () runs using CUDA on the jetson
+    
+    std::cout << "-----------executing forward--------------" << std::endl;
     
     auto output = module.forward(input_to_net); // vector of IValues which contains c10::List to IValue output
     c10::ivalue::Tuple& tuple = output.toTupleRef();
@@ -81,8 +87,8 @@ std::vector<CroppedTarget> Saliency::salience(cv::Mat image) {
         c10::IValue labels = dict.at("labels");          
         at::Tensor boxTensor = boxes.toTensor();
         at::Tensor labelsTensor = labels.toTensor();
-        std::cout << boxTensor << std::endl;
-        std::cout << labelsTensor << std::endl;
+        // std::cout << boxTensor << std::endl;
+        // std::cout << labelsTensor << std::endl;
         
         for (int i = 0; i < boxTensor.size(0); i++) { 
             CroppedTarget targ; 
@@ -117,12 +123,7 @@ std::vector<CroppedTarget> Saliency::salience(cv::Mat image) {
         }
     }
 
-    // std::cout << "results:\n";
-    // for (int i = 0; i < targets.size(); i++) {
-    //     std::cout << "box: \n";
-    //     std::cout << targets[i].bbox.x1 << ", " << targets[i].bbox.y1 << ", " << targets[i].bbox.x2 << ", " << targets[i].bbox.y2 << "\n"; 
-    //     std::cout << "isMannikin = " << targets[i].isMannikin;
-    // }
+    
 
     std::cout << "salience ok\n";
     return targets; 
