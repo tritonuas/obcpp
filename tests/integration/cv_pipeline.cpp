@@ -92,14 +92,12 @@ int main() {
 
     PipelineResults output = pipeline.run(imageData);
 
-    size_t numTargets = output.matchedTargets.size() +
-        output.unmatchedTargets.size();
-    size_t numMatches = output.matchedTargets.size();
+    size_t numTargets = output.targets.size();
 
-    LOG_F(INFO, "Found %ld targets", numTargets);
-    LOG_F(INFO, "Found %ld matches", numMatches);
+    LOG_F(INFO, "Detected %ld targets", numTargets);
 
-    for (AirdropTarget& match: output.matchedTargets) {
-        LOG_F(INFO, "Found match assigned to bottle index %d\n", match.index());
+    for (DetectedTarget& t: output.targets) {
+        LOG_F(INFO, "Detected Bottle %d at (%f %f) with match distance %f \n",
+            t.index, t.coord.latitude(), t.coord.longitude(), t.match_distance);
     }
 }

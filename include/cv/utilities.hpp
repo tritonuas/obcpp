@@ -3,6 +3,20 @@
 
 #include <opencv2/opencv.hpp>
 
+#include <array>
+
+#include "utilities/constants.hpp"
+#include "protos/obc.pb.h"
+
+struct DetectedTarget {
+    DetectedTarget(GPSCoord coord, BottleDropIndex index, double match_distance)
+        :coord{coord}, index{index}, match_distance{match_distance} {}
+
+    GPSCoord coord;
+    BottleDropIndex index;
+    double match_distance; 
+};
+
 class Bbox {
  public:
     int x1;

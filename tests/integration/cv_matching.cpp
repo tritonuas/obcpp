@@ -79,7 +79,7 @@ int main(int argc, char* argv[]) {
     cv::Mat ref4 = cv::imread(refImagePath4);
     referenceImages.push_back(std::make_pair(ref4, BottleDropIndex(0)));
 
-    Matching matcher(bottlesToDrop, 0.5, referenceImages, modelPath);
+    Matching matcher(bottlesToDrop, referenceImages, modelPath);
     cv::Mat image = cv::imread(imageMatchPath);
     Bbox dummyBox(0, 0, 0, 0);
     CroppedTarget cropped = {
@@ -96,15 +96,13 @@ int main(int argc, char* argv[]) {
     };
 
     MatchResult result = matcher.match(cropped);
-    LOG_F(INFO, "\nTRUE MATCH TEST:\nClosest is bottle at index %d\nfoundMatch is %d\nThe similarity is %.3f\n",
+    LOG_F(INFO, "\nTRUE MATCH TEST:\nClosest is bottle at index %d\nThe similarity is %.3f\n",
         int(result.bottleDropIndex),
-        result.foundMatch,
         result.similarity);
 
     MatchResult resultFalse = matcher.match(croppedFalse);
-    LOG_F(INFO, "\nFALSE MATCH TEST:\nClosest is bottle at index %d\nfoundMatch is %d\nThe similarity is %.3f\n",
+    LOG_F(INFO, "\nFALSE MATCH TEST:\nClosest is bottle at index %d\nThe similarity is %.3f\n",
         int(resultFalse.bottleDropIndex),
-        resultFalse.foundMatch,
         resultFalse.similarity);
 
     return 0;
