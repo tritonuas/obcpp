@@ -8,8 +8,10 @@
 #include <vector>
 #include <optional>
 #include <queue>
+#include <array>
 
 #include "core/mission_config.hpp"
+#include "cv/utilities.hpp"
 #include "utilities/datatypes.hpp"
 #include "utilities/constants.hpp"
 #include "utilities/locks.hpp"
@@ -87,6 +89,12 @@ class MissionState {
 
     std::shared_ptr<MavlinkClient> mav;
     std::shared_ptr<AirdropClient> airdrop;
+
+    std::mutex cv_mut;
+    std::vector<DetectedTarget> cv_detected_targets;
+    // Gives an index into cv_detected_targets, and specifies that that bottle is matched
+    // with the detected_target specified by the index
+    std::array<size_t, NUM_AIRDROP_BOTTLES> cv_matches;
 
     void _setTick(Tick* newTick);  // does not acquire the tick_mut
 };
