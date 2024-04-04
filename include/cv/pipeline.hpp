@@ -29,13 +29,23 @@ struct PipelineResults {
     std::vector<DetectedTarget> targets;
 };
 
+struct PipelineParams {
+    PipelineParams(std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives,
+        std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages,
+        std::string matchingModelPath, std::string segmentationModelPath)
+        : competitionObjectives{competitionObjectives}, referenceImages{referenceImages},
+          matchingModelPath{matchingModelPath}, segmentationModelPath{segmentationModelPath} {}
+
+    std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives;
+    std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages;
+    std::string matchingModelPath;
+    std::string segmentationModelPath;
+};
+
 // Pipeline handles all infrastructure within the CV pipeline
 class Pipeline {
  public:
-        Pipeline(std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives,
-            std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages,
-            const std::string &matchingModelPath,
-            const std::string &segmentationModelPath);
+    Pipeline(const PipelineParams& p);
 
     PipelineResults run(const ImageData& imageData);
 

@@ -10,10 +10,10 @@
 
 struct DetectedTarget {
     DetectedTarget(GPSCoord coord, BottleDropIndex index, double match_distance)
-        :coord{coord}, index{index}, match_distance{match_distance} {}
+        :coord{coord}, likely_bottle{index}, match_distance{match_distance} {}
 
     GPSCoord coord;
-    BottleDropIndex index;
+    BottleDropIndex likely_bottle;
     double match_distance; 
 };
 

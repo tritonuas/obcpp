@@ -98,6 +98,6 @@ int main() {
 
     for (DetectedTarget& t: output.targets) {
         LOG_F(INFO, "Detected Bottle %d at (%f %f) with match distance %f \n",
-            t.index, t.coord.latitude(), t.coord.longitude(), t.match_distance);
+            t.likely_bottle, t.coord.latitude(), t.coord.longitude(), t.match_distance);
     }
 }

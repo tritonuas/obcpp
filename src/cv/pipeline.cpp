@@ -4,13 +4,10 @@
 // modules of the pipeline (to customize model filepath, etc...)
 // TODO: I also want to have a way to customize if the model will use
 // matching vs segmentation/classification
-Pipeline::Pipeline(std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives,
-    std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages,
-    const std::string &matchingModelPath,
-    const std::string &segmentationModelPath) :
+Pipeline::Pipeline(const PipelineParams& p) :
     // assumes reference images passed to pipeline from not_stolen
-        matcher(competitionObjectives, referenceImages, matchingModelPath),
-        segmentor(segmentationModelPath) {}
+        matcher(p.competitionObjectives, p.referenceImages, p.matchingModelPath),
+        segmentor(p.segmentationModelPath) {}
 
 /*
  *  Entrypoint of CV Pipeline. At a high level, it will include the following
