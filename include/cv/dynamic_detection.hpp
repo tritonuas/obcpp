@@ -41,8 +41,12 @@ struct Detection {
 class ObstacleDetectionQueue {
     public:
         ObstacleDetectionQueue();
-        void add();
+        void add(Detection detection);
         bool isEmpty();
+        // prune every image older than `age` seconds ago
+        void pruneQueue(int age);
+        // copies the queue so you can look at the data
+        void copyQueue(std::queue<Detection> queue);
 
     private:
      // This is used to store all previous obstacles.
