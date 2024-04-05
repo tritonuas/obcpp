@@ -243,3 +243,7 @@ bool Environment::intersect(XYZCoord p1, XYZCoord q1, XYZCoord p2, XYZCoord q2) 
 
     return false;  // Doesn't fall in any of the above cases
 }
+
+const std::pair<std::pair<double, double>, std::pair<double, double>> Environment::getBounds() const {
+    return bounds;
+}

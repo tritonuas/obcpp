@@ -161,6 +161,54 @@ class RRT {
     void optimizeTree(RRTNode *sample);
 };
 
+class AirdropSearch {
+ public:
+    AirdropSearch(RRTPoint start, int scan_radius, Polygon bounds,
+                  std::vector<Polygon> obstacles = {})
+        : start(start),
+          scan_radius(scan_radius),
+          airspace(Environment(bounds, {}, obstacles)),
+          dubins(Dubins(TURNING_RADIUS, POINT_SEPARATION)) {}
+
+    /**
+     * Runs the RRT algorithm to find the optimal path to the goal
+     *
+     * @return  ==> list of 2-vectors to the goal region
+     */
+    std::vector<XYZCoord> run() {
+        auto bounds = airspace.getBounds();
+        auto [x_min, x_max] = bounds.first;
+        auto [y_min, y_max] = bounds.second;
+
+        // generates waypoints to search the entire bounds
+        std::vector<RRTPoint> waypoints;
+        bool fly_down = true;
+        for (double x = x_min; x < x_max; x += scan_radius) {
+            double angle = fly_down ? 0 : M_PI;
+
+            waypoints.push_back(RRTPoint(XYZCoord(x, y_max, 0), angle));
+            waypoints.push_back(RRTPoint(XYZCoord(x, y_min, 0), angle));
+        }
+
+        // generates dubins from the start to the waypoints
+        std::vector<XYZCoord> path;
+        RRTPoint current = start;
+        for (auto &waypoint : waypoints) {
+            auto dubins_path = dubins.dubinsPath(current, waypoint);
+            path.insert(path.end(), dubins_path.begin(), dubins_path.end());
+            current = waypoint;
+        }
+
+        return path;
+    }
+
+ private:
+    const int scan_radius;
+    const RRTPoint start;
+    const Environment airspace;
+    const Dubins dubins;
+};
+
 std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state);
 
 #endif  // INCLUDE_PATHING_STATIC_HPP_

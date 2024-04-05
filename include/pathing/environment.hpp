@@ -172,6 +172,13 @@ class Environment {
      */
     bool intersect(XYZCoord p1, XYZCoord q1, XYZCoord p2, XYZCoord q2) const;
 
+    /**
+     * Returns the bounds
+     * 
+     * @return the bounds of the valid region
+    */
+   const std::pair<std::pair<double, double>, std::pair<double, double>> getBounds() const; 
+
  private:
     const Polygon valid_region;            // boundary of the valid map
     const std::vector<XYZCoord> goals;     // goal point
