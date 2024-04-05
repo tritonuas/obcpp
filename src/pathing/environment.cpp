@@ -10,12 +10,13 @@
 #include "utilities/datatypes.hpp"
 #include "utilities/rng.hpp"
 
-Environment::Environment(const Polygon& valid_region, const std::vector<XYZCoord>& goals,
-                         const std::vector<Polygon>& obstacles)
+Environment::Environment(const Polygon& valid_region, const Polygon& airdrop_zone,
+                         const std::vector<XYZCoord>& goals, const std::vector<Polygon>& obstacles)
     : valid_region(valid_region),
+      airdrop_zone(airdrop_zone),
       goals(goals),
       goals_found(0),
-      bounds(findBounds()),
+      bounds(findBounds(valid_region)),
       obstacles(obstacles) {}
 
 bool Environment::isPointInBounds(const XYZCoord& point) const {
@@ -165,26 +166,6 @@ bool Environment::isLineInBounds(const XYZCoord& start_point, const XYZCoord& en
     return true;
 }
 
-std::pair<std::pair<double, double>, std::pair<double, double>> Environment::findBounds() const {
-    if (valid_region.empty()) {
-        return std::make_pair(std::make_pair(0, 0), std::make_pair(0, 0));
-    }
-
-    double min_x = valid_region[0].x;
-    double max_x = valid_region[0].x;
-    double min_y = valid_region[0].y;
-    double max_y = valid_region[0].y;
-
-    for (const XYZCoord& point : valid_region) {
-        min_x = std::min(min_x, point.x);
-        max_x = std::max(max_x, point.x);
-        min_y = std::min(min_y, point.y);
-        max_y = std::max(max_y, point.y);
-    }
-
-    return {{min_x, max_x}, {min_y, max_y}};
-}
-
 bool Environment::doesLineIntersectPolygon(const XYZCoord& start_point, const XYZCoord& end_point,
                                            const Polygon& polygon) const {
     for (int i = 0, j = polygon.size() - 1; i < polygon.size(); j = i++) {
@@ -244,6 +225,28 @@ bool Environment::intersect(XYZCoord p1, XYZCoord q1, XYZCoord p2, XYZCoord q2) 
     return false;  // Doesn't fall in any of the above cases
 }
 
-const std::pair<std::pair<double, double>, std::pair<double, double>> Environment::getBounds() const {
-    return bounds;
+std::pair<std::pair<double, double>, std::pair<double, double>> Environment::getAirdropBounds()
+    const {
+    return findBounds(airdrop_zone);
+}
+
+std::pair<std::pair<double, double>, std::pair<double, double>> Environment::findBounds(
+    const Polygon& region) const {
+    if (region.empty()) {
+        return std::make_pair(std::make_pair(0, 0), std::make_pair(0, 0));
+    }
+
+    double min_x = region[0].x;
+    double max_x = region[0].x;
+    double min_y = region[0].y;
+    double max_y = region[0].y;
+
+    for (const XYZCoord& point : region) {
+        min_x = std::min(min_x, point.x);
+        max_x = std::max(max_x, point.x);
+        min_y = std::min(min_y, point.y);
+        max_y = std::max(max_y, point.y);
+    }
+
+    return {{min_x, max_x}, {min_y, max_y}};
 }

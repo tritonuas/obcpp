@@ -24,7 +24,8 @@ RRT::RRT(RRTPoint start, std::vector<XYZCoord> goals, int iterations_per_waypoin
     : iterations_per_waypoint(iterations_per_waypoint),
       search_radius(search_radius),
       rewire_radius(rewire_radius),
-      tree(start, Environment(bounds, goals, obstacles), Dubins(TURNING_RADIUS, POINT_SEPARATION)),
+      tree(start, Environment(bounds, {}, goals, obstacles),
+           Dubins(TURNING_RADIUS, POINT_SEPARATION)),
       config(config) {}
 
 void RRT::run() {
@@ -244,8 +245,7 @@ std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
     // the other waypoitns is the goals
     if (state->config.getWaypoints().size() < 2) {
         loguru::set_thread_name("Static Pathing");
-        LOG_F(ERROR,
-              "Not enough waypoints to generate a path, required 2+, existing waypoints: %s",
+        LOG_F(ERROR, "Not enough waypoints to generate a path, required 2+, existing waypoints: %s",
               std::to_string(state->config.getWaypoints().size()).c_str());
         return {};
     }

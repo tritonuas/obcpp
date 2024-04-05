@@ -163,11 +163,11 @@ class RRT {
 
 class AirdropSearch {
  public:
-    AirdropSearch(RRTPoint start, int scan_radius, Polygon bounds,
+    AirdropSearch(const RRTPoint &start, int scan_radius, Polygon bounds, Polygon airdrop_zone,
                   std::vector<Polygon> obstacles = {})
         : start(start),
           scan_radius(scan_radius),
-          airspace(Environment(bounds, {}, obstacles)),
+          airspace(Environment(bounds, airdrop_zone, {}, obstacles)),
           dubins(Dubins(TURNING_RADIUS, POINT_SEPARATION)) {}
 
     /**
@@ -176,18 +176,25 @@ class AirdropSearch {
      * @return  ==> list of 2-vectors to the goal region
      */
     std::vector<XYZCoord> run() {
-        auto bounds = airspace.getBounds();
+        auto bounds = airspace.getAirdropBounds();
         auto [x_min, x_max] = bounds.first;
         auto [y_min, y_max] = bounds.second;
 
         // generates waypoints to search the entire bounds
         std::vector<RRTPoint> waypoints;
         bool fly_down = true;
-        for (double x = x_min; x < x_max; x += scan_radius) {
-            double angle = fly_down ? 0 : M_PI;
+        for (double x = x_min; x <= x_max - scan_radius; x += scan_radius * 2) {
+            double angle = fly_down ? 3 * M_PI / 2 : HALF_PI;
 
-            waypoints.push_back(RRTPoint(XYZCoord(x, y_max, 0), angle));
-            waypoints.push_back(RRTPoint(XYZCoord(x, y_min, 0), angle));
+            if (fly_down) {
+                waypoints.push_back(RRTPoint(XYZCoord(x, y_max, 0), angle));
+                waypoints.push_back(RRTPoint(XYZCoord(x, y_min, 0), angle));
+            } else {
+                waypoints.push_back(RRTPoint(XYZCoord(x, y_min, 0), angle));
+                waypoints.push_back(RRTPoint(XYZCoord(x, y_max, 0), angle));
+            }
+
+            fly_down = !fly_down;
         }
 
         // generates dubins from the start to the waypoints
@@ -202,10 +209,10 @@ class AirdropSearch {
         return path;
     }
 
- private:
+    //  private:
     const int scan_radius;
     const RRTPoint start;
-    const Environment airspace;
+    Environment airspace;
     const Dubins dubins;
 };
 
