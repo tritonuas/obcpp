@@ -69,15 +69,15 @@ int main(int argc, char* argv[]) {
 
     std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages;
     cv::Mat ref0 = cv::imread(refImagePath0);
-    referenceImages.push_back(std::make_pair(ref0, BottleDropIndex(4)));
+    referenceImages.push_back(std::make_pair(ref0, BottleDropIndex(5)));
     cv::Mat ref1 = cv::imread(refImagePath1);
-    referenceImages.push_back(std::make_pair(ref1, BottleDropIndex(3)));
+    referenceImages.push_back(std::make_pair(ref1, BottleDropIndex(4)));
     cv::Mat ref2 = cv::imread(refImagePath2);
-    referenceImages.push_back(std::make_pair(ref2, BottleDropIndex(2)));
+    referenceImages.push_back(std::make_pair(ref2, BottleDropIndex(3)));
     cv::Mat ref3 = cv::imread(refImagePath3);
-    referenceImages.push_back(std::make_pair(ref3, BottleDropIndex(1)));
+    referenceImages.push_back(std::make_pair(ref3, BottleDropIndex(2)));
     cv::Mat ref4 = cv::imread(refImagePath4);
-    referenceImages.push_back(std::make_pair(ref4, BottleDropIndex(0)));
+    referenceImages.push_back(std::make_pair(ref4, BottleDropIndex(1)));
 
     Matching matcher(bottlesToDrop, referenceImages, modelPath);
     cv::Mat image = cv::imread(imageMatchPath);

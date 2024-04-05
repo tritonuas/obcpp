@@ -12,6 +12,8 @@
 
 #include "core/mission_config.hpp"
 #include "cv/utilities.hpp"
+#include "cv/aggregator.hpp"
+#include "camera/interface.hpp"
 #include "utilities/datatypes.hpp"
 #include "utilities/constants.hpp"
 #include "utilities/locks.hpp"
@@ -58,7 +60,7 @@ class MissionState {
     }
 
     /*
-     * Gets a shared_ptr to the mavlink client. 
+     * Gets a shared_ptr to the mavlink client.
      * IMPORTANT: need to check that the pointer is not nullptr
      * before accessing, to make sure the connection has already
      * been established
@@ -75,6 +77,14 @@ class MissionState {
     std::shared_ptr<AirdropClient> getAirdrop();
     void setAirdrop(std::shared_ptr<AirdropClient> airdrop);
 
+    /*
+     * Gets a shared_ptr to the CVAggregator, which lets you
+     * run the CV pipeline on images in background threads.
+     */
+    std::shared_ptr<CVAggregator> getCV();
+    void setCV(std::shared_ptr<CVAggregator> cv);
+    std::shared_ptr<CameraInterface> getCamera();
+
     MissionConfig config;  // has its own mutex
 
  private:
@@ -89,6 +99,8 @@ class MissionState {
 
     std::shared_ptr<MavlinkClient> mav;
     std::shared_ptr<AirdropClient> airdrop;
+    std::shared_ptr<CVAggregator> cv;
+    std::shared_ptr<CameraInterface> camera;
 
     std::mutex cv_mut;
     std::vector<DetectedTarget> cv_detected_targets;
