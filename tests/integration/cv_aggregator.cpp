@@ -3,14 +3,13 @@
 #include <opencv2/opencv.hpp>
 #include <loguru.hpp>
 
-#include "protos/obc.pb.h"
+#include "cv/pipeline.hpp"
+#include "cv/aggregator.hpp"
 
-#include "cv/matching.hpp"
-#include "utilities/constants.hpp"
-
-// Download these test images by running "make pull_matching_test_images" or from the test.zip here https://drive.google.com/drive/u/1/folders/1opXBWx6bBF7J3-JSFtrhfFIkYis9qhGR
+// Download these test images from one of the zips here https://drive.google.com/drive/u/1/folders/1opXBWx6bBF7J3-JSFtrhfFIkYis9qhGR
 // Or, any cropped not-stolen images will work
-// NOTE: images are given reverse order bottleIndexes, e.g. refImagePath0 -> index 4, etc.
+
+// this image should be located at a relative path to the CMake build dir
 const std::string imageTestDir = "../tests/integration/images/matching_cropped/test/";
 const std::string refImagePath0 = imageTestDir + "000000910.jpg"; // bottle 4
 const std::string refImagePath1 = imageTestDir + "000000920.jpg"; // bottle 3
@@ -18,18 +17,29 @@ const std::string refImagePath2 = imageTestDir + "000000003.jpg"; // bottle 2
 const std::string refImagePath3 = imageTestDir + "000000004.jpg"; // bottle 1
 const std::string refImagePath4 = imageTestDir + "000000005.jpg"; // bottle 0
 
-// model can be downloaded by running "make pull_matching" or from here: https://drive.google.com/drive/folders/1ciDfycNyJiLvRhJhwQZoeKH7vgV6dGHJ?usp=drive_link
-const std::string modelPath = "../models/target_siamese_1.pt";
+// matching model can be downloaded from here: https://drive.google.com/drive/folders/1ciDfycNyJiLvRhJhwQZoeKH7vgV6dGHJ?usp=drive_link
+const std::string matchingModelPath = "../models/target_siamese_1.pt";
+// segmentation model can be downloaded from here: https://drive.google.com/file/d/1U2EbfJFzcjVnjTuD6ud-bIf8YOiEassf/view?usp=drive_link
+const std::string segmentationModelPath = "../models/fcn.pth";
 
-// These images can also come from the same source as the reference images. To accurately
-// run this test, provide one image that is a positive match and one that doesn't match
-// any of the references.
-const std::string imageMatchPath = imageTestDir + "000000920.jpg";
-const int matchIndex = 3; 
-const std::string imageNotMatchPath = imageTestDir + "000000016.jpg";
+// mock telemetry data
+double latitude = 38.31568;
+double longitude = 76.55006;
+double altitude = 75;
+double airspeed = 20;
+double yaw = 100;
+double pitch = 5;
+double roll = 3;
 
-int main(int argc, char* argv[]) {
-    // purely for the constructor, doesn't do much in matching
+// integration test to test all stages of the CV pipeline
+// with an arbitrary image as input
+int main() {
+    cv::Mat image = cv::imread(imageTestDir + "000000008.jpg");
+    assert(!image.empty());
+    ImageTelemetry mockTelemetry(latitude, longitude, altitude, airspeed,
+        yaw, pitch, roll);
+    ImageData imageData("000000008.jpg", imageTestDir, image, mockTelemetry);
+
     std::array<Bottle, NUM_AIRDROP_BOTTLES> bottlesToDrop;
 
     Bottle bottle1;
@@ -79,31 +89,24 @@ int main(int argc, char* argv[]) {
     cv::Mat ref4 = cv::imread(refImagePath4);
     referenceImages.push_back(std::make_pair(ref4, BottleDropIndex(1)));
 
-    Matching matcher(bottlesToDrop, referenceImages, modelPath);
-    cv::Mat image = cv::imread(imageMatchPath);
-    Bbox dummyBox(0, 0, 0, 0);
-    CroppedTarget cropped = {
-        image,
-        dummyBox,
-        false
-    };
+    Pipeline pipeline(PipelineParams(bottlesToDrop, referenceImages, matchingModelPath, segmentationModelPath));
 
-    cv::Mat falseImage = cv::imread(imageNotMatchPath);
-    CroppedTarget croppedFalse = {
-        falseImage,
-        dummyBox,
-        false
-    };
+    // Same setup as cv_pipeline unit test up until this point
 
-    MatchResult result = matcher.match(cropped);
-    LOG_F(INFO, "\nTRUE MATCH TEST:\nClosest is bottle at index %d\nThe similarity is %.3f\n",
-        int(result.bottleDropIndex),
-        result.distance);
+    std::cout << "about to create aggregator\n";
 
-    MatchResult resultFalse = matcher.match(croppedFalse);
-    LOG_F(INFO, "\nFALSE MATCH TEST:\nClosest is bottle at index %d\nThe similarity is %.3f\n",
-        int(resultFalse.bottleDropIndex),
-        resultFalse.distance);
+    CVAggregator aggregator(pipeline);
 
-    return 0;
+    std::cout << "about to run aggregator\n";
+
+    aggregator.runPipeline(imageData);
+    aggregator.runPipeline(imageData);
+    aggregator.runPipeline(imageData);
+    aggregator.runPipeline(imageData);
+    aggregator.runPipeline(imageData);
+    aggregator.runPipeline(imageData);
+    aggregator.runPipeline(imageData);
+    aggregator.runPipeline(imageData);
+
+    sleep(100000);
 }

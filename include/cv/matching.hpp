@@ -17,9 +17,11 @@
 #include "protos/obc.pb.h"
 
 struct MatchResult {
+    MatchResult(BottleDropIndex index, double distance)
+        : bottleDropIndex{index}, distance{distance} {}
+
     BottleDropIndex bottleDropIndex;
-    bool foundMatch;
-    double similarity;
+    double distance;
 };
 
 // Matching is used to match targets to a potential corresponding competition
@@ -44,7 +46,6 @@ struct MatchResult {
 class Matching {
  public:
         Matching(std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives,
-            double matchThreshold,
             std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages,
             const std::string &modelPath);
 
@@ -52,9 +53,8 @@ class Matching {
 
  private:
         std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives;
-        double matchThreshold;
         std::vector<std::pair<torch::Tensor, BottleDropIndex>> referenceFeatures;
-        torch::jit::script::Module module;
+        torch::jit::script::Module torch_module;
 };
 
 #endif  // INCLUDE_CV_MATCHING_HPP_

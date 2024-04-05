@@ -78,28 +78,26 @@ int main() {
 
     std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages;
     cv::Mat ref0 = cv::imread(refImagePath0);
-    referenceImages.push_back(std::make_pair(ref0, BottleDropIndex(4)));
+    referenceImages.push_back(std::make_pair(ref0, BottleDropIndex(5)));
     cv::Mat ref1 = cv::imread(refImagePath1);
-    referenceImages.push_back(std::make_pair(ref1, BottleDropIndex(3)));
+    referenceImages.push_back(std::make_pair(ref1, BottleDropIndex(4)));
     cv::Mat ref2 = cv::imread(refImagePath2);
-    referenceImages.push_back(std::make_pair(ref2, BottleDropIndex(2)));
+    referenceImages.push_back(std::make_pair(ref2, BottleDropIndex(3)));
     cv::Mat ref3 = cv::imread(refImagePath3);
-    referenceImages.push_back(std::make_pair(ref3, BottleDropIndex(1)));
+    referenceImages.push_back(std::make_pair(ref3, BottleDropIndex(2)));
     cv::Mat ref4 = cv::imread(refImagePath4);
-    referenceImages.push_back(std::make_pair(ref4, BottleDropIndex(0)));
+    referenceImages.push_back(std::make_pair(ref4, BottleDropIndex(1)));
 
-    Pipeline pipeline(bottlesToDrop, referenceImages, matchingModelPath, segmentationModelPath);
+    Pipeline pipeline(PipelineParams(bottlesToDrop, referenceImages, matchingModelPath, segmentationModelPath));
 
     PipelineResults output = pipeline.run(imageData);
 
-    size_t numTargets = output.matchedTargets.size() +
-        output.unmatchedTargets.size();
-    size_t numMatches = output.matchedTargets.size();
+    size_t numTargets = output.targets.size();
 
-    LOG_F(INFO, "Found %ld targets", numTargets);
-    LOG_F(INFO, "Found %ld matches", numMatches);
+    LOG_F(INFO, "Detected %ld targets", numTargets);
 
-    for (AirdropTarget& match: output.matchedTargets) {
-        LOG_F(INFO, "Found match assigned to bottle index %d\n", match.index());
+    for (DetectedTarget& t: output.targets) {
+        LOG_F(INFO, "Detected Bottle %d at (%f %f) with match distance %f \n",
+            t.likely_bottle, t.coord.latitude(), t.coord.longitude(), t.match_distance);
     }
 }
