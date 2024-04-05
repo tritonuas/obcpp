@@ -6,8 +6,9 @@
 
 CVAggregator::CVAggregator(Pipeline p): pipeline{p} {
     this->num_worker_threads = 0;
-    for (size_t& index : this->results->matches) {
-        index = -1; // mark each bottle as not having a match yet
+    this->results = std::make_shared<CVResults>();
+    for (int i = 0; i < this->results->matches.size(); i++) {
+        this->results->matches[i] = -1;
     }
 }
 
@@ -36,7 +37,7 @@ void CVAggregator::runPipeline(const ImageData& image) {
 }
 
 void CVAggregator::worker(ImageData image, int thread_num) {
-    loguru::set_thread_name(("CVAggregator worker #" + std::to_string(thread_num)).c_str());
+    loguru::set_thread_name(("cv worker " + std::to_string(thread_num)).c_str());
     LOG_F(INFO, "New CVAggregator worker spawned.");
 
     while (true) {
@@ -58,8 +59,8 @@ void CVAggregator::worker(ImageData image, int thread_num) {
                     static_cast<int>(curr_target.likely_bottle) - 1] = detected_target_index;
             } else if (curr_match->get().match_distance > curr_target.match_distance) {
                 LOG_F(INFO,
-                    "Swapping match on bottle %d from target %d -> %d (distance %f -> %f)",
-                    curr_match->get().likely_bottle, 
+                    "Swapping match on bottle %d from target %ld -> %d (distance %f -> %f)",
+                    static_cast<int>(curr_match->get().likely_bottle),
                     this->results->matches[static_cast<int>(curr_match->get().likely_bottle)],
                     detected_target_index, curr_match->get().match_distance, curr_target.match_distance);
 

@@ -98,12 +98,12 @@ int main(int argc, char* argv[]) {
     MatchResult result = matcher.match(cropped);
     LOG_F(INFO, "\nTRUE MATCH TEST:\nClosest is bottle at index %d\nThe similarity is %.3f\n",
         int(result.bottleDropIndex),
-        result.similarity);
+        result.distance);
 
     MatchResult resultFalse = matcher.match(croppedFalse);
     LOG_F(INFO, "\nFALSE MATCH TEST:\nClosest is bottle at index %d\nThe similarity is %.3f\n",
         int(resultFalse.bottleDropIndex),
-        resultFalse.similarity);
+        resultFalse.distance);
 
     return 0;
 }

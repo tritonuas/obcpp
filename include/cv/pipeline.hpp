@@ -45,7 +45,7 @@ struct PipelineParams {
 // Pipeline handles all infrastructure within the CV pipeline
 class Pipeline {
  public:
-    Pipeline(const PipelineParams& p);
+    explicit Pipeline(const PipelineParams& p);
 
     PipelineResults run(const ImageData& imageData);
 

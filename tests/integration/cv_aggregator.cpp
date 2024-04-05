@@ -4,18 +4,18 @@
 #include <loguru.hpp>
 
 #include "cv/pipeline.hpp"
+#include "cv/aggregator.hpp"
 
 // Download these test images from one of the zips here https://drive.google.com/drive/u/1/folders/1opXBWx6bBF7J3-JSFtrhfFIkYis9qhGR
 // Or, any cropped not-stolen images will work
 
 // this image should be located at a relative path to the CMake build dir
-const std::string imagePath = "mock_image.jpg";
-
-const std::string refImagePath0 = "../bin/test/test/000000910.jpg";
-const std::string refImagePath1 = "../bin/test/test/000000920.jpg";
-const std::string refImagePath2 = "../bin/test/test/000000003.jpg";
-const std::string refImagePath3 = "../bin/test/test/000000004.jpg";
-const std::string refImagePath4 = "../bin/test/test/000000005.jpg";
+const std::string imageTestDir = "../tests/integration/images/matching_cropped/test/";
+const std::string refImagePath0 = imageTestDir + "000000910.jpg"; // bottle 4
+const std::string refImagePath1 = imageTestDir + "000000920.jpg"; // bottle 3
+const std::string refImagePath2 = imageTestDir + "000000003.jpg"; // bottle 2
+const std::string refImagePath3 = imageTestDir + "000000004.jpg"; // bottle 1
+const std::string refImagePath4 = imageTestDir + "000000005.jpg"; // bottle 0
 
 // matching model can be downloaded from here: https://drive.google.com/drive/folders/1ciDfycNyJiLvRhJhwQZoeKH7vgV6dGHJ?usp=drive_link
 const std::string matchingModelPath = "../models/target_siamese_1.pt";
@@ -23,21 +23,22 @@ const std::string matchingModelPath = "../models/target_siamese_1.pt";
 const std::string segmentationModelPath = "../models/fcn.pth";
 
 // mock telemetry data
-const double latitude = 38.31568;
-const double longitude = 76.55006;
-const double altitude = 75;
-const double airspeed = 20;
-const double yaw = 100;
-const double pitch = 5;
-const double roll = 3;
+double latitude = 38.31568;
+double longitude = 76.55006;
+double altitude = 75;
+double airspeed = 20;
+double yaw = 100;
+double pitch = 5;
+double roll = 3;
 
 // integration test to test all stages of the CV pipeline
 // with an arbitrary image as input
 int main() {
-    cv::Mat image = cv::imread(imagePath);
+    cv::Mat image = cv::imread(imageTestDir + "000000008.jpg");
+    assert(!image.empty());
     ImageTelemetry mockTelemetry(latitude, longitude, altitude, airspeed,
         yaw, pitch, roll);
-    ImageData imageData("mock_image", imagePath, image, mockTelemetry);
+    ImageData imageData("000000008.jpg", imageTestDir, image, mockTelemetry);
 
     std::array<Bottle, NUM_AIRDROP_BOTTLES> bottlesToDrop;
 
@@ -78,26 +79,34 @@ int main() {
 
     std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages;
     cv::Mat ref0 = cv::imread(refImagePath0);
-    referenceImages.push_back(std::make_pair(ref0, BottleDropIndex(4)));
+    referenceImages.push_back(std::make_pair(ref0, BottleDropIndex(5)));
     cv::Mat ref1 = cv::imread(refImagePath1);
-    referenceImages.push_back(std::make_pair(ref1, BottleDropIndex(3)));
+    referenceImages.push_back(std::make_pair(ref1, BottleDropIndex(4)));
     cv::Mat ref2 = cv::imread(refImagePath2);
-    referenceImages.push_back(std::make_pair(ref2, BottleDropIndex(2)));
+    referenceImages.push_back(std::make_pair(ref2, BottleDropIndex(3)));
     cv::Mat ref3 = cv::imread(refImagePath3);
-    referenceImages.push_back(std::make_pair(ref3, BottleDropIndex(1)));
+    referenceImages.push_back(std::make_pair(ref3, BottleDropIndex(2)));
     cv::Mat ref4 = cv::imread(refImagePath4);
-    referenceImages.push_back(std::make_pair(ref4, BottleDropIndex(0)));
+    referenceImages.push_back(std::make_pair(ref4, BottleDropIndex(1)));
 
     Pipeline pipeline(PipelineParams(bottlesToDrop, referenceImages, matchingModelPath, segmentationModelPath));
 
-    PipelineResults output = pipeline.run(imageData);
+    // Same setup as cv_pipeline unit test up until this point
 
-    size_t numTargets = output.targets.size();
+    std::cout << "about to create aggregator\n";
 
-    LOG_F(INFO, "Detected %ld targets", numTargets);
+    CVAggregator aggregator(pipeline);
 
-    for (DetectedTarget& t: output.targets) {
-        LOG_F(INFO, "Detected Bottle %d at (%f %f) with match distance %f \n",
-            t.likely_bottle, t.coord.latitude(), t.coord.longitude(), t.match_distance);
-    }
+    std::cout << "about to run aggregator\n";
+
+    aggregator.runPipeline(imageData);
+    aggregator.runPipeline(imageData);
+    aggregator.runPipeline(imageData);
+    aggregator.runPipeline(imageData);
+    aggregator.runPipeline(imageData);
+    aggregator.runPipeline(imageData);
+    aggregator.runPipeline(imageData);
+    aggregator.runPipeline(imageData);
+
+    sleep(100000);
 }
