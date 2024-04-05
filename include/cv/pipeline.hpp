@@ -24,7 +24,7 @@
 struct PipelineResults {
     PipelineResults(ImageData imageData, std::vector<DetectedTarget> targets)
         : imageData{imageData}, targets{targets} {}
-    
+
     ImageData imageData;
     std::vector<DetectedTarget> targets;
 };

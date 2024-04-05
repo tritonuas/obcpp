@@ -1,17 +1,18 @@
 #ifndef INCLUDE_CV_AGGREGATOR_HPP_
 #define INCLUDE_CV_AGGREGATOR_HPP_
 
-#include "cv/utilities.hpp"
-#include "cv/pipeline.hpp"
-#include "utilities/constants.hpp"
-#include "utilities/lockptr.hpp"
-
 #include <mutex>
+#include <memory>
 #include <vector>
 #include <future>
 #include <queue>
 #include <array>
 #include <functional>
+
+#include "cv/utilities.hpp"
+#include "cv/pipeline.hpp"
+#include "utilities/constants.hpp"
+#include "utilities/lockptr.hpp"
 
 struct CVResults {
     std::vector<DetectedTarget> detected_targets;
@@ -21,7 +22,7 @@ struct CVResults {
 
 class CVAggregator {
  public:
-    CVAggregator(Pipeline p);
+    explicit CVAggregator(Pipeline p);
     ~CVAggregator();
 
     void runPipeline(const ImageData& image);

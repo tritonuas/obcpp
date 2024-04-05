@@ -29,7 +29,7 @@ Pipeline::Pipeline(const PipelineParams& p) :
 PipelineResults Pipeline::run(const ImageData &imageData) {
     LOG_F(INFO, "Running pipeline on %s/%s",
         imageData.getPath().c_str(), imageData.getName().c_str());
-    
+
     VLOG_F(TRACE, "Saliency Start");
     std::vector<CroppedTarget> saliencyResults = this->detector.salience(imageData.getData());
 
@@ -55,7 +55,7 @@ PipelineResults Pipeline::run(const ImageData &imageData) {
             curr_target_num, saliencyResults.size(),
             targetPosition.latitude(), targetPosition.longitude(),
             static_cast<int>(potentialMatch.bottleDropIndex), potentialMatch.distance);
-        detectedTargets.push_back(DetectedTarget(targetPosition, 
+        detectedTargets.push_back(DetectedTarget(targetPosition,
             potentialMatch.bottleDropIndex, potentialMatch.distance));
     }
 

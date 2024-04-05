@@ -1,9 +1,9 @@
 #ifndef INCLUDE_CV_UTILITIES_HPP_
 #define INCLUDE_CV_UTILITIES_HPP_
 
-#include <opencv2/opencv.hpp>
-
 #include <array>
+
+#include <opencv2/opencv.hpp>
 
 #include "utilities/constants.hpp"
 #include "protos/obc.pb.h"
@@ -14,7 +14,7 @@ struct DetectedTarget {
 
     GPSCoord coord;
     BottleDropIndex likely_bottle;
-    double match_distance; 
+    double match_distance;
 };
 
 class Bbox {
