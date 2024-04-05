@@ -7,9 +7,11 @@
 CVAggregator::CVAggregator(Pipeline p): pipeline{p} {
     this->num_worker_threads = 0;
     this->results = std::make_shared<CVResults>();
-    for (int i = 0; i < this->results->matches.size(); i++) {
-        this->results->matches[i] = -1;
-    }
+    this->results->matches[BottleDropIndex::A] = -1;
+    this->results->matches[BottleDropIndex::B] = -1;
+    this->results->matches[BottleDropIndex::C] = -1;
+    this->results->matches[BottleDropIndex::D] = -1;
+    this->results->matches[BottleDropIndex::E] = -1;
 }
 
 CVAggregator::~CVAggregator() {}
@@ -44,28 +46,29 @@ void CVAggregator::worker(ImageData image, int thread_num) {
 
         Lock lock(this->mut);
         for (auto curr_target : results.targets) {
-            auto curr_match = this->bottleToMatchedTarget(curr_target.likely_bottle);
-
             // this->detected_targets.size() will end up being the index of the
             // newly inserted target, once we insert it after the if/else
-            int detected_target_index = this->results->detected_targets.size();
+            size_t detected_target_index = this->results->detected_targets.size();
 
-            if (!curr_match.has_value()) {
-                LOG_F(INFO, "Made first match between target %d and bottle %d",
+            size_t curr_match_idx = this->results->matches[curr_target.likely_bottle];
+            if (curr_match_idx < 0) {
+                LOG_F(INFO, "Made first match between target %ld and bottle %d",
                     detected_target_index, curr_target.likely_bottle);
 
-                this->results->matches[
-                    static_cast<int>(curr_target.likely_bottle) - 1] = detected_target_index;
-            } else if (curr_match->get().match_distance > curr_target.match_distance) {
-                LOG_F(INFO,
-                    "Swapping match on bottle %d from target %ld -> %d (distance %f -> %f)",
-                    static_cast<int>(curr_match->get().likely_bottle),
-                    this->results->matches[static_cast<int>(curr_match->get().likely_bottle)],
-                    detected_target_index, curr_match->get().match_distance,
-                    curr_target.match_distance);
+                this->results->matches[curr_target.likely_bottle] = detected_target_index;
+            } else {
+                auto curr_match = this->results->detected_targets[curr_match_idx];
 
-                this->results->matches[static_cast<int>(curr_match->get().likely_bottle) - 1] =
-                    this->results->detected_targets.size();
+                if (curr_match.match_distance > curr_target.match_distance) {
+                    LOG_F(INFO,
+                        "Swapping match on bottle %d from target %ld -> %ld (distance %f -> %f)",
+                        static_cast<int>(curr_match.likely_bottle),
+                        this->results->matches[curr_match.likely_bottle],
+                        detected_target_index, curr_match.match_distance,
+                        curr_target.match_distance);
+
+                    this->results->matches[curr_match.likely_bottle] = detected_target_index;
+                }
             }
 
             // do this last so we can still meaningfully access local var curr_target
@@ -83,14 +86,4 @@ void CVAggregator::worker(ImageData image, int thread_num) {
 
     LOG_F(INFO, "CVAggregator worker terminating.");
     this->num_worker_threads--;
-}
-
-inline std::optional<std::reference_wrapper<DetectedTarget>>
-    CVAggregator::bottleToMatchedTarget(BottleDropIndex index) {
-    size_t i = this->results->matches[static_cast<int>(index) - 1];
-    if (i < 0) {
-        return {};
-    }
-
-    return this->results->detected_targets[i];
 }

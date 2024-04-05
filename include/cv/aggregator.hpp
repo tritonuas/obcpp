@@ -6,8 +6,8 @@
 #include <vector>
 #include <future>
 #include <queue>
-#include <array>
 #include <functional>
+#include <unordered_map>
 
 #include "cv/utilities.hpp"
 #include "cv/pipeline.hpp"
@@ -16,8 +16,8 @@
 
 struct CVResults {
     std::vector<DetectedTarget> detected_targets;
-    // matches[0] = 5 => detected_targets[5] is matched with bottle A
-    std::array<size_t, NUM_AIRDROP_BOTTLES> matches;
+    // mapping from bottle -> index into detected_targets
+    std::unordered_map<BottleDropIndex, size_t> matches;
 };
 
 class CVAggregator {
@@ -41,10 +41,6 @@ class CVAggregator {
     std::queue<ImageData> overflow_queue;
 
     std::shared_ptr<CVResults> results;
-
-    // Helper functions to interface with detected_targets and matches vector/array
-    inline std::optional<std::reference_wrapper<DetectedTarget>>
-        bottleToMatchedTarget(BottleDropIndex index);
 };
 
 #endif  // INCLUDE_CV_AGGREGATOR_HPP_
