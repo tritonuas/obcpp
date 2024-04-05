@@ -4,6 +4,8 @@
 #include <iostream>
 #include <memory>
 #include "cv/saliency.hpp"
+#include <torch/cuda.h>
+#include <torch/mps.h>
 
 auto ToTensor(cv::Mat img, bool show_output = false, bool unsqueeze=false, int unsqueeze_dim = 0)
 {
@@ -56,24 +58,22 @@ std::vector<CroppedTarget> Saliency::salience(cv::Mat image) {
 
     auto input_to_net = ToInput(tensor);
 
+    c10::Device device = torch::cuda::is_available() ? torch::kCUDA : torch::kCPU;
     torch::jit::script::Module module;
     try {
         // Deserialize the ScriptModule from a file using torch::jit::load().
         std::cout << modelPath << std::endl;
-        module = torch::jit::load(modelPath);
+        module = torch::jit::load(modelPath, device);
         module.eval();
     }
     catch (const c10::Error& e) {
         std::cerr << "error loading the model\n";
         std::cerr << e.msg() << std::endl; 
-        std::cout << "-----------load failed--------------" << std::endl;
         return {};
     }
 
     // note: add flag so that forward () runs using CUDA on the jetson
-    
-    std::cout << "-----------executing forward--------------" << std::endl;
-    
+        
     auto output = module.forward(input_to_net); // vector of IValues which contains c10::List to IValue output
     c10::ivalue::Tuple& tuple = output.toTupleRef();
     auto detections = tuple.elements()[1];      // index 1: detections
