@@ -1,18 +1,36 @@
 set(LIB_NAME obcpp_network)
 
-add_library(${LIB_NAME} STATIC ${PROJECT_SOURCE_DIR}/build/gen_protos/protos/obc.pb.cc
+set(COMMON_FILES
     airdrop_client.cpp
-    airdrop_sockets.c
     gcs_routes.cpp
     gcs.cpp
     mavlink.cpp
 )
 
-target_link_libraries(${LIB_NAME} PRIVATE
+set(FILES
+    airdrop_sockets.c
+    ${COMMON_FILES}
+)
+
+set(MOCK_FILES
+    mock/airdrop_sockets.c
+    mock/packet_queue.c
+    ${COMMON_FILES}
+)
+
+set(LIB_DEPS
     obcpp_utilities
     obcpp_ticks
     obcpp_core
     obcpp_pathing
+)
+
+add_library(${LIB_NAME} STATIC ${PROJECT_SOURCE_DIR}/build/gen_protos/protos/obc.pb.cc
+    ${FILES}
+)
+
+target_link_libraries(${LIB_NAME} PRIVATE
+    ${LIB_DEPS}
 )
 
 target_add_protobuf(${LIB_NAME})
@@ -32,19 +50,11 @@ target_link_libraries(${LIB_NAME} PRIVATE -Wl,--copy-dt-needed-entries ${ImageMa
 set(LIB_NAME obcpp_network_mock)
 
 add_library(${LIB_NAME} STATIC ${PROJECT_SOURCE_DIR}/build/gen_protos/protos/obc.pb.cc
-    airdrop_client.cpp
-    mock/airdrop_sockets.c
-    mock/packet_queue.c
-    gcs_routes.cpp
-    gcs.cpp
-    mavlink.cpp
+    ${MOCK_FILES}
 )
 
 target_link_libraries(${LIB_NAME} PRIVATE
-    obcpp_utilities
-    obcpp_ticks
-    obcpp_core_mock
-    obcpp_pathing
+    ${LIB_DEPS}
 )
 
 target_add_protobuf(${LIB_NAME})

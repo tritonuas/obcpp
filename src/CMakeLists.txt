@@ -46,6 +46,3 @@ target_add_loguru(${PROJECT_NAME})
 # target_add_imagemagick(${PROJECT_NAME})
 target_include_directories(${PROJECT_NAME} PRIVATE ${ImageMagick_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
-
-# get_target_property(OUT ${PROJECT_NAME} LINK_LIBRARIES)
-# message(STATUS ${OUT})

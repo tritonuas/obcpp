@@ -1,10 +1,14 @@
 set(LIB_NAME obcpp_utilities)
 
-add_library(${LIB_NAME} SHARED ${PROJECT_SOURCE_DIR}/build/gen_protos/protos/obc.pb.cc
+SET(FILES
     common.cpp
     datatypes.cpp
     logging.cpp
     rng.cpp
+)
+
+add_library(${LIB_NAME} SHARED ${PROJECT_SOURCE_DIR}/build/gen_protos/protos/obc.pb.cc
+    ${FILES}
 )
 
 target_add_protobuf(${LIB_NAME})
