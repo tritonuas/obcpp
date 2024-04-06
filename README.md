@@ -16,7 +16,7 @@ mkdir build && cd build
 cmake ..    # configures the CMake build system
 ```
 
-Now you can use our Make targets.
+Now you can use our build targets.
 
 - `ninja obcpp`: Makes the binary which you can run using `./bin/obcpp`
 - `ninja test`: Run the tests in `tests/unit`
@@ -186,13 +186,7 @@ With that, everything should be set up correctly, and you should be good to go.
 
 ## Modifying `CMakeLists.txt`
 
-The `CMakeLists.txt` file tells `cmake` how to build the program. It will need to be modified if any of the following occurs:
-
-1. A new `.cpp` file is created
-2. A `.cpp` file is renamed
-3. A new module is created
-
-Each module has its own folder in `include/` and `src/`. Currently all of the header files that we expect to need are planned out, but many do not have accompanying source files. As we add these source files, new libraries will need to be added to the CMake file. You can follow the example for the libraries already included to make this change.
+There is a `CMakeLists.txt` folder inside of each of the obcpp's module directories. If you add a new file to, say, the `network` module inside of `src/network/`, then you will need to add that filename to `src/network/CMakeLists.txt`.
 
 Note: you may need to clear you CMake cache if things get messed up.
 `find -name "*Cache.txt" -delete`
