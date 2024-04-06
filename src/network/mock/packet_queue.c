@@ -3,10 +3,9 @@
 #include "network/mock/packet_queue.h"
 
 #include <semaphore.h>
+#include <stdio.h>
 
 #include "airdrop/packet.h"
-
-#include <stdio.h>
 
 void pqueue_init(packet_queue_t* q) {
     q->_front = 0;
@@ -15,9 +14,9 @@ void pqueue_init(packet_queue_t* q) {
 
     // not trying to analyze at the error output of these...
     // these should just work (famous last words)
-    sem_init(&q->_mutex, 0, 1);    // 1 => enforce mutual exclusion
-    q->_num_waiting_for_recv = 0;  // start off no one waiting on recv_sem
-    sem_init(&q->_recv_sem, 0, 0); // 0 => any wait will block
+    sem_init(&q->_mutex, 0, 1);     // 1 => enforce mutual exclusion
+    q->_num_waiting_for_recv = 0;   // start off no one waiting on recv_sem
+    sem_init(&q->_recv_sem, 0, 0);  // 0 => any wait will block
 }
 
 int pqueue_empty(packet_queue_t* q) {

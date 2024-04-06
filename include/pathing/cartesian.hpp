@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <tuple>
+#include <algorithm>
+#include <limits>
 
 #include "protos/obc.pb.h"
 #include "utilities/datatypes.hpp"
