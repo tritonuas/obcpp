@@ -150,11 +150,11 @@ target_link_libraries(path_planning PRIVATE -Wl,--copy-dt-needed-entries ${Image
 # add_executable(airdrop_sockets src/network/airdrop_sockets.c tests/integration/airdrop_sockets.c)
 # target_include_directories(airdrop_sockets PRIVATE ${INCLUDE_DIRECTORY})
 
-add_executable(camera_playground camera_playground.cpp)
-target_include_directories(camera_playground PRIVATE ${INCLUDE_DIRECTORY})
-target_add_arena(camera_playground)
-add_custom_target(
-    run_camera_playground
-    ${CMAKE_COMMAND}
-    -E env LD_LIBRARY_s/target_siamese_1.pt
-)
+# add_executable(camera_playground camera_playground.cpp)
+# target_include_directories(camera_playground PRIVATE ${INCLUDE_DIRECTORY})
+# target_add_arena(camera_playground)
+# add_custom_target(
+#     run_camera_playground
+#     ${CMAKE_COMMAND}
+#     -E env LD_LIBRARY_s/target_siamese_1.pt
+# )
