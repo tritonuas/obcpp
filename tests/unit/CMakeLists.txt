@@ -2,12 +2,8 @@ set(BINARY ${CMAKE_PROJECT_NAME}_tests)
 
 file(GLOB_RECURSE TEST_SOURCES LIST_DIRECTORIES false *.hpp *.h *.cpp *.c)
 
-# remove the implementation of sockets that actually use syscalls, to be replaced
-# by tests/unit/airdrop_client/mock_airdrop_sockets.c which will be globbed in TEST_SOURCES
-set(SOURCES_CULLED ${SOURCES})
-list(REMOVE_ITEM SOURCES_CULLED ${PROJECT_SOURCE_DIR}/src/network/airdrop_sockets.c)
-
-add_executable(${BINARY} ${TEST_SOURCES} ${SOURCES_CULLED})
+add_executable(${BINARY} ${TEST_SOURCES})
+target_link_libraries(${BINARY} PRIVATE obcpp_lib) 
 
 set(INCLUDE_DIRECTORY ${PROJECT_SOURCE_DIR}/include)
 set(GEN_PROTOS_DIRECTORY ${PROJECT_SOURCE_DIR}/build/gen_protos)
