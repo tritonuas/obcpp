@@ -1,5 +1,5 @@
-#ifndef PACKET_QUEUE_H_
-#define PACKET_QUEUE_H_
+#ifndef INCLUDE_NETWORK_MOCK_PACKET_QUEUE_H_
+#define INCLUDE_NETWORK_MOCK_PACKET_QUEUE_H_
 
 #include "airdrop/packet.h"
 
@@ -16,13 +16,13 @@
 
 typedef struct packet_queue {
     ad_packet_t _arr[MAX_PACKETS];
-    size_t _front;  // index of first element in the queue
-    size_t _back;   // index of next element in the queue
+    size_t _front;    // index of first element in the queue
+    size_t _back;     // index of next element in the queue
     size_t _num_elems;
 
-    sem_t _mutex;    // mutex to read/write any of the vars here
-    sem_t _recv_sem; // wait on this when 
-    size_t _num_waiting_for_recv; // number of threads blocked on _recv_sem
+    sem_t _mutex;     // mutex to read/write any of the vars here
+    sem_t _recv_sem;  // wait on this when
+    size_t _num_waiting_for_recv;  // number of threads blocked on _recv_sem
 } packet_queue_t;
 
 // initialize the queue to have 0 items
@@ -44,4 +44,4 @@ ad_packet_t pqueue_pop(packet_queue_t* queue);
 // then wait until there is something to pop
 ad_packet_t pqueue_wait_pop(packet_queue_t* queue);
 
-#endif  // PACKET_QUEUE_H_
+#endif  // INCLUDE_NETWORK_MOCK_PACKET_QUEUE_H_

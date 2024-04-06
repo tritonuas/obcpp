@@ -18,10 +18,22 @@ cmake ..    # configures the CMake build system
 
 Now you can use our Make targets.
 
-- `make obcpp`: Makes the binary which you can run using `./bin/obcpp`
-- `make test`: Run the tests in `tests/unit`
-- `make playground`: Runs the `tests/integration/playground.cpp` test which makes sure all dependencies work correctly
-- `make lint`: Check code for problems using `cpplint`
+- `ninja obcpp`: Makes the binary which you can run using `./bin/obcpp`
+- `ninja test`: Run the tests in `tests/unit`
+- `ninja playground`: Runs the `tests/integration/playground.cpp` test which makes sure all dependencies work correctly
+- `ninja lint`: Check code for problems using `cpplint`
+
+## A Note on Ninja
+
+Ninja, the build tool we are using, tries to use a number of cores on your system based on how more cores your CPU has. It is possible that it will attempt to use too many cores, and you will run out of memory on your system and everything will freeze up.
+
+If this happens, you should explicitly tell Ninja to use less cores. You can do this by passing the following argument:
+
+```
+ninja -j [# cores]
+```
+
+Anecdotally, on a machine with 16 virtual cores and 16GB of RAM, `-j 8` appears to be a good balance between speed and resources usage.
 
 ## Modules
 
@@ -153,7 +165,7 @@ Now that everything is installed, here is the process to build and run the appli
 
 11. Build executable with the following command. (You will need to do this anytime you edit code.)
     ```sh
-    make
+    ninja obcpp 
     ```
 
 12. Run the generated executable to verify it was created correctly.
@@ -163,7 +175,7 @@ Now that everything is installed, here is the process to build and run the appli
 
 13. Verify that the testing framework is set up correctly
     ```sh
-    make test
+    ninja test
     ```
 
     If you receive output about certain tests passing/failing, then you are good. Ideally the main branch (which should be what
