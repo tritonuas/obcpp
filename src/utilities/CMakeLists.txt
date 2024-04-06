@@ -7,7 +7,7 @@ SET(FILES
     rng.cpp
 )
 
-add_library(${LIB_NAME} SHARED ${PROJECT_SOURCE_DIR}/build/gen_protos/protos/obc.pb.cc
+add_library(${LIB_NAME} STATIC ${PROJECT_SOURCE_DIR}/build/gen_protos/protos/obc.pb.cc
     ${FILES}
 )
 

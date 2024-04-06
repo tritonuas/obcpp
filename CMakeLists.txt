@@ -25,7 +25,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/bin)
 set(CMAKE_EXPORT_COMPILE_COMMANDS True)
 
-set(CMAKE_POSITION_INDEPENDENT_CODE True)
+# set(CMAKE_POSITION_INDEPENDENT_CODE True)
 
 SET(GCC_COMPILE_FLAGS "")
 SET(GCC_LINK_FLAGS    "-lprotobuf -lopencv_core -lopencv_highgui -lopencv_features2d -lopencv_flann -lopencv_imgcodecs -lopencv_dnn -lopencv_videoio -lopencv_imgproc -lopencv_ml -lopencv_photo -lprotobuf")
