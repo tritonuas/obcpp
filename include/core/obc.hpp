@@ -25,6 +25,9 @@ class OBC {
 
     std::unique_ptr<GCSServer> gcs_server;
 
+    std::thread connectMavThread;
+    std::thread connectAirdropThread;
+
     void connectMavlink(const char* mavlink_url);
     void connectAirdrop();
 };

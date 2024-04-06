@@ -2,9 +2,6 @@
 {
 	"name": "Existing Dockerfile",
 	"image": "ghcr.io/tritonuas/obcpp:main",
-	// "build": {
-	// 	"dockerfile": "Dockerfile"
-	// },
 
 	"customizations": {
 		"vscode": {

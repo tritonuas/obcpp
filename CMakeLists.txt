@@ -117,6 +117,10 @@ target_add_mavsdk(playground)
 target_add_matplot(playground)
 target_add_protobuf(playground)
 target_add_loguru(playground)
+# for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
+# target_add_imagemagick(path_plotting)
+target_include_directories(playground PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(playground PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
 # for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
 # target_add_imagemagick(${PROJECT_NAME})
@@ -124,9 +128,10 @@ target_include_directories(playground PRIVATE ${ImageMagick_INCLUDE_DIRS})
 target_link_libraries(playground PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
 # load_torchvision_model
-add_executable(load_torchvision_model tests/integration/load_torchvision_model.cpp)
+add_executable(load_torchvision_model  ${SOURCES} "tests/integration/load_torchvision_model.cpp")
 target_add_torch(load_torchvision_model)
 target_add_torchvision(load_torchvision_model)
+target_add_loguru(load_torchvision_model)
 
 # mavlink-client
 add_executable(mavlink_client ${SOURCES} "tests/integration/mavlink_client.cpp")
@@ -140,6 +145,75 @@ target_add_httplib(mavlink_client)
 target_add_mavsdk(mavlink_client)
 target_add_matplot(mavlink_client)
 target_add_loguru(mavlink_client)
+# for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
+# target_add_imagemagick(path_plotting)
+target_include_directories(mavlink_client PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(mavlink_client PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
+
+# cv_pipeline 
+add_executable(cv_pipeline ${SOURCES} "tests/integration/cv_pipeline.cpp")
+target_add_json(cv_pipeline)
+target_add_matplot(cv_pipeline)
+target_add_opencv(cv_pipeline)
+target_add_loguru(cv_pipeline)
+target_add_httplib(cv_pipeline)
+target_add_protobuf(cv_pipeline)
+target_add_torch(cv_pipeline)
+target_add_torchvision(cv_pipeline)
+target_add_mavsdk(cv_pipeline)
+target_add_loguru(cv_pipeline)
+# for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
+# target_add_imagemagick(path_plotting)
+target_include_directories(cv_pipeline PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(cv_pipeline PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
+
+# cv_aggregator 
+add_executable(cv_aggregator ${SOURCES} "tests/integration/cv_aggregator.cpp")
+target_add_json(cv_aggregator)
+target_add_matplot(cv_aggregator)
+target_add_opencv(cv_aggregator)
+target_add_loguru(cv_aggregator)
+target_add_httplib(cv_aggregator)
+target_add_protobuf(cv_aggregator)
+target_add_torch(cv_aggregator)
+target_add_torchvision(cv_aggregator)
+target_add_mavsdk(cv_aggregator)
+target_add_loguru(cv_aggregator)
+# for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
+# target_add_imagemagick(path_plotting)
+target_include_directories(cv_aggregator PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(cv_aggregator PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
+
+# cv_matching
+add_executable(cv_matching ${SOURCES} "tests/integration/cv_matching.cpp")
+target_add_json(cv_matching)
+target_add_matplot(cv_matching)
+target_add_opencv(cv_matching)
+target_add_torch(cv_matching)
+target_add_torchvision(cv_matching)
+target_add_loguru(cv_matching)
+target_add_httplib(cv_matching)
+target_add_mavsdk(cv_matching)
+# for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
+# target_add_imagemagick(path_plotting)
+target_include_directories(cv_matching PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(cv_matching PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
+
+
+# cv_segmentation
+add_executable(cv_segmentation ${SOURCES} "tests/integration/cv_segmentation.cpp")
+target_add_json(cv_segmentation)
+target_add_matplot(cv_segmentation)
+target_add_opencv(cv_segmentation)
+target_add_torch(cv_segmentation)
+target_add_torchvision(cv_segmentation)
+target_add_loguru(cv_segmentation)
+target_add_httplib(cv_segmentation)
+target_add_mavsdk(cv_segmentation)
+# for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
+# target_add_imagemagick(path_plotting)
+target_include_directories(cv_segmentation PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(cv_segmentation PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
 # for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
 # target_add_imagemagick(${PROJECT_NAME})
@@ -161,16 +235,73 @@ target_add_loguru(path_plotting)
 target_include_directories(path_plotting PRIVATE ${ImageMagick_INCLUDE_DIRS})
 target_link_libraries(path_plotting PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
+add_executable(path_planning ${SOURCES} "tests/integration/path_planning.cpp")
+target_include_directories(path_planning PRIVATE ${INCLUDE_DIRECTORY})
+target_add_protobuf(path_planning)
+target_add_torch(path_planning)
+target_add_torchvision(path_planning)
+target_add_json(path_planning)
+target_add_opencv(path_planning)
+target_add_httplib(path_planning)
+target_add_mavsdk(path_planning)
+target_add_matplot(path_planning)
+target_add_loguru(path_planning)
+
+target_include_directories(path_planning PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(path_planning PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 # airdrop_sockets
 add_executable(airdrop_sockets src/network/airdrop_sockets.c tests/integration/airdrop_sockets.c)
 target_include_directories(airdrop_sockets PRIVATE ${INCLUDE_DIRECTORY})
 
+add_executable(camera_playground tests/integration/camera_playground.cpp)
+target_include_directories(camera_playground PRIVATE ${INCLUDE_DIRECTORY})
+target_add_arena(camera_playground)
+add_custom_target(
+    run_camera_playground
+    ${CMAKE_COMMAND}
+    -E env LD_LIBRARY_s/target_siamese_1.pt
+)
 # =============================
 
 # =============================
 # Unit tests
 add_subdirectory(tests/unit)
 add_subdirectory(${DEPS_DIRECTORY}/google-test)
+# =============================
+
+# =============================
+# Pull models
+add_custom_target(pull_models 
+  DEPENDS pull_saliency pull_matching pull_segmentation
+)
+
+# Saliency model
+add_custom_target(pull_saliency
+  COMMAND gdown 1S1IfXlGs_pCH49DwZmbD-tZA5YH0A1gx -O ${CMAKE_BINARY_DIR}/../models/torchscript_19.pth
+)
+
+# Matching model 
+add_custom_target(pull_matching
+  COMMAND gdown 1NeFiAfSSLXAZWlehfd0ox7p_jFF4YdrO -O ${CMAKE_BINARY_DIR}/../models/target_siamese_1.pt
+)
+
+
+# Segmentation model
+add_custom_target(pull_segmentation
+  COMMAND gdown 1U2EbfJFzcjVnjTuD6ud-bIf8YOiEassf -O ${CMAKE_BINARY_DIR}/../models/fcn-model_20-epochs_06-01-2023T21-16-02.pth
+)
+# =============================
+
+# =============================
+# Pull testing images
+
+# pull cropped images from fraternal_targets testing folder
+add_custom_target(pull_matching_test_images
+  COMMAND gdown 1opxdXw75jSQZu9s61njE6hjQkfHiKvgp -O ${CMAKE_BINARY_DIR}/../tests/integration/images/test.zip && 
+    mkdir -p ${CMAKE_BINARY_DIR}/../tests/integration/images/matching_cropped &&
+    unzip ${CMAKE_BINARY_DIR}/../tests/integration/images/test.zip -d ${CMAKE_BINARY_DIR}/../tests/integration/images/matching_cropped
+)
+ 
 # =============================
 
 # =============================
@@ -182,7 +313,9 @@ if(CPPLINT)
   # define lint target
   add_custom_target(lint
     COMMAND cpplint
-    --filter=-legal,-readability/todo,-build/c++11
+    # Do not require licenses, TODO assignment, Google versions of C++ libs
+    # also don't check for runtime/references since Google's public style guidelines are behind https://github.com/cpplint/cpplint/issues/148
+    --filter=-legal,-readability/todo,-build/c++11,-runtime/references
     --linelength=100
     --recursive
     ../src

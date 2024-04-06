@@ -1,5 +1,4 @@
 set(BINARY ${CMAKE_PROJECT_NAME}_tests)
-set(DEPS_DIRECTORY ${PROJECT_SOURCE_DIR}/deps)
 
 file(GLOB_RECURSE TEST_SOURCES LIST_DIRECTORIES false *.hpp *.h *.cpp *.c)
 
@@ -18,6 +17,7 @@ target_link_libraries(${BINARY} PUBLIC gtest_main)
 target_add_protobuf(${BINARY})
 target_add_matplot(${BINARY})
 target_add_opencv(${BINARY}) 
+target_add_torch(${BINARY}) 
 target_add_httplib(${BINARY})
 target_add_json(${BINARY})
 target_add_mavsdk(${BINARY})
