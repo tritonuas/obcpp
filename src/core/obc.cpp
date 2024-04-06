@@ -26,7 +26,7 @@ OBC::OBC(const char* mavlink_url, uint16_t gcs_port) {
     // Don't need to look at these futures at all because the connect functions
     // will set the global mission state themselves when connected, which everything
     // else can check.
-    this->connectMavThread = std::thread([this]{this->connectMavlink(mavlink_url);});
+    this->connectMavThread = std::thread([this, mavlink_url]{this->connectMavlink(mavlink_url);});
     this->connectAirdropThread = std::thread([this]{this->connectAirdrop();});
 }
 
