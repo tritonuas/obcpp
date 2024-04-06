@@ -162,6 +162,23 @@ target_add_loguru(cv_pipeline)
 target_include_directories(cv_pipeline PRIVATE ${ImageMagick_INCLUDE_DIRS})
 target_link_libraries(cv_pipeline PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
+# cv_aggregator 
+add_executable(cv_aggregator ${SOURCES} "tests/integration/cv_aggregator.cpp")
+target_add_json(cv_aggregator)
+target_add_matplot(cv_aggregator)
+target_add_opencv(cv_aggregator)
+target_add_loguru(cv_aggregator)
+target_add_httplib(cv_aggregator)
+target_add_protobuf(cv_aggregator)
+target_add_torch(cv_aggregator)
+target_add_torchvision(cv_aggregator)
+target_add_mavsdk(cv_aggregator)
+target_add_loguru(cv_aggregator)
+# for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
+# target_add_imagemagick(path_plotting)
+target_include_directories(cv_aggregator PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(cv_aggregator PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
+
 # cv_matching
 add_executable(cv_matching ${SOURCES} "tests/integration/cv_matching.cpp")
 target_add_json(cv_matching)
