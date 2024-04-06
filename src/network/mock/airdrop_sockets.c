@@ -23,7 +23,7 @@
 #include <stdio.h>
 
 #include "airdrop/packet.h"
-#include "packet_queue.h"
+#include "network/mock/packet_queue.h"
 
 // Global variables to buffer the messages
 static packet_queue_t obc_queue;

@@ -1,6 +1,6 @@
 // LINT_C_FILE
 
-#include "packet_queue.h"
+#include "network/mock/packet_queue.h"
 
 #include <semaphore.h>
 

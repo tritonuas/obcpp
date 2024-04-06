@@ -1,6 +1,6 @@
 set(LIB_NAME obcpp_cv)
 
-add_library(${LIB_NAME} SHARED ${PROJECT_SOURCE_DIR}/build/gen_protos/protos/obc.pb.cc
+set(FILES
     aggregator.cpp
     hdr.cpp
     localization.cpp
@@ -9,6 +9,14 @@ add_library(${LIB_NAME} SHARED ${PROJECT_SOURCE_DIR}/build/gen_protos/protos/obc
     saliency.cpp
     segmentation.cpp
     utilities.cpp
+)
+
+add_library(${LIB_NAME} SHARED ${PROJECT_SOURCE_DIR}/build/gen_protos/protos/obc.pb.cc
+    ${FILES}
+)
+
+target_link_libraries(${LIB_NAME} PRIVATE
+    obcpp_utilities
 )
 
 target_add_protobuf(${LIB_NAME})

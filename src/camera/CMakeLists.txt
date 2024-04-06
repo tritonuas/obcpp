@@ -1,8 +1,12 @@
 set(LIB_NAME obcpp_camera)
 
-add_library(${LIB_NAME} SHARED ${PROJECT_SOURCE_DIR}/build/gen_protos/protos/obc.pb.cc
-    interface.cpp 
+set(FILES
+    interface.cpp
     mock.cpp
+)
+
+add_library(${LIB_NAME} SHARED ${PROJECT_SOURCE_DIR}/build/gen_protos/protos/obc.pb.cc
+    ${FILES}
 )
 
 target_add_protobuf(${LIB_NAME})

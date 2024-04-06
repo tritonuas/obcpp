@@ -110,6 +110,10 @@ target_add_mavsdk(cv_segmentation)
 target_include_directories(cv_segmentation PRIVATE ${ImageMagick_INCLUDE_DIRS})
 target_link_libraries(cv_segmentation PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
+# for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
+# target_add_imagemagick(${PROJECT_NAME})
+target_include_directories(${PROJECT_NAME} PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 # path_plotting 
 add_executable(path_plotting "path_plotting.cpp")
 target_link_libraries(path_plotting PRIVATE obcpp_lib)

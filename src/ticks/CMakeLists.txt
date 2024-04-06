@@ -1,6 +1,6 @@
 set(LIB_NAME obcpp_ticks)
 
-add_library(${LIB_NAME} SHARED ${PROJECT_SOURCE_DIR}/build/gen_protos/protos/obc.pb.cc
+add_library(${LIB_NAME} STATIC ${PROJECT_SOURCE_DIR}/build/gen_protos/protos/obc.pb.cc
     airdrop_approach.cpp
     auto_landing.cpp
     cv_loiter.cpp
@@ -13,6 +13,12 @@ add_library(${LIB_NAME} SHARED ${PROJECT_SOURCE_DIR}/build/gen_protos/protos/obc
     path_gen.cpp
     path_validate.cpp
     takeoff.cpp
+)
+
+target_link_libraries(${LIB_NAME} PRIVATE
+    obcpp_utilities
+    obcpp_core
+    obcpp_network
 )
 
 target_add_protobuf(${LIB_NAME})
