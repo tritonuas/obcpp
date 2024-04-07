@@ -15,7 +15,7 @@
 #include "pathing/static.hpp"
 #include "resources/json_snippets.hpp"
 #include "ticks/mission_prep.hpp"
-#include "ticks/mission_upload.hpp"
+#include "ticks/mav_upload.hpp"
 #include "ticks/path_gen.hpp"
 #include "ticks/tick.hpp"
 #include "utilities/http.hpp"
