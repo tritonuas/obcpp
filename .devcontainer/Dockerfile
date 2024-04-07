@@ -46,7 +46,8 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
                            # needed for matplotplus
                            gnuplot \ 
                            # imagemagick with c++ dependency
-                           libmagick++-dev
+                           libmagick++-dev \
+                           ninja-build
 
 RUN apt-add-repository universe
 RUN apt-get install -y cpplint

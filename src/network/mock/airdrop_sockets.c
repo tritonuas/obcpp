@@ -23,14 +23,14 @@
 #include <stdio.h>
 
 #include "airdrop/packet.h"
-#include "packet_queue.h"
+#include "network/mock/packet_queue.h"
 
 // Global variables to buffer the messages
 static packet_queue_t obc_queue;
 static packet_queue_t payload_queue;
 
 ad_socket_result_t make_ad_socket(uint16_t recv_port, uint16_t send_port) {
-    if ((recv_port != AD_OBC_PORT) && (recv_port != AD_PAYLOAD_PORT) || 
+    if ((recv_port != AD_OBC_PORT) && (recv_port != AD_PAYLOAD_PORT) ||
         (send_port != AD_OBC_PORT) && (send_port != AD_PAYLOAD_PORT)) {
         fprintf(stderr, "mock ad socket called with nonvalid ports");
         exit(1);
@@ -57,7 +57,7 @@ ad_int_result_t send_ad_packet(ad_socket_t socket, ad_packet_t packet) {
     packet_queue_t* q;
     if (socket.send_port == AD_OBC_PORT) {
         q = &obc_queue;
-    } else { // assume payload otherwise for the purposes of simple testing
+    } else {  // assume payload otherwise for the purposes of simple testing
         q = &payload_queue;
     }
 
@@ -76,7 +76,7 @@ ad_int_result_t recv_ad_packet(ad_socket_t socket, void* buf, size_t buf_len) {
     packet_queue_t* q;
     if (socket.recv_port == AD_OBC_PORT) {
         q = &obc_queue;
-    } else { // assume payload otherwise for the purposes of simple testing
+    } else {  // assume payload otherwise for the purposes of simple testing
         q = &payload_queue;
     }
 
