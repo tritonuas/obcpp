@@ -163,11 +163,39 @@ class Environment {
     bool intersect(XYZCoord p1, XYZCoord q1, XYZCoord p2, XYZCoord q2) const;
 
     /**
-     * Get the bounds of the airdrop zone
+     * Returns endpoints (of vertical lines) on airdrop_zone for coverage pathing
+     * 
+     * TODO - UNIT TESTS
      *
-     * @return the bounds of the airdrop zone
+     * @return the endpoints on the airdrop zone
      */
-    std::pair<std::pair<double, double>, std::pair<double, double>> getAirdropBounds() const;
+    std::vector<RRTPoint> getAirdropEndpoints(int scan_radius) const;
+
+    /**
+     * Fills an intersection if one exists between an edge of the polygon and the VERTICAL ray
+     *
+     * @param p1 the first point of the edge
+     * @param p2 the second point of the edge
+     * @param rayStart the start of the ray
+     * @param rayEnd the end of the ray
+     * @param intersection the intersection point (WILL BE FILLED IF INTERSECTION EXISTS)
+     * @return true if an intersection exists, false otherwise
+     */
+    bool rayIntersectsEdge(const XYZCoord& p1, const XYZCoord& p2, const XYZCoord& rayStart,
+                           const XYZCoord& rayEnd, XYZCoord& intersection) const;
+
+    /**
+     * Finds all intersections between a VERTICAL ray and a polygon, and returns them as a lit
+     * 
+     * TODO - UNIT TESTS
+     *
+     * @param polygon the polygon to check intersections
+     * @param rayStart the start of the ray
+     * @param rayEnd the end of the ray
+     * @return a list of intersections
+     */
+    std::vector<XYZCoord> findIntersections(const Polygon& polygon, const XYZCoord& rayStart,
+                                            const XYZCoord& rayEnd) const;
 
  private:
     const Polygon valid_region;            // boundary of the valid map

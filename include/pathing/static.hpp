@@ -161,59 +161,33 @@ class RRT {
     void optimizeTree(RRTNode *sample);
 };
 
+/**
+ * Class that performs Coverage-Path_Planning (CPP) over a given polygon
+ *
+ * Basically draws vertical lines, and the connects them with Dubins paths
+ *
+ * Limitations
+ * - Cannot path through non-convex shapes
+ * - Does not check if path is inbounds or not
+ */
 class AirdropSearch {
  public:
-    AirdropSearch(const RRTPoint &start, int scan_radius, Polygon bounds, Polygon airdrop_zone,
-                  std::vector<Polygon> obstacles = {})
-        : start(start),
-          scan_radius(scan_radius),
-          airspace(Environment(bounds, airdrop_zone, {}, obstacles)),
-          dubins(Dubins(TURNING_RADIUS, POINT_SEPARATION)) {}
+    AirdropSearch(const RRTPoint &start, double scan_radius, Polygon bounds, Polygon airdrop_zone,
+                  std::vector<Polygon> obstacles = {});
 
     /**
-     * Runs the RRT algorithm to find the optimal path to the goal
+     * Generates a path of parallel lines to cover a given area
      *
-     * @return  ==> list of 2-vectors to the goal region
+     * @return  ==> list of 2-vectors describing the path through the aridrop_zone
      */
-    std::vector<XYZCoord> run() {
-        auto bounds = airspace.getAirdropBounds();
-        auto [x_min, x_max] = bounds.first;
-        auto [y_min, y_max] = bounds.second;
+    std::vector<XYZCoord> run() const;
 
-        // generates waypoints to search the entire bounds
-        std::vector<RRTPoint> waypoints;
-        bool fly_down = true;
-        for (double x = x_min; x <= x_max - scan_radius; x += scan_radius * 2) {
-            double angle = fly_down ? 3 * M_PI / 2 : HALF_PI;
-
-            if (fly_down) {
-                waypoints.push_back(RRTPoint(XYZCoord(x, y_max, 0), angle));
-                waypoints.push_back(RRTPoint(XYZCoord(x, y_min, 0), angle));
-            } else {
-                waypoints.push_back(RRTPoint(XYZCoord(x, y_min, 0), angle));
-                waypoints.push_back(RRTPoint(XYZCoord(x, y_max, 0), angle));
-            }
-
-            fly_down = !fly_down;
-        }
-
-        // generates dubins from the start to the waypoints
-        std::vector<XYZCoord> path;
-        RRTPoint current = start;
-        for (auto &waypoint : waypoints) {
-            auto dubins_path = dubins.dubinsPath(current, waypoint);
-            path.insert(path.end(), dubins_path.begin(), dubins_path.end());
-            current = waypoint;
-        }
-
-        return path;
-    }
-
-    //  private:
-    const int scan_radius;
-    const RRTPoint start;
-    Environment airspace;
-    const Dubins dubins;
+ private:
+    const double scan_radius;    // how far each side of the plane we intend to look (half dist
+                                 // between search lines)
+    const RRTPoint start;        // start location (doesn't have to be near polygon)
+    const Environment airspace;  // information aobut the airspace
+    const Dubins dubins;         // dubins object to generate paths
 };
 
 std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state);

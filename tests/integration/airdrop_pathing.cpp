@@ -257,7 +257,7 @@ int main() {
 
     RRTPoint start = RRTPoint(state->config.getWaypoints()[0], 0);
 
-    AirdropSearch search(start, 100, state->config.getFlightBoundary(),
+    AirdropSearch search(start, 20, state->config.getFlightBoundary(),
                          state->config.getAirdropBoundary());
 
     std::vector<XYZCoord> path = search.run();

@@ -55,7 +55,7 @@ void RRT::run() {
 std::vector<XYZCoord> RRT::getPointsToGoal() const { return tree.getPathToGoal(); }
 
 bool RRT::RRTIteration(int tries, int current_goal_index) {
-    const int epoch_interval = tries / 5;
+    const int epoch_interval = tries / NUM_EPOCHS;
     int current_epoch = epoch_interval;
 
     RRTNode *goal_node = nullptr;
@@ -272,4 +272,27 @@ std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
     }
 
     return output_coords;
+}
+
+AirdropSearch::AirdropSearch(const RRTPoint &start, double scan_radius, Polygon bounds,
+                             Polygon airdrop_zone, std::vector<Polygon> obstacles)
+    : start(start),
+      scan_radius(scan_radius),
+      airspace(Environment(bounds, airdrop_zone, {}, obstacles)),
+      dubins(Dubins(std::min(scan_radius, TURNING_RADIUS), POINT_SEPARATION)) {}
+
+std::vector<XYZCoord> AirdropSearch::run() const {
+    // generates the endpoints for the lines (including headings)
+    std::vector<RRTPoint> waypoints = airspace.getAirdropEndpoints(scan_radius);
+
+    // generates the path connecting the q
+    std::vector<XYZCoord> path;
+    RRTPoint current = start;
+    for (auto &waypoint : waypoints) {
+        std::vector<XYZCoord> dubins_path = dubins.dubinsPath(current, waypoint);
+        path.insert(path.end(), dubins_path.begin() + 1, dubins_path.end());
+        current = waypoint;
+    }
+
+    return path;
 }

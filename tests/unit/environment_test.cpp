@@ -5,7 +5,6 @@
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
 
-
 /*
  *   tests Polygon::pointInBounds
  */
@@ -59,7 +58,6 @@ TEST(EnvironmentTest, PointInBounds) {
     EXPECT_EQ(false, quadrilateral_env.isPointInPolygon(quadrilateral, XYZCoord{2.5, 1.30, 0}));
     EXPECT_EQ(false, quadrilateral_env.isPointInPolygon(quadrilateral, XYZCoord{1.5, 2.50, 0}));
 }
-
 
 /*
  *  Tests Environment::isPointInBounds
@@ -161,8 +159,8 @@ TEST(EnvironmentTest, PathOutOfBoundsTest) {
 }
 
 /*
-*   test points in bound and in obstacles
-*/
+ *   test points in bound and in obstacles
+ */
 TEST(EnvironmentTest, InsideObstacleTest) {
     Polygon square;
     square.emplace_back(XYZCoord{0, 0, 0});
@@ -176,7 +174,7 @@ TEST(EnvironmentTest, InsideObstacleTest) {
     std::vector<Polygon> obstacles = {obs1};
 
     Environment test{square, {}, {XYZCoord(0, 0, 0)}, obstacles};
-    
+
     EXPECT_FALSE(test.isPointInBounds(XYZCoord{15, 15, 0}));
     EXPECT_FALSE(test.isPointInBounds(XYZCoord{10, 10, 0}));
     EXPECT_FALSE(test.isPointInBounds(XYZCoord{15, 10, 0}));
@@ -186,14 +184,14 @@ TEST(EnvironmentTest, InsideObstacleTest) {
 }
 
 /*
-*   tests Environment::intersect()
-*/
+ *   tests Environment::intersect()
+ */
 TEST(EnvironmentTest, IntersectTest) {
     Environment test({}, {}, {}, {});
 
     // test intersect
     std::vector<XYZCoord> path1 = {XYZCoord{0, 0, 0}, XYZCoord{100, 100, 0}};
-    std::vector<XYZCoord> path1_5 = {XYZCoord{0, 0, 0}, XYZCoord{-1, -1, 0}}; 
+    std::vector<XYZCoord> path1_5 = {XYZCoord{0, 0, 0}, XYZCoord{-1, -1, 0}};
     std::vector<XYZCoord> path2 = {XYZCoord{-1, -1, 0}, XYZCoord{5, 5, 0}};
     std::vector<XYZCoord> path3 = {XYZCoord{0, 0, 0}, XYZCoord{15, 15, 0}};
     std::vector<XYZCoord> path4 = {XYZCoord{2, 1, 0}, XYZCoord{1, 2, 0}};
@@ -206,6 +204,45 @@ TEST(EnvironmentTest, IntersectTest) {
 
     EXPECT_TRUE(test.intersect(path1[0], path1[1], path4[0], path4[1]));
     EXPECT_FALSE(test.intersect(path1_5[0], path1_5[1], path4[0], path4[1]));
+}
 
+/*
+ *   tests Environment::rayIntersectsEdge()
+ */
+TEST(EnvironmentTest, RayIntersectsEdge) {
+    Polygon airdrop_zone = {
+        {XYZCoord(0, 0, 0), XYZCoord(100, 0, 0), XYZCoord(100, 100, 0), XYZCoord(50, 100, 0)}};
 
+    Environment test{{}, airdrop_zone, {}, {}};
+
+    std::pair<XYZCoord, XYZCoord> edge1 = {XYZCoord(75, 9999, 0), XYZCoord(75, -9999, 0)};
+    XYZCoord intersect1(0, 0, 0);
+    XYZCoord expect1(75, 0, 0);
+    XYZCoord expect2(75, 100, 0);
+
+    EXPECT_TRUE(test.rayIntersectsEdge(airdrop_zone[0], airdrop_zone[1], edge1.first, edge1.second,
+                                       intersect1));
+    EXPECT_EQ(intersect1, expect1);
+    EXPECT_FALSE(test.rayIntersectsEdge(airdrop_zone[1], airdrop_zone[2], edge1.first, edge1.second,
+                                        intersect1));
+    EXPECT_TRUE(test.rayIntersectsEdge(airdrop_zone[2], airdrop_zone[3], edge1.first, edge1.second,
+                                       intersect1));
+    EXPECT_EQ(intersect1, expect2);
+    EXPECT_FALSE(test.rayIntersectsEdge(airdrop_zone[3], airdrop_zone[0], edge1.first, edge1.second,
+                                        intersect1));
+
+    std::pair<XYZCoord, XYZCoord> edge2 = {XYZCoord(25, 9999, 0), XYZCoord(25, -9999, 0)};
+    XYZCoord intersect2(0, 0, 0);
+    XYZCoord expect3(25, 0, 0);
+    XYZCoord expect4(25, 50, 0);
+    EXPECT_TRUE(test.rayIntersectsEdge(airdrop_zone[0], airdrop_zone[1], edge2.first, edge2.second,
+                                       intersect2));
+    EXPECT_EQ(intersect2, expect3);
+    EXPECT_FALSE(test.rayIntersectsEdge(airdrop_zone[1], airdrop_zone[2], edge2.first, edge2.second,
+                                        intersect2));
+    EXPECT_FALSE(test.rayIntersectsEdge(airdrop_zone[2], airdrop_zone[3], edge2.first, edge2.second,
+                                        intersect2));
+    EXPECT_TRUE(test.rayIntersectsEdge(airdrop_zone[3], airdrop_zone[0], edge2.first, edge2.second,
+                                       intersect2));
+    EXPECT_EQ(intersect2, expect4);
 }
