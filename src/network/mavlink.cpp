@@ -110,8 +110,23 @@ MavlinkClient::MavlinkClient(const char* link) {
         });
 }
 
-bool MavlinkClient::uploadMissionUntilSuccess(std::shared_ptr<MissionState> state) const {
-    LOG_SCOPE_F(INFO, "Uploading Mav Mission");
+bool MavlinkClient::uploadMissionUntilSuccess(std::shared_ptr<MissionState> state,
+    bool upload_geofence, std::vector<GPSCoord> waypoints) const {
+    if (upload_geofence) {
+        if (!this->uploadGeofenceUntilSuccess(state)) {
+            return false;
+        }
+    }
+    if (waypoints.size() > 0) {
+        if (!this->uploadWaypointsUntilSuccess(state, waypoints)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool MavlinkClient::uploadGeofenceUntilSuccess(std::shared_ptr<MissionState> state) const {
+    LOG_SCOPE_F(INFO, "Uploading Geofence");
 
     // Make sure everything is set up
     auto mission = state->config.getCachedMission();
@@ -131,18 +146,6 @@ bool MavlinkClient::uploadMissionUntilSuccess(std::shared_ptr<MissionState> stat
         flight_bound.points.push_back(mavsdk::Geofence::Point {
             .latitude_deg {coord.latitude()},
             .longitude_deg {coord.longitude()},
-        });
-    }
-
-    // Parse the waypoint information
-    std::vector<mavsdk::Mission::MissionItem> mission_items;
-    for (const auto& coord : state->getInitPath()) {
-        mavsdk::Mission::MissionItem new_item {};
-        mission_items.push_back(mavsdk::Mission::MissionItem {
-            .latitude_deg {coord.latitude()},
-            .longitude_deg {coord.longitude()},
-            .relative_altitude_m {static_cast<float>(coord.altitude())},
-            .is_fly_through {true}
         });
     }
 
@@ -174,8 +177,26 @@ bool MavlinkClient::uploadMissionUntilSuccess(std::shared_ptr<MissionState> stat
 
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
-    // For some reason the sitl won't sometimes accept waypoint missions...
-    // but there is no reason to go until it works, so block here
+
+    return true;
+}
+
+bool MavlinkClient::uploadWaypointsUntilSuccess(std::shared_ptr<MissionState> state,
+    std::vector<GPSCoord> waypoints) const {
+    LOG_SCOPE_F(INFO, "Uploading waypoints");
+
+    // Parse the waypoint information
+    std::vector<mavsdk::Mission::MissionItem> mission_items;
+    for (const auto& coord : waypoints) {
+        mavsdk::Mission::MissionItem new_item {};
+        mission_items.push_back(mavsdk::Mission::MissionItem {
+            .latitude_deg {coord.latitude()},
+            .longitude_deg {coord.longitude()},
+            .relative_altitude_m {static_cast<float>(coord.altitude())},
+            .is_fly_through {true}
+        });
+    }
+
     while (true) {
         LOG_F(INFO, "Sending waypoint information...");
 
@@ -217,6 +238,8 @@ bool MavlinkClient::uploadMissionUntilSuccess(std::shared_ptr<MissionState> stat
 
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
+
+    return true;
 }
 
 std::pair<double, double> MavlinkClient::latlng_deg() {
