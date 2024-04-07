@@ -126,7 +126,7 @@ bool MavlinkClient::uploadMissionUntilSuccess(std::shared_ptr<MissionState> stat
 }
 
 bool MavlinkClient::uploadGeofenceUntilSuccess(std::shared_ptr<MissionState> state) const {
-   LOG_SCOPE_F(INFO, "Uploading Geofence");
+    LOG_SCOPE_F(INFO, "Uploading Geofence");
 
     // Make sure everything is set up
     auto mission = state->config.getCachedMission();
@@ -184,7 +184,7 @@ bool MavlinkClient::uploadGeofenceUntilSuccess(std::shared_ptr<MissionState> sta
 bool MavlinkClient::uploadWaypointsUntilSuccess(std::shared_ptr<MissionState> state,
     std::vector<GPSCoord> waypoints) const {
     LOG_SCOPE_F(INFO, "Uploading waypoints");
-    
+
     // Parse the waypoint information
     std::vector<mavsdk::Mission::MissionItem> mission_items;
     for (const auto& coord : waypoints) {

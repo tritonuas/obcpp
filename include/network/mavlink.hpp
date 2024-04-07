@@ -6,6 +6,7 @@
 #include <mavsdk/plugins/mission/mission.h>
 #include <mavsdk/plugins/geofence/geofence.h>
 #include <memory>
+#include <vector>
 #include <mutex>
 #include <string>
 #include <chrono>

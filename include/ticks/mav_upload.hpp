@@ -2,6 +2,7 @@
 #define INCLUDE_TICKS_MAV_UPLOAD_HPP_
 
 #include <memory>
+#include <vector>
 #include <chrono>
 #include <string>
 #include <future>

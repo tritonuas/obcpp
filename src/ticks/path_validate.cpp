@@ -19,7 +19,7 @@ std::chrono::milliseconds PathValidateTick::getWait() const {
 Tick* PathValidateTick::tick() {
     if (status == Status::Validated) {
         if (this->state->getMav() != nullptr) {
-            return new MavUploadTick(this->state, new TakeoffTick(this->state), 
+            return new MavUploadTick(this->state, new TakeoffTick(this->state),
                 state->getInitPath(), true);
         } else {
             LOG_F(WARNING, "Path Validated, but cannot continue because mavlink not connected.");
