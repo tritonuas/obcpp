@@ -2,6 +2,7 @@ set(LIB_NAME obcpp_ticks)
 
 set(FILES
     airdrop_approach.cpp
+    airdrop_prep.cpp
     auto_landing.cpp
     cv_loiter.cpp
     fly_search.cpp
@@ -9,7 +10,7 @@ set(FILES
     manual_landing.cpp
     mission_done.cpp
     mission_prep.cpp
-    mission_upload.cpp
+    mav_upload.cpp
     path_gen.cpp
     path_validate.cpp
     takeoff.cpp
