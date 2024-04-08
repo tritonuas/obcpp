@@ -1,6 +1,7 @@
 *.so
 lib/
 bin/
+logs/
 
 Makefile
 CMakeFiles/
@@ -15,7 +16,17 @@ models/**
 Testing/
 imgs/
 
-.vscode
+models/*
+!models/.gitkeep
+
+tests/integration/images/*
+!tests/integration/images/.gitkeep
+
+.vscode/*
+!.vscode/c_cpp_properties.json
 
 libcore_library.dylib
 .DS_Store
+
+**/*.pb.cc
+**/*.pb.h

@@ -1,16 +1,21 @@
-#include <httplib.h>
-#include <iostream>
+#include <chrono>
+#include <string>
 
-#include "core/states.hpp"
+extern "C" {
+    #include "network/airdrop_sockets.h"
+}
+
+#include "core/obc.hpp"
 #include "utilities/constants.hpp"
-#include "pathing/plotting.hpp"
+#include "utilities/logging.hpp"
 
-int main() {
-    std::cout << "Starting HTTP server at port " << SERVER_PORT << std::endl;
 
-    httplib::Server svr;
-    svr.Get("/hi", [](const httplib::Request &, httplib::Response &res) {
-        res.set_content("Hello World!", "text/plain");
-    });
-    svr.listen("0.0.0.0", SERVER_PORT);
+int main(int argc, char* argv[]) {
+    // TODO: pull logging folder from config
+    initLogging("/workspaces/obcpp/logs", true, argc, argv);
+
+    // In future, load configs, perhaps command line parameters, and pass
+    // into the obc object
+    OBC obc(DEFAULT_GCS_PORT);
+    obc.run();
 }

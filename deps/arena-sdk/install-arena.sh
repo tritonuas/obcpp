@@ -48,10 +48,9 @@ else
             echo "ERROR: Unable to install Arena-SDK. tar is not installed. Install tar for your system and retry."
             exit 1
         fi;
-    
-        # This command is kinda crazy to bypass Google drive's virus scanning warning for large files https://medium.com/@acpanjan/download-google-drive-files-using-wget-3c2c025a8b99
-        wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate "https://docs.google.com/uc?export=download&id=$FILE_ID" -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=$FILE_ID" -O "$PKGS_DIR/$FILE_NAME" && rm -rf /tmp/cookies.txt
-        tar xf "$PKGS_DIR/$FILE_NAME" --directory="$PKGS_DIR"
+
+        # /home/tuas/.local/bin/gdown "${FILE_ID}" -O "${PKGS_DIR}/${FILE_NAME}"
+        # tar xf "$PKGS_DIR/$FILE_NAME" --directory="$PKGS_DIR"
     else \
         echo "WARNING: Arena SDK is already installed at $PKGS_DIR/$ARENA_SDK_DIR. Will not download again."; \
     fi;

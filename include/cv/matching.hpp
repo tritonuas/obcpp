@@ -1,16 +1,27 @@
 #ifndef INCLUDE_CV_MATCHING_HPP_
 #define INCLUDE_CV_MATCHING_HPP_
 
-#include <opencv2/opencv.hpp>
+#include <torch/torch.h>
+#include <torch/script.h>
+#include <torchvision/vision.h>
 
+#include <string>
+#include <vector>
+#include <utility>
+
+#include <opencv2/opencv.hpp>
 #include "cv/utilities.hpp"
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
 
+#include "protos/obc.pb.h"
+
 struct MatchResult {
-    uint8_t bottleDropIndex;
-    bool foundMatch;
-    double similarity;
+    MatchResult(BottleDropIndex index, double distance)
+        : bottleDropIndex{index}, distance{distance} {}
+
+    BottleDropIndex bottleDropIndex;
+    double distance;
 };
 
 // Matching is used to match targets to a potential corresponding competition
@@ -34,14 +45,16 @@ struct MatchResult {
 // see how close it is to known objectives.
 class Matching {
  public:
-        Matching(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES>
-            competitionObjectives, double matchThreshold);
+        Matching(std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives,
+            std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages,
+            const std::string &modelPath);
 
         MatchResult match(const CroppedTarget& croppedTarget);
 
  private:
-        std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES> competitionObjectives;
-        double matchThreshold;
+        std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives;
+        std::vector<std::pair<torch::Tensor, BottleDropIndex>> referenceFeatures;
+        torch::jit::script::Module torch_module;
 };
 
 #endif  // INCLUDE_CV_MATCHING_HPP_

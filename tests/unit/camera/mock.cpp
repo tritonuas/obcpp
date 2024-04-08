@@ -3,6 +3,7 @@
 #include "camera/interface.hpp"
 #include "camera/mock.hpp"
 
+// test that the mock camera returns a valid image
 TEST(MockCamera, TakePicture) {
     CameraConfiguration config({
        {"SampleConfigKey", 100},

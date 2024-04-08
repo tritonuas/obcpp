@@ -7,42 +7,27 @@
 #include <opencv2/opencv.hpp>
 #include <matplot/matplot.h>
 #include <mavsdk/mavsdk.h>
+#include <loguru.hpp>
 
-using json = nlohmann::json;
+// using json = nlohmann::json;
 
 int main (int argc, char *argv[]) {
-    // test arena
-    // Arena::ISystem* pSystem = Arena::OpenSystem();
-
-    // test torch
-    std::cout << "Testing torch installation" << std::endl;
-    torch::Tensor tensor = torch::eye(3);
-    std::cout << tensor << "\n" << std::endl;
-
-    // test json
-    std::cout << "Testing json installation" << std::endl;
-    json data = {
-        {"json", true},
-        {"works", true},
-    };
-    std::cout << data << "\n" << std::endl;
-
     // test opencv
-    std::cout << "Testing opencv installation" << std::endl;
+    LOG_F(INFO, "Testing opencv installation\n");
     cv::Mat opencv_mat = cv::Mat::eye(300, 300, CV_32F);
-    std::cout << "Rows: " << opencv_mat.rows << " Cols: " << opencv_mat.cols << std::endl;
+    LOG_F(INFO, "Rows: %d Cols: %d\n", opencv_mat.rows, opencv_mat.cols);
     
     // test matplot
-    std::cout << "Testing matplot installation" << std::endl;
+    LOG_F(INFO, "Testing matplot installation\n");
     matplot::color c = matplot::color::black;
-    std::cout << "Black: " << static_cast<int>(c) << std::endl;
+    LOG_F(INFO, "Black: %d\n", static_cast<int>(c));
     
     // test mavsdk
-    std::cout << "Testing mavsdk installation" << std::endl;
+    LOG_F(INFO, "Testing mavsdk installation\n");
     mavsdk::Mavsdk mavsdk;
     std::string connection_address = "tcp://127.0.0.1:5760";
     mavsdk::ConnectionResult conn_result = mavsdk.add_any_connection(connection_address);
-    std::cout << "Expected connection to be refused" << std::endl;
+    LOG_F(INFO, "Expected connection to be refused\n");
     
     return 0;
 }

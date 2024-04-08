@@ -1,83 +1,445 @@
 #include <vector>
 #include <string>
+#include <cmath>
+#include <chrono>
+#include <thread>
+#include <utility>
+#include <filesystem>
+
+// NOTE: this is very dumb but this #include <assert.h> is needed
+// before we #include <Magick++.h>. This is because ImageMagick
+// defines some assert related function that conflicts with
+// what the protobuf code expects to be available.
+// https://github.com/ImageMagick/ImageMagick/issues/4679
+// https://stackoverflow.com/questions/43676010/c-boost-assert-fail-was-not-declared-in-this-scope
+#include <assert.h> // NOLINT 
+#include <Magick++.h>
 
 #include "pathing/plotting.hpp"
 #include "utilities/datatypes.hpp"
 
-void PathingPlot::addPoints(std::vector<XYZCoord> pts) {
-    for (auto pt : pts) {
-        this->addPoint(pt);
+PathingPlot::PathingPlot(std::filesystem::path outputDir) :
+    outputDir(outputDir), figure(matplot::gcf()) {
+    // https://alandefreitas.github.io/matplotplusplus/coding-styles/reactive-vs-quiet-figures/
+    this->figure->quiet_mode(true);
+
+    // multiple calls to plot won't erase axes
+    this->figure->current_axes()->hold(true);
+}
+
+PathingPlot::PathingPlot(
+    std::filesystem::path outputDir,
+    Polygon flightBoundary,
+    Polygon aidropBoundary,
+    std::vector<XYZCoord> waypoints) :
+    outputDir(outputDir),
+    figure(matplot::gcf()),
+    flightBoundary(flightBoundary),
+    airdropBoundary(aidropBoundary),
+    waypoints(waypoints) {
+    // https://alandefreitas.github.io/matplotplusplus/coding-styles/reactive-vs-quiet-figures/
+    this->figure->quiet_mode(true);
+
+    // multiple calls to plot won't erase axes
+    this->figure->current_axes()->hold(true);
+}
+
+void PathingPlot::addFinalPoints(std::vector<XYZCoord> pts) {
+    for (XYZCoord& coord : pts)  {
+        this->addFinalPoint(coord);
     }
 }
 
-void PathingPlot::addPolygons(std::vector<Polygon> polygons) {
-    for (auto polygon : polygons) {
-        this->addPolygon(polygon);
+void PathingPlot::addFinalPolylines(std::vector<Polyline> polylines) {
+    for (Polyline& polyline : polylines)  {
+        this->addFinalPolyline(polyline);
     }
 }
 
-void PathingPlot::addPolylines(std::vector<Polyline> polylines) {
-    for (auto polyline : polylines) {
-        this->addPolyline(polyline);
+void PathingPlot::addFinalPoint(XYZCoord pt) {
+    // if there are no chunks, create an initial empty one
+    if (this->plottingChunks.empty()) {
+        this->plottingChunks.push_back(PlottingChunk());
+    }
+
+    // add a finalItem to the latest chunk
+    this->plottingChunks.back().finalItem = pt;
+    // create a new chunk for the next set of intermediates and another final
+    this->plottingChunks.push_back(PlottingChunk());
+}
+
+void PathingPlot::addFinalPolyline(Polyline polyline) {
+    // if there are no chunks, create an initial empty one
+    if (this->plottingChunks.empty()) {
+        this->plottingChunks.push_back(PlottingChunk());
+    }
+
+    // add a finalItem to the latest chunk
+    this->plottingChunks.back().finalItem = polyline;
+    // create a new chunk for the next set of intermediates and another final
+    this->plottingChunks.push_back(PlottingChunk());
+}
+
+void PathingPlot::addIntermediatePoints(std::vector<XYZCoord> pts) {
+    for (XYZCoord& coord : pts)  {
+        this->addIntermediatePoint(coord);
+    }
+}
+
+void PathingPlot::addIntermediatePolylines(std::vector<Polyline> polylines) {
+    for (Polyline& polyline : polylines)  {
+        this->addIntermediatePolyline(polyline);
+    }
+}
+
+void PathingPlot::addIntermediatePoint(XYZCoord pt) {
+    // if there are no chunks, create an initial empty one
+    if (this->plottingChunks.empty()) {
+        this->plottingChunks.push_back(PlottingChunk());
+    }
+
+    this->plottingChunks.back().intermediateItems.push_back(pt);
+}
+
+void PathingPlot::addIntermediatePolyline(Polyline polyline) {
+    // if there are no chunks, create an initial empty one
+    if (this->plottingChunks.empty()) {
+        this->plottingChunks.push_back(PlottingChunk());
+    }
+
+    this->plottingChunks.back().intermediateItems.push_back(polyline);
+}
+
+void PathingPlot::output(std::string filename, PathOutputType pathType) {
+    std::filesystem::create_directories(outputDir);
+
+    std::filesystem::path staticFilepath(outputDir / (filename + ".jpg"));
+    std::filesystem::path animatedFilepath(outputDir / (filename + ".gif"));
+
+    auto ax = this->figure->current_axes();
+    switch (pathType) {
+    case PathOutputType::NONE:
+        return;
+    case PathOutputType::STATIC:
+        outputStatic(ax, staticFilepath);
+        return;
+    case PathOutputType::ANIMATED:
+        outputAnimated(ax, animatedFilepath);
+        return;
+    case PathOutputType::BOTH:
+        outputStatic(ax, staticFilepath);
+        outputAnimated(ax, animatedFilepath);
+        return;
+    default:
+        return;
     }
 }
 
 
-AnimationPathingPlot::AnimationPathingPlot() {
-    // TODO: init member vars
+void PathingPlot::setLineWidth(float lineWidth) {
+    this->lineWidth = lineWidth;
+}
+void PathingPlot::setCoordSize(float coordSize) {
+    this->coordSize = coordSize;
 }
 
-void AnimationPathingPlot::beginUpdate() {
-    // TODO: delineate update
+void PathingPlot::setAnimationDelay(size_t animationDelayCentiSec) {
+    this->animationDelayCentiSec = animationDelayCentiSec;
 }
 
-void AnimationPathingPlot::endUpdate() {
-    // TODO: delinate end of update
+void PathingPlot::setFramesPerDistanceUnit(double framesPerDistanceUnit) {
+    this->framesPerDistanceUnit = framesPerDistanceUnit;
 }
 
-void AnimationPathingPlot::addPoint(XYZCoord pt) {
-    // TODO: add point
+void PathingPlot::outputStatic(matplot::axes_handle ax, std::filesystem::path filepath) {
+    this->clearPlot(ax);
+    this->plotStaticBackground(ax);
+
+    // add all final coords
+    for (PlottingChunk& chunk : plottingChunks) {
+        // skip all chunks without final items
+        if (!chunk.finalItem.has_value()) {
+            continue;
+        }
+
+        this->plotStaticPlottable(ax, chunk.finalItem.value(), PLANNED_PATH_COLOR);
+    }
+
+    matplot::save(this->figure, filepath.string());
 }
 
-void AnimationPathingPlot::addPolygon(Polygon polygon) {
-    // TODO: add polygon
+
+void PathingPlot::outputAnimated(matplot::axes_handle ax, std::filesystem::path filepath) {
+    this->currFrame = 0;
+    this->clearPlot(ax);
+    this->plotStaticBackground(ax);
+
+    // set limits of axes to allocate enough space for the whole graph
+    std::pair<double, double> xLimits;
+    std::pair<double, double> yLimits;
+    std::tie(xLimits, yLimits) = this->getAnimatedPlotLimits();
+    ax->xlim({xLimits.first, xLimits.second});
+    ax->ylim({yLimits.first, yLimits.second});
+
+    // create a temporary directory for the frames
+    std::filesystem::path tmpFrameDir = std::filesystem::temp_directory_path() / "frames";
+    std::filesystem::create_directories(tmpFrameDir);
+
+    // plot each chunk's intermediate and final items
+    for (PlottingChunk& chunk : this->plottingChunks) {
+        matplot::axes_type* prevFinalAxRaw = new matplot::axes_type(this->figure);
+        std::memcpy(prevFinalAxRaw, ax.get(), sizeof(matplot::axes_type));
+        matplot::axes_handle prevFinalAxShared =
+            std::make_shared<matplot::axes_type>(*prevFinalAxRaw);
+
+        // plot intermediates onto temporary axes
+        for (Plottable& item : chunk.intermediateItems) {
+            this->plotAnimatedPlottable(ax, item, TENTATIVE_PATH_COLOR, tmpFrameDir);
+        }
+
+        // plot final item if there is one
+        if (chunk.finalItem.has_value()) {
+            // plot final item onto temporary Ax
+            this->plotAnimatedPlottable(
+                ax,
+                chunk.finalItem.value(),
+                PLANNED_PATH_COLOR,
+                tmpFrameDir);
+
+            // update the current ax to the version before we added any intermediates
+            *ax = *prevFinalAxShared;
+            // add an extra frame of the finalized item
+            this->plotStaticPlottable(ax, chunk.finalItem.value(), PLANNED_PATH_COLOR);
+        }
+    }
+
+    // use ImageMagick to save the frames to a .gif file
+    std::vector<Magick::Image> frames;
+    for (int i = 0; i < this->currFrame; i++) {
+        Magick::Image image;
+        // This isn't great but we assume that the temporary frames at these file paths
+        std::filesystem::path frameFilepath = tmpFrameDir / ("frame" + std::to_string(i) + ".jpg");
+        image.read(frameFilepath);
+        image.animationDelay(this->animationDelayCentiSec);
+        frames.push_back(image);
+    }
+    Magick::writeImages(frames.begin(), frames.end(), filepath);
+
+    // cleanup temporary gifs and temporary directory
+    for (int i = 0; i < this->currFrame; i++) {
+        std::filesystem::path frameFilepath = tmpFrameDir / ("frame" + std::to_string(i) + ".jpg");
+        std::filesystem::remove(frameFilepath);
+    }
+    std::filesystem::remove(tmpFrameDir);
 }
 
-void AnimationPathingPlot::addPolyline(Polyline polyline) {
-    // TODO: add polyline
+void PathingPlot::clearPlot(matplot::axes_handle ax) {
+    ax->clear();
 }
 
-void AnimationPathingPlot::output(std::string filename) {
-    // TODO: go through all the data and create GIF
-    // append .gif to filename param
+void PathingPlot::plotStaticBackground(matplot::axes_handle ax) {
+    if (this->flightBoundary.has_value()) {
+        this->plotStaticPolygon(ax, flightBoundary.value(), FLIGHT_BOUND_COLOR);
+    }
+
+    if (this->airdropBoundary.has_value()) {
+        this->plotStaticPolygon(ax, airdropBoundary.value(), AIRDROP_BOUND_COLOR);
+    }
+
+    if (this->waypoints.has_value()) {
+        for (XYZCoord& coord : this->waypoints.value()) {
+            this->plotStaticCoord(ax, coord, WAYPOINTS_COLOR);
+        }
+    }
 }
 
+void PathingPlot::plotStaticPolygon(
+    matplot::axes_handle ax,
+    const Polygon& polygon,
+    matplot::color color) {
+    for (size_t i = 0; i < polygon.size(); i++) {
+        size_t firstPointIdx = i;
+        size_t secondPointIdx = i+1;
 
-StaticPathingPlot::StaticPathingPlot() {
-    // TODO: init member vars
+        // if we reached the end, wrap around and
+        // draw a line from the last point to the first
+        if (secondPointIdx == polygon.size()) {
+            secondPointIdx = 0;
+        }
+
+        XYZCoord firstPoint = polygon.at(firstPointIdx);
+        XYZCoord secondPoint = polygon.at(secondPointIdx);
+        ax->plot({firstPoint.x, secondPoint.x}, {firstPoint.y, secondPoint.y})->
+            line_width(this->lineWidth).
+            color(color);
+    }
 }
 
-void StaticPathingPlot::beginUpdate() {
-    // does nothing
+void PathingPlot::plotStaticPolyline(
+    matplot::axes_handle ax,
+    const Polyline& polyline,
+    matplot::color color) {
+    for (size_t i = 0; i < polyline.size() - 1; i++) {
+        size_t firstPointIdx = i;
+        size_t secondPointIdx = i+1;
+
+        XYZCoord firstPoint = polyline.at(firstPointIdx);
+        XYZCoord secondPoint = polyline.at(secondPointIdx);
+        ax->plot({firstPoint.x, secondPoint.x}, {firstPoint.y, secondPoint.y})->
+            line_width(this->lineWidth).
+            color(color);
+    }
 }
 
-void StaticPathingPlot::endUpdate() {
-    // does nothing
+void PathingPlot::plotStaticCoord(
+    matplot::axes_handle ax,
+    const XYZCoord &coord,
+    matplot::color color) {
+    ax->scatter({coord.x}, {coord.y})->
+        marker_face(true).
+        marker_color(color).
+        marker_face_color(color).
+        marker_size(this->coordSize).
+        color(color);
 }
 
-void StaticPathingPlot::addPoint(XYZCoord pt) {
-    // TODO: add point
+void PathingPlot::plotStaticPlottable(
+    matplot::axes_handle ax,
+    const Plottable& plottable,
+    matplot::color color) {
+    if (auto *coord = std::get_if<XYZCoord>(&plottable)) {
+        this->plotStaticCoord(ax, *coord, color);
+    } else if (auto *polyline = std::get_if<Polyline>(&plottable)) {
+        this->plotStaticPolyline(ax, *polyline, color);
+    }
 }
 
-void StaticPathingPlot::addPolygon(Polygon polygon) {
-    // TODO: add polygon
+void PathingPlot::plotAnimatedPolyline(
+    matplot::axes_handle ax,
+    const Polyline& polyline,
+    matplot::color color,
+    std::filesystem::path tmpFrameDir) {
+    for (size_t currPolyline = 0; currPolyline < polyline.size() - 1; currPolyline++) {
+        size_t firstPointIdx = currPolyline;
+        size_t secondPointIdx = currPolyline+1;
+
+        const XYZCoord& firstPoint = polyline.at(firstPointIdx);
+        const XYZCoord& secondPoint = polyline.at(secondPointIdx);
+
+        // find out how many frames to generate per line segment
+        double segmentDistance = std::sqrt(std::pow(secondPoint.y - firstPoint.y, 2) +
+            std::pow(secondPoint.x - firstPoint.x, 2));
+        int numFrames = std::floor(segmentDistance * this->framesPerDistanceUnit);
+
+        double x_step = (1.f / static_cast<double>(numFrames))*(secondPoint.x - firstPoint.x);
+        double y_step = (1.f / static_cast<double>(numFrames))*(secondPoint.y - firstPoint.y);
+
+        double curr_x = firstPoint.x;
+        double curr_y = firstPoint.y;
+        double next_x = curr_x + x_step;
+        double next_y = curr_y + y_step;
+
+        for (int i = 0; i < numFrames; i++) {
+            ax->plot({curr_x, next_x}, {curr_y, next_y})->line_width(4).color(color);
+
+            // TODO: don't save to build dir
+            std::filesystem::path frameFilepath =
+                tmpFrameDir / ("frame" + std::to_string(this->currFrame) + ".jpg");
+            ++this->currFrame;
+
+            // TODO: this is so dumb; can't figure out how to get matplotplus plot
+            // rendered to a c++ array of pixel vals
+            // So, we must save it to disk and load it again via imagemagick for GIF
+            matplot::save(this->figure, frameFilepath.string());
+
+            // step forward
+            curr_x = next_x;
+            next_x += x_step;
+
+            curr_y = next_y;
+            next_y += y_step;
+        }
+    }
 }
 
-void StaticPathingPlot::addPolyline(Polyline polyline) {
-    // TODO: add polyline
+void PathingPlot::plotAnimatedPlottable(
+    matplot::axes_handle ax,
+    const Plottable& plottable,
+    matplot::color color, std::filesystem::path tmpFrameDir) {
+
+    if (auto *coord = std::get_if<XYZCoord>(&plottable)) {
+        this->plotStaticCoord(ax, *coord, color);
+    } else if (auto *polyline = std::get_if<Polyline>(&plottable)) {
+        this->plotAnimatedPolyline(ax, *polyline, color, tmpFrameDir);
+    }
 }
 
-void StaticPathingPlot::output(std::string filename) {
-    // TODO: go through all the data and create image
-    // append .png to filename param
+std::pair<std::pair<double, double>, std::pair<double, double>>
+    PathingPlot::getAnimatedPlotLimits() {
+    double minX = std::numeric_limits<double>::infinity();
+    double minY = std::numeric_limits<double>::infinity();
+    double maxX = -std::numeric_limits<double>::infinity();
+    double maxY = -std::numeric_limits<double>::infinity();
+
+    auto updateLimits = [&minX, &minY, &maxX, &maxY](XYZCoord& coord) mutable {
+            if (coord.x < minX) {
+               minX = coord.x;
+            }
+            if (coord.x > maxX) {
+               maxX = coord.x;
+            }
+            if (coord.y < minY) {
+               minY = coord.y;
+            }
+            if (coord.y > maxY) {
+               maxY = coord.y;
+            }
+    };
+
+    // check background points
+    if (this->flightBoundary.has_value()) {
+        for (XYZCoord& coord : this->flightBoundary.value()) {
+            updateLimits(coord);
+        }
+    }
+
+    if (this->airdropBoundary.has_value()) {
+        for (XYZCoord& coord : this->airdropBoundary.value()) {
+            updateLimits(coord);
+        }
+    }
+
+    if (this->waypoints.has_value()) {
+        for (XYZCoord& coord : this->waypoints.value()) {
+            updateLimits(coord);
+        }
+    }
+
+    // loop through each chunk
+    for (PlottingChunk& chunk : this->plottingChunks) {
+        // loop through intermediates
+        for (Plottable& item : chunk.intermediateItems) {
+            if (auto *coord = std::get_if<XYZCoord>(&item)) {
+                updateLimits(*coord);
+            } else if (auto *polyline = std::get_if<Polyline>(&item)) {
+                for (XYZCoord& coord : *polyline) {
+                    updateLimits(coord);
+                }
+            }
+        }
+
+        // check final item of each chunk
+        if (!chunk.finalItem.has_value()) {
+            continue;
+        }
+        if (auto *coord = std::get_if<XYZCoord>(&chunk.finalItem.value())) {
+            updateLimits(*coord);
+        } else if (auto *polyline = std::get_if<Polyline>(&chunk.finalItem.value())) {
+            for (XYZCoord& coord : *polyline) {
+                updateLimits(coord);
+            }
+        }
+    }
+
+    return std::make_pair(std::make_pair(minX, maxX), std::make_pair(minY, maxY));
 }

@@ -1,15 +1,18 @@
 #include "utilities/datatypes.hpp"
 
 #include <cmath>
-/*
- *   Empty in-line comments prevent VSCode auto-formatter screrw with my
- *   preffered way of formatting.
- */
+
+#include "pathing/cartesian.hpp"
+#include "protos/obc.pb.h"
+
+inline bool floatingPointEquals(double x1, double x2) {
+    return std::fabs(x1 - x2) < std::numeric_limits<double>::epsilon();
+}
 
 bool XYZCoord::operator==(const XYZCoord &other_point) const {
-    return this->x == other_point.x     //
-           && this->y == other_point.y  //
-           && this->z == other_point.z;
+    return floatingPointEquals(this->x, other_point.x) &&
+           floatingPointEquals(this->y, other_point.y) &&
+           floatingPointEquals(this->z, other_point.z);
 }
 
 XYZCoord &XYZCoord::operator+=(const XYZCoord &other_coord) {
@@ -39,22 +42,20 @@ XYZCoord operator-(const XYZCoord &lhs, const XYZCoord &rhs) {
 }
 
 XYZCoord operator*(double scalar, const XYZCoord &vector) {
-    XYZCoord result{
-        vector.x * scalar, vector.y * scalar,
-        vector.z * scalar  //
-    };
-
-    return result;
+    return {vector.x * scalar, vector.y * scalar, vector.z * scalar};
 }
 
-XYZCoord operator*(const XYZCoord &vector, double scalar) {
-    return scalar * vector;
+XYZCoord operator*(const XYZCoord &vector, double scalar) { return scalar * vector; }
+
+double XYZCoord::distanceTo(const XYZCoord &other) const { return (*this - other).norm(); }
+double XYZCoord::distanceToSquared(const XYZCoord &other) const {
+    return (*this - other).normSquared();
 }
 
-double XYZCoord::norm() const {
-    return sqrt(this->x * this->x    //
-                + this->y * this->y  //
-                + this->z * this->z);
+double XYZCoord::norm() const { return sqrt(this->normSquared()); }
+
+double XYZCoord::normSquared() const {
+    return this->x * this->x + this->y * this->y + this->z * this->z;
 }
 
 XYZCoord XYZCoord::normalized() const {
@@ -64,9 +65,38 @@ XYZCoord XYZCoord::normalized() const {
         return *this;
     }
 
-    return (1 / this->norm()) * (*this);
+    return (1 / norm) * (*this);
 }
 
-Polygon::Polygon(matplot::color color) { this->color = color; }
+std::size_t PointHashFunction::operator()(const RRTPoint &point) const {
+    unsigned int h1 = std::hash<double>{}(point.coord.x);
+    unsigned int h2 = std::hash<double>{}(point.coord.y);
+    unsigned int h3 = std::hash<double>{}(point.coord.z);
 
-Polyline::Polyline(matplot::color color) { this->color = color; }
+    unsigned int c1 = 0.5 * (h1 + h2) * (h1 + h2 + 1) + h2;
+    unsigned int c2 = 0.5 * (c1 + h3) * (c1 + h3 + 1) + h3;
+
+    return c2;
+}
+
+RRTPoint::RRTPoint(XYZCoord point, double psi) : coord{point}, psi{psi} {}
+
+bool RRTPoint::operator==(const RRTPoint &otherPoint) const {
+    return this->coord == otherPoint.coord && floatingPointEquals(this->psi, otherPoint.psi);
+}
+
+double RRTPoint::distanceTo(const RRTPoint &otherPoint) const {
+    return this->coord.distanceTo(otherPoint.coord);
+}
+
+double RRTPoint::distanceToSquared(const RRTPoint &otherPoint) const {
+    return this->coord.distanceToSquared(otherPoint.coord);
+}
+
+GPSCoord makeGPSCoord(double lat, double lng, double alt) {
+    GPSCoord coord;
+    coord.set_latitude(lat);
+    coord.set_longitude(lng);
+    coord.set_altitude(alt);
+    return coord;
+}

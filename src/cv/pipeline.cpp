@@ -1,13 +1,14 @@
 #include "cv/pipeline.hpp"
-
-const double DEFAULT_MATCHING_THRESHOLD = 0.5;
+#include "utilities/logging.hpp"
 
 // TODO: eventually we will need to invoke non-default constructors for all the
 // modules of the pipeline (to customize model filepath, etc...)
 // TODO: I also want to have a way to customize if the model will use
 // matching vs segmentation/classification
-Pipeline::Pipeline(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES> competitionObjectives)
-    : matcher(competitionObjectives, DEFAULT_MATCHING_THRESHOLD) {}
+Pipeline::Pipeline(const PipelineParams& p) :
+    // assumes reference images passed to pipeline from not_stolen
+        matcher(p.competitionObjectives, p.referenceImages, p.matchingModelPath),
+        segmentor(p.segmentationModelPath) {}
 
 /*
  *  Entrypoint of CV Pipeline. At a high level, it will include the following
@@ -26,33 +27,39 @@ Pipeline::Pipeline(std::array<CompetitionBottle, NUM_AIRDROP_BOTTLES> competitio
  *        target matching stage is replaced by segmentation/classification.
  */
 PipelineResults Pipeline::run(const ImageData &imageData) {
-    std::vector<CroppedTarget> saliencyResults = detector.salience(imageData.getData());
+    LOG_F(INFO, "Running pipeline on %s/%s",
+        imageData.getPath().c_str(), imageData.getName().c_str());
+
+    VLOG_F(TRACE, "Saliency Start");
+    std::vector<CroppedTarget> saliencyResults = this->detector.salience(imageData.getData());
 
     // if saliency finds no potential targets, end early with no results
     if (saliencyResults.empty()) {
-        return PipelineResults{imageData, {}, {}};
+        LOG_F(INFO, "No saliency results, terminating...");
+        return PipelineResults(imageData, {});
     }
 
-    // go through saliency results and determine if each potential target
-    // matches one of the targets assigned to a bottle for a competition
-    /// objective
-    std::vector<AirdropTarget> matchedTargets;
-    std::vector<AirdropTarget> unmatchedTargets;
+    VLOG_F(TRACE, "Saliency cropped %ld potential targets", saliencyResults.size());
+    std::vector<DetectedTarget> detectedTargets;
+    size_t curr_target_num = 0;
     for (CroppedTarget target : saliencyResults) {
-        MatchResult potentialMatch = matcher.match(target);
+        VLOG_F(TRACE, "Working on target %ld/%ld", ++curr_target_num, saliencyResults.size());
+        VLOG_F(TRACE, "Matching Start");
+        MatchResult potentialMatch = this->matcher.match(target);
 
-        GPSCoord targetPosition = localizer.localize(imageData.getTelemetry(), target.bbox);
+        VLOG_F(TRACE, "Localization Start");
+        GPSCoord targetPosition(this->ecefLocalizer.localize(
+            imageData.getTelemetry(), target.bbox));
 
-        AirdropTarget airdropTarget = {potentialMatch.bottleDropIndex, targetPosition};
-
-        // TODO: we should have some criteria to handle duplicate targets that
-        // show up in multiple images
-        if (potentialMatch.foundMatch) {
-            matchedTargets.push_back(airdropTarget);
-        } else {
-            unmatchedTargets.push_back(airdropTarget);
-        }
+        VLOG_F(TRACE, "Detected target %ld/%ld at [%f, %f] matched to bottle %d with %f distance.",
+            curr_target_num, saliencyResults.size(),
+            targetPosition.latitude(), targetPosition.longitude(),
+            static_cast<int>(potentialMatch.bottleDropIndex), potentialMatch.distance);
+        detectedTargets.push_back(DetectedTarget(targetPosition,
+            potentialMatch.bottleDropIndex, potentialMatch.distance));
     }
 
-    return PipelineResults(imageData, matchedTargets, unmatchedTargets);
+    LOG_F(INFO, "Finished Pipeline on %s/%s",
+        imageData.getPath().c_str(), imageData.getName().c_str());
+    return PipelineResults(imageData, detectedTargets);
 }
