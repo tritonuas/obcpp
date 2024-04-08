@@ -162,6 +162,22 @@ target_add_loguru(airdrop_pathing)
 target_include_directories(airdrop_pathing PRIVATE ${ImageMagick_INCLUDE_DIRS})
 target_link_libraries(airdrop_pathing PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
+add_executable(airdrop_pathing_2 "airdrop_pathing_2.cpp")
+target_link_libraries(airdrop_pathing_2 PRIVATE obcpp_lib)
+target_include_directories(airdrop_pathing_2 PRIVATE ${INCLUDE_DIRECTORY})
+target_add_protobuf(airdrop_pathing_2)
+target_add_torch(airdrop_pathing_2)
+target_add_torchvision(airdrop_pathing_2)
+target_add_json(airdrop_pathing_2)
+target_add_opencv(airdrop_pathing_2)
+target_add_httplib(airdrop_pathing_2)
+target_add_mavsdk(airdrop_pathing_2)
+target_add_matplot(airdrop_pathing_2)
+target_add_loguru(airdrop_pathing_2)
+
+target_include_directories(airdrop_pathing_2 PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(airdrop_pathing_2 PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
+
 # airdrop_sockets
 # add_executable(airdrop_sockets src/network/airdrop_sockets.c tests/integration/airdrop_sockets.c)
 # target_include_directories(airdrop_sockets PRIVATE ${INCLUDE_DIRECTORY})
