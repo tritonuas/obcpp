@@ -11,11 +11,11 @@ FATAL: In-source builds are not allowed.
 endif()
 
 # enable build caching
-find_program(CCACHE ccache)
-if(CCACHE)
-    set(CMAKE_C_COMPILER_LAUNCHER ${CCACHE})
-    set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE})
-endif(CCACHE)
+# find_program(CCACHE ccache)
+# if(CCACHE)
+#     set(CMAKE_C_COMPILER_LAUNCHER ${CCACHE})
+#     set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE})
+# endif(CCACHE)
 
 set(CMAKE_CXX_COMPILER g++)
 set(CMAKE_CXX_STANDARD 20)
@@ -34,6 +34,10 @@ SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COMPILE_FLAGS}")
 SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${GCC_LINK_FLAGS}")
 
 SET(CMAKE_C_FLAGS "-D_GNU_SOURCE")
+
+set_property(GLOBAL PROPERTY JOB_POOLS four_jobs=4 eight_jobs=8)
+set(CMAKE_JOB_POOL_COMPILE four_jobs)
+set(CMAKE_JOB_POOL_LINK    four_jobs)
 
 project(obcpp VERSION 1.0)
 

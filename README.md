@@ -27,8 +27,9 @@ Now you can use our build targets.
 
 Ninja, the build tool we are using, tries to use a number of cores on your system based on how more cores your CPU has. It is possible that it will attempt to use too many cores, and you will run out of memory on your system and everything will freeze up.
 
-If this happens, you should explicitly tell Ninja to use less cores. You can do this by passing the following argument:
+To solve this, in our CMake config we limit the number of core CMake can use to 4. This hasn't crashed anyone's computer so far, but it is possible that you may need to reduce this number, or perhaps you want to increase it if your system can handle it so that you can get faster build times.
 
+To change the number of cores, you can run `ninja` with the following flag.
 ```
 ninja -j [# cores]
 ```
