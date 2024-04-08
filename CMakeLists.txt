@@ -35,6 +35,19 @@ SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${GCC_LINK_FLAGS}")
 
 SET(CMAKE_C_FLAGS "-D_GNU_SOURCE")
 
+# Anecdotal Observations:
+#   four_jobs works with 12GB RAM
+#   eight_jobs requires more than 12GB RAM
+#   sixteen_jobs requires more than 16GB RAM (I don't know how much, since I only have 16GB)
+# Therefore we default to 4 jobs, so it doesn't crash anyone's laptop with 12GB ram.
+if (NOT DEFINED CMAKE_JOB_POOLS)
+    set_property(GLOBAL PROPERTY JOB_POOLS j=4)
+else()
+    message("Using user defined number of pools: ${CMAKE_JOB_POOLS}")
+endif()
+set(CMAKE_JOB_POOL_COMPILE j)
+set(CMAKE_JOB_POOL_LINK    j)
+
 project(obcpp VERSION 1.0)
 
 set(LOGURU_WITH_STREAMS TRUE)
