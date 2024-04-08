@@ -235,15 +235,14 @@ const static char* mission_json_2020 = R"(
  * FILE OUTPUT LOCATIONS
  *  |- build
  *    |- pathing_output
- *      |- test_final_path.jpg
- *      |- test_final_path.gif (if enabled)
- *    |- path_coordinates.txt
+ *      |- test_airdrop_pathing.jpg
+ *      |- test_airdrop_pathing.gif (if enabled)
+ *    |- airdop_search_coords.txt
  *
- * This integration test runs static path finding once, and generates a plot as
- * well as returns the coordinates for the path.
+ *  This rough integration test is to test the airdrop search pathing algorithm
  */
 int main() {
-    std::cout << "Messing with RRT*" << std::endl;
+    std::cout << "Messing with Airdrop Zone Search Pathing" << std::endl;
     // First upload a mission so that we generate a path
     // this is roughly the mission from 2020
     DECLARE_HANDLER_PARAMS(state, req, resp);
@@ -254,68 +253,22 @@ int main() {
 
     // files to put path_coordinates to
     std::ofstream file;
-    file.open("path_coordinates.txt");
-
-    // infrastructure to set up all the pararmeters of the environment
-    std::vector<XYZCoord> goals;
-
-    for (const XYZCoord& waypoint : state->config.getWaypoints()) {
-        goals.push_back(waypoint);
-    }
-
-    goals.erase(goals.begin());
-
-    Polygon obs1 = {XYZCoord(-200, 150, 0), XYZCoord(100, 75, 0), XYZCoord(-125, 300, 0),
-                    XYZCoord(-300, 300, 0)};
-
-    Polygon obs2 = {XYZCoord(-200, -600, 0), XYZCoord(100, -600, 0), XYZCoord(250, -300, 0),
-                    XYZCoord(0, -300, 0)};
-
-    std::vector<Polygon> obstacles = {obs1, obs2};
+    file.open("airdop_search_coords.txt");
 
     RRTPoint start = RRTPoint(state->config.getWaypoints()[0], 0);
 
-    // RRT settings (manually put in)
-    int num_iterations = 512;
-    double search_radius = 9999;
-    double rewire_radius = 256;
-    RRTConfig config = RRTConfig { true, POINT_FETCH_METHODS::NONE, false };
+    AirdropSearch search(start, 20, state->config.getFlightBoundary(),
+                         state->config.getAirdropBoundary());
 
-    RRT rrt = RRT(start, goals, num_iterations, search_radius, rewire_radius,
-                  state->config.getFlightBoundary(), obstacles, config);
-
-    // print out stats
-    std::cout << "num_iterations: " << num_iterations << std::endl;
-    std::cout << "search_radius: " << search_radius << std::endl;
-    std::cout << "rewire_radius: " << rewire_radius << std::endl;
-
-    //run the algoritm, and time it
-    auto start_time = std::chrono::high_resolution_clock::now();
-    rrt.run();
-    auto end_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = end_time - start_time;
-    std::cout << "Time to run: " << elapsed.count() << "s" << std::endl;
-    std::cout << "End Running" << std::endl;
-
-    // get the path, put it into the file
-    std::vector<XYZCoord> path = rrt.getPointsToGoal();
-    std::cout << "Path size: " << path.size() << std::endl;
-    std::cout << "Path length: " << (path.size() * POINT_SEPARATION) << std::endl;
-    for (const XYZCoord& point : path) {
-        file << point.x << ", " << point.y << std::endl;
-    }
+    std::vector<XYZCoord> path = search.run();
 
     // plot the path
     std::cout << "Start Plotting" << std::endl;
-    PathingPlot plotter("pathing_output", state->config.getFlightBoundary(), obstacles[1], goals);
+    PathingPlot plotter("pathing_output", state->config.getFlightBoundary(),
+                        state->config.getAirdropBoundary(), {});
 
-    start_time = std::chrono::high_resolution_clock::now();
     plotter.addFinalPolyline(path);
-    plotter.output("test_final_path", PathOutputType::STATIC);
-    end_time = std::chrono::high_resolution_clock::now();
-    elapsed = end_time - start_time;
-
-    std::cout << "Time to plot: " << elapsed.count() << "s" << std::endl;
+    plotter.output("test_airdrop_pathing", PathOutputType::STATIC);
     file.close();
     return 0;
 }
