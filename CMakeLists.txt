@@ -11,11 +11,11 @@ FATAL: In-source builds are not allowed.
 endif()
 
 # enable build caching
-# find_program(CCACHE ccache)
-# if(CCACHE)
-#     set(CMAKE_C_COMPILER_LAUNCHER ${CCACHE})
-#     set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE})
-# endif(CCACHE)
+find_program(CCACHE ccache)
+if(CCACHE)
+    set(CMAKE_C_COMPILER_LAUNCHER ${CCACHE})
+    set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE})
+endif(CCACHE)
 
 set(CMAKE_CXX_COMPILER g++)
 set(CMAKE_CXX_STANDARD 20)
@@ -35,9 +35,18 @@ SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${GCC_LINK_FLAGS}")
 
 SET(CMAKE_C_FLAGS "-D_GNU_SOURCE")
 
-set_property(GLOBAL PROPERTY JOB_POOLS four_jobs=4 eight_jobs=8)
-set(CMAKE_JOB_POOL_COMPILE four_jobs)
-set(CMAKE_JOB_POOL_LINK    four_jobs)
+# Anecdotal Observations:
+#   four_jobs works with 12GB RAM
+#   eight_jobs requires more than 12GB RAM
+#   sixteen_jobs requires more than 16GB RAM (I don't know how much, since I only have 16GB)
+# Therefore we default to 4 jobs, so it doesn't crash anyone's laptop with 12GB ram.
+if (NOT DEFINED CMAKE_JOB_POOLS)
+    set_property(GLOBAL PROPERTY JOB_POOLS j=4)
+else()
+    message("Using user defined number of pools: ${CMAKE_JOB_POOLS}")
+endif()
+set(CMAKE_JOB_POOL_COMPILE j)
+set(CMAKE_JOB_POOL_LINK    j)
 
 project(obcpp VERSION 1.0)
 

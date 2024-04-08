@@ -25,16 +25,19 @@ Now you can use our build targets.
 
 ## A Note on Ninja
 
-Ninja, the build tool we are using, tries to use a number of cores on your system based on how more cores your CPU has. It is possible that it will attempt to use too many cores, and you will run out of memory on your system and everything will freeze up.
+Ninja, the build tool we are using, tries to use a number of cores on your system based on how more cores your CPU has. For our repo, it seems like this default almost always crashes/freezes your computer because it quickly runs out of memory.
 
-To solve this, in our CMake config we limit the number of core CMake can use to 4. This hasn't crashed anyone's computer so far, but it is possible that you may need to reduce this number, or perhaps you want to increase it if your system can handle it so that you can get faster build times.
+To solve this, in our CMake config we limit the number of core ninja can use to 4. This hasn't crashed anyone's computer so far, but it is possible that you may need to reduce this number, or perhaps you want to increase it if your system can handle it so that you can get faster build times.
 
-To change the number of cores, you can run `ninja` with the following flag.
+To change the number of cores, you have to pass a special flag when you run `cmake`, like so:
 ```
-ninja -j [# cores]
+cmake -D CMAKE_JOB_POOLS="j=[# jobs]" ..
 ```
+where you replace `[# jobs]` with a number specifying the number of jobs.
 
-Anecdotally, on a machine with 16 virtual cores and 16GB of RAM, `-j 8` appears to be a good balance between speed and resources usage.
+If you do this once, CMake should remember how you specified it, so as long as you don't clear the CMake cache you won't need to enter this again. (I.e. you can just run `cmake ..` and you should still see the message at the top saying that it is using a user-defined number of jobs).
+
+Anecdotally, on a machine with 16 virtual cores and 16GB of RAM, `-D CMAKE_JOB_POOLS="j=8"` appears to be a good balance between speed and resources usage.
 
 ## Modules
 
