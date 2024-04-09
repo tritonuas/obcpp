@@ -283,7 +283,7 @@ AirdropSearch::AirdropSearch(const RRTPoint &start, double scan_radius, Polygon 
 
 std::vector<XYZCoord> AirdropSearch::run() const {
     // generates the endpoints for the lines (including headings)
-    std::vector<RRTPoint> waypoints = airspace.getAirdropEndpoints(scan_radius);
+    std::vector<RRTPoint> waypoints = airspace.getAirdropWaypoints(scan_radius);
 
     // generates the path connecting the q
     std::vector<XYZCoord> path;

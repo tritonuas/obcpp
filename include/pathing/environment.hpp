@@ -163,13 +163,22 @@ class Environment {
     bool intersect(XYZCoord p1, XYZCoord q1, XYZCoord p2, XYZCoord q2) const;
 
     /**
-     * Returns endpoints (of vertical lines) on airdrop_zone for coverage pathing
+     * Returns endpoints on airdrop_zone for coverage pathing
+     *  - if vertical, endpoints will always be top down, left right
+     *  - if horizonal, endpoints will always be left right, top down
      * 
      * TODO - UNIT TESTS
      *
      * @return the endpoints on the airdrop zone
      */
-    std::vector<RRTPoint> getAirdropEndpoints(int scan_radius) const;
+    std::vector<XYZCoord> getAirdropEndpoints(int scan_radius, bool vertical) const;
+
+    /**
+    * Returns waypoints
+    * 
+    * 
+    */
+    std::vector<RRTPoint> getAirdropWaypoints(int scan_radius, bool one_way = false, bool vertical = false) const;
 
     /**
      * Fills an intersection if one exists between an edge of the polygon and the VERTICAL ray
@@ -181,7 +190,20 @@ class Environment {
      * @param intersection the intersection point (WILL BE FILLED IF INTERSECTION EXISTS)
      * @return true if an intersection exists, false otherwise
      */
-    bool rayIntersectsEdge(const XYZCoord& p1, const XYZCoord& p2, const XYZCoord& rayStart,
+    bool verticalRayIntersectsEdge(const XYZCoord& p1, const XYZCoord& p2, const XYZCoord& rayStart,
+                           const XYZCoord& rayEnd, XYZCoord& intersection) const;
+
+        /**
+     * Fills an intersection if one exists between an edge of the polygon and the HORIZONTAL ray
+     *
+     * @param p1 the first point of the edge
+     * @param p2 the second point of the edge
+     * @param rayStart the start of the ray
+     * @param rayEnd the end of the ray
+     * @param intersection the intersection point (WILL BE FILLED IF INTERSECTION EXISTS)
+     * @return true if an intersection exists, false otherwise
+     */
+    bool horizontalRayIntersectsEdge(const XYZCoord& p1, const XYZCoord& p2, const XYZCoord& rayStart,
                            const XYZCoord& rayEnd, XYZCoord& intersection) const;
 
     /**
@@ -195,7 +217,7 @@ class Environment {
      * @return a list of intersections
      */
     std::vector<XYZCoord> findIntersections(const Polygon& polygon, const XYZCoord& rayStart,
-                                            const XYZCoord& rayEnd) const;
+                                            const XYZCoord& rayEnd, bool vertical) const;
 
  private:
     const Polygon valid_region;            // boundary of the valid map

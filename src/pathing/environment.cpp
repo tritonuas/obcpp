@@ -225,39 +225,86 @@ bool Environment::intersect(XYZCoord p1, XYZCoord q1, XYZCoord p2, XYZCoord q2) 
     return false;  // Doesn't fall in any of the above cases
 }
 
-std::vector<RRTPoint> Environment::getAirdropEndpoints(int scan_radius) const {
+std::vector<XYZCoord> Environment::getAirdropEndpoints(int scan_radius, bool vertical) const {
     auto bounds = findBounds(airdrop_zone);
     auto [x_min, x_max] = bounds.first;
     auto [y_min, y_max] = bounds.second;
 
-    std::vector<RRTPoint> endpoints;
+    std::vector<XYZCoord> endpoints;
     bool fly_down = true;
-    for (double x = x_min + scan_radius; x <= x_max - scan_radius; x += scan_radius * 2) {
+    double start = vertical ? x_min + scan_radius : -1 * (y_max - scan_radius);
+    double end = vertical ? x_max - scan_radius : -1 * (y_min + scan_radius);
+    double iteration = scan_radius * 2;
+
+    for (double coordinate = start; coordinate <= end; coordinate += iteration) {
         // finds where this x-coordinate intersects with the airdrop zone (always convex)
-        const XYZCoord top(x, y_max, 0);
-        const XYZCoord bottom(x, y_min, 0);
-        std::vector<XYZCoord> intersections = findIntersections(airdrop_zone, top, bottom);
-
-        // adjacent lines should be in different directions
-        double angle = fly_down ? 3 * M_PI / 2 : HALF_PI;
-        RRTPoint top_vector(intersections[0], angle);
-        RRTPoint bottom_vector(intersections[1], angle);
-
-        if (fly_down) {
-            endpoints.push_back(top_vector);
-            endpoints.push_back(bottom_vector);
+        XYZCoord top(0,0,0);
+        XYZCoord bottom(0,0,0);
+        if (vertical) {
+            top = XYZCoord(coordinate, y_max, 0);
+            bottom = XYZCoord(coordinate, y_min, 0);
         } else {
-            endpoints.push_back(bottom_vector);
-            endpoints.push_back(top_vector);
+            top = XYZCoord(x_min, -coordinate, 0);
+            bottom = XYZCoord(x_max, -coordinate, 0);
         }
 
-        fly_down = !fly_down;
+        std::vector<XYZCoord> intersections = findIntersections(airdrop_zone, top, bottom, vertical);
+
+        if (vertical) {
+            if (intersections[0].y < intersections[1].y) {
+        endpoints.push_back(intersections[1]);
+        endpoints.push_back(intersections[0]);
+
+            } else {
+        endpoints.push_back(intersections[0]);
+        endpoints.push_back(intersections[1]);
+            }
+        } else {
+            if (intersections[0].x < intersections[1].x) {
+        endpoints.push_back(intersections[0]);
+        endpoints.push_back(intersections[1]);
+
+            } else {
+        endpoints.push_back(intersections[1]);
+        endpoints.push_back(intersections[0]);
+            }
+        }
     }
 
     return endpoints;
 }
 
-bool Environment::rayIntersectsEdge(const XYZCoord& p1, const XYZCoord& p2,
+std::vector<RRTPoint> Environment::getAirdropWaypoints(int scan_radius, bool one_way, bool vertical) const {
+    std::vector<RRTPoint> waypoints;
+    std::vector<XYZCoord> endpoints = getAirdropEndpoints(scan_radius, vertical);
+    double angle = vertical ? 3.0 / 2.0 * M_PI : 0;
+
+    if (one_way) {
+        for (const XYZCoord& endpoint : endpoints) {
+            waypoints.push_back(RRTPoint(endpoint, angle));
+        }
+    } else {
+        bool fly_down = true;
+        for (int i = 0; i < endpoints.size(); i += 2) {
+            if (fly_down) {
+                waypoints.push_back(RRTPoint(endpoints[i], angle));
+                waypoints.push_back(RRTPoint(endpoints[i + 1], angle));
+            } else {
+                waypoints.push_back(RRTPoint(endpoints[i + 1], angle));
+                waypoints.push_back(RRTPoint(endpoints[i], angle));
+            }
+
+            angle = mod(angle + M_PI, TWO_PI);
+            fly_down = !fly_down;
+        }
+    }
+
+    return waypoints;
+}
+
+
+
+bool Environment::verticalRayIntersectsEdge(const XYZCoord& p1, const XYZCoord& p2,
                                     const XYZCoord& rayStart, const XYZCoord& rayEnd,
                                     XYZCoord& intersection) const {
     // if the x coordinate lines between the edge
@@ -270,9 +317,24 @@ bool Environment::rayIntersectsEdge(const XYZCoord& p1, const XYZCoord& p2,
     return false;
 }
 
+bool Environment::horizontalRayIntersectsEdge(const XYZCoord& p1, const XYZCoord& p2,
+                                    const XYZCoord& rayStart, const XYZCoord& rayEnd,
+                                    XYZCoord& intersection) const {
+    // if the x coordinate lines between the edge
+    if ((p2.y <= rayStart.y && p1.y >= rayStart.y) || (p1.y <= rayStart.y && p2.y >= rayStart.y)) {
+        double inverse_slope = (p2.x - p1.x) / (p2.y - p1.y);
+        // finds where they intersect using a line y - y' = m(x - x')
+        intersection = XYZCoord(inverse_slope * (rayStart.y - p1.y) + p1.x, rayStart.y, 0);
+        return true;
+    }
+    return false;
+}
+
+
+
 std::vector<XYZCoord> Environment::findIntersections(const Polygon& polygon,
                                                      const XYZCoord& rayStart,
-                                                     const XYZCoord& rayEnd) const {
+                                                     const XYZCoord& rayEnd, bool vertical) const {
     // array to be filled
     std::vector<XYZCoord> intersections;
     int n = polygon.size();
@@ -283,7 +345,10 @@ std::vector<XYZCoord> Environment::findIntersections(const Polygon& polygon,
 
         // temporary variable to be changed if an intersection is found
         XYZCoord intersection(0, 0, 0);
-        if (rayIntersectsEdge(p1, p2, rayStart, rayEnd, intersection)) {
+        bool found_intersection = vertical ? 
+        verticalRayIntersectsEdge(p1, p2, rayStart, rayEnd, intersection) 
+        : horizontalRayIntersectsEdge(p1, p2, rayStart, rayEnd, intersection);
+        if (found_intersection) {
             intersections.push_back(intersection);
         }
     }
