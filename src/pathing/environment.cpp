@@ -356,6 +356,26 @@ std::vector<XYZCoord> Environment::findIntersections(const Polygon& polygon,
     return intersections;
 }
 
+Polygon Environment::scale(double scale, const Polygon& source_polygon) const {
+    Polygon scaled_polygon;
+
+    auto bounds = findBounds(source_polygon);
+    auto [x_min, x_max] = bounds.first;
+    auto [y_min, y_max] = bounds.second;
+
+    double x_center = (x_max + x_min) / 2;
+    double y_center = (y_max + y_min) / 2;
+
+    for (const XYZCoord& point : source_polygon) {
+        double scaled_x = (point.x - x_center) * scale + x_center; 
+        double scaled_y = (point.y - y_center) * scale + y_center;
+
+        scaled_polygon.push_back(XYZCoord(scaled_x, scaled_y, 0));
+    }
+
+    return scaled_polygon;
+}
+
 std::pair<std::pair<double, double>, std::pair<double, double>> Environment::findBounds(
     const Polygon& region) const {
     if (region.empty()) {

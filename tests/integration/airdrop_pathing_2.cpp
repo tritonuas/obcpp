@@ -254,12 +254,17 @@ int main() {
     AirdropSearch search(start, 9, state->config.getFlightBoundary(),
                          state->config.getAirdropBoundary());
 
+    Environment env(state->config.getFlightBoundary(), state->config.getAirdropBoundary(),
+                    {}, {});
+
+    Polygon scaled = env.scale(0.75, state->config.getFlightBoundary());
+
     std::vector<XYZCoord> path = search.run();
 
     // plot the path
     std::cout << "Start Plotting" << std::endl;
     PathingPlot plotter("pathing_output", state->config.getFlightBoundary(),
-                        state->config.getAirdropBoundary(), {});
+                        scaled, {});
 
     plotter.addFinalPolyline(path);
     plotter.output("test_airdrop_pathing_2", PathOutputType::STATIC);
