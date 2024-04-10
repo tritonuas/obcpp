@@ -3,7 +3,6 @@ lib/
 bin/
 logs/
 
-Makefile
 CMakeFiles/
 build/
 CMakeCache.txt
