@@ -5,7 +5,7 @@
 #include <atomic>
 
 extern "C" {
-    #include "packet_queue.h"
+    #include "network/mock/packet_queue.h"
     #include "airdrop/packet.h"
     #include "network/airdrop_sockets.h"
 }

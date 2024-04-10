@@ -3,9 +3,25 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
 #include <nlohmann/json.hpp>
 #include <opencv2/opencv.hpp>
+
+// class to contain all telemetry that should be tagged with an image.
+// In the future this could be in a mavlink file.
+struct ImageTelemetry {
+    ImageTelemetry(double latitude, double longitude, double altitude, double airspeed, double yaw,
+                   double pitch, double roll);
+
+    double latitude;
+    double longitude;
+    double altitude;
+    double airspeed;
+    double yaw;
+    double pitch;
+    double roll;
+};
 
 /*
  * FYI: this is class that will standardize image data but
@@ -18,15 +34,19 @@
  */
 class ImageData {
  private:
-    const std::string NAME;
-    const std::string PATHS;
-    const cv::Mat DATA;
+    std::string NAME;
+    std::string PATH;
+    cv::Mat DATA;
+    ImageTelemetry TELEMETRY;
 
  public:
-    ImageData(std::string NAME, std::string PATH, cv::Mat DATA);
-    std::string getName();
-    std::string getPath();
-    cv::Mat getData();
+    ImageData(std::string NAME, std::string PATH, cv::Mat DATA, ImageTelemetry TELEMETRY);
+    ImageData(const ImageData&) = default;
+
+    std::string getName() const;
+    std::string getPath() const;
+    cv::Mat getData() const;
+    ImageTelemetry getTelemetry() const;
 };
 
 // ? possibly convert most common / important json fields to
@@ -40,7 +60,7 @@ class CameraConfiguration {
 
     void updateConfig(nlohmann::json newSetting);
 
-    void updateConfigField(std::string key, T value);
+    // void updateConfigField(std::string key, T value);
 
     nlohmann::json getConfig();
 
@@ -50,8 +70,8 @@ class CameraConfiguration {
 class CameraInterface {
  private:
     CameraConfiguration config;
-    ImageData recentPicture;  // might need to move it to public
-    bool doneTakingPicture;      // overengineering time
+    std::unique_ptr<ImageData> recentPicture;  // might need to move it to public
+    bool doneTakingPicture;                    // overengineering time
     std::string uploadPath;
     // Interpreter interp
     // TODO: SERVER CONNECTION HERE ?
@@ -61,19 +81,21 @@ class CameraInterface {
  public:
     explicit CameraInterface(CameraConfiguration config);
 
-    void connect();
+    virtual ~CameraInterface() = default;
 
-    bool verifyConnection();
+    virtual void connect() = 0;
 
-    void takePicture();
+    virtual bool verifyConnection() = 0;
 
-    ImageData getLastPicture();
+    virtual void takePicture() = 0;
 
-    bool takePictureForSeconds(int sec);
+    virtual ImageData getLastPicture() = 0;
 
-    void startTakingPictures(double intervalSec);
+    virtual bool takePictureForSeconds(int sec) = 0;
 
-    bool isDoneTakingPictures();
+    virtual void startTakingPictures(double intervalSec) = 0;
+
+    virtual bool isDoneTakingPictures() = 0;
 
     CameraConfiguration getConfig();
 

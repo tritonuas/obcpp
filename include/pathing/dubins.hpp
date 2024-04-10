@@ -6,7 +6,6 @@
 #include <limits>
 #include <vector>
 
-#include "pathing/tree.hpp"
 #include "utilities/datatypes.hpp"
 
 typedef XYZCoord Vector;
@@ -76,16 +75,6 @@ bool compareRRTOptionLength(const RRTOption &first, const RRTOption &second);
  *  @see    https://mathworld.wolfram.com/PerpendicularVector.html
  */
 Vector findOrthogonalVector2D(const Vector &vector);
-
-/**
- *   finds the distance between two 2-vectors
- *
- *   @param vector1  ==> 2-vector
- *   @param vector2  ==> 2-vector
- *   @return         ==> the magnitude of the displacement vector between
- *                          the two vectors
- */
-double distanceBetween(const Vector &vector1, const Vector &vector2);
 
 /**
  *  returns half of the displacement vector from v2 to v1
@@ -310,6 +299,15 @@ class Dubins {
      *  @return         ==> the points for the most optimal path from @param start to @param end
      */
     std::vector<Vector> dubinsPath(const RRTPoint &start, const RRTPoint &end) const;
+
+    /**
+     * Returns the optimal RRTOption from the list of options
+     *
+     * @param start     ==> vector at start position
+     * @param end       ==> vector at end position
+     * @return          ==> the optimal RRTOption from the list of options
+     */
+    RRTOption bestOption(const RRTPoint &start, const RRTPoint &end) const;
 
  private:
     const double _radius;

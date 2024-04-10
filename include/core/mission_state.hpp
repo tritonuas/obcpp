@@ -7,10 +7,18 @@
 #include <chrono>
 #include <vector>
 #include <optional>
+#include <queue>
+#include <array>
 
 #include "core/mission_config.hpp"
+#include "cv/utilities.hpp"
+#include "cv/aggregator.hpp"
+#include "camera/interface.hpp"
 #include "utilities/datatypes.hpp"
 #include "utilities/constants.hpp"
+#include "utilities/locks.hpp"
+#include "utilities/lockptr.hpp"
+#include "utilities/logging.hpp"
 #include "protos/obc.pb.h"
 #include "pathing/cartesian.hpp"
 #include "ticks/ids.hpp"
@@ -28,21 +36,31 @@ class MissionState {
     void setCartesianConverter(CartesianConverter<GPSProtoVec>);
 
     std::chrono::milliseconds doTick();
-    // For external use, acquires the tick mutex
-    // In contrast to the private version of the function,
-    // which is for internal use and does not acquire
-    // the mutex. This version should not be called from
-    // within another function that already acquires the tick_mut
-    void setTick(Tick* newTick);
     TickID getTickID();
+
+    void setTick(Tick* newTick);
 
     void setInitPath(std::vector<GPSCoord> init_path);
     const std::vector<GPSCoord>& getInitPath();
-    bool isInitPathValidated();
-    void validateInitPath();
 
     /*
-     * Gets a shared_ptr to the mavlink client. 
+     * Gets a locking reference to the underlying tick for the given tick subclass T.
+     * 
+     * Needs to be defined in the header file unless we want to manually list out
+     * template derivations.
+     */
+    template <typename T>
+    std::optional<LockPtr<T>> getTickLockPtr() {
+        try {
+            return LockPtr(std::dynamic_pointer_cast<T>(this->tick), &this->tick_mut);
+        } catch (std::bad_cast ex) {
+            LOG_F(ERROR, "Error creating TickLockRef: %s", ex.what());
+            return {};
+        }
+    }
+
+    /*
+     * Gets a shared_ptr to the mavlink client.
      * IMPORTANT: need to check that the pointer is not nullptr
      * before accessing, to make sure the connection has already
      * been established
@@ -59,6 +77,14 @@ class MissionState {
     std::shared_ptr<AirdropClient> getAirdrop();
     void setAirdrop(std::shared_ptr<AirdropClient> airdrop);
 
+    /*
+     * Gets a shared_ptr to the CVAggregator, which lets you
+     * run the CV pipeline on images in background threads.
+     */
+    std::shared_ptr<CVAggregator> getCV();
+    void setCV(std::shared_ptr<CVAggregator> cv);
+    std::shared_ptr<CameraInterface> getCamera();
+
     MissionConfig config;  // has its own mutex
 
  private:
@@ -66,17 +92,23 @@ class MissionState {
     std::optional<CartesianConverter<GPSProtoVec>> converter;
 
     std::mutex tick_mut;  // for reading/writing tick
-    std::unique_ptr<Tick> tick;
+    std::shared_ptr<Tick> tick;
 
     std::mutex init_path_mut;  // for reading/writing the initial path
     std::vector<GPSCoord> init_path;
-    bool init_path_validated = false;  // true when the operator has validated the initial path
 
     std::shared_ptr<MavlinkClient> mav;
     std::shared_ptr<AirdropClient> airdrop;
+    std::shared_ptr<CVAggregator> cv;
+    std::shared_ptr<CameraInterface> camera;
+
+    std::mutex cv_mut;
+    std::vector<DetectedTarget> cv_detected_targets;
+    // Gives an index into cv_detected_targets, and specifies that that bottle is matched
+    // with the detected_target specified by the index
+    std::array<size_t, NUM_AIRDROP_BOTTLES> cv_matches;
 
     void _setTick(Tick* newTick);  // does not acquire the tick_mut
 };
-
 
 #endif  // INCLUDE_CORE_MISSION_STATE_HPP_

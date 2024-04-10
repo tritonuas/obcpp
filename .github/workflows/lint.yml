@@ -33,4 +33,4 @@ jobs:
         run: cd "$HOME_DIR/obcpp" && mkdir build && cd build && sudo cmake -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" ..
 
       - name: Run cpplint
-        run: cd "$HOME_DIR/obcpp/build" && sudo make lint
+        run: cd "$HOME_DIR/obcpp/build" && sudo ninja lint

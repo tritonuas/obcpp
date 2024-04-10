@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 extern "C" {
-    #include <network/airdrop_sockets.h>
+    #include "network/airdrop_sockets.h"
 }
 
 #define SETUP_SOCKETS() \

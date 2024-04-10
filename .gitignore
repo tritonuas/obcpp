@@ -12,6 +12,12 @@ _deps/
 Testing/
 imgs/
 
+models/*
+!models/.gitkeep
+
+tests/integration/images/*
+!tests/integration/images/.gitkeep
+
 .vscode/*
 !.vscode/c_cpp_properties.json
 
