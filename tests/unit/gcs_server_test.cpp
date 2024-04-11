@@ -16,7 +16,7 @@
 #include "utilities/http.hpp"
 #include "ticks/mission_prep.hpp"
 #include "ticks/path_gen.hpp"
-#include "ticks/mission_upload.hpp"
+#include "ticks/mav_upload.hpp"
 #include "ticks/tick.hpp"
 
 #define DECLARE_HANDLER_PARAMS(STATE, REQ, RESP) \

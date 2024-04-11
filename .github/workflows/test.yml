@@ -35,5 +35,5 @@ jobs:
         run: cd "$HOME_DIR/obcpp" && mkdir build && cd build && sudo cmake -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" ..
 
       - name: Run Tests
-        run: cd "$HOME_DIR/obcpp/build" && sudo make test
+        run: cd "$HOME_DIR/obcpp/build" && sudo ninja test -j 4
 

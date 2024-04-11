@@ -16,7 +16,7 @@ mkdir build && cd build
 cmake ..    # configures the CMake build system
 ```
 
-Now you can use our Make targets.
+Now you can use our build targets.
 
 - `ninja obcpp`: Makes the binary which you can run using `./bin/obcpp`
 - `ninja test`: Run the tests in `tests/unit`
@@ -25,15 +25,19 @@ Now you can use our Make targets.
 
 ## A Note on Ninja
 
-Ninja, the build tool we are using, tries to use a number of cores on your system based on how more cores your CPU has. It is possible that it will attempt to use too many cores, and you will run out of memory on your system and everything will freeze up.
+Ninja, the build tool we are using, tries to use a number of cores on your system based on how more cores your CPU has. For our repo, it seems like this default almost always crashes/freezes your computer because it quickly runs out of memory.
 
-If this happens, you should explicitly tell Ninja to use less cores. You can do this by passing the following argument:
+To solve this, in our CMake config we limit the number of core ninja can use to 4. This hasn't crashed anyone's computer so far, but it is possible that you may need to reduce this number, or perhaps you want to increase it if your system can handle it so that you can get faster build times.
 
+To change the number of cores, you have to pass a special flag when you run `cmake`, like so:
 ```
-ninja -j [# cores]
+cmake -D CMAKE_JOB_POOLS="j=[# jobs]" ..
 ```
+where you replace `[# jobs]` with a number specifying the number of jobs.
 
-Anecdotally, on a machine with 16 virtual cores and 16GB of RAM, `-j 8` appears to be a good balance between speed and resources usage.
+If you do this once, CMake should remember how you specified it, so as long as you don't clear the CMake cache you won't need to enter this again. (I.e. you can just run `cmake ..` and you should still see the message at the top saying that it is using a user-defined number of jobs).
+
+Anecdotally, on a machine with 16 virtual cores and 16GB of RAM, `-D CMAKE_JOB_POOLS="j=8"` appears to be a good balance between speed and resources usage.
 
 ## Modules
 
@@ -186,13 +190,7 @@ With that, everything should be set up correctly, and you should be good to go.
 
 ## Modifying `CMakeLists.txt`
 
-The `CMakeLists.txt` file tells `cmake` how to build the program. It will need to be modified if any of the following occurs:
-
-1. A new `.cpp` file is created
-2. A `.cpp` file is renamed
-3. A new module is created
-
-Each module has its own folder in `include/` and `src/`. Currently all of the header files that we expect to need are planned out, but many do not have accompanying source files. As we add these source files, new libraries will need to be added to the CMake file. You can follow the example for the libraries already included to make this change.
+There is a `CMakeLists.txt` folder inside of each of the obcpp's module directories. If you add a new file to, say, the `network` module inside of `src/network/`, then you will need to add that filename to `src/network/CMakeLists.txt`.
 
 Note: you may need to clear you CMake cache if things get messed up.
 `find -name "*Cache.txt" -delete`

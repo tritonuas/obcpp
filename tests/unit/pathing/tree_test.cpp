@@ -25,7 +25,7 @@ TEST(SimpleTreeTest, addNodeTest) {
         {XYZCoord(10, 10, 0), XYZCoord(20, 10, 0), XYZCoord(20, 20, 0), XYZCoord(10, 20, 0)}};
 
     std::vector<Polygon> obstacles = {obs1};
-    Environment env = Environment(valid_region, {XYZCoord(0, 0, 0)}, obstacles);
+    Environment env = Environment(valid_region, {}, {XYZCoord(0, 0, 0)}, obstacles);
     RRTPoint point1 = RRTPoint(XYZCoord(25, 25, 0), 0);
     RRTPoint point2 = RRTPoint(XYZCoord(50, 75, 0), 0);
     RRTOption option = dubins.allOptions(point1, point2, true)[0];
@@ -53,7 +53,7 @@ TEST(SimpleTreeTest, rewireEdgeTest) {
         {XYZCoord(10, 10, 0), XYZCoord(20, 10, 0), XYZCoord(20, 20, 0), XYZCoord(10, 20, 0)}};
 
     std::vector<Polygon> obstacles = {obs1};
-    Environment env = Environment(valid_region, {XYZCoord(0, 0, 0)}, obstacles);
+    Environment env = Environment(valid_region, {}, {XYZCoord(0, 0, 0)}, obstacles);
     RRTPoint point1 = RRTPoint(XYZCoord(25, 25, 0), 0);
     RRTPoint point2 = RRTPoint(XYZCoord(50, 75, 0), HALF_PI);
     RRTPoint point3 = RRTPoint(XYZCoord(50, 80, 1.5), HALF_PI);

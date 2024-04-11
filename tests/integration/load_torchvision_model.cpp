@@ -23,6 +23,11 @@ int main (int argc, char *argv[]) {
         return 1;
     }
 
+    if (torch::cuda::is_available()) {
+	    module.to(torch::kCUDA);
+        LOG_F(INFO, "successfully moved model to GPU (CUDA)");
+    }
+
     LOG_F(INFO, "loaded model without crashing");
     return 0;
 }
