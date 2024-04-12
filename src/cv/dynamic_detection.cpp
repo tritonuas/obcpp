@@ -1,4 +1,5 @@
 #include "cv/dynamic_detection.hpp"
+#include "camera/lucid.hpp"
 
 ObstacleDetectionQueue::ObstacleDetectionQueue() {
     std::queue<Detection> queue;
@@ -15,11 +16,11 @@ bool ObstacleDetectionQueue::isEmpty() {
     return queue.empty();
 }
 
-void ObstacleDetectionQueue::pruneQueue() {
+void ObstacleDetectionQueue::pruneQueue(int age = 15.0) {
     Lock lock(this->mutex);
     // delete items
     auto now = std::chrono::system_clock::now();
-    while (now - queue.front().time > 15.0) {
+    while (now - queue.front().time > std::chrono::seconds(age)) {
         queue.pop();
     }
 }
@@ -29,12 +30,14 @@ void ObstacleDetectionQueue::copyQueue(std::queue<Detection> queue) {
     queue = this->queue;
 }
 
-DynamicDetection::DynamicDetection() {}
+DynamicDetection::DynamicDetection(CameraInterface* camera) {
+    this->camera = camera;
+} 
 
 void* DynamicDetection::takeImage() {
     // TODO: this is pseudocode, dynamic images are not taken with the Lucid camera
     // Take a picture every second
-    LucidCamera::startTakingPictures(1);
+    this->camera->startTakingPictures(1);
     return NULL;
 }
 
@@ -81,6 +84,6 @@ void DynamicDetection::main() {
             return;
         }
 
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(1ms);
     }
 }

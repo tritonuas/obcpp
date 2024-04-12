@@ -8,6 +8,9 @@
 #include "utilities/constants.hpp"
 #include "utilities/locks.hpp"
 #include <thread>
+#include "camera/interface.hpp"
+
+using namespace std::chrono_literals;
 
 /*
 Design:
@@ -32,7 +35,7 @@ Thread 2: This is the main program execution, which should be polling every tick
 
 // Output after an obstacle has been detected
 struct Detection {
-    time_t time;
+    std::chrono::time_point<std::chrono::system_clock> time;
     // TODO(Samir): is there a type for location of bounding box
     int x_pos;
     int y_pos;
@@ -63,8 +66,11 @@ class ObstacleDetectionQueue {
 
 class DynamicDetection {
     public:
-        DynamicDetection();
+        DynamicDetection(CameraInterface* camera);
     private:
+        // generic camera to use to take pictures
+        CameraInterface* camera;
+
         // Take a photo from front facing camera
         // TODO: this functionality and hardware has not been added
         void* takeImage();
