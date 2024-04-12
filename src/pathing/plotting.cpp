@@ -329,7 +329,7 @@ void PathingPlot::plotAnimatedPolyline(
         // find out how many frames to generate per line segment
         double segmentDistance = std::sqrt(std::pow(secondPoint.y - firstPoint.y, 2) +
             std::pow(secondPoint.x - firstPoint.x, 2));
-        int numFrames = std::ceil(segmentDistance * this->framesPerDistanceUnit);
+        int numFrames = std::floor(segmentDistance * this->framesPerDistanceUnit);
 
         double x_step = (1.f / static_cast<double>(numFrames))*(secondPoint.x - firstPoint.x);
         double y_step = (1.f / static_cast<double>(numFrames))*(secondPoint.y - firstPoint.y);

@@ -25,7 +25,11 @@ class OBC {
 
     std::unique_ptr<GCSServer> gcs_server;
 
+    std::thread connectMavThread;
+    std::thread connectAirdropThread;
+
     void connectMavlink();
+    void connectAirdrop();
 };
 
 #endif  // INCLUDE_CORE_OBC_HPP_

@@ -14,6 +14,7 @@
 #include "network/gcs_macros.hpp"
 #include "ticks/tick.hpp"
 #include "ticks/path_gen.hpp"
+#include "ticks/path_validate.hpp"
 
 /*
  * This file defines all of the GCS handler functions for every route
@@ -32,6 +33,12 @@
  *        Note: you shouldn't need to access this for most things, as
  *        the LOG_RESPONSE macro will handle it for you.
  */
+
+DEF_GCS_HANDLE(Get, tick) {
+    LOG_REQUEST("GET", "/tick");
+
+    LOG_RESPONSE(INFO, TICK_ID_TO_STR(state->getTickID()), OK);
+}
 
 DEF_GCS_HANDLE(Get, mission) {
     LOG_REQUEST("GET", "/mission");
@@ -87,7 +94,12 @@ DEF_GCS_HANDLE(Get, path, initial) {
 DEF_GCS_HANDLE(Get, path, initial, new) {
     LOG_REQUEST("GET", "/path/initial/new");
 
-    state->setTick(new PathGenTick(state));
+    auto lock_ptr = state->getTickLockPtr<PathValidateTick>();
+    if (!lock_ptr.has_value()) {
+        LOG_RESPONSE(WARNING, "Not currently in PathValidate Tick", BAD_REQUEST);
+        return;
+    }
+    lock_ptr->ptr->setStatus(PathValidateTick::Status::Rejected);
 
     LOG_RESPONSE(INFO, "Started generating new initial path", OK);
 }
@@ -97,10 +109,17 @@ DEF_GCS_HANDLE(Post, path, initial, validate) {
 
     if (state->getInitPath().empty()) {
         LOG_RESPONSE(WARNING, "No initial path generated", BAD_REQUEST);
-    } else {
-        state->validateInitPath();
-        LOG_RESPONSE(INFO, "Initial path validated", OK);
+        return;
     }
+
+    auto lock_ptr = state->getTickLockPtr<PathValidateTick>();
+    if (!lock_ptr.has_value()) {
+        LOG_RESPONSE(WARNING, "Not currently in PathValidate Tick", BAD_REQUEST);
+        return;
+    }
+    lock_ptr->ptr->setStatus(PathValidateTick::Status::Validated);
+
+    LOG_RESPONSE(INFO, "Initial path validated", OK);
 }
 
 DEF_GCS_HANDLE(Get, camera, status) {

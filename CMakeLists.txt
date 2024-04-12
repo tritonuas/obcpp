@@ -20,9 +20,12 @@ endif(CCACHE)
 set(CMAKE_CXX_COMPILER g++)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_C_COMPILER gcc)
+set(CMAKE_C_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ./bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/bin)
 set(CMAKE_EXPORT_COMPILE_COMMANDS True)
+
+# set(CMAKE_POSITION_INDEPENDENT_CODE True)
 
 SET(GCC_COMPILE_FLAGS "")
 SET(GCC_LINK_FLAGS    "-lprotobuf -lopencv_core -lopencv_highgui -lopencv_features2d -lopencv_flann -lopencv_imgcodecs -lopencv_dnn -lopencv_videoio -lopencv_imgproc -lopencv_ml -lopencv_photo -lprotobuf")
@@ -30,7 +33,24 @@ SET(GCC_LINK_FLAGS    "-lprotobuf -lopencv_core -lopencv_highgui -lopencv_featur
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COMPILE_FLAGS}")
 SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${GCC_LINK_FLAGS}")
 
+SET(CMAKE_C_FLAGS "-D_GNU_SOURCE")
+
+# Anecdotal Observations:
+#   four_jobs works with 12GB RAM
+#   eight_jobs requires more than 12GB RAM
+#   sixteen_jobs requires more than 16GB RAM (I don't know how much, since I only have 16GB)
+# Therefore we default to 4 jobs, so it doesn't crash anyone's laptop with 12GB ram.
+if (NOT DEFINED CMAKE_JOB_POOLS)
+    set_property(GLOBAL PROPERTY JOB_POOLS j=4)
+else()
+    message("Using user defined number of pools: ${CMAKE_JOB_POOLS}")
+endif()
+set(CMAKE_JOB_POOL_COMPILE j)
+set(CMAKE_JOB_POOL_LINK    j)
+
 project(obcpp VERSION 1.0)
+
+set(LOGURU_WITH_STREAMS TRUE)
 
 # =============================
 # Dependencies 
@@ -63,6 +83,15 @@ endif()
 
 # =============================
 
+# ============================
+# Global include directories
+
+set(INCLUDE_DIRECTORY ${PROJECT_SOURCE_DIR}/include)
+set(GEN_PROTOS_DIRECTORY ${PROJECT_SOURCE_DIR}/build/gen_protos)
+include_directories(${INCLUDE_DIRECTORY} ${GEN_PROTOS_DIRECTORY})
+
+# ============================
+
 # =============================
 # Set up imagemagick
 add_definitions( -DMAGICKCORE_QUANTUM_DEPTH=16 )
@@ -72,85 +101,72 @@ find_package(ImageMagick COMPONENTS Magick++ REQUIRED)
 # =============================
 
 # =============================
-# obcpp executable
-file(GLOB_RECURSE SOURCES "src/*.cpp" "build/gen_protos/*.pb.cc")
-list(REMOVE_ITEM SOURCES "${CMAKE_SOURCE_DIR}/src/main.cpp")
-file(GLOB_RECURSE HEADERS "include/*.hpp" "build/gen_protos/*.pb.h")
+# obcpp library & executable
 
-set(INCLUDE_DIRECTORY ${PROJECT_SOURCE_DIR}/include)
-set(GEN_PROTOS_DIRECTORY ${PROJECT_SOURCE_DIR}/build/gen_protos)
-add_executable(${PROJECT_NAME} ${SOURCES} "src/main.cpp")
-include_directories(${INCLUDE_DIRECTORY} ${GEN_PROTOS_DIRECTORY})
-target_add_protobuf(${PROJECT_NAME})
-target_add_torch(${PROJECT_NAME})
-# target_add_arena(${PROJECT_NAME}) # Tyler: currently broken, so we had to comment this out
-target_add_torchvision(${PROJECT_NAME})
-target_add_json(${PROJECT_NAME})
-target_add_opencv(${PROJECT_NAME})
-target_add_httplib(${PROJECT_NAME})
-target_add_mavsdk(${PROJECT_NAME})
-target_add_matplot(${PROJECT_NAME})
-target_add_loguru(${PROJECT_NAME})
-# for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
-# target_add_imagemagick(${PROJECT_NAME})
-target_include_directories(${PROJECT_NAME} PRIVATE ${ImageMagick_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
+add_subdirectory(src)
+
 # =============================
 
 # =============================
 # Integration tests
 
-# playground
-add_executable(playground ${SOURCES} "tests/integration/playground.cpp")
-target_include_directories(playground PRIVATE ${INCLUDE_DIRECTORY} ${GEN_PROTOS_DIRECTORY})
-target_add_torch(playground)
-# target_add_arena(playground)
-target_add_json(playground)
-target_add_opencv(playground) 
-target_add_httplib(playground)
-target_add_mavsdk(playground)
-target_add_matplot(playground)
-target_add_protobuf(playground)
-target_add_loguru(playground)
+add_subdirectory(tests/integration)
 
-# load_torchvision_model
-add_executable(load_torchvision_model tests/integration/load_torchvision_model.cpp)
-target_add_torch(load_torchvision_model)
-target_add_torchvision(load_torchvision_model)
-
-# mavlink-client
-add_executable(mavlink_client ${SOURCES} "tests/integration/mavlink_client.cpp")
-target_include_directories(mavlink_client PRIVATE ${INCLUDE_DIRECTORY})
-target_add_protobuf(mavlink_client)
-target_add_torch(mavlink_client)
-target_add_torchvision(mavlink_client)
-target_add_json(mavlink_client)
-target_add_opencv(mavlink_client)
-target_add_httplib(mavlink_client)
-target_add_mavsdk(mavlink_client)
-target_add_matplot(mavlink_client)
-target_add_loguru(mavlink_client)
-
-# path_plotting 
-add_executable(path_plotting ${SOURCES} tests/integration/path_plotting.cpp)
-target_add_torch(path_plotting)
-target_add_json(path_plotting)
-target_add_httplib(path_plotting)
-target_add_mavsdk(path_plotting)
-target_add_matplot(path_plotting)
-target_add_protobuf(path_plotting)
-target_add_opencv(path_plotting) 
-target_add_loguru(path_plotting)
+# cuda_check
+add_executable(cuda_check ${SOURCES} tests/integration/cuda_check.cpp)
+target_add_torch(cuda_check)
+target_add_json(cuda_check)
+target_add_httplib(cuda_check)
+target_add_mavsdk(cuda_check)
+target_add_matplot(cuda_check)
+target_add_protobuf(cuda_check)
+target_add_opencv(cuda_check) 
+target_add_loguru(cuda_check)
 # for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
-# target_add_imagemagick(path_plotting)
-target_include_directories(path_plotting PRIVATE ${ImageMagick_INCLUDE_DIRS})
-target_link_libraries(path_plotting PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
+# target_add_imagemagick(cuda_check)
+target_include_directories(cuda_check PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(cuda_check PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 # =============================
 
 # =============================
 # Unit tests
 add_subdirectory(tests/unit)
 add_subdirectory(${DEPS_DIRECTORY}/google-test)
+# =============================
+
+# =============================
+# Pull models
+add_custom_target(pull_models 
+  DEPENDS pull_saliency pull_matching pull_segmentation
+)
+
+# Saliency model
+add_custom_target(pull_saliency
+  COMMAND gdown 1S1IfXlGs_pCH49DwZmbD-tZA5YH0A1gx -O ${CMAKE_BINARY_DIR}/../models/torchscript_19.pth
+)
+
+# Matching model 
+add_custom_target(pull_matching
+  COMMAND gdown 1NeFiAfSSLXAZWlehfd0ox7p_jFF4YdrO -O ${CMAKE_BINARY_DIR}/../models/target_siamese_1.pt
+)
+
+
+# Segmentation model
+add_custom_target(pull_segmentation
+  COMMAND gdown 1U2EbfJFzcjVnjTuD6ud-bIf8YOiEassf -O ${CMAKE_BINARY_DIR}/../models/fcn-model_20-epochs_06-01-2023T21-16-02.pth
+)
+# =============================
+
+# =============================
+# Pull testing images
+
+# pull cropped images from fraternal_targets testing folder
+add_custom_target(pull_matching_test_images
+  COMMAND gdown 1opxdXw75jSQZu9s61njE6hjQkfHiKvgp -O ${CMAKE_BINARY_DIR}/../tests/integration/images/test.zip && 
+    mkdir -p ${CMAKE_BINARY_DIR}/../tests/integration/images/matching_cropped &&
+    unzip ${CMAKE_BINARY_DIR}/../tests/integration/images/test.zip -d ${CMAKE_BINARY_DIR}/../tests/integration/images/matching_cropped
+)
+ 
 # =============================
 
 # =============================
@@ -162,7 +178,9 @@ if(CPPLINT)
   # define lint target
   add_custom_target(lint
     COMMAND cpplint
-    --filter=-legal,-readability/todo,-build/c++11
+    # Do not require licenses, TODO assignment, Google versions of C++ libs
+    # also don't check for runtime/references since Google's public style guidelines are behind https://github.com/cpplint/cpplint/issues/148
+    --filter=-legal,-readability/todo,-build/c++11,-runtime/references
     --linelength=100
     --recursive
     ../src
