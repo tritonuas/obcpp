@@ -103,6 +103,7 @@ target_add_opencv(cv_saliency)
 target_add_torchvision(cv_saliency)
 target_add_matplot(cv_saliency)
 target_add_json(cv_saliency)
+target_add_loguru(cv_saliency)
 target_include_directories(cv_saliency PRIVATE ${ImageMagick_INCLUDE_DIRS})
 target_link_libraries(cv_saliency PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 

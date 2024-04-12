@@ -152,7 +152,14 @@ add_custom_target(pull_matching_test_images
     mkdir -p ${CMAKE_BINARY_DIR}/../tests/integration/images/matching_cropped &&
     unzip ${CMAKE_BINARY_DIR}/../tests/integration/images/test.zip -d ${CMAKE_BINARY_DIR}/../tests/integration/images/matching_cropped
 )
- 
+
+# pull cropped images from saliency images testing folder
+add_custom_target(pull_saliency_test_images
+  COMMAND gdown 1HJLdrm0X3VxnlQ3Z58EE9-Y5VX1NlhAz -O ${CMAKE_BINARY_DIR}/../tests/integration/images/saliency.zip && 
+    mkdir -p ${CMAKE_BINARY_DIR}/../tests/integration/images/saliency &&
+    unzip ${CMAKE_BINARY_DIR}/../tests/integration/images/saliency.zip -d ${CMAKE_BINARY_DIR}/../tests/integration/images/saliency
+)
+
 # =============================
 
 # =============================

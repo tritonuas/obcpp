@@ -5,6 +5,7 @@
 #include <string>
 
 #include "cv/saliency.hpp"
+#include "loguru.hpp"
 
 // expected arguments: <path-to-model> <path-to-image> 
 int main(int argc, const char* argv[]) {
@@ -32,10 +33,11 @@ int main(int argc, const char* argv[]) {
     cv::rectangle(img, roi, (cv::Scalar) (0,255,0), 2); 
   }    
 
-  cv::namedWindow("cropped targets", cv::WINDOW_FULLSCREEN);
-  cv::imshow("cropped targets", img);
-  cv::waitKey(0);  
-  cv::imwrite("/workspaces/obcpp/croppedTargets.jpg", img);
+  // cv::namedWindow("cropped targets", cv::WINDOW_FULLSCREEN);
+  // cv::imshow("cropped targets", img);
+  // cv::waitKey(0);  
+  cv::imwrite("croppedTargets.jpg", img);
+  LOG_F(INFO, "saved croppedTargets.jpg to build/");
   // testing: save input image to file path (cv::imsave?) with bounding boxes overlayed
 
   // std::cout << "results:\n";
