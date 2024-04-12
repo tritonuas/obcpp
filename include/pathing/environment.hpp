@@ -168,15 +168,22 @@ class Environment {
      *  - if horizonal, endpoints will always be left right, top down
      *
      * TODO - UNIT TESTS
-     *
+     * @param scan_radius the radius of search, lines will be 2 * scan_radius apart
+     * @param vertical whether or not to scan vertically
      * @return the endpoints on the airdrop zone
      */
     std::vector<XYZCoord> getAirdropEndpoints(int scan_radius, bool vertical) const;
 
     /**
-     * Returns waypoints
+     * Returns waypoints for airdrop coverage pathing
+     * - if vertical, waypoints will always be top down, left right
+     * - if horizonal, waypoints will always be left right, top down
      *
-     *
+     * @param scan_radius the radius of search, lines will be 2 * scan_radius apart
+     * @param one_way whether or not to return waypoints in one direction (if not, returns in
+     * alterating directions)
+     * @param vertical whether or not to scan vertically
+     * @return the waypoints on the airdrop zone
      */
     std::vector<RRTPoint> getAirdropWaypoints(int scan_radius, bool one_way = false,
                                               bool vertical = false) const;
@@ -220,11 +227,15 @@ class Environment {
      */
     std::vector<XYZCoord> findIntersections(const Polygon& polygon, const XYZCoord& rayStart,
                                             const XYZCoord& rayEnd, bool vertical) const;
-    
+
     /**
-    *
-    */
-    Polygon scale (double scale, const Polygon& source_polygon) const;
+     * Returns a new polygon that is scaled by a given factor
+     *
+     * @param scale the factor to scale the polygon by
+     * @param source_polygon the polygon to scale
+     * @return the scaled polygon
+     */
+    Polygon scale(double scale, const Polygon& source_polygon) const;
 
  private:
     const Polygon valid_region;            // boundary of the valid map

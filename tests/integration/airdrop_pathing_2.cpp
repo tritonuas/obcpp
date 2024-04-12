@@ -12,8 +12,8 @@
 #include "network/gcs_routes.hpp"
 #include "pathing/plotting.hpp"
 #include "pathing/static.hpp"
-#include "ticks/mission_prep.hpp"
 #include "ticks/mav_upload.hpp"
+#include "ticks/mission_prep.hpp"
 #include "ticks/path_gen.hpp"
 #include "ticks/tick.hpp"
 #include "utilities/constants.hpp"
@@ -24,8 +24,6 @@
     std::shared_ptr<MissionState> STATE = std::make_shared<MissionState>(); \
     httplib::Request REQ;                                                   \
     httplib::Response RESP
-
-
 
 const static char* mission_json_2024 = R"(
 {
@@ -254,8 +252,7 @@ int main() {
     AirdropSearch search(start, 9, state->config.getFlightBoundary(),
                          state->config.getAirdropBoundary());
 
-    Environment env(state->config.getFlightBoundary(), state->config.getAirdropBoundary(),
-                    {}, {});
+    Environment env(state->config.getFlightBoundary(), state->config.getAirdropBoundary(), {}, {});
 
     Polygon scaled = env.scale(0.75, state->config.getFlightBoundary());
 
@@ -263,8 +260,7 @@ int main() {
 
     // plot the path
     std::cout << "Start Plotting" << std::endl;
-    PathingPlot plotter("pathing_output", state->config.getFlightBoundary(),
-                        scaled, {});
+    PathingPlot plotter("pathing_output", state->config.getFlightBoundary(), scaled, {});
 
     plotter.addFinalPolyline(path);
     plotter.output("test_airdrop_pathing_2", PathOutputType::STATIC);

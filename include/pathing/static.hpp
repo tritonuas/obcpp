@@ -173,7 +173,9 @@ class RRT {
 class AirdropSearch {
  public:
     AirdropSearch(const RRTPoint &start, double scan_radius, Polygon bounds, Polygon airdrop_zone,
-                  std::vector<Polygon> obstacles = {});
+                  std::vector<Polygon> obstacles = {},
+                  AirdropSearchConfig config = {
+                      .optimize = false, .vertical = false, .one_way = false});
 
     /**
      * Generates a path of parallel lines to cover a given area
@@ -188,6 +190,7 @@ class AirdropSearch {
     const RRTPoint start;        // start location (doesn't have to be near polygon)
     const Environment airspace;  // information aobut the airspace
     const Dubins dubins;         // dubins object to generate paths
+    const AirdropSearchConfig config;
 };
 
 std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state);
