@@ -2,18 +2,9 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <memory>
-#include </workspaces/obcpp/include/cv/saliency.hpp>
+#include <string>
 
-// constructor definition
-Saliency::Saliency () {
-  this->modelPath = "";
-} 
-
-// constructor definition
-Saliency::Saliency (std::string modelPath) {
-  this->modelPath = modelPath;
-} 
-
+#include "cv/saliency.hpp"
 
 // expected arguments: <path-to-model> <path-to-image> 
 int main(int argc, const char* argv[]) {
@@ -24,7 +15,7 @@ int main(int argc, const char* argv[]) {
 
   // convert image to tensor
   const char* modelPath = argv[1];
-  Saliency sal (modelPath);
+  Saliency sal(modelPath);
   const char* imgPath = argv[2];
   cv::Mat img = cv::imread(imgPath, cv::IMREAD_COLOR);
 

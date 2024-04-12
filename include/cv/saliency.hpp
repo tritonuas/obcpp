@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <opencv2/opencv.hpp>
+#include <torch/torch.h>
 
 #include "cv/utilities.hpp"
 
@@ -26,7 +27,12 @@ class Saliency {
     Saliency ();                        // no-argument constructor
     Saliency (std::string modelPath);   // constructor with model path
 
-    std::vector<CroppedTarget> salience(cv::Mat image);
+    std::vector<CroppedTarget> salience(cv::Mat image); // saliency function
+
+    // helper functions
+    at::Tensor ToTensor(cv::Mat img, bool show_output, bool unsqueeze, int unsqueeze_dim);
+    at::Tensor transpose(at::Tensor tensor, c10::IntArrayRef dims);
+    std::vector<torch::jit::IValue> ToInput(at::Tensor tensor_image);
     
 private:
     std::string modelPath;  // path to prediction model 

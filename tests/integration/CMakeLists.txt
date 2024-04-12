@@ -94,15 +94,17 @@ target_include_directories(cv_matching PRIVATE ${ImageMagick_INCLUDE_DIRS})
 target_link_libraries(cv_matching PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
 
-# saliency
-add_executable(saliency ${SOURCES} "saliency.cpp")
-target_include_directories(saliency PRIVATE ${INCLUDE_DIRECTORY})
-target_add_torch(saliency)
-target_add_opencv(saliency) 
-target_add_torchvision(saliency)
-target_add_matplot(saliency)
-target_add_json(saliency)
-
+# cv_saliency
+add_executable(cv_saliency ${SOURCES} "cv_saliency.cpp")
+target_link_libraries(cv_saliency PRIVATE obcpp_lib)
+target_include_directories(cv_saliency PRIVATE ${INCLUDE_DIRECTORY})
+target_add_torch(cv_saliency)
+target_add_opencv(cv_saliency) 
+target_add_torchvision(cv_saliency)
+target_add_matplot(cv_saliency)
+target_add_json(cv_saliency)
+target_include_directories(cv_saliency PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(cv_saliency PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
 # cv_segmentation
 add_executable(cv_segmentation "cv_segmentation.cpp")

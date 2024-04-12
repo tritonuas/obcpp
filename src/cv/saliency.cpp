@@ -6,55 +6,27 @@
 #include "cv/saliency.hpp"
 #include <torch/cuda.h>
 #include <torch/mps.h>
+#include "utilities/logging.hpp"
 
-auto ToTensor(cv::Mat img, bool show_output = false, bool unsqueeze=false, int unsqueeze_dim = 0)
-{
-    std::cout << "image shape: " << img.size() << std::endl;
-    at::Tensor tensor_image = torch::from_blob(img.data, { img.rows, img.cols, 3 }, at::kByte);
+// constructor definition
+Saliency::Saliency () {
+    this->modelPath = "";
+} 
 
-    if (unsqueeze)
-    {
-        tensor_image.unsqueeze_(unsqueeze_dim);
-        std::cout << "tensors new shape: " << tensor_image.sizes() << std::endl;
-    }
-    
-    if (show_output)
-    {
-        std::cout << tensor_image.slice(2, 0, 1) << std::endl;
-    }
-    std::cout << "tenor shape: " << tensor_image.sizes() << std::endl;
-    return tensor_image;
-}
-
-auto transpose(at::Tensor tensor, c10::IntArrayRef dims = { 0, 3, 1, 2 })
-{
-    std::cout << "############### transpose ############" << std::endl;
-    std::cout << "shape before : " << tensor.sizes() << std::endl;
-    tensor = tensor.permute(dims);
-    std::cout << "shape after : " << tensor.sizes() << std::endl;
-    std::cout << "######################################" << std::endl;
-    return tensor;
-}
-
-std::vector<torch::jit::IValue> ToInput(at::Tensor tensor_image)
-{
-    // Create a vector of inputs.
-    std::vector<torch::jit::IValue> toReturn; //c10 List is also IValue
-    c10::List<at::Tensor> tensorList;
-    tensorList.push_back(tensor_image);       // add Tensor to c10::List
-    toReturn.push_back(tensorList);           // add c10::List to vector of IValues
-    return toReturn;
-}
+// constructor definition
+Saliency::Saliency (std::string modelPath) {
+    this->modelPath = modelPath;
+} 
 
 std::vector<CroppedTarget> Saliency::salience(cv::Mat image) { 
     
-    auto tensor = ToTensor(image);
+    at::Tensor tensor = Saliency::ToTensor(image, false, false, 0);
 
     // convert the tensor into float and scale it 
     tensor = tensor.toType(c10::kFloat).div(255);
     
     // swap axis 
-    tensor = transpose(tensor, { (2),(0),(1) });
+    tensor = Saliency::transpose(tensor, { (2),(0),(1) });
 
     auto input_to_net = ToInput(tensor);
 
@@ -62,7 +34,6 @@ std::vector<CroppedTarget> Saliency::salience(cv::Mat image) {
     torch::jit::script::Module module;
     try {
         // Deserialize the ScriptModule from a file using torch::jit::load().
-        std::cout << modelPath << std::endl;
         module = torch::jit::load(modelPath, device);
         module.eval();
     }
@@ -106,7 +77,7 @@ std::vector<CroppedTarget> Saliency::salience(cv::Mat image) {
             } else if (labelsTensor[0].item().toInt() == 1) {
                 targ.isMannikin = 0;
             } else {
-                std::cout << "ERROR! Saliency::salience found invalid score\n";
+                LOG_F(ERROR, "Saliency::salience found invalid score");
             }
 
             cv::Rect roi; // setup region of interest (cropped target)
@@ -125,6 +96,47 @@ std::vector<CroppedTarget> Saliency::salience(cv::Mat image) {
 
     
 
-    std::cout << "salience ok\n";
+    LOG_F(INFO, "salience ok");
     return targets; 
 }
+
+
+at::Tensor Saliency::ToTensor(cv::Mat img, bool show_output = false, bool unsqueeze=false, int unsqueeze_dim = 0)
+{
+    // std::cout << "image shape: " << img.size() << std::endl;
+    at::Tensor tensor_image = torch::from_blob(img.data, { img.rows, img.cols, 3 }, at::kByte);
+
+    if (unsqueeze)
+    {
+        tensor_image.unsqueeze_(unsqueeze_dim);
+        // std::cout << "tensors new shape: " << tensor_image.sizes() << std::endl;
+    }
+    
+    if (show_output)
+    {
+        std::cout << tensor_image.slice(2, 0, 1) << std::endl;
+    }
+    // std::cout << "tenor shape: " << tensor_image.sizes() << std::endl;
+    return tensor_image;
+}
+
+at::Tensor Saliency::transpose(at::Tensor tensor, c10::IntArrayRef dims = { 0, 3, 1, 2 })
+{
+    // std::cout << "############### transpose ############" << std::endl;
+    // std::cout << "shape before : " << tensor.sizes() << std::endl;
+    tensor = tensor.permute(dims);
+    // std::cout << "shape after : " << tensor.sizes() << std::endl;
+    // std::cout << "######################################" << std::endl;
+    return tensor;
+}
+
+std::vector<torch::jit::IValue> Saliency::ToInput(at::Tensor tensor_image)
+{
+    // Create a vector of inputs.
+    std::vector<torch::jit::IValue> toReturn; //c10 List is also IValue
+    c10::List<at::Tensor> tensorList;
+    tensorList.push_back(tensor_image);       // add Tensor to c10::List
+    toReturn.push_back(tensorList);           // add c10::List to vector of IValues
+    return toReturn;
+}
+
