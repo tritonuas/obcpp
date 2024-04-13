@@ -18,6 +18,15 @@
 #include "ticks/path_gen.hpp"
 
 /*
+ * GET /connection
+ * ---
+ * Returns information about the connection status of the OBC
+ * 
+ * 200 OK: Successfully retrieved data
+ */
+DEF_GCS_HANDLE(Get, connection);
+
+/*
  * GET /tick
  * ---
  * Returns the name of the current tick function, for display in the GCS control page

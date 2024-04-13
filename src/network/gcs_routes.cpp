@@ -16,6 +16,8 @@
 #include "ticks/path_gen.hpp"
 #include "ticks/path_validate.hpp"
 
+using namespace std::chrono_literals;
+
 /*
  * This file defines all of the GCS handler functions for every route
  * the gcs server is listening on.
@@ -33,6 +35,29 @@
  *        Note: you shouldn't need to access this for most things, as
  *        the LOG_RESPONSE macro will handle it for you.
  */
+
+DEF_GCS_HANDLE(Get, connection) {
+    LOG_REQUEST("GET", "/connection");
+
+    auto lost_airdrop_conns = state->getAirdrop()->getLostConnections(3s);
+    auto mav_conn = state->getMav()->get_conn_status();
+    // TODO: query the camera status
+    bool camera_good = false;
+
+    OBCConnInfo info;
+    for (auto const& [bottle_index, ms_since_last_heartbeat] : lost_airdrop_conns) {
+        info.add_dropped_bottle_idx(bottle_index);
+        info.add_ms_since_ad_heartbeat(ms_since_last_heartbeat.count());
+    }
+    info.set_mav_rc_good(mav_conn.is_available);
+    info.set_mav_rc_strength(mav_conn.signal_strength_percent);
+    info.set_camera_good(camera_good);
+
+    std::string output;
+    google::protobuf::util::MessageToJsonString(info, &output);
+
+    LOG_RESPONSE(INFO, "Returning conn info", OK, output.c_str(), mime::json);
+}
 
 DEF_GCS_HANDLE(Get, tick) {
     LOG_REQUEST("GET", "/tick");

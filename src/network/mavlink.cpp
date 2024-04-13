@@ -276,3 +276,7 @@ mavsdk::Telemetry::FlightMode MavlinkClient::flight_mode() {
     Lock lock(this->data_mut);
     return this->data.flight_mode;
 }
+
+mavsdk::Telemetry::RcStatus MavlinkClient::get_conn_status() {
+    return this->telemetry->rc_status();
+}
