@@ -17,7 +17,12 @@ extern "C" {
 }
 
 // TODO: allow specifying config filename
-OBC::OBC(const char* mavlink_url, uint16_t gcs_port) {
+OBC::OBC(OBCConfig config) {
+    const char* mavlink_url= config.network_mavlink_connect.c_str();
+    int gcs_port = config.network_gcs_port;
+
+    LOG_F(INFO, mavlink_url);
+
     this->state = std::make_shared<MissionState>();
     this->state->setTick(new MissionPrepTick(this->state));
 

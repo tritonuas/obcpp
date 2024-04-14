@@ -9,6 +9,7 @@
 #include "core/mission_state.hpp"
 #include "network/gcs.hpp"
 #include "network/mavlink.hpp"
+#include "utilities/OBCConfig.hpp"
 
 /*
  *  The highest level class for the entire OBC
@@ -16,7 +17,7 @@
  */
 class OBC {
  public:
-    explicit OBC(const char* mavlink_url, uint16_t gcs_port);
+    explicit OBC(OBCConfig config);
 
     void run();
 
