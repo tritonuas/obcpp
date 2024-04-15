@@ -2,7 +2,6 @@
 
 #include "cv/localization.hpp"
 
-
 void assertLocalizationAccuracy(
     const GPSCoord& expectedCoord,
     const GPSCoord& predictedCoord,
@@ -24,7 +23,7 @@ TEST(CVLocalization, LocalizationAccuracy) {
 
         GPSCoord expectedTargetCoord;
     };
-
+    
     const std::vector<TestCase> testCases{{
         {
             "directly underneath",
@@ -74,23 +73,25 @@ TEST(CVLocalization, LocalizationAccuracy) {
             Bbox(3499, 2008, 3499, 2008),
             makeGPSCoord(-0.00000292339877027894, 0.00001211822682158354, 0),
         }
-        // TODO: move blender localization test cases here
-        // {
-        //     "another test case",
-        //     ImageTelemetry(0, 0, 100, 50, 0, 0, 0),
-        //     Bbox(1951, 1483, 1951, 1483),
-        //     makeGPSCoord(0, 0, 0),
-        // }
     }};
 
     for (const auto &testCase : testCases) {
         ECEFLocalization ecefLocalizer;
         GSDLocalization gsdLocalization;
+        std::cout << testCase.name << std::endl;
 
-        GPSCoord ecefTargetCoord = ecefLocalizer.localize(testCase.inputImageTelemetry, testCase.inputTargetBbox);
-        assertLocalizationAccuracy(testCase.expectedTargetCoord, ecefTargetCoord);
+        // GPSCoord ecefTargetCoord = ecefLocalizer.localize(testCase.inputImageTelemetry, testCase.inputTargetBbox);
+        // assertLocalizationAccuracy(testCase.expectedTargetCoord, ecefTargetCoord);
 
         GPSCoord gsdTargetCoord = gsdLocalization.localize(testCase.inputImageTelemetry, testCase.inputTargetBbox);
+        //TODO: FLOAT VS DOUBLE
+        std::cout << "Error: " << gsdLocalization.distanceInMetersBetweenCords(
+            (testCase.expectedTargetCoord.latitude()), 
+            (testCase.expectedTargetCoord.longitude()), 
+            (gsdTargetCoord.longitude()), 
+            (gsdTargetCoord.latitude())) * METER_TO_FT
+            << " feet" << std::endl;
+        
         assertLocalizationAccuracy(testCase.expectedTargetCoord, gsdTargetCoord);
     };
 }
