@@ -72,6 +72,20 @@ bool AirdropClient::send(ad_packet_t packet) {
     return true;
 }
 
+bool AirdropClient::send(ad_latlng_packet_t packet) {
+    set_send_thread();
+
+    auto res = send_ad_latlng_packet(this->socket, packet);
+    if (res.is_err) {
+        LOG_F(ERROR, "%s", res.data.err);
+        return false;
+    }
+
+    // TODO: helper to go from packet -> str
+    LOG_F(INFO, "Sent airdrop latlng packet: %hhu %hhu", packet.hdr, packet.bottle);
+    return true;
+}
+
 std::optional<ad_packet_t> AirdropClient::receive() {
     Lock lock(this->recv_mut);
 

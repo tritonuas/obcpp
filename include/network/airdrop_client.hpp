@@ -24,6 +24,7 @@ class AirdropClient {
     ~AirdropClient();
 
     bool send(ad_packet_t packet);
+    bool send(ad_latlng_packet_t packet);
     // Receives oldest packet since last receive() call, ignoring any
     // HEARTBEAT packets as those are parsed by the client itself
     // and exposed through the TODO function.

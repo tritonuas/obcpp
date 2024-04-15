@@ -70,6 +70,11 @@ ad_int_result_t send_ad_packet(ad_socket_t socket, ad_packet_t packet) {
     AD_RETURN_SUCC_RESULT(int, sizeof(ad_packet_t));
 }
 
+ad_int_result_t send_ad_latlng_packet(ad_socket_t socket, ad_latlng_packet_t packet) {
+    // TODO: Mock sending ad_latlng_packets
+    fprintf(stderr, "ERR: haven't yet implemented sending ad latlng packets in mock");
+}
+
 ad_int_result_t recv_ad_packet(ad_socket_t socket, void* buf, size_t buf_len) {
     static char err[1] = "";
 

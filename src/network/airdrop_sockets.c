@@ -118,6 +118,26 @@ ad_int_result_t send_ad_packet(ad_socket_t socket, ad_packet_t packet) {
     AD_RETURN_SUCC_RESULT(int, bytes_sent);
 }
 
+ad_int_result_t send_ad_latlng_packet(ad_socket_t socket, ad_latlng_packet_t packet) {
+    struct sockaddr_in SEND_ADDR = {
+        .sin_family = AF_INET,
+        .sin_port = htons(socket.send_port),
+        .sin_addr = INADDR_BROADCAST,
+        .sin_zero = {0},
+    };
+
+    static char err[AD_ERR_LEN];
+    int bytes_sent = sendto(socket.fd, (void*) &packet, sizeof(ad_latlng_packet_t), 0,
+                            (struct sockaddr*) &SEND_ADDR, sizeof(SEND_ADDR));
+
+    if (bytes_sent < 0) {
+        snprintf(&err[0], AD_ERR_LEN, "send failed: %s", strerror_l(errno, _send_locale));
+        AD_RETURN_ERR_RESULT(int, err);
+    }
+
+    AD_RETURN_SUCC_RESULT(int, bytes_sent);
+}
+
 ad_int_result_t recv_ad_packet(ad_socket_t socket, void* buf, size_t buf_len) {
     static char err[AD_ERR_LEN];
     struct sockaddr_in RECV_ADDR = {
