@@ -61,7 +61,7 @@ enum ad_packet_hdr {
     ACK_SIGNAL  = 201,
     REVOKE      = 202,
     ACK_REVOKE  = 203,
-    SEND_LATLNG = 204, // special packet format!
+    SEND_LATLNG = 204,  // special packet format!
     ACK_LATLNG  = 205,
 
     // Direct & Indirect
