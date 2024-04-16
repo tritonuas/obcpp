@@ -52,6 +52,7 @@ enum ad_packet_hdr {
     // Handshake to establish connection
     SET_MODE    = 1,
     ACK_MODE    = 2,
+    RESET_MODE  = 3, // TODO:
 
     // Direct Drop
     DROP_NOW    = 100,
@@ -91,7 +92,6 @@ inline int validate_packet_as(enum ad_packet_hdr hdr, ad_packet_t packet) {
     }
 
     switch (packet.hdr) {
-        case HEARTBEAT:
         case ACK_MODE:
             return 1;
         case SET_MODE:
@@ -102,6 +102,7 @@ inline int validate_packet_as(enum ad_packet_hdr hdr, ad_packet_t packet) {
         case REVOKE:
         case ACK_REVOKE:
         case ABOUT_TO_RELEASE:
+        case HEARTBEAT:
             return (packet.data >= BOTTLE_A && packet.data <= BOTTLE_E);
         default:
             return 0;
