@@ -1,0 +1,13 @@
+{
+    "logging": {
+        "dir": "/workspaces/obcpp/logs"
+    },
+    "network": {
+        "gcs": {
+            "port": 5010
+        },
+        "mavlink": {
+            "connect": "tcp://172.17.0.1:5760"
+        }
+    }
+}
