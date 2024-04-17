@@ -8,6 +8,7 @@
 #include "pathing/environment.hpp"
 #include "utilities/datatypes.hpp"
 #include "utilities/rng.hpp"
+#include "utilities/logging.hpp"
 
 RRTNode::RRTNode(const RRTPoint& point, double cost, double path_length,
                  const std::vector<XYZCoord> path)
@@ -363,7 +364,7 @@ void RRTTree::RRTStar(RRTNode* sample, double rewire_radius) {
 
 void RRTTree::setCurrentHead(RRTNode* goal) {
     if (goal == nullptr) {
-        std::cout << "FAILURE: Goal is not in the tree\n" << std::endl;
+        LOG_F(ERROR, "FAILURE: Goal is not in the tree");
         return;
     }
 
