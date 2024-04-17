@@ -16,7 +16,7 @@
 #include "ticks/path_gen.hpp"
 #include "ticks/path_validate.hpp"
 
-using namespace std::chrono_literals;
+using namespace std::chrono_literals; // NOLINT
 
 /*
  * This file defines all of the GCS handler functions for every route
