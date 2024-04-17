@@ -104,9 +104,9 @@ struct RRTConfig {
 };
 
 struct AirdropSearchConfig {
-    bool optimize; // whether to ignore the config below and run all ways.
-    bool vertical; // if true, will search in vertical lines
-    bool one_way; // if true, path returned will only be in 1 direction
+    bool optimize;  // whether to ignore the config below and run all ways.
+    bool vertical;  // if true, will search in vertical lines
+    bool one_way;   // if true, path returned will only be in 1 direction
 };
 
 #endif  // INCLUDE_UTILITIES_DATATYPES_HPP_

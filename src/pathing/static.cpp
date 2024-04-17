@@ -292,7 +292,7 @@ std::vector<XYZCoord> AirdropSearch::run() const {
         // generates the path connecting the q
         std::vector<XYZCoord> path;
         RRTPoint current = start;
-        for (const RRTPoint & waypoint: waypoints) {
+        for (const RRTPoint &waypoint : waypoints) {
             std::vector<XYZCoord> dubins_path = dubins.dubinsPath(current, waypoint);
             path.insert(path.end(), dubins_path.begin() + 1, dubins_path.end());
             current = waypoint;
@@ -315,17 +315,21 @@ std::vector<XYZCoord> AirdropSearch::run() const {
         {false, true}, {false, false}, {true, true}, {true, false}};
 
     std::vector<std::vector<RRTOption>> dubins_paths;
+    std::vector<int> lengths = {0, 0, 0, 0};
 
     // generates the endpoints for the lines (including headings)
-    for (auto &config : configs) {
+    for (int i = 0; i < configs.size(); i++) {
+        const auto &config = configs[i];
+
         std::vector<RRTPoint> waypoints =
             airspace.getAirdropWaypoints(scan_radius, config.first, config.second);
 
-        // generates the path connecting the q
+        // generates the path connecting the waypoints to each other
         std::vector<RRTOption> current_dubins_path;
         RRTPoint current = start;
-        for (const RRTPoint& waypoint : waypoints) {
+        for (const RRTPoint &waypoint : waypoints) {
             RRTOption dubins_path = dubins.bestOption(current, waypoint);
+            lengths[i] += dubins_path.length;
             current_dubins_path.push_back(dubins_path);
             current = waypoint;
         }
@@ -335,15 +339,10 @@ std::vector<XYZCoord> AirdropSearch::run() const {
 
     // finds the shortest path
     int shortest_path_index = 0;
-    double shortest_length = std::numeric_limits<double>::max();
-    for (int i = 0; i < dubins_paths.size(); i++) {
-        double length = 0;
-        for (auto &option : dubins_paths[i]) {
-            length += option.length;
-        }
-
-        if (length < shortest_length) {
-            shortest_length = length;
+    double shortest_length = lengths[0];
+    for (int i = 1; i < lengths.size(); i++) {
+        if (lengths[i] < shortest_length) {
+            shortest_length = lengths[i];
             shortest_path_index = i;
         }
     }
@@ -357,10 +356,9 @@ std::vector<XYZCoord> AirdropSearch::run() const {
         scan_radius, configs[shortest_path_index].first, configs[shortest_path_index].second);
 
     // initial path to the region is a special case, so we deal with it individually
-    std::vector<XYZCoord> init_path = dubins
-                       .generatePoints(current, waypoints[0],
-                                       dubins_paths[shortest_path_index][0].dubins_path,
-                                       dubins_paths[shortest_path_index][0].has_straight);
+    std::vector<XYZCoord> init_path = dubins.generatePoints(
+        current, waypoints[0], dubins_paths[shortest_path_index][0].dubins_path,
+        dubins_paths[shortest_path_index][0].has_straight);
     path.insert(path.end(), init_path.begin(), init_path.end());
 
     // go through all the waypoints

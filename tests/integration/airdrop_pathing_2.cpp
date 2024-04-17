@@ -225,11 +225,11 @@ const static char* mission_json_2024 = R"(
 
 /*
  * FILE OUTPUT LOCATIONS
- *  |- build
- *    |- pathing_output
- *      |- test_airdrop_pathing.jpg
- *      |- test_airdrop_pathing.gif (if enabled)
- *    |- airdop_search_coords.txt
+ *  |-- build
+ *      |-- pathing_output
+ *          |-- test_airdrop_pathing.jpg
+ *          |-- test_airdrop_pathing.gif (if enabled)
+ *      |-- airdop_search_coords.txt
  *
  *  This rough integration test is to test the airdrop search pathing algorithm
  */

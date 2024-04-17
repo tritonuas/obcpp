@@ -238,8 +238,8 @@ std::vector<XYZCoord> Environment::getAirdropEndpoints(int scan_radius, bool ver
 
     for (double coordinate = start; coordinate <= end; coordinate += iteration) {
         // finds where this x-coordinate intersects with the airdrop zone (always convex)
-        XYZCoord top(0,0,0);
-        XYZCoord bottom(0,0,0);
+        XYZCoord top(0, 0, 0);
+        XYZCoord bottom(0, 0, 0);
         if (vertical) {
             top = XYZCoord(coordinate, y_max, 0);
             bottom = XYZCoord(coordinate, y_min, 0);
@@ -248,25 +248,26 @@ std::vector<XYZCoord> Environment::getAirdropEndpoints(int scan_radius, bool ver
             bottom = XYZCoord(x_max, -coordinate, 0);
         }
 
-        std::vector<XYZCoord> intersections = findIntersections(airdrop_zone, top, bottom, vertical);
+        std::vector<XYZCoord> intersections =
+            findIntersections(airdrop_zone, top, bottom, vertical);
 
         if (vertical) {
             if (intersections[0].y < intersections[1].y) {
-        endpoints.push_back(intersections[1]);
-        endpoints.push_back(intersections[0]);
+                endpoints.push_back(intersections[1]);
+                endpoints.push_back(intersections[0]);
 
             } else {
-        endpoints.push_back(intersections[0]);
-        endpoints.push_back(intersections[1]);
+                endpoints.push_back(intersections[0]);
+                endpoints.push_back(intersections[1]);
             }
         } else {
             if (intersections[0].x < intersections[1].x) {
-        endpoints.push_back(intersections[0]);
-        endpoints.push_back(intersections[1]);
+                endpoints.push_back(intersections[0]);
+                endpoints.push_back(intersections[1]);
 
             } else {
-        endpoints.push_back(intersections[1]);
-        endpoints.push_back(intersections[0]);
+                endpoints.push_back(intersections[1]);
+                endpoints.push_back(intersections[0]);
             }
         }
     }
@@ -274,7 +275,8 @@ std::vector<XYZCoord> Environment::getAirdropEndpoints(int scan_radius, bool ver
     return endpoints;
 }
 
-std::vector<RRTPoint> Environment::getAirdropWaypoints(int scan_radius, bool one_way, bool vertical) const {
+std::vector<RRTPoint> Environment::getAirdropWaypoints(int scan_radius, bool one_way,
+                                                       bool vertical) const {
     std::vector<RRTPoint> waypoints;
     std::vector<XYZCoord> endpoints = getAirdropEndpoints(scan_radius, vertical);
     double angle = vertical ? 3.0 / 2.0 * M_PI : 0;
@@ -302,11 +304,9 @@ std::vector<RRTPoint> Environment::getAirdropWaypoints(int scan_radius, bool one
     return waypoints;
 }
 
-
-
 bool Environment::verticalRayIntersectsEdge(const XYZCoord& p1, const XYZCoord& p2,
-                                    const XYZCoord& rayStart, const XYZCoord& rayEnd,
-                                    XYZCoord& intersection) const {
+                                            const XYZCoord& rayStart, const XYZCoord& rayEnd,
+                                            XYZCoord& intersection) const {
     // if the x coordinate lines between the edge
     if ((p2.x <= rayStart.x && p1.x >= rayStart.x) || (p1.x <= rayStart.x && p2.x >= rayStart.x)) {
         double slope = (p2.y - p1.y) / (p2.x - p1.x);
@@ -318,8 +318,8 @@ bool Environment::verticalRayIntersectsEdge(const XYZCoord& p1, const XYZCoord& 
 }
 
 bool Environment::horizontalRayIntersectsEdge(const XYZCoord& p1, const XYZCoord& p2,
-                                    const XYZCoord& rayStart, const XYZCoord& rayEnd,
-                                    XYZCoord& intersection) const {
+                                              const XYZCoord& rayStart, const XYZCoord& rayEnd,
+                                              XYZCoord& intersection) const {
     // if the x coordinate lines between the edge
     if ((p2.y <= rayStart.y && p1.y >= rayStart.y) || (p1.y <= rayStart.y && p2.y >= rayStart.y)) {
         double inverse_slope = (p2.x - p1.x) / (p2.y - p1.y);
@@ -329,8 +329,6 @@ bool Environment::horizontalRayIntersectsEdge(const XYZCoord& p1, const XYZCoord
     }
     return false;
 }
-
-
 
 std::vector<XYZCoord> Environment::findIntersections(const Polygon& polygon,
                                                      const XYZCoord& rayStart,
@@ -345,9 +343,9 @@ std::vector<XYZCoord> Environment::findIntersections(const Polygon& polygon,
 
         // temporary variable to be changed if an intersection is found
         XYZCoord intersection(0, 0, 0);
-        bool found_intersection = vertical ? 
-        verticalRayIntersectsEdge(p1, p2, rayStart, rayEnd, intersection) 
-        : horizontalRayIntersectsEdge(p1, p2, rayStart, rayEnd, intersection);
+        bool found_intersection =
+            vertical ? verticalRayIntersectsEdge(p1, p2, rayStart, rayEnd, intersection)
+                     : horizontalRayIntersectsEdge(p1, p2, rayStart, rayEnd, intersection);
         if (found_intersection) {
             intersections.push_back(intersection);
         }
@@ -359,15 +357,20 @@ std::vector<XYZCoord> Environment::findIntersections(const Polygon& polygon,
 Polygon Environment::scale(double scale, const Polygon& source_polygon) const {
     Polygon scaled_polygon;
 
+    // square bounds of the polygon
     auto bounds = findBounds(source_polygon);
     auto [x_min, x_max] = bounds.first;
     auto [y_min, y_max] = bounds.second;
 
+    // finds the center of the polygon
     double x_center = (x_max + x_min) / 2;
     double y_center = (y_max + y_min) / 2;
 
     for (const XYZCoord& point : source_polygon) {
-        double scaled_x = (point.x - x_center) * scale + x_center; 
+        // shifts the  polygon to the center so scaling doesn't shift the centter (readability)
+        // scales the polygon
+        // retranslates the center to the original center
+        double scaled_x = (point.x - x_center) * scale + x_center;
         double scaled_y = (point.y - y_center) * scale + y_center;
 
         scaled_polygon.push_back(XYZCoord(scaled_x, scaled_y, 0));
@@ -382,11 +385,13 @@ std::pair<std::pair<double, double>, std::pair<double, double>> Environment::fin
         return std::make_pair(std::make_pair(0, 0), std::make_pair(0, 0));
     }
 
+    // initial values
     double min_x = region[0].x;
     double max_x = region[0].x;
     double min_y = region[0].y;
     double max_y = region[0].y;
 
+    // finds the min and max x and y values
     for (const XYZCoord& point : region) {
         min_x = std::min(min_x, point.x);
         max_x = std::max(max_x, point.x);

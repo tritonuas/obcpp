@@ -180,6 +180,9 @@ class AirdropSearch {
     /**
      * Generates a path of parallel lines to cover a given area
      *
+     * TODO - optimize dubins to not have to go to each line, rather search every other line then
+     * loop back
+     *
      * @return  ==> list of 2-vectors describing the path through the aridrop_zone
      */
     std::vector<XYZCoord> run() const;
