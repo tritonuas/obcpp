@@ -29,7 +29,7 @@ class MavlinkClient {
      * example:
      *   MavlinkClient("tcp://192.168.65.254:5762")
      */ 
-    explicit MavlinkClient(const char* link);
+    explicit MavlinkClient(std::string link);
 
     /*
      * BLOCKING. Continues to try to upload the mission based on the passed through MissionConfig

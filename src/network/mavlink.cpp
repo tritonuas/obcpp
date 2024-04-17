@@ -18,14 +18,14 @@
 #include "utilities/logging.hpp"
 #include "core/mission_state.hpp"
 
-MavlinkClient::MavlinkClient(const char* link) {
-    LOG_F(INFO, "Connecting to Mav at %s", link);
+MavlinkClient::MavlinkClient(std::string link) {
+    LOG_F(INFO, "Connecting to Mav at %s", link.c_str());
 
     while (true) {
         LOG_F(INFO, "Attempting to add mav connection...");
         const auto conn_result = this->mavsdk.add_any_connection(link);
         if (conn_result == mavsdk::ConnectionResult::Success) {
-            LOG_F(INFO, "Mavlink connection successfully established at %s", link);
+            LOG_F(INFO, "Mavlink connection successfully established at %s", link.c_str());
             break;
         }
 

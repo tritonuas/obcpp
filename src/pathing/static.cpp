@@ -279,7 +279,7 @@ AirdropSearch::AirdropSearch(const RRTPoint &start, double scan_radius, Polygon 
     : start(start),
       scan_radius(scan_radius),
       airspace(Environment(bounds, airdrop_zone, {}, obstacles)),
-      dubins(Dubins(std::min(scan_radius, TURNING_RADIUS), POINT_SEPARATION)) {}
+      dubins(Dubins(TURNING_RADIUS, POINT_SEPARATION)) {}
 
 std::vector<XYZCoord> AirdropSearch::run() const {
     // generates the endpoints for the lines (including headings)

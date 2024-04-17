@@ -1,5 +1,4 @@
 #include <chrono>
-#include <string>
 
 extern "C" {
     #include "network/airdrop_sockets.h"
@@ -8,14 +7,15 @@ extern "C" {
 #include "core/obc.hpp"
 #include "utilities/constants.hpp"
 #include "utilities/logging.hpp"
+#include "utilities/obc_config.hpp"
 
 
 int main(int argc, char* argv[]) {
-    // TODO: pull logging folder from config
-    initLogging("/workspaces/obcpp/logs", true, argc, argv);
+    OBCConfig config(argc, argv);
 
-    // In future, load configs, perhaps command line parameters, and pass
-    // into the obc object
-    OBC obc(DEFAULT_GCS_PORT);
+    // TODO: pull logging folder from config
+    initLogging(config.logging_dir, true, argc, argv);
+
+    OBC obc(config);
     obc.run();
 }

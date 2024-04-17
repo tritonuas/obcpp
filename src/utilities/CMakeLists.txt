@@ -4,6 +4,7 @@ SET(FILES
     common.cpp
     datatypes.cpp
     logging.cpp
+    obc_config.cpp
     rng.cpp
 )
 

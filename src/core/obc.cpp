@@ -12,18 +12,25 @@
 #include "network/mavlink.hpp"
 #include "network/airdrop_client.hpp"
 #include "utilities/logging.hpp"
+#include "utilities/obc_config.hpp"
 extern "C" {
     #include "network/airdrop_sockets.h"
 }
 
 // TODO: allow specifying config filename
-OBC::OBC(uint16_t gcs_port) {
+OBC::OBC(OBCConfig config) {
+    int gcs_port = config.network_gcs_port;
+
     this->state = std::make_shared<MissionState>();
     this->state->setTick(new MissionPrepTick(this->state));
 
     this->gcs_server = std::make_unique<GCSServer>(gcs_port, this->state);
 
-    this->connectMavThread = std::thread([this]{this->connectMavlink();});
+    // Don't need to look at these futures at all because the connect functions
+    // will set the global mission state themselves when connected, which everything
+    // else can check.
+    this->connectMavThread = std::thread([this, config]
+        {this->connectMavlink(config.network_mavlink_connect);});
     this->connectAirdropThread = std::thread([this]{this->connectAirdrop();});
 }
 
@@ -34,12 +41,11 @@ void OBC::run() {
     }
 }
 
-void OBC::connectMavlink() {
+void OBC::connectMavlink(std::string mavlink_url) {
     loguru::set_thread_name("mav connect");
 
     // TODO: pull mav ip from config file
-    std::shared_ptr<MavlinkClient> mav(new MavlinkClient("serial:///dev/ttyACM0:57600"));
-    // std::shared_ptr<MavlinkClient> mav(new MavlinkClient("tcp://172.17.0.1:5760"));
+    std::shared_ptr<MavlinkClient> mav(new MavlinkClient(mavlink_url));
     this->state->setMav(mav);
 }
 
