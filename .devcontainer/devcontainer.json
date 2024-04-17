@@ -6,9 +6,9 @@
 	// also: need to run obcpp with sudo or add tuas user to dialout group with
 	// 	   `sudo usermod -aG dialout tuas && newgrp && bash`
 	// "runArgs": ["--device=/dev/ttyACM0"], 
-	"runArgs": [
-		"--network=host"
-	],
+	// "runArgs": [
+	// 	"--network=host"
+	// ],
 
 	"customizations": {
 		"vscode": {

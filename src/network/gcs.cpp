@@ -48,6 +48,10 @@ GCSServer::~GCSServer() {
 }
 
 void GCSServer::_bindHandlers() {
+    this->server.Get("/", [](const httplib::Request& request, httplib::Response& response) {
+        response.status = 200;
+        response.set_content("Fort-nite", "text/plain");
+    });
     BIND_HANDLER(Get, connections);
     BIND_HANDLER(Get, tick);
     BIND_HANDLER(Get, mission);
