@@ -20,6 +20,7 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
         json configs = json::parse(configStream);
 
         // Set configs
+        this->logging_dir = configs["logging"]["dir"];
         this->network_mavlink_connect = configs["network"]["mavlink"]["connect"];
         this->network_gcs_port = configs["network"]["gcs"]["port"];
     } else {
@@ -29,11 +30,13 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
 
 void OBCConfig::makeDefault() {
     // Set configs
+    this->logging_dir = "/workspaces/obcpp/logs";
     this->network_mavlink_connect = "tcp://172.17.0.1:5760";
     this->network_gcs_port = 5010;
 
     // Create default configs
     json configs;
+    configs["logging"]["dir"] = this->logging_dir;
     configs["network"]["mavlink"]["connect"] = this->network_mavlink_connect;
     configs["network"]["gcs"]["port"] = this->network_gcs_port;
     std::ofstream configFile(configsPath + "default-config.json");

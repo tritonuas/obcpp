@@ -1,4 +1,7 @@
 {
+    "logging": {
+        "dir": "/workspaces/obcpp/logs"
+    },
     "network": {
         "mavlink": {
             "connect": "tcp://172.17.0.1:5760"

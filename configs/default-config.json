@@ -1,4 +1,7 @@
 {
+    "logging": {
+        "dir": "/workspaces/obcpp/logs"
+    },
     "network": {
         "gcs": {
             "port": 5010

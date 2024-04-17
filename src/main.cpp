@@ -14,7 +14,7 @@ int main(int argc, char* argv[]) {
     OBCConfig config(argc, argv);
 
     // TODO: pull logging folder from config
-    initLogging("/workspaces/obcpp/logs", true, argc, argv);
+    initLogging(config.logging_dir, true, argc, argv);
 
     OBC obc(config);
     obc.run();

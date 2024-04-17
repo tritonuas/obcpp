@@ -4,6 +4,8 @@
 #include <string>
 
 struct OBCConfig {
+    std::string logging_dir;
+
     std::string network_mavlink_connect;
     int network_gcs_port;
 
