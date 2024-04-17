@@ -37,7 +37,7 @@ using namespace std::chrono_literals; // NOLINT
  */
 
 DEF_GCS_HANDLE(Get, connections) {
-    LOG_REQUEST("GET", "/connections");
+    LOG_REQUEST_TRACE("GET", "/connections");
 
     std::list<std::pair<BottleDropIndex, std::chrono::milliseconds>> lost_airdrop_conns;
     if (state->getAirdrop() == nullptr) {
@@ -54,7 +54,7 @@ DEF_GCS_HANDLE(Get, connections) {
 
     if (state->getMav() == nullptr) {
         mav_conn.is_available = false;
-        mav_conn.signal_strength_percent = 0.1;
+        mav_conn.signal_strength_percent = 0.0;
     } else {
         mav_conn = state->getMav()->get_conn_status();
     }
@@ -74,7 +74,7 @@ DEF_GCS_HANDLE(Get, connections) {
     std::string output;
     google::protobuf::util::MessageToJsonString(info, &output);
 
-    LOG_RESPONSE(INFO, "Returning conn info", OK, output.c_str(), mime::json);
+    LOG_RESPONSE(TRACE, "Returning conn info", OK, output.c_str(), mime::json);
 }
 
 DEF_GCS_HANDLE(Get, tick) {

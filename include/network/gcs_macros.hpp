@@ -107,6 +107,11 @@
     if (request.has_header("User-Agent")) \
         LOG_F(INFO, "User-Agent: %s", request.get_header_value("User-Agent").c_str());
 
+#define LOG_REQUEST_TRACE(method, route) \
+    VLOG_SCOPE_F(TRACE, "%s %s", method, route); \
+    if (request.has_header("User-Agent")) \
+        VLOG_F(TRACE, "User-Agent: %s", request.get_header_value("User-Agent").c_str());
+
 // One of the LOG_RESPONSE logging functions should be used to both log and
 // set the HTTP response
 #define LOG_RESPONSE_5(LOG_LEVEL, msg, response_code, body, mime) \
