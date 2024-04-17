@@ -12,16 +12,14 @@
 #include "network/mavlink.hpp"
 #include "network/airdrop_client.hpp"
 #include "utilities/logging.hpp"
+#include "utilities/obc_config.hpp"
 extern "C" {
     #include "network/airdrop_sockets.h"
 }
 
 // TODO: allow specifying config filename
 OBC::OBC(OBCConfig config) {
-    const char* mavlink_url= config.network_mavlink_connect.c_str();
     int gcs_port = config.network_gcs_port;
-
-    LOG_F(INFO, mavlink_url);
 
     this->state = std::make_shared<MissionState>();
     this->state->setTick(new MissionPrepTick(this->state));
@@ -31,7 +29,8 @@ OBC::OBC(OBCConfig config) {
     // Don't need to look at these futures at all because the connect functions
     // will set the global mission state themselves when connected, which everything
     // else can check.
-    this->connectMavThread = std::thread([this, mavlink_url]{this->connectMavlink(mavlink_url);});
+    this->connectMavThread = std::thread([this, config]
+        {this->connectMavlink(config.network_mavlink_connect);});
     this->connectAirdropThread = std::thread([this]{this->connectAirdrop();});
 }
 
@@ -42,7 +41,7 @@ void OBC::run() {
     }
 }
 
-void OBC::connectMavlink(const char* mavlink_url) {
+void OBC::connectMavlink(std::string mavlink_url) {
     loguru::set_thread_name("mav connect");
 
     // TODO: pull mav ip from config file

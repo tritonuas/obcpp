@@ -9,7 +9,7 @@
 #include "core/mission_state.hpp"
 #include "network/gcs.hpp"
 #include "network/mavlink.hpp"
-#include "utilities/OBCConfig.hpp"
+#include "utilities/obc_config.hpp"
 
 /*
  *  The highest level class for the entire OBC
@@ -29,7 +29,7 @@ class OBC {
     std::thread connectMavThread;
     std::thread connectAirdropThread;
 
-    void connectMavlink(const char* mavlink_url);
+    void connectMavlink(std::string mavlink_url);
     void connectAirdrop();
 };
 
