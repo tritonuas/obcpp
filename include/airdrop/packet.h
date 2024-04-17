@@ -52,7 +52,7 @@ enum ad_packet_hdr {
     // Handshake to establish connection
     SET_MODE    = 1,
     ACK_MODE    = 2,
-    RESET_MODE  = 3, // TODO:
+    RESET_MODE  = 3,  // TODO:
 
     // Direct Drop
     DROP_NOW    = 100,
