@@ -33,7 +33,9 @@ GCSServer::GCSServer(uint16_t port, std::shared_ptr<MissionState> state)
     this->server_thread = std::thread([this, port]() {
         loguru::set_thread_name("gcs server");
         LOG_F(INFO, "Starting GCS HTTP server on port %d", port);
-        this->server.listen("0.0.0.0", port);
+        if (!this->server.listen("0.0.0.0", port)) {
+            LOG_F(ERROR, "ERROR: GCS server stopped!");
+        }
         LOG_F(INFO, "GCS Server stopped on port %d", port);
     });
 }
@@ -46,7 +48,7 @@ GCSServer::~GCSServer() {
 }
 
 void GCSServer::_bindHandlers() {
-    BIND_HANDLER(Get, connection);
+    BIND_HANDLER(Get, connections);
     BIND_HANDLER(Get, tick);
     BIND_HANDLER(Get, mission);
     BIND_HANDLER(Post, mission);

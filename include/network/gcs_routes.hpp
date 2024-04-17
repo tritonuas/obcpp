@@ -24,7 +24,7 @@
  * 
  * 200 OK: Successfully retrieved data
  */
-DEF_GCS_HANDLE(Get, connection);
+DEF_GCS_HANDLE(Get, connections);
 
 /*
  * GET /tick

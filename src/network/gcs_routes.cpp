@@ -36,8 +36,8 @@ using namespace std::chrono_literals;
  *        the LOG_RESPONSE macro will handle it for you.
  */
 
-DEF_GCS_HANDLE(Get, connection) {
-    LOG_REQUEST("GET", "/connection");
+DEF_GCS_HANDLE(Get, connections) {
+    LOG_REQUEST("GET", "/connections");
 
     auto lost_airdrop_conns = state->getAirdrop()->getLostConnections(3s);
     auto mav_conn = state->getMav()->get_conn_status();
