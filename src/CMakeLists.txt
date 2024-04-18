@@ -1,4 +1,12 @@
-add_library(obcpp_protos STATIC ${PROJECT_SOURCE_DIR}/build/gen_protos/protos/obc.pb.cc)
+add_library(obcpp_protos STATIC ${PROJECT_SOURCE_DIR}/build/gen_protos/protos/obc.pb.cc dummy.c)
+
+# target_precompile_headers(obcpp_protos PUBLIC [["stdafx.h"]])
+
+# # LOL
+# https://stackoverflow.com/questions/68735830/cmake-precompiled-headers-issue-with-mixed-c-c-project
+target_precompile_headers(obcpp_protos PUBLIC
+    "$<$<COMPILE_LANGUAGE:CXX>:\"stdafx.h\">"
+    "$<$<COMPILE_LANGUAGE:C>:<stddef.h$<ANGLE-R>>")
 
 add_subdirectory(camera)
 add_subdirectory(core)

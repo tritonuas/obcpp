@@ -34,7 +34,7 @@ target_link_libraries(${LIB_NAME} PRIVATE
     ${LIB_DEPS}
 )
 
-target_precompile_headers(${LIB_NAME} REUSE_FROM obcpp_pc_headers)
+target_precompile_headers(${LIB_NAME} REUSE_FROM obcpp_protos)
 set_unity_for_target(${LIB_NAME})
 
 target_add_protobuf(${LIB_NAME})
@@ -61,7 +61,7 @@ target_link_libraries(${LIB_NAME} PRIVATE
     ${LIB_DEPS}
 )
 
-target_precompile_headers(${LIB_NAME} REUSE_FROM obcpp_pc_headers)
+target_precompile_headers(${LIB_NAME} REUSE_FROM obcpp_protos)
 set_unity_for_target(${LIB_NAME})
 
 target_add_protobuf(${LIB_NAME})
