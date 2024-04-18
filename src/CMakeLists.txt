@@ -1,3 +1,5 @@
+add_library(obcpp_protos STATIC ${PROJECT_SOURCE_DIR}/build/gen_protos/protos/obc.pb.cc)
+
 add_subdirectory(camera)
 add_subdirectory(core)
 add_subdirectory(cv)
@@ -8,6 +10,7 @@ add_subdirectory(utilities)
 
 add_library(obcpp_lib INTERFACE)
 target_link_libraries(obcpp_lib INTERFACE
+    obcpp_protos
     obcpp_camera
     obcpp_core
     obcpp_cv
@@ -20,6 +23,7 @@ target_link_libraries(obcpp_lib INTERFACE
 # for use in unit tests
 add_library(obcpp_lib_mock INTERFACE)
 target_link_libraries(obcpp_lib_mock INTERFACE
+    obcpp_protos
     obcpp_camera
     obcpp_core
     obcpp_cv
