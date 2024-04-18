@@ -8,19 +8,9 @@ SET(FILES
     rng.cpp
 )
 
-SET(LIB_DEPS
-    obcpp_protos
-)
-
-add_library(${LIB_NAME} STATIC
+add_library(${LIB_NAME} STATIC ${PROJECT_SOURCE_DIR}/build/gen_protos/protos/obc.pb.cc
     ${FILES}
 )
-
-target_link_libraries(${LIB_NAME} PRIVATE
-    ${LIB_DEPS}
-)
-
-set_unity_for_target(${LIB_NAME})
 
 target_add_protobuf(${LIB_NAME})
 target_add_torch(${LIB_NAME})
