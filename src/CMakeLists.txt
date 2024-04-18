@@ -1,8 +1,11 @@
-add_library(obcpp_protos STATIC ${PROJECT_SOURCE_DIR}/build/gen_protos/protos/obc.pb.cc dummy.c)
+# DONT REMOVE THE DUMMY FILE!!! IT WILL SEEM LIKE IT IS OKAY BUT IT WILL BREAK THE NEXT TIME
+# YOU RECLONE OR RM -RF THE BUILD DIRECTORY!!! DON'T BE A DUMMY!
+add_library(obcpp_protos STATIC 
+    ${PROJECT_SOURCE_DIR}/build/gen_protos/protos/obc.pb.cc 
+    dummy.c
+)
 
-# target_precompile_headers(obcpp_protos PUBLIC [["stdafx.h"]])
-
-# # LOL
+# LOL
 # https://stackoverflow.com/questions/68735830/cmake-precompiled-headers-issue-with-mixed-c-c-project
 target_precompile_headers(obcpp_protos PUBLIC
     "$<$<COMPILE_LANGUAGE:CXX>:\"stdafx.h\">"
