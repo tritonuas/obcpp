@@ -99,10 +99,14 @@ add_definitions( -DMAGICKCORE_HDRI_ENABLE=0 )
 
 find_package(ImageMagick COMPONENTS Magick++ REQUIRED)
 # =============================
+# Build speed up 
 
+# function to enable unity build for a target
 function(set_unity_for_target target_name)
   set_target_properties(${target_name} PROPERTIES UNITY_BUILD ON UNITY_BUILD_MODE BATCH UNITY_BUILD_BATCH_SIZE 16 UNITY_BUILD_UNIQUE_ID "MY_UNITY_ID")
 endfunction()
+
+add_subdirectory(include)
 
 # =============================
 # obcpp library & executable
