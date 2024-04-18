@@ -21,10 +21,11 @@
 
 class RRT {
  public:
-    RRT(RRTPoint start, std::vector<XYZCoord> goals, int iterations_per_waypoint,
-        double search_radius, double rewire_radius, Polygon bounds,
+    RRT(RRTPoint start, std::vector<XYZCoord> goals, double search_radius, Polygon bounds,
         std::vector<Polygon> obstacles = {},
-        RRTConfig config = {.optimize = false,
+        RRTConfig config = {.iterations_per_waypoint = ITERATIONS_PER_WAYPOINT,
+                            .rewire_radius = REWIRE_RADIUS,
+                            .optimize = false,
                             .point_fetch_method = POINT_FETCH_METHODS::NONE,
                             .allowed_to_skip_waypoints = false});
 

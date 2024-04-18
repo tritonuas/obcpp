@@ -18,12 +18,11 @@
 #include "utilities/datatypes.hpp"
 #include "utilities/rng.hpp"
 
-RRT::RRT(RRTPoint start, std::vector<XYZCoord> goals, int iterations_per_waypoint,
-         double search_radius, double rewire_radius, Polygon bounds, std::vector<Polygon> obstacles,
-         RRTConfig config)
-    : iterations_per_waypoint(iterations_per_waypoint),
+RRT::RRT(RRTPoint start, std::vector<XYZCoord> goals, double search_radius, Polygon bounds,
+         std::vector<Polygon> obstacles, RRTConfig config)
+    : iterations_per_waypoint(config.iterations_per_waypoint),
       search_radius(search_radius),
-      rewire_radius(rewire_radius),
+      rewire_radius(config.rewire_radius),
       tree(start, Environment(bounds, {}, goals, obstacles),
            Dubins(TURNING_RADIUS, POINT_SEPARATION)),
       config(config) {}
@@ -238,42 +237,6 @@ RRTNode *RRT::parseOptions(const std::vector<std::pair<RRTNode *, RRTOption>> &o
 
 void RRT::optimizeTree(RRTNode *sample) { tree.RRTStar(sample, rewire_radius); }
 
-std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
-    // first waypoint is start
-    RRTPoint start(state->config.getWaypoints().front(), 0);
-
-    // the other waypoitns is the goals
-    if (state->config.getWaypoints().size() < 2) {
-        loguru::set_thread_name("Static Pathing");
-        LOG_F(ERROR, "Not enough waypoints to generate a path, required 2+, existing waypoints: %s",
-              std::to_string(state->config.getWaypoints().size()).c_str());
-        return {};
-    }
-
-    std::vector<XYZCoord> goals;
-
-    // Copy elements (reference) from the second element to the last element of source into
-    // destination all other methods of copying over crash???
-    for (int i = 1; i < state->config.getWaypoints().size(); i++) {
-        goals.emplace_back(state->config.getWaypoints()[i]);
-    }
-
-    RRT rrt(start, goals, ITERATIONS_PER_WAYPOINT, SEARCH_RADIUS, REWIRE_RADIUS,
-            state->config.getFlightBoundary(), {}, RRTConfig{true, POINT_FETCH_METHODS::NONE});
-
-    rrt.run();
-
-    std::vector<XYZCoord> path = rrt.getPointsToGoal();
-    std::vector<GPSCoord> output_coords;
-    int count = 0;
-
-    for (XYZCoord wpt : path) {
-        output_coords.push_back(state->getCartesianConverter().value().toLatLng(wpt));
-    }
-
-    return output_coords;
-}
-
 AirdropSearch::AirdropSearch(const RRTPoint &start, double scan_radius, Polygon bounds,
                              Polygon airdrop_zone, std::vector<Polygon> obstacles,
                              AirdropSearchConfig config)
@@ -370,4 +333,40 @@ std::vector<XYZCoord> AirdropSearch::run() const {
     }
 
     return path;
+}
+
+std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
+    // first waypoint is start
+    RRTPoint start(state->config.getWaypoints().front(), 0);
+
+    // the other waypoitns is the goals
+    if (state->config.getWaypoints().size() < 2) {
+        loguru::set_thread_name("Static Pathing");
+        LOG_F(ERROR, "Not enough waypoints to generate a path, required 2+, existing waypoints: %s",
+              std::to_string(state->config.getWaypoints().size()).c_str());
+        return {};
+    }
+
+    std::vector<XYZCoord> goals;
+
+    // Copy elements (reference) from the second element to the last element of source into
+    // destination all other methods of copying over crash???
+    for (int i = 1; i < state->config.getWaypoints().size(); i++) {
+        goals.emplace_back(state->config.getWaypoints()[i]);
+    }
+
+    RRT rrt(start, goals, SEARCH_RADIUS, state->config.getFlightBoundary(), {},
+            RRTConfig{ITERATIONS_PER_WAYPOINT, REWIRE_RADIUS, true, POINT_FETCH_METHODS::NONE});
+
+    rrt.run();
+
+    std::vector<XYZCoord> path = rrt.getPointsToGoal();
+    std::vector<GPSCoord> output_coords;
+    int count = 0;
+
+    for (XYZCoord wpt : path) {
+        output_coords.push_back(state->getCartesianConverter().value().toLatLng(wpt));
+    }
+
+    return output_coords;
 }
