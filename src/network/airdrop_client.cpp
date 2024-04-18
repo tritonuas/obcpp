@@ -55,6 +55,8 @@ void AirdropClient::_establishConnection() {
     LOG_F(INFO, "Payload connection established in %s mode",
         (this->mode == DIRECT_DROP) ? "Direct" : "Indirect");
 
+    send_ad_packet(this->socket, make_ad_packet(ad_packet_hdr::ACK_MODE, *this->mode));
+
     this->worker_future = std::async(std::launch::async, &AirdropClient::_receiveWorker, this);
 }
 
@@ -173,6 +175,12 @@ void AirdropClient::_receiveWorker() {
             continue;  // heartbeat, so we should not put it in the queue
         }
 
+        if (packet.hdr == SET_MODE) {
+            send_ad_packet(this->socket, make_ad_packet(ad_packet_hdr::ACK_MODE, *this->mode));
+            LOG_F(INFO, "Received extra SET_MODE, reacking");
+            continue;
+        }
+
         Lock lock(this->recv_mut);
         this->recv_queue.emplace(packet);
     }
@@ -187,6 +195,8 @@ bool AirdropClient::_parseHeartbeats(ad_packet_t packet) {
     // [1, 5] and corresponds to a bottle index, so we can
     // subtract 1 to get the index into the lastHeartbeat array.
     this->last_heartbeat[packet.data - 1] = getUnixTime_ms();
+
+    LOG_F(INFO, "Packet heartbeat from %d", packet.data);
 
     return true;
 }
