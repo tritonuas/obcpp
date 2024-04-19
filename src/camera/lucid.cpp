@@ -1,47 +1,23 @@
-// #include "camera/lucid.hpp"
-
-// #include <chrono>
-// #include <thread>
-// #include <optional>
-
-// #include <loguru.hpp>
-
-// #include "utilities/locks.hpp"
-
-// LucidCamera::LucidCamera() {
-
-// }
-
-// LucidCamera::~LucidCamera() {
-
-// }
-
-// void LucidCamera::connect() {
-//     WriteLock lock(this->arenaSystemLock)
-//     pSystem = Arena::OpenSystem();
-// }
-
-// bool LucidCamera::isConnected();
-
-// void LucidCamera::startTakingPictures(std::chrono::seconds interval) override;
-// void LucidCamera::stopTakingPictures() override;
-
-// std::optional<ImageData> LucidCamera::getLatestImage() override;
-// std::queue<ImageData> LucidCamera::getAllImages() override;
-#define ARENA_SDK_INSTALLED
-#ifdef ARENA_SDK_INSTALLED
+// #define ARENA_SDK_INSTALLED
+// #ifdef ARENA_SDK_INSTALLED
 
 #include "camera/interface.hpp"
 #include "camera/lucid.hpp"
 #include <nlohmann/json.hpp>
+#include "utilities/locks.hpp"
+
+#include <chrono>
+#include <thread>
+#include <optional>
 #include <string>
 #include <unordered_map>
-#include <optional>
+
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core.hpp>
-using json = nlohmann::json;
+#include <loguru.hpp>
 
+using json = nlohmann::json;
 
 LucidCameraConfig::LucidCameraConfig(json config) {
     this->configJson = config;
@@ -77,7 +53,7 @@ json LucidCameraConfig::getConfigField(std::string name)
     return returnJ;
 }
 
-ImageData * LucidCamera::imgConvert(Arena::IImage * pImage)
+ImageData LucidCamera::imgConvert(Arena::IImage * pImage)
 {
     Arena::IImage *pConverted = Arena::ImageFactory::Convert(
         pImage,
@@ -88,9 +64,9 @@ ImageData * LucidCamera::imgConvert(Arena::IImage * pImage)
     std::string path = "";
 
     cv::Mat mat = cv::Mat(static_cast<int>(pConverted->GetHeight()), static_cast<int>(pConverted->GetWidth()), CV_8UC3, data);
+    cv::Mat matCopy = mat.clone();
 
-    ImageData * img = new ImageData(name, path, mat);
-    return img;
+    return ImageData(name, path, matCopy);
 }
 
 LucidCamera::LucidCamera(LucidCameraConfig *config)
@@ -100,36 +76,34 @@ LucidCamera::LucidCamera(LucidCameraConfig *config)
     } else {
         this->config = nullptr;
     }
-    this->system = Arena::OpenSystem();
-    this->device = nullptr;
-    this->recentPicture = nullptr;
-
 }
 
-int LucidCamera::connect() 
+
+void LucidCamera::connect()
 {
     try
     {
-        this->system->UpdateDevices(1000);
+        WriteLock systemLock(this->arenaSystemLock);
+        this->system->UpdateDevices(this->connectionTimeoutMs);
+
         std::vector<Arena::DeviceInfo> deviceInfos = this->system->GetDevices();
         if (deviceInfos.size() == 0)
         {
-            std::cout << "\nNo camera connected\nPress enter to complete\n";
+            LOG_F(ERROR, "\nNo camera connected\nPress enter to complete\n");
             std::getchar();
-            return -1;
+            throw std::exception();
         }
+        WriteLock deviceLock(this->arenaDeviceLock);
         this->device = this->system->CreateDevice(deviceInfos[0]);
 
-        // run configuration
-        std::cout << "Trigger configuration start\n\n";
-        configureTrigger();
-        std::cout << "\nTrigger configured finished\n";
+        // // run configuration
+        // std::cout << "Trigger configuration start\n\n";
+        // configureTrigger();
+        // std::cout << "\nTrigger configured finished\n";
 
-        std::cout << "Verifying connection\n\n";
-
-        if (!verifyConnection()) 
+        if (!isConnected()) 
         {
-            std::cout << "Connection fail!\n\n";
+            LOG_F(ERROR,"Lucid Camera Connection fail!\n");
             throw std::exception();
         }
 
@@ -139,98 +113,142 @@ int LucidCamera::connect()
     }
     catch (GenICam::GenericException &ge)
     {
-        std::cout << "\nGenICam exception thrown: " << ge.what() << "\n";
-        return -1;
+        LOG_F(ERROR, "GenICam exception thrown: %s \n", ge.what());
+        throw ge;
     }
     catch (std::exception &ex)
     {
-        std::cout << "Standard exception thrown: " << ex.what() << "\n";
-        return -1;
+        LOG_F(ERROR, "Standard exception thrown: %s \n", ge.what());
+        throw ex;
     }
     catch (...)
     {
-        std::cout << "Unexpected exception thrown\n";
-        return -1;
+        LOG_F(ERROR, "Unexpected exception thrown: %s \n", ge.what());
+        throw std::exception();
     }
 }
 
-void LucidCamera::configureTrigger() 
-{
-    json configJson = config->getConfig();
-
-    for (auto it = configJson.begin(); it != configJson.end(); it++)
-    {
-        std::string key = it.key();
-
-
-        if (it.value().type() == json::value_t::number_unsigned)
-        {
-            int value = it.value();
-            Arena::SetNodeValue<int64_t>(
-                this->device->GetNodeMap(),
-                key.c_str(),
-                value);
-        }
-        else if (it.value().type() == json::value_t::boolean)
-        {
-            bool value = it.value();
-            Arena::SetNodeValue<bool>(
-                this->device->GetNodeMap(),
-                key.c_str(),
-                value);
-        }
-        else if (it.value().type() == json::value_t::number_float)
-        {
-
-            float value_float = it.value();
-            double value = value_float;
-
-            Arena::SetNodeValue<double>(
-                this->device->GetNodeMap(),
-                key.c_str(),
-                value);
-        }
-        else if (it.value().type() == json::value_t::string)
-        {
-            std::string value = it.value();
-            Arena::SetNodeValue<GenICam::gcstring>(
-                this->device->GetNodeMap(),
-                key.c_str(),
-                value.c_str());
-        } else {
-            std::cout << "Unkown type of varible. Skipping " << key << std::endl;
-        }
+void LucidCamera::startTakingPictures(std::chrono::seconds interval) {
+    this->isTakingPictures = true;
+    try {
+        this->captureThread = std::thread(&LucidCamera::captureEvery, this, interval);
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
     }
 }
+void LucidCamera::stopTakingPictures() {
+    if (!this->isTakingPictures) {
+        return;
+    }
 
-bool LucidCamera::verifyConnection()
-{
+    this->isTakingPictures = false;
+
+    this->captureThread.join();
+};
+
+std::optional<ImageData> LucidCamera::getLatestImage() {
+    ReadLock lock(this->imageQueueLock);
+    ImageData lastImage = this->imageQueue.front();
+    this->imageQueue.pop();
+    return lastImage;
+};
+
+std::queue<ImageData> LucidCamera::getAllImages() {
+    ReadLock lock(this->imageQueueLock);
+    std::queue<ImageData> outputQueue = this->imageQueue; 
+    this->imageQueue = std::queue<ImageData>();
+    return outputQueue;
+}
+
+// void LucidCamera::configureTrigger() 
+// {
+//     json configJson = config->getConfig();
+
+//     for (auto it = configJson.begin(); it != configJson.end(); it++)
+//     {
+//         std::string key = it.key();
+
+
+//         if (it.value().type() == json::value_t::number_unsigned)
+//         {
+//             int value = it.value();
+//             Arena::SetNodeValue<int64_t>(
+//                 this->device->GetNodeMap(),
+//                 key.c_str(),
+//                 value);
+//         }
+//         else if (it.value().type() == json::value_t::boolean)
+//         {
+//             bool value = it.value();
+//             Arena::SetNodeValue<bool>(
+//                 this->device->GetNodeMap(),
+//                 key.c_str(),
+//                 value);
+//         }
+//         else if (it.value().type() == json::value_t::number_float)
+//         {
+
+//             float value_float = it.value();
+//             double value = value_float;
+
+//             Arena::SetNodeValue<double>(
+//                 this->device->GetNodeMap(),
+//                 key.c_str(),
+//                 value);
+//         }
+//         else if (it.value().type() == json::value_t::string)
+//         {
+//             std::string value = it.value();
+//             Arena::SetNodeValue<GenICam::gcstring>(
+//                 this->device->GetNodeMap(),
+//                 key.c_str(),
+//                 value.c_str());
+//         } else {
+//             std::cout << "Unkown type of varible. Skipping " << key << std::endl;
+//         }
+//     }
+// }
+
+bool LucidCamera::isConnected() {
+    ReadLock lock(this->arenaDeviceLock);
     return this->device->IsConnected();
 }
 
-ImageData * LucidCamera::takePicture(int timeout)
-{
-    device->StartStream();
+void LucidCamera::captureEvery(std::chrono::seconds interval) {
+    this->arenaDeviceLock.lock();
+    this->device->StartStream();
+    this->arenaDeviceLock.unlock();
+
+    while (this->isTakingPictures) {
+        LOG_F(INFO, "Taking picture with LUCID camera\n");
+        ImageData newImage = this->takePicture(this->takePictureTimeoutSec);
+
+        WriteLock lock(this->imageQueueLock);
+        this->imageQueue.push(newImage);
+        lock.unlock();
+
+        std::this_thread::sleep_for(interval);
+    }
+
+    this->arenaDeviceLock.lock();
+    this->device->StopStream();
+    this->arenaDeviceLock.unlock();
+}
+
+ImageData LucidCamera::takePicture(int timeout) {
+    WriteLock lock(this->arenaDeviceLock);
     Arena::IImage* pImage = device->GetImage(timeout);
 
-    if (pImage->IsIncomplete())
-    {
-        std::cout << "WARNING! Recivied Image is incomplete" << std::endl;
-        return nullptr;
+    ImageData returnImg = imgConvert(pImage);
+
+    if (pImage->IsIncomplete()) {
+        LOG_F(ERROR, "Recivied Image is incomplete\n");
     }
 
     device->RequeueBuffer(pImage);
     device->StopStream();
 
-    ImageData * returnImg = imgConvert(pImage);
-    this->recentPicture = returnImg;
-
     return returnImg;
 }
 
-ImageData *  LucidCamera::getLastPicture()
-{
-    return this->recentPicture;
-}
-
-#endif // ARENA_SDK_INSTALLED
+// #endif // ARENA_SDK_INSTALLED

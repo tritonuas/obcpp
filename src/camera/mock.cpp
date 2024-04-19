@@ -23,12 +23,9 @@ void MockCamera::startTakingPictures(std::chrono::seconds interval) {
     this->isTakingPictures = true;
     try {
         this->captureThread = std::thread(&MockCamera::captureEvery, this, interval);
-        // this->captureThread.detach();
-        // captureThread = std::thread([this, interval] { this->captureEvery(interval); });
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
     }
-    return;
 }
 
 void MockCamera::stopTakingPictures() {
@@ -36,9 +33,9 @@ void MockCamera::stopTakingPictures() {
         return;
     }
 
-    this->captureThread.join();
+    this->isTakingPictures = false;
 
-    return;
+    this->captureThread.join();
 }
 
 std::optional<ImageData> MockCamera::getLatestImage() {

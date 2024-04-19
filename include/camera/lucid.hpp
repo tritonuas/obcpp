@@ -1,16 +1,37 @@
-<<<<<<< HEAD
 #ifndef INCLUDE_CAMERA_LUCID_HPP_
 #define INCLUDE_CAMERA_LUCID_HPP_
 
 // #ifdef ARENA_SDK_INSTALLED
 
+
+#include "camera/interface.hpp"
+#include <nlohmann/json.hpp>
+#include "ArenaApi.h"
+
+#include <string>
 #include <memory>
+#include <optional>
+#include <shared_mutex>
+#include <thread>
 
 #include "camera/interface.hpp"
 
+using json = nlohmann::json;
+
+class LucidCameraConfig {
+    private:
+        json configJson;
+    public:
+        LucidCameraConfig();
+
+        LucidCameraConfig(json config);
+        void updateConfig(json newSetting);
+
+};
+
 class LucidCamera : public CameraInterface {
  public:
-    LucidCamera();
+    LucidCamera(LucidCameraConfig* config);
     ~LucidCamera();
 
     void connect();
@@ -22,93 +43,45 @@ class LucidCamera : public CameraInterface {
     std::optional<ImageData> getLatestImage() override;
     std::queue<ImageData> getAllImages() override;
 
+    void updateConfig(json newSetting);
+
+    // void updateConfigField(std::string key, std::string value) override;
+
+    // void updateConfigField(std::string key, int value) override;
+
+    // void updateConfigField(std::string key, bool value) override;
+
+    json getConfig();
+
+    json getConfigField(std::string name);
+
  private:
+   ImageData imgConvert(Arena::IImage * pImage); 
+   ImageData takePicture(int timeout);
+   void captureEvery(std::chrono::seconds interval);
+
    static std::shared_mutex arenaSystemLock;
-   static Arena::ISystem* pSystem;
+   static Arena::ISystem* system;
 
-
-   std::atomic_bool isConnected;
+   static std::shared_mutex arenaDeviceLock;
+   static Arena::IDevice* device;
 
    std::atomic_bool isTakingPictures;
 
-   void captureEvery(std::chrono::seconds interval);
 
    std::queue<ImageData> imageQueue;
    std::shared_mutex imageQueueLock;
 
    std::thread captureThread;
 
-   ImageData takePicture();
-    std::shared_mutex imageQueueMut;
+   std::shared_mutex imageQueueMut;
 
-=======
-#ifndef CAMERA_LUCID_HPP_
-#define CAMERA_LUCID_HPP_
-#define ARENA_SDK_INSTALLED
-#ifdef ARENA_SDK_INSTALLED
+   json configJson;
 
-#include "camera/interface.hpp"
-#include <nlohmann/json.hpp>
-#include <string>
-#include <optional>
-#include "ArenaApi.h"
-using json = nlohmann::json;
-
-class LucidCameraConfig {
-    private:
-        json configJson;
-    public:
-        LucidCameraConfig();
-
-        LucidCameraConfig(json config);
-
-        void updateConfig(json newSetting);
-
-        // void updateConfigField(std::string key, std::string value) override;
-
-        // void updateConfigField(std::string key, int value) override;
-
-        // void updateConfigField(std::string key, bool value) override;
-
-        json getConfig();
-
-        json getConfigField(std::string name);
+   const int connectionTimeoutMs = 1000;
+   const int takePictureTimeoutSec = 1;
 };
 
-class LucidCamera {
-    private:
-        LucidCameraConfig * config;
-        ImageData* recentPicture; // might need to move it to public
-        Arena::IDevice * device;
-        Arena::ISystem * system;
-        ImageData * imgConvert(Arena::IImage * pImage); 
-        void configureTrigger();
-
-    public:
-        LucidCamera(LucidCameraConfig * config);
-
-        int connect();
-
-        bool verifyConnection();
-
-        ImageData *  takePicture(int timeout);
-
-        ImageData * getLastPicture();
-
-        // bool takePictureForSeconds(int sec) override;
-
-        // void startTakingPictures(double intervalSec) override;
-
-        // bool isDoneTakingPictures() override;
-
-        // CameraConfiguration getConfig() override;
-
-        // void updateConfig(CameraConfiguration newConfig) override;
-
-        // void updateConfig(json newJsonConfig) override;
-
->>>>>>> origin/feat/lucid-config-interface
-};
 
 // #endif  // ARENA_SDK_INSTALLED
 

@@ -27,7 +27,7 @@ struct ImageTelemetry {
     double yaw;
     double pitch;
     double roll;
-}
+};
 
 template <typename T> 
 class CameraConfigMetadata {

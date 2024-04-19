@@ -7,11 +7,7 @@
 using namespace std::chrono_literals;
 
 int main (int argc, char *argv[]) {
-    CameraConfiguration config({
-       {"SampleConfigKey", 100},
-       {"ExposureTime", 1000},
-    });
-    LucidCameracamera(config);
+    LucidCamera camera(nullptr);
 
     camera.connect();
 

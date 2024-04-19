@@ -194,6 +194,7 @@ target_link_libraries(airdrop_pathing_2 PRIVATE -Wl,--copy-dt-needed-entries ${I
 add_executable(camera_lucid "camera_lucid.cpp")
 target_link_libraries(camera_lucid PRIVATE obcpp_lib)
 target_include_directories(camera_lucid PRIVATE ${INCLUDE_DIRECTORY})
+target_add_arena(camera_lucid)
 target_add_protobuf(camera_lucid)
 target_add_torch(camera_lucid)
 target_add_torchvision(camera_lucid)

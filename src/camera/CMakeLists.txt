@@ -3,6 +3,7 @@ set(LIB_NAME obcpp_camera)
 set(FILES
     interface.cpp
     mock.cpp
+    lucid.cpp
 )
 
 SET(LIB_DEPS
@@ -22,7 +23,7 @@ set_unity_for_target(${LIB_NAME})
 
 target_add_protobuf(${LIB_NAME})
 target_add_torch(${LIB_NAME})
-# target_add_arena(${LIB_NAME}) # Tyler: currently broken, so we had to comment this out
+target_add_arena(${LIB_NAME}) # Tyler: currently broken, so we had to comment this out
 target_add_torchvision(${LIB_NAME})
 target_add_json(${LIB_NAME})
 target_add_opencv(${LIB_NAME})
