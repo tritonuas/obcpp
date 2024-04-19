@@ -87,15 +87,30 @@ RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 10
 RUN update-alternatives --set gcc /usr/bin/gcc-10
 RUN update-alternatives --set g++ /usr/bin/g++-10
 
+RUN pip3 install gdown
+ENV PATH="${PATH}:${HOME}/.local/bin"
+
+ARG ARENA_INSTALL_DIR=/arena-tmp
+ARG ARENA_TAR_PATH="${ARENA_INSTALL_DIR}ArenaSDK_Linux.tar.gz"
+ARG ARENA_EXTRACTED_PATH="${ARENA_INSTALL_DIR}/ArenaSDK_Linux_ARM64"
+WORKDIR ${ARENA_INSTALL_DIR}
+RUN gdown 1VtBji-cWfetM5nXZwt55JuHPWPGahQOH -O ${ARENA_TAR_PATH}
+RUN tar -xvzf ${ARENA_TAR_PATH}
+WORKDIR ${ARENA_EXTRACTED_PATH}
+RUN sh Arena_SDK_ARM64.conf
+
+RUN apt-get update && apt-get install ninja-build
+
 WORKDIR /obcpp
 COPY . .
 
+RUN git submodule update --init
 RUN rm -rf /obcpp/build
 WORKDIR /obcpp/build
 ENV CMAKE_PREFIX_PATH="/usr/local/lib/python3.8/dist-packages/torch/share/cmake/Torch;/usr/local/share/cmake/TorchVision"
-RUN GITHUB_ACTIONS=true cmake -DCMAKE_PREFIX_PATH="/usr/local/lib/python3.8/dist-packages/torch/share/cmake/Torch;/usr/local/share/cmake/TorchVision" -DCMAKE_MODULE_PATH="/usr/local/share/cmake/TorchVision" -DCMAKE_BUILD_TYPE="Release" ..
+RUN GITHUB_ACTIONS=true cmake -DCMAKE_PREFIX_PATH="/usr/local/lib/python3.8/dist-packages/torch/share/cmake/Torch;/usr/local/share/cmake/TorchVision" -DCMAKE_MODULE_PATH="/usr/local/share/cmake/TorchVision" -DCMAKE_BUILD_TYPE="Release" -DCMAKE_JOB_POOLS="j=2" ..
 
-RUN make obcpp cuda_check load_torchvision_model VERBOSE=1
+RUN ninja obcpp cuda_check load_torchvision_model
 
 # login as non-root user
 # USER $USERNAME

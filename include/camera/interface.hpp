@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <optional>
 
 #include <nlohmann/json.hpp>
 #include <opencv2/opencv.hpp>
@@ -54,67 +55,33 @@ class ImageData {
 class CameraConfiguration {
  private:
     nlohmann::json configJson;
-
  public:
     explicit CameraConfiguration(nlohmann::json config);
 
-    void updateConfig(nlohmann::json newSetting);
-
-    // void updateConfigField(std::string key, T value);
-
     nlohmann::json getConfig();
-
-    nlohmann::json getConfigField();
+   //  void updateConfigField(std::string key, T value);
 };
 
 class CameraInterface {
  private:
     CameraConfiguration config;
-    std::unique_ptr<ImageData> recentPicture;  // might need to move it to public
-    bool doneTakingPicture;                    // overengineering time
-    std::string uploadPath;
-    // Interpreter interp
-    // TODO: SERVER CONNECTION HERE ?
-
-    void imgConvert();
 
  public:
     explicit CameraInterface(CameraConfiguration config);
-
     virtual ~CameraInterface() = default;
 
     virtual void connect() = 0;
+    virtual bool isConnected() = 0;
 
-    virtual bool verifyConnection() = 0;
+    virtual void startTakingPictures(std::chrono::seconds interval) = 0;
+    virtual void stopTakingPictures() = 0;
 
-    virtual void takePicture() = 0;
-
-    virtual ImageData getLastPicture() = 0;
-
-    virtual bool takePictureForSeconds(int sec) = 0;
-
-    virtual void startTakingPictures(double intervalSec) = 0;
-
-    virtual bool isDoneTakingPictures() = 0;
+    virtual std::optional<ImageData> getLatestImage() = 0;
+    virtual std::queue<ImageData> getAllImages() = 0;
 
     CameraConfiguration getConfig();
-
     void updateConfig(CameraConfiguration newConfig);
-
     void updateConfig(nlohmann::json newJsonConfig);
-
-    std::string getUploadPath();
-
-    void setUploadPath(std::string path);
-
-    void uploadPicture(ImageData img);
-
-    std::vector<ImageData> listPicturesFromUploadPath();
-
-    ImageData getImageByName(std::string name);
-
-    // server connection methods here
-    // virtual methods for all possible camera actions
 };
 
 #endif  // INCLUDE_CAMERA_INTERFACE_HPP_

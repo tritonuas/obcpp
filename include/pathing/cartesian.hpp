@@ -5,6 +5,7 @@
 #include <tuple>
 #include <algorithm>
 #include <limits>
+#include "math.h"
 
 #include "protos/obc.pb.h"
 #include "utilities/datatypes.hpp"
@@ -34,13 +35,13 @@ class CartesianConverter {
         this->center.set_longitude((min_lng + max_lng) / 2.0);
 
         this->latlng_0.set_altitude(this->center.altitude());
-        this->latlng_0.set_latitude(this->center.latitude() * std::numbers::pi / 180.0);
-        this->latlng_0.set_longitude(this->center.longitude() * std::numbers::pi / 180.0);
+        this->latlng_0.set_latitude(this->center.latitude() * M_PI / 180.0);
+        this->latlng_0.set_longitude(this->center.longitude() * M_PI / 180.0);
 
         // Essentially what is localizing us to this part of the globe
         // "Standard Parallels"
-        this->phi_0 = (min_lat - 1) * std::numbers::pi / 180.0;
-        this->phi_1 = (max_lat + 1) * std::numbers::pi / 180.0;
+        this->phi_0 = (min_lat - 1) * M_PI / 180.0;
+        this->phi_1 = (max_lat + 1) * M_PI / 180.0;
     }
 
     GPSCoord toLatLng(XYZCoord coord) const {
@@ -52,15 +53,15 @@ class CartesianConverter {
             std::pow(rho0 - coord.y, 2.0)) / EARTH_RADIUS_METERS;
         double theta = std::atan(coord.x / (rho0 - coord.y));
 
-        double lat = std::asin((c - rho * rho * n * n) / 2.0 / n) * 180.0 / std::numbers::pi;
-        double lng = (this->latlng_0.longitude() + theta / n) * 180.0 / std::numbers::pi;
+        double lat = std::asin((c - rho * rho * n * n) / 2.0 / n) * 180.0 / M_PI;
+        double lng = (this->latlng_0.longitude() + theta / n) * 180.0 / M_PI;
 
         return makeGPSCoord(lat, lng, coord.z);
     }
 
     XYZCoord toXYZ(GPSCoord coord) const {
-        double lat = coord.latitude() * std::numbers::pi / 180.0;
-        double lng = coord.longitude() * std::numbers::pi / 180.0;
+        double lat = coord.latitude() * M_PI / 180.0;
+        double lng = coord.longitude() * M_PI / 180.0;
 
         double n = 1.0 / 2.0 * (std::sin(this->phi_0) + std::sin(this->phi_1));
         double theta = n * (lng - this->latlng_0.longitude());

@@ -13,8 +13,9 @@ TEST(MockCamera, TakePicture) {
 
     camera.connect();
 
-    camera.takePicture();
+    camera.startTakingPictures();
     ImageData image = camera.getLastPicture();
+    camera.stopTakingPictures();
 
     EXPECT_EQ(image.getData().size(), cv::Size(4000, 3000));
 }
