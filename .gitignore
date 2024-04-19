@@ -9,6 +9,9 @@ CMakeCache.txt
 cmake_install.cmake
 _deps/
 
+models/**
+!models/.gitkeep
+
 Testing/
 imgs/
 
