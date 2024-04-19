@@ -1,3 +1,16 @@
+# DONT REMOVE THE DUMMY FILE!!! IT WILL SEEM LIKE IT IS OKAY BUT IT WILL BREAK THE NEXT TIME
+# YOU RECLONE OR RM -RF THE BUILD DIRECTORY!!! DON'T BE A DUMMY!
+add_library(obcpp_protos STATIC 
+    ${PROJECT_SOURCE_DIR}/build/gen_protos/protos/obc.pb.cc 
+    dummy.c
+)
+
+# LOL
+# https://stackoverflow.com/questions/68735830/cmake-precompiled-headers-issue-with-mixed-c-c-project
+target_precompile_headers(obcpp_protos PUBLIC
+    "$<$<COMPILE_LANGUAGE:CXX>:\"stdafx.h\">"
+    "$<$<COMPILE_LANGUAGE:C>:<stddef.h$<ANGLE-R>>")
+
 add_subdirectory(camera)
 add_subdirectory(core)
 add_subdirectory(cv)
@@ -8,6 +21,7 @@ add_subdirectory(utilities)
 
 add_library(obcpp_lib INTERFACE)
 target_link_libraries(obcpp_lib INTERFACE
+    obcpp_protos
     obcpp_camera
     obcpp_core
     obcpp_cv
@@ -20,6 +34,7 @@ target_link_libraries(obcpp_lib INTERFACE
 # for use in unit tests
 add_library(obcpp_lib_mock INTERFACE)
 target_link_libraries(obcpp_lib_mock INTERFACE
+    obcpp_protos
     obcpp_camera
     obcpp_core
     obcpp_cv
