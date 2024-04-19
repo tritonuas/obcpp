@@ -85,10 +85,12 @@ TEST(AirdropClientTest, ObcSendToPayload) {
     });
 
     ad_packet_t p = { 0 };
-    while (num_received < NUM_TO_SEND) {
+    while (num_received < NUM_TO_SEND + 1) {
         recv_ad_packet(payload_socket, &p, sizeof(ad_packet_t));
-        ASSERT_EQ(p.hdr, SIGNAL);
-        ASSERT_EQ(p.data, num_received);
+        if (num_received != 0) { // ignore first because will be ack_mode
+            ASSERT_EQ(p.hdr, SIGNAL);
+            ASSERT_EQ(p.data, num_received - 1);
+        }
         num_received++;
     }
 }

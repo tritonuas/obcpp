@@ -64,6 +64,7 @@ class MavlinkClient {
     double airspeed_m_s();
     double heading_deg();
     mavsdk::Telemetry::FlightMode flight_mode();
+    mavsdk::Telemetry::RcStatus get_conn_status();
 
  private:
     mavsdk::Mavsdk mavsdk;
