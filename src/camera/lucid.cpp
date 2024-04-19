@@ -53,98 +53,79 @@ json LucidCameraConfig::getConfigField(std::string name)
     return returnJ;
 }
 
-ImageData LucidCamera::imgConvert(Arena::IImage * pImage)
-{
-    Arena::IImage *pConverted = Arena::ImageFactory::Convert(
-        pImage,
-        BGR8);
 
-    std::string name = "img_"+pConverted->GetTimestamp();
-    void * data = (void *)pConverted->GetData();
-    std::string path = "";
-
-    cv::Mat mat = cv::Mat(static_cast<int>(pConverted->GetHeight()), static_cast<int>(pConverted->GetWidth()), CV_8UC3, data);
-    cv::Mat matCopy = mat.clone();
-
-    return ImageData(name, path, matCopy);
+LucidCamera::LucidCamera(CameraConfiguration config) :
+    CameraInterface(config) {
+    // if (config != nullptr) {
+    //     this->config = config; // huh?
+    // } else {
+    //     this->config = nullptr;
+    // }
 }
 
-LucidCamera::LucidCamera(LucidCameraConfig *config)
-{
-    if (config != nullptr) {
-        this->config = config; // huh?
-    } else {
-        this->config = nullptr;
-    }
-}
+void LucidCamera::connect() {
+    // aquire locks to Arena System and Device
+    WriteLock systemLock(this->arenaSystemLock);
+    WriteLock deviceLock(this->arenaDeviceLock);
 
+    while (true) {
+        try {
+            // ArenaSystem broadcasts a discovery packet on the network to discover
+            // any cameras on the network. We provide a timeout for this broadcasting.
+            this->system->UpdateDevices(this->connectionTimeoutMs);
 
-void LucidCamera::connect()
-{
-    try
-    {
-        WriteLock systemLock(this->arenaSystemLock);
-        this->system->UpdateDevices(this->connectionTimeoutMs);
+            std::vector<Arena::DeviceInfo> deviceInfos = this->system->GetDevices();
+            if (deviceInfos.size() != 0) {
+                LOG_F(INFO,"Lucid camera connection succeeded!\n");
+                this->device = this->system->CreateDevice(deviceInfos[0]);
+                break;
+            }
 
-        std::vector<Arena::DeviceInfo> deviceInfos = this->system->GetDevices();
-        if (deviceInfos.size() == 0)
-        {
-            LOG_F(ERROR, "\nNo camera connected\nPress enter to complete\n");
-            std::getchar();
+            LOG_F(ERROR,"Lucid camera connection failed! Retrying in \n");
+            std::this_thread::sleep_for(this->connectionRetry);
+
+            // TODO: add to destructor
+            // pSystem->DestroyDevice(pDevice);
+            // Arena::CloseSystem(pSystem);
+        }
+        catch (GenICam::GenericException &ge) {
+            LOG_F(ERROR, "GenICam exception thrown: %s \n", ge.what());
+            throw ge;
+        }
+        catch (std::exception &ex) {
+            LOG_F(ERROR, "Standard exception thrown: %s \n", ex.what());
+            throw ex;
+        }
+        catch (...) {
+            LOG_F(ERROR, "Unexpected exception thrown:\n");
             throw std::exception();
         }
-        WriteLock deviceLock(this->arenaDeviceLock);
-        this->device = this->system->CreateDevice(deviceInfos[0]);
+    }
 
-        // // run configuration
-        // std::cout << "Trigger configuration start\n\n";
-        // configureTrigger();
-        // std::cout << "\nTrigger configured finished\n";
-
-        if (!isConnected()) 
-        {
-            LOG_F(ERROR,"Lucid Camera Connection fail!\n");
-            throw std::exception();
-        }
-
-        // TODO: add to destructor
-        // pSystem->DestroyDevice(pDevice);
-        // Arena::CloseSystem(pSystem);
-    }
-    catch (GenICam::GenericException &ge)
-    {
-        LOG_F(ERROR, "GenICam exception thrown: %s \n", ge.what());
-        throw ge;
-    }
-    catch (std::exception &ex)
-    {
-        LOG_F(ERROR, "Standard exception thrown: %s \n", ge.what());
-        throw ex;
-    }
-    catch (...)
-    {
-        LOG_F(ERROR, "Unexpected exception thrown: %s \n", ge.what());
-        throw std::exception();
-    }
+    this->configureDefaults();
 }
 
 void LucidCamera::startTakingPictures(std::chrono::seconds interval) {
-    this->isTakingPictures = true;
-    try {
-        this->captureThread = std::thread(&LucidCamera::captureEvery, this, interval);
-    } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-    }
+    // this->isTakingPictures = true;
+    // try {
+    //     this->captureThread = std::thread(&LucidCamera::captureEvery, this, interval);
+    // } catch (const std::exception& e) {
+    //     std::cerr << e.what() << std::endl;
+    // }
 }
 void LucidCamera::stopTakingPictures() {
-    if (!this->isTakingPictures) {
-        return;
-    }
+    // if (!this->isTakingPictures) {
+    //     return;
+    // }
 
-    this->isTakingPictures = false;
+    // this->isTakingPictures = false;
 
-    this->captureThread.join();
+    // this->captureThread.join();
 };
+
+void LucidCamera::configureDefaults() {
+
+}
 
 std::optional<ImageData> LucidCamera::getLatestImage() {
     ReadLock lock(this->imageQueueLock);
@@ -249,6 +230,21 @@ ImageData LucidCamera::takePicture(int timeout) {
     device->StopStream();
 
     return returnImg;
+}
+
+ImageData LucidCamera::imgConvert(Arena::IImage* pImage) {
+    Arena::IImage *pConverted = Arena::ImageFactory::Convert(
+        pImage,
+        BGR8);
+
+    std::string name = "img_"+pConverted->GetTimestamp();
+    void * data = (void *)pConverted->GetData();
+    std::string path = "";
+
+    cv::Mat mat = cv::Mat(static_cast<int>(pConverted->GetHeight()), static_cast<int>(pConverted->GetWidth()), CV_8UC3, data);
+    cv::Mat matCopy = mat.clone();
+
+    return ImageData(name, path, matCopy, ImageTelemetry(0, 0, 0, 0, 0, 0, 0));
 }
 
 // #endif // ARENA_SDK_INSTALLED

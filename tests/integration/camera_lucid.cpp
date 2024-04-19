@@ -7,15 +7,19 @@
 using namespace std::chrono_literals;
 
 int main (int argc, char *argv[]) {
-    LucidCamera camera(nullptr);
+    CameraConfiguration config({
+       {"SampleConfigKey", 100},
+       {"ExposureTime", 1000},
+    });
+    LucidCamera camera(config);
 
     camera.connect();
 
-    camera.startTakingPictures(1s);
-    std::this_thread::sleep_for(2s);
-    std::optional<ImageData> image = camera.getLatestImage();
-    if (image.has_value()) {
-        cv::imwrite("lucid_img.jpg", image.value().getData());
-    }
-    camera.stopTakingPictures();
+    // camera.startTakingPictures(1s);
+    // std::this_thread::sleep_for(2s);
+    // std::optional<ImageData> image = camera.getLatestImage();
+    // if (image.has_value()) {
+    //     cv::imwrite("lucid_img.jpg", image.value().getData());
+    // }
+    // camera.stopTakingPictures();
 }

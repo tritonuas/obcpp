@@ -24,12 +24,13 @@ function(target_add_arena target_name)
             "${ARENA_SDK_DIR}/include/GenTL"
             "${ARENA_SDK_DIR}/include/Save"
         )
-        # file(GLOB_RECURSE ARENA_LIBS 
-        #     # "${ARENA_SDK_DIR}/extracted/lib64/*.so" 
-        #     "${ARENA_SDK_DIR}/extracted/**/*.so"
-        # )
-        # target_link_libraries(${target_name} PRIVATE
-        #     ${ARENA_LIBS}
-        # )
+        file(GLOB_RECURSE ARENA_LIBS 
+            "${ARENA_SDK_DIR}/lib64/*.so" 
+            "${ARENA_SDK_DIR}/**/*.so"
+        )
+        target_link_libraries(${target_name} PRIVATE
+            ${ARENA_LIBS}
+        )
+
     endif()
 endfunction()

@@ -18,6 +18,8 @@
 
 using json = nlohmann::json;
 
+using namespace std::chrono_literals;
+
 class LucidCameraConfig {
     private:
         json configJson;
@@ -27,15 +29,24 @@ class LucidCameraConfig {
         LucidCameraConfig(json config);
         void updateConfig(json newSetting);
 
+        json getConfig();
+
+        json getConfigField(std::string name);
+
+        // void updateConfigField(std::string key, std::string value) override;
+
+        // void updateConfigField(std::string key, int value) override;
+
+        // void updateConfigField(std::string key, bool value) override;
 };
 
 class LucidCamera : public CameraInterface {
  public:
-    LucidCamera(LucidCameraConfig* config);
-    ~LucidCamera();
+    explicit LucidCamera(CameraConfiguration config);
+    ~LucidCamera() = default;
 
-    void connect();
-    bool isConnected();
+    void connect() override;
+    bool isConnected() override;
 
     void startTakingPictures(std::chrono::seconds interval) override;
     void stopTakingPictures() override;
@@ -43,31 +54,22 @@ class LucidCamera : public CameraInterface {
     std::optional<ImageData> getLatestImage() override;
     std::queue<ImageData> getAllImages() override;
 
-    void updateConfig(json newSetting);
-
-    // void updateConfigField(std::string key, std::string value) override;
-
-    // void updateConfigField(std::string key, int value) override;
-
-    // void updateConfigField(std::string key, bool value) override;
-
-    json getConfig();
-
-    json getConfigField(std::string name);
 
  private:
    ImageData imgConvert(Arena::IImage * pImage); 
    ImageData takePicture(int timeout);
    void captureEvery(std::chrono::seconds interval);
+   void configureDefaults();
 
-   static std::shared_mutex arenaSystemLock;
-   static Arena::ISystem* system;
+   LucidCameraConfig* config;
 
-   static std::shared_mutex arenaDeviceLock;
-   static Arena::IDevice* device;
+   inline static std::shared_mutex arenaSystemLock;
+   inline static Arena::ISystem* system;
+
+   inline static std::shared_mutex arenaDeviceLock;
+   inline static Arena::IDevice* device;
 
    std::atomic_bool isTakingPictures;
-
 
    std::queue<ImageData> imageQueue;
    std::shared_mutex imageQueueLock;
@@ -76,9 +78,9 @@ class LucidCamera : public CameraInterface {
 
    std::shared_mutex imageQueueMut;
 
-   json configJson;
-
    const int connectionTimeoutMs = 1000;
+   const std::chrono::milliseconds connectionRetry = 1000s;
+
    const int takePictureTimeoutSec = 1;
 };
 
