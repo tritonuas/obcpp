@@ -8,7 +8,8 @@
 Pipeline::Pipeline(const PipelineParams& p) :
     // assumes reference images passed to pipeline from not_stolen
         matcher(p.competitionObjectives, p.referenceImages, p.matchingModelPath),
-        segmentor(p.segmentationModelPath) {}
+        segmentor(p.segmentationModelPath),
+        detector(p.saliencyModelPath) {}
 
 /*
  *  Entrypoint of CV Pipeline. At a high level, it will include the following
