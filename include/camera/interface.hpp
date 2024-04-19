@@ -5,9 +5,14 @@
 #include <vector>
 #include <memory>
 #include <optional>
+#include <unordered_map>
 
 #include <nlohmann/json.hpp>
 #include <opencv2/opencv.hpp>
+#include <opencv2/core/mat.hpp>
+
+using json = nlohmann::json;
+using Mat = cv::Mat;
 
 // class to contain all telemetry that should be tagged with an image.
 // In the future this could be in a mavlink file.
@@ -22,6 +27,61 @@ struct ImageTelemetry {
     double yaw;
     double pitch;
     double roll;
+}
+
+template <typename T> 
+class CameraConfigMetadata {
+    private:
+        std::string name {};
+        T value {};
+        std::string valueType {};
+        bool configurable {};
+        bool executable {};
+    public:
+        CameraConfigMetadata() 
+        {
+        }
+        CameraConfigMetadata(std::string name, T value, bool configurable, bool executable)
+        {
+            this->name = name; 
+            this->value = value;
+            this->valueType = typeid(this->value).name();
+            this->configurable = configurable;
+            this->executable = executable;
+        }
+
+        std::string getName()
+        {
+            return this->name;
+        }
+
+        T getValue()
+        {
+            return this->value;
+        }
+
+        void setValue(T value)
+        {
+            this->value = value;
+        }
+
+        std::string getValueType() 
+        {
+            return this->valueType;
+        }
+
+        CameraConfigMetadata<T>& operator=(const CameraConfigMetadata<T>& other) 
+        {
+            name = other.name;
+            value = other.value;
+            valueType = other.valueType;
+            configurable = other.configurable;
+            executable = other.executable;
+
+            return *this;
+        } 
+
+        // TODO: overwrite the = operator
 };
 
 /*
