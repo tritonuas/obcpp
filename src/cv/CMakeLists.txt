@@ -11,13 +11,21 @@ set(FILES
     utilities.cpp
 )
 
-add_library(${LIB_NAME} STATIC ${PROJECT_SOURCE_DIR}/build/gen_protos/protos/obc.pb.cc
+set(LIB_DEPS
+    obcpp_protos
+    obcpp_utilities
+)
+
+add_library(${LIB_NAME} STATIC
     ${FILES}
 )
 
 target_link_libraries(${LIB_NAME} PRIVATE
-    obcpp_utilities
+    ${LIB_DEPS}
 )
+
+target_precompile_headers(${LIB_NAME} REUSE_FROM obcpp_protos)
+set_unity_for_target(${LIB_NAME})
 
 target_add_protobuf(${LIB_NAME})
 target_add_torch(${LIB_NAME})
