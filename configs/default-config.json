@@ -10,17 +10,18 @@
             "connect": "tcp://172.17.0.1:5760"
         }
     },
-    "static-pathing": {
+    "pathing": {
         "rrt": {
             "iterations_per_waypoint": 200,
             "rewire_radius": 200.0,
-            "k_closest_nodes": 50,
-            "total_options_for_goal_connection": 2048
+            "optimize": true,
+            "point_fetch_methods": "NEAREST",
+            "allowed_to_skip_waypoints": false
         },
-        "cpp": {
+        "coverage": {
+            "optimize": false,
             "vertical": false,
-            "one-way": true,
-            "optimize": false
+            "one-way": true
         }
     }
 }

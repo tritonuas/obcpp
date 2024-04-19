@@ -8,7 +8,7 @@
 #include <iostream>
 #include <string>
 
-#include "core/mission_config.hpp"
+#include "core/mission_parameters.hpp"
 #include "core/mission_state.hpp"
 #include "ticks/tick.hpp"
 #include "ticks/path_gen.hpp"

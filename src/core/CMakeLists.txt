@@ -1,7 +1,7 @@
 set(LIB_NAME obcpp_core)
 
 set(FILES
-    mission_config.cpp
+    mission_parameters.cpp
     mission_state.cpp
     obc.cpp
 )

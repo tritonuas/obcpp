@@ -10,7 +10,7 @@
 #include <queue>
 #include <array>
 
-#include "core/mission_config.hpp"
+#include "core/mission_parameters.hpp"
 #include "cv/utilities.hpp"
 #include "cv/aggregator.hpp"
 #include "camera/interface.hpp"
@@ -85,7 +85,7 @@ class MissionState {
     void setCV(std::shared_ptr<CVAggregator> cv);
     std::shared_ptr<CameraInterface> getCamera();
 
-    MissionConfig config;  // has its own mutex
+    MissionParameters config;  // has its own mutex
 
  private:
     std::mutex converter_mut;

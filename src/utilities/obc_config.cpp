@@ -39,6 +39,4 @@ void OBCConfig::makeDefault() {
     configs["logging"]["dir"] = this->logging_dir;
     configs["network"]["mavlink"]["connect"] = this->network_mavlink_connect;
     configs["network"]["gcs"]["port"] = this->network_gcs_port;
-    std::ofstream configFile(configsPath + "default-config.json");
-    configFile << configs.dump(4);  // Dump to file with 4 space indents
 }
