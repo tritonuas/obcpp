@@ -3,6 +3,7 @@
 #include <chrono>
 #include <thread>
 #include <optional>
+#include <deque>
 
 #include <loguru.hpp>
 
@@ -19,7 +20,7 @@ void MockCamera::connect() { return; }
 
 bool MockCamera::isConnected() { return true; }
 
-void MockCamera::startTakingPictures(std::chrono::seconds interval) {
+void MockCamera::startTakingPictures(const std::chrono::milliseconds& interval) {
     this->isTakingPictures = true;
     try {
         this->captureThread = std::thread(&MockCamera::captureEvery, this, interval);
@@ -41,24 +42,24 @@ void MockCamera::stopTakingPictures() {
 std::optional<ImageData> MockCamera::getLatestImage() {
     ReadLock lock(this->imageQueueLock);
     ImageData lastImage = this->imageQueue.front();
-    this->imageQueue.pop();
+    this->imageQueue.pop_front();
     return lastImage;
 }
 
-std::queue<ImageData> MockCamera::getAllImages() {
+std::deque<ImageData> MockCamera::getAllImages() {
     ReadLock lock(this->imageQueueLock);
-    std::queue<ImageData> outputQueue = this->imageQueue; 
-    this->imageQueue = std::queue<ImageData>();
+    std::deque<ImageData> outputQueue = this->imageQueue; 
+    this->imageQueue = std::deque<ImageData>();
     return outputQueue;
 }
 
-void MockCamera::captureEvery(std::chrono::seconds interval) {
+void MockCamera::captureEvery(const std::chrono::milliseconds& interval) {
     while (this->isTakingPictures) {
         LOG_F(INFO, "Taking picture with mock camera\n");
         ImageData newImage = this->takePicture();
 
         WriteLock lock(this->imageQueueLock);
-        this->imageQueue.push(newImage);
+        this->imageQueue.push_back(newImage);
         lock.unlock();
 
         std::this_thread::sleep_for(interval);

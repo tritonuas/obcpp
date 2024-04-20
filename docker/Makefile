@@ -26,3 +26,12 @@ stop-jetson-pixhawk-compose:
 run-jetson-cuda-check:
 	docker run -it --rm --runtime nvidia -i tritonuas/obcpp:nvidia /obcpp/build/bin/cuda_check
 
+
+# NOTE: Use this target for development where you want to quicly edit source code and recompile.
+# This will spawn up the jetson container, launch you into a bash shell and mount the 
+# host's obcpp directory at "/obcpp" in the container. This means you can edit the source 
+# files on the host (with VSCode over SSH or Vim) and recompile in the Docker environment.
+# Note that to re-run cmake inside the container you'll need the really long CMake command
+# in the Dockerfile.jetson.
+enter-jetson-docker:
+	cd .. && docker run -it --net=host --runtime=nvidia --platform=linux/arm64 --volume=./:/obcpp tritonuas/obcpp:jetson /bin/bash

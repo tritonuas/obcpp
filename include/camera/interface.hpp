@@ -6,6 +6,7 @@
 #include <memory>
 #include <optional>
 #include <unordered_map>
+#include <deque>
 
 #include <nlohmann/json.hpp>
 #include <opencv2/opencv.hpp>
@@ -133,11 +134,11 @@ class CameraInterface {
     virtual void connect() = 0;
     virtual bool isConnected() = 0;
 
-    virtual void startTakingPictures(std::chrono::seconds interval) = 0;
+    virtual void startTakingPictures(const std::chrono::milliseconds& interval) = 0;
     virtual void stopTakingPictures() = 0;
 
     virtual std::optional<ImageData> getLatestImage() = 0;
-    virtual std::queue<ImageData> getAllImages() = 0;
+    virtual std::deque<ImageData> getAllImages() = 0;
 
     CameraConfiguration getConfig();
     void updateConfig(CameraConfiguration newConfig);

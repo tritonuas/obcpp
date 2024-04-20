@@ -4,6 +4,7 @@
 #include <thread>
 #include <memory>
 #include <shared_mutex>
+#include <deque>
 
 #include "camera/interface.hpp"
 
@@ -15,18 +16,18 @@ class MockCamera : public CameraInterface {
     void connect() override;
     bool isConnected() override;
 
-    void startTakingPictures(std::chrono::seconds interval) override;
+    void startTakingPictures(const std::chrono::milliseconds& interval) override;
     void stopTakingPictures() override;
 
     std::optional<ImageData> getLatestImage() override;
-    std::queue<ImageData> getAllImages() override;
+    std::deque<ImageData> getAllImages() override;
 
  private:
    std::atomic_bool isTakingPictures;
 
-   void captureEvery(std::chrono::seconds interval);
+   void captureEvery(const std::chrono::milliseconds& interval);
 
-   std::queue<ImageData> imageQueue;
+   std::deque<ImageData> imageQueue;
    std::shared_mutex imageQueueLock;
 
    std::thread captureThread;

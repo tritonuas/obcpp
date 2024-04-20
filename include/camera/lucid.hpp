@@ -13,6 +13,7 @@
 #include <optional>
 #include <shared_mutex>
 #include <thread>
+#include <deque>
 
 #include "camera/interface.hpp"
 
@@ -43,22 +44,23 @@ class LucidCameraConfig {
 class LucidCamera : public CameraInterface {
  public:
     explicit LucidCamera(CameraConfiguration config);
-    ~LucidCamera() = default;
+    ~LucidCamera();
 
     void connect() override;
     bool isConnected() override;
 
-    void startTakingPictures(std::chrono::seconds interval) override;
+    void startTakingPictures(const std::chrono::milliseconds& interval) override;
     void stopTakingPictures() override;
 
     std::optional<ImageData> getLatestImage() override;
-    std::queue<ImageData> getAllImages() override;
+    std::deque<ImageData> getAllImages() override;
 
 
  private:
+   std::optional<ImageData> takePicture(const std::chrono::milliseconds& timeout);
+   void captureEvery(const std::chrono::milliseconds& interval);
+
    ImageData imgConvert(Arena::IImage * pImage); 
-   ImageData takePicture(int timeout);
-   void captureEvery(std::chrono::seconds interval);
    void configureDefaults();
 
    LucidCameraConfig* config;
@@ -71,17 +73,17 @@ class LucidCamera : public CameraInterface {
 
    std::atomic_bool isTakingPictures;
 
-   std::queue<ImageData> imageQueue;
+   std::deque<ImageData> imageQueue;
    std::shared_mutex imageQueueLock;
 
    std::thread captureThread;
 
    std::shared_mutex imageQueueMut;
 
-   const int connectionTimeoutMs = 1000;
-   const std::chrono::milliseconds connectionRetry = 1000s;
+   const std::chrono::milliseconds connectionTimeout = 1000ms;
+   const std::chrono::milliseconds connectionRetry = 500ms;
 
-   const int takePictureTimeoutSec = 1;
+   const std::chrono::milliseconds takePictureTimeout = 1000ms;
 };
 
 
