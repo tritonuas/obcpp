@@ -4,10 +4,18 @@
 #include <string>
 
 struct OBCConfig {
-    std::string logging_dir;
+    struct {
+        std::string dir;
+    } logging;
 
-    std::string network_mavlink_connect;
-    int network_gcs_port;
+    struct {
+        struct {
+            int port;
+        } gcs;
+        struct {
+            std::string connect;
+        } mavlink;
+    } network;
 
     // Load user specified config json, or make a new one
     OBCConfig(int argc, char* argv[]);
