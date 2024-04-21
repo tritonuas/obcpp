@@ -259,7 +259,7 @@ int main() {
     // infrastructure to set up all the pararmeters of the environment
     std::vector<XYZCoord> goals;
 
-    for (const XYZCoord& waypoint : state->config.getWaypoints()) {
+    for (const XYZCoord& waypoint : state->mission_params.getWaypoints()) {
         goals.push_back(waypoint);
     }
 
@@ -273,7 +273,7 @@ int main() {
 
     std::vector<Polygon> obstacles = {obs1, obs2};
 
-    RRTPoint start = RRTPoint(state->config.getWaypoints()[0], 0);
+    RRTPoint start = RRTPoint(state->mission_params.getWaypoints()[0], 0);
 
     // RRT settings (manually put in)
     int num_iterations = 512;
@@ -282,7 +282,7 @@ int main() {
     RRTConfig config = RRTConfig { num_iterations, rewire_radius, true, POINT_FETCH_METHODS::NONE, true };
 
     RRT rrt = RRT(start, goals, search_radius, 
-                  state->config.getFlightBoundary(), obstacles, config);
+                  state->mission_params.getFlightBoundary(), obstacles, config);
 
     // print out stats
     std::cout << "num_iterations: " << num_iterations << std::endl;
@@ -307,7 +307,7 @@ int main() {
 
     // plot the path
     std::cout << "Start Plotting" << std::endl;
-    PathingPlot plotter("pathing_output", state->config.getFlightBoundary(), obstacles[1], goals);
+    PathingPlot plotter("pathing_output", state->mission_params.getFlightBoundary(), obstacles[1], goals);
 
     start_time = std::chrono::high_resolution_clock::now();
     plotter.addFinalPolyline(path);

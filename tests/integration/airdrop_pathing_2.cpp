@@ -247,20 +247,20 @@ int main() {
     std::ofstream file;
     file.open("airdop_search_coords_2.txt");
 
-    RRTPoint start = RRTPoint(state->config.getWaypoints()[0], 0);
+    RRTPoint start = RRTPoint(state->mission_params.getWaypoints()[0], 0);
 
-    AirdropSearch search(start, 9, state->config.getFlightBoundary(),
-                         state->config.getAirdropBoundary());
+    AirdropSearch search(start, 9, state->mission_params.getFlightBoundary(),
+                         state->mission_params.getAirdropBoundary());
 
-    Environment env(state->config.getFlightBoundary(), state->config.getAirdropBoundary(), {}, {});
+    Environment env(state->mission_params.getFlightBoundary(), state->mission_params.getAirdropBoundary(), {}, {});
 
-    Polygon scaled = env.scale(0.75, state->config.getFlightBoundary());
+    Polygon scaled = env.scale(0.75, state->mission_params.getFlightBoundary());
 
     std::vector<XYZCoord> path = search.run();
 
     // plot the path
     std::cout << "Start Plotting" << std::endl;
-    PathingPlot plotter("pathing_output", state->config.getFlightBoundary(), scaled, {});
+    PathingPlot plotter("pathing_output", state->mission_params.getFlightBoundary(), scaled, {});
 
     plotter.addFinalPolyline(path);
     plotter.output("test_airdrop_pathing_2", PathOutputType::STATIC);

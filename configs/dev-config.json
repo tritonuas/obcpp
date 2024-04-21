@@ -10,18 +10,18 @@
             "port": 5010
         }
     },
-    "static-pathing": {
+    "pathing": {
         "rrt": {
             "iterations_per_waypoint": 200,
             "rewire_radius": 200.0,
             "optimize": true,
-            "point_fetch_methods": "NEAREST",
+            "point_fetch_methods": 2,
             "allowed_to_skip_waypoints": false
         },
-        "cpp": {
+        "coverage": {
             "optimize": false,
             "vertical": false,
-            "one-way": true
+            "one_way": true
         }
     }
 }

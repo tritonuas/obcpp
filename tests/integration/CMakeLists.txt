@@ -159,6 +159,23 @@ target_add_loguru(path_planning)
 target_include_directories(path_planning PRIVATE ${ImageMagick_INCLUDE_DIRS})
 target_link_libraries(path_planning PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
+
+add_executable(pathing_integration "pathing_integration.cpp")
+target_link_libraries(pathing_integration PRIVATE obcpp_lib)
+target_include_directories(pathing_integration PRIVATE ${INCLUDE_DIRECTORY})
+target_add_protobuf(pathing_integration)
+target_add_torch(pathing_integration)
+target_add_torchvision(pathing_integration)
+target_add_json(pathing_integration)
+target_add_opencv(pathing_integration)
+target_add_httplib(pathing_integration)
+target_add_mavsdk(pathing_integration)
+target_add_matplot(pathing_integration)
+target_add_loguru(pathing_integration)
+
+target_include_directories(pathing_integration PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(pathing_integration PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
+
 add_executable(airdrop_pathing "airdrop_pathing.cpp")
 target_link_libraries(airdrop_pathing PRIVATE obcpp_lib)
 target_include_directories(airdrop_pathing PRIVATE ${INCLUDE_DIRECTORY})

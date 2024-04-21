@@ -23,7 +23,8 @@ OBC::OBC(OBCConfig config) {
 
     this->state = std::make_shared<MissionState>();
     this->state->setTick(new MissionPrepTick(this->state));
-
+    this->state->rrt_config = config.rrt_config;
+    this->state->coverage_pathing_config = config.coverage_pathing_config;
     this->gcs_server = std::make_unique<GCSServer>(gcs_port, this->state);
 
     // Don't need to look at these futures at all because the connect functions

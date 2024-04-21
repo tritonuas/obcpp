@@ -337,13 +337,13 @@ std::vector<XYZCoord> AirdropSearch::run() const {
 
 std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
     // first waypoint is start
-    RRTPoint start(state->config.getWaypoints().front(), 0);
+    RRTPoint start(state->mission_params.getWaypoints().front(), 0);
 
     // the other waypoitns is the goals
-    if (state->config.getWaypoints().size() < 2) {
+    if (state->mission_params.getWaypoints().size() < 2) {
         loguru::set_thread_name("Static Pathing");
         LOG_F(ERROR, "Not enough waypoints to generate a path, required 2+, existing waypoints: %s",
-              std::to_string(state->config.getWaypoints().size()).c_str());
+              std::to_string(state->mission_params.getWaypoints().size()).c_str());
         return {};
     }
 
@@ -351,12 +351,14 @@ std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
 
     // Copy elements (reference) from the second element to the last element of source into
     // destination all other methods of copying over crash???
-    for (int i = 1; i < state->config.getWaypoints().size(); i++) {
-        goals.emplace_back(state->config.getWaypoints()[i]);
+    for (int i = 1; i < state->mission_params.getWaypoints().size(); i++) {
+        goals.emplace_back(state->mission_params.getWaypoints()[i]);
     }
 
-    RRT rrt(start, goals, SEARCH_RADIUS, state->config.getFlightBoundary(), {},
-            RRTConfig{ITERATIONS_PER_WAYPOINT, REWIRE_RADIUS, true, POINT_FETCH_METHODS::NONE});
+        LOG_F(ERROR, "Iterations Per Waypoint: %d", state->rrt_config.iterations_per_waypoint);
+
+    RRT rrt(start, goals, SEARCH_RADIUS, state->mission_params.getFlightBoundary(), {},
+            state->rrt_config);
 
     rrt.run();
 

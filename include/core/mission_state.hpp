@@ -1,29 +1,30 @@
 #ifndef INCLUDE_CORE_MISSION_STATE_HPP_
 #define INCLUDE_CORE_MISSION_STATE_HPP_
 
+#include <array>
+#include <chrono>
+#include <functional>
 #include <memory>
 #include <mutex>
-#include <functional>
-#include <chrono>
-#include <vector>
 #include <optional>
 #include <queue>
-#include <array>
+#include <vector>
 
-#include "core/mission_parameters.hpp"
-#include "cv/utilities.hpp"
-#include "cv/aggregator.hpp"
 #include "camera/interface.hpp"
-#include "utilities/datatypes.hpp"
-#include "utilities/constants.hpp"
-#include "utilities/locks.hpp"
-#include "utilities/lockptr.hpp"
-#include "utilities/logging.hpp"
-#include "protos/obc.pb.h"
-#include "pathing/cartesian.hpp"
-#include "ticks/ids.hpp"
-#include "network/mavlink.hpp"
+#include "core/mission_parameters.hpp"
+#include "cv/aggregator.hpp"
+#include "cv/utilities.hpp"
 #include "network/airdrop_client.hpp"
+#include "network/mavlink.hpp"
+#include "pathing/cartesian.hpp"
+#include "protos/obc.pb.h"
+#include "ticks/ids.hpp"
+#include "utilities/constants.hpp"
+#include "utilities/datatypes.hpp"
+#include "utilities/lockptr.hpp"
+#include "utilities/locks.hpp"
+#include "utilities/logging.hpp"
+#include "utilities/obc_config.hpp"
 
 class Tick;
 
@@ -45,7 +46,7 @@ class MissionState {
 
     /*
      * Gets a locking reference to the underlying tick for the given tick subclass T.
-     * 
+     *
      * Needs to be defined in the header file unless we want to manually list out
      * template derivations.
      */
@@ -85,7 +86,9 @@ class MissionState {
     void setCV(std::shared_ptr<CVAggregator> cv);
     std::shared_ptr<CameraInterface> getCamera();
 
-    MissionParameters config;  // has its own mutex
+    MissionParameters mission_params;  // has its own mutex
+    RRTConfig rrt_config;
+    AirdropSearchConfig coverage_pathing_config;
 
  private:
     std::mutex converter_mut;
