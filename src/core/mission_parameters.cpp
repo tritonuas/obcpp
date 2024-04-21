@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <optional>
 
-#include "core/mission_config.hpp"
+#include "core/mission_parameters.hpp"
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
 #include "utilities/locks.hpp"
@@ -16,7 +16,7 @@
 
 // TODO: Log out mission config after it has been set
 
-MissionConfig::MissionConfig() {
+MissionParameters::MissionParameters() {
     // Bottle updates work by finding the bottle already in the list
     // by index and setting its values to the updated values, so we
     // need to initialize placeholder values in the bottles vector
@@ -37,42 +37,42 @@ MissionConfig::MissionConfig() {
     this->bottles.push_back(bottleE);
 }
 
-MissionConfig::MissionConfig(std::string filename) {
+MissionParameters::MissionParameters(std::string filename) {
     // TODO: load from file
 }
 
-Polygon MissionConfig::getFlightBoundary() {
+Polygon MissionParameters::getFlightBoundary() {
     ReadLock lock(this->mut);
 
     return this->flightBoundary;
 }
 
-Polygon MissionConfig::getAirdropBoundary() {
+Polygon MissionParameters::getAirdropBoundary() {
     ReadLock lock(this->mut);
 
     return this->airdropBoundary;
 }
 
-Polyline MissionConfig::getWaypoints() {
+Polyline MissionParameters::getWaypoints() {
     ReadLock lock(this->mut);
 
     return this->waypoints;
 }
 
-const std::vector<Bottle>& MissionConfig::getAirdropBottles() {
+const std::vector<Bottle>& MissionParameters::getAirdropBottles() {
     ReadLock lock(this->mut);
 
     return this->bottles;
 }
 
-std::tuple<Polygon, Polygon, Polyline, std::vector<Bottle>> MissionConfig::getConfig() {
+std::tuple<Polygon, Polygon, Polyline, std::vector<Bottle>> MissionParameters::getConfig() {
     ReadLock lock(this->mut);
 
     return std::make_tuple(
         this->flightBoundary, this->airdropBoundary, this->waypoints, this->bottles);
 }
 
-void MissionConfig::_setBottle(Bottle bottle) {
+void MissionParameters::_setBottle(Bottle bottle) {
     // Go until you find the bottle that has the same index, and replace all values
     for (auto& curr_bottle : this->bottles) {
         if (curr_bottle.index() == bottle.index()) {
@@ -83,7 +83,7 @@ void MissionConfig::_setBottle(Bottle bottle) {
 }
 
 
-std::optional<std::string> MissionConfig::setMission(
+std::optional<std::string> MissionParameters::setMission(
     Mission mission, CartesianConverter<GPSProtoVec> cconverter
 ) {
     WriteLock lock(this->mut);
@@ -115,13 +115,13 @@ std::optional<std::string> MissionConfig::setMission(
     return {};
 }
 
-void MissionConfig::saveToFile(std::string filename) {
+void MissionParameters::saveToFile(std::string filename) {
     ReadLock lock(this->mut);
 
     // TODO: implement
 }
 
-std::optional<Mission> MissionConfig::getCachedMission() {
+std::optional<Mission> MissionParameters::getCachedMission() {
     ReadLock lock(this->mut);
 
     return this->cached_mission;

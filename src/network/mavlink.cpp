@@ -129,7 +129,7 @@ bool MavlinkClient::uploadGeofenceUntilSuccess(std::shared_ptr<MissionState> sta
     LOG_SCOPE_F(INFO, "Uploading Geofence");
 
     // Make sure everything is set up
-    auto mission = state->config.getCachedMission();
+    auto mission = state->mission_params.getCachedMission();
     if (!mission.has_value()) {
         LOG_F(ERROR, "Upload failed - no mission");
         return false;  // todo determine return type

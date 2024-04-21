@@ -21,10 +21,11 @@
 
 class RRT {
  public:
-    RRT(RRTPoint start, std::vector<XYZCoord> goals, int iterations_per_waypoint,
-        double search_radius, double rewire_radius, Polygon bounds,
+    RRT(RRTPoint start, std::vector<XYZCoord> goals, double search_radius, Polygon bounds,
         std::vector<Polygon> obstacles = {},
-        RRTConfig config = {.optimize = false,
+        RRTConfig config = {.iterations_per_waypoint = ITERATIONS_PER_WAYPOINT,
+                            .rewire_radius = REWIRE_RADIUS,
+                            .optimize = false,
                             .point_fetch_method = POINT_FETCH_METHODS::NONE,
                             .allowed_to_skip_waypoints = false});
 
@@ -173,10 +174,15 @@ class RRT {
 class AirdropSearch {
  public:
     AirdropSearch(const RRTPoint &start, double scan_radius, Polygon bounds, Polygon airdrop_zone,
-                  std::vector<Polygon> obstacles = {});
+                  std::vector<Polygon> obstacles = {},
+                  AirdropSearchConfig config = {
+                      .optimize = false, .vertical = false, .one_way = false});
 
     /**
      * Generates a path of parallel lines to cover a given area
+     *
+     * TODO - optimize dubins to not have to go to each line, rather search every other line then
+     * loop back
      *
      * @return  ==> list of 2-vectors describing the path through the aridrop_zone
      */
@@ -188,6 +194,7 @@ class AirdropSearch {
     const RRTPoint start;        // start location (doesn't have to be near polygon)
     const Environment airspace;  // information aobut the airspace
     const Dubins dubins;         // dubins object to generate paths
+    const AirdropSearchConfig config;
 };
 
 std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state);

@@ -97,10 +97,18 @@ enum POINT_FETCH_METHODS {
 };
 
 struct RRTConfig {
-    bool optimize;  // run RRT* if true
+    int iterations_per_waypoint;  // number of iterations run between two waypoints
+    double rewire_radius;         // maximum distance from sampled point to optimize during RRT*
+    bool optimize;                // run RRT* if true
     POINT_FETCH_METHODS point_fetch_method;
     bool allowed_to_skip_waypoints;  // if true, will skip waypoints if it can not connect after 1
                                      // RRT iteration
+};
+
+struct AirdropSearchConfig {
+    bool optimize;  // whether to ignore the config below and run all ways.
+    bool vertical;  // if true, will search in vertical lines
+    bool one_way;   // if true, path returned will only be in 1 direction
 };
 
 #endif  // INCLUDE_UTILITIES_DATATYPES_HPP_
