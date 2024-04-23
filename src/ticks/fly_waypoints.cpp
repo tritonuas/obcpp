@@ -4,8 +4,6 @@
 
 #include "ticks/ids.hpp"
 #include "utilities/constants.hpp"
-#include <mavsdk/plugins/mission/mission.h>
-#include <plugins/mission/mission.h>
 
 FlyWaypointsTick::FlyWaypointsTick(std::shared_ptr<MissionState> state)
     :Tick(state, TickID::FlyWaypoints) {}
