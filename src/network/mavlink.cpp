@@ -276,3 +276,43 @@ mavsdk::Telemetry::FlightMode MavlinkClient::flight_mode() {
     Lock lock(this->data_mut);
     return this->data.flight_mode;
 }
+
+double MavlinkClient::angle2D(double x1, double y1, double x2, double y2) {
+    double dtheta, theta1, theta2;
+
+    theta1 = atan2(y1, x1);
+    theta2 = atan2(y2, x2);
+    dtheta = theta2 - theta1;
+
+    while(dtheta > M_PI){
+        dtheta -= 2*M_PI;
+    }
+    while(dtheta < -M_PI){
+        dtheta += 2*M_PI;
+    }
+
+    return(dtheta);
+}
+
+bool MavlinkClient::isPointInPolygon(std::pair<double, double> latlng, std::vector<XYZCoord> region){
+    int n = region.size();
+    double angle = 0;
+
+    for(int i = 0; i < n; i++){
+        double point_1_lat = region[i].x - latlng.first;
+        double point_1_lng = region[i].y - latlng.second;
+        double point_2_lat = region[(i+1)%n].x - latlng.first;
+        double point_2_lng = region[(i+1)%n].y - latlng.second;
+        angle += MavlinkClient::angle2D(point_1_lat, point_1_lng, point_2_lat, point_2_lng);
+    }
+
+    if(std::abs(angle) < M_PI){
+        return false;
+    }
+    
+    return true;
+}
+
+bool MavlinkClient::isMissionFinished(){
+    return this->mission->is_mission_finished().second;
+}

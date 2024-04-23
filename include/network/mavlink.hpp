@@ -64,8 +64,11 @@ class MavlinkClient {
     double airspeed_m_s();
     double heading_deg();
     mavsdk::Telemetry::FlightMode flight_mode();
+    double angle2D(double x1, double y1, double x2, double y2);
+    bool isPointInPolygon(std::pair<double, double> latlng, std::vector<XYZCoord> region);
+    bool isMissionFinished();
 
- private:
+private:
     mavsdk::Mavsdk mavsdk;
     std::shared_ptr<mavsdk::System> system;
     std::unique_ptr<mavsdk::Telemetry> telemetry;
