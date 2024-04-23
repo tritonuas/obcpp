@@ -55,6 +55,6 @@ jobs:
           file: ${{ env.DOCKERFILE_PATH }} 
           context: .
           push: true
-          tags: ${{ env.TAG }} 
+          tags: ghcr.io/${{ github.repository }}:${{ env.TAG }} 
           labels: ${{ steps.meta.outputs.labels }}
 
