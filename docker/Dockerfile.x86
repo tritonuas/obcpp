@@ -152,6 +152,18 @@ RUN wget "https://github.com/pytorch/vision/archive/refs/tags/v${TORCHVISION_VER
     && make -j2 \
     && make install
 
+RUN pip3 install gdown
+ENV PATH="${PATH}:${HOME}/.local/bin"
+
+ARG ARENA_INSTALL_DIR=/arena-tmp
+ARG ARENA_TAR_PATH="${ARENA_INSTALL_DIR}ArenaSDK_Linux.tar.gz"
+ENV ARENA_EXTRACTED_PATH="${ARENA_INSTALL_DIR}/ArenaSDK_Linux_x64"
+WORKDIR ${ARENA_INSTALL_DIR}
+RUN gdown 1pQtheOK-f2N4C2CDi43HTqttGuxHKptg -O ${ARENA_TAR_PATH}
+RUN tar -xvzf ${ARENA_TAR_PATH}
+WORKDIR ${ARENA_EXTRACTED_PATH}
+RUN sh Arena_SDK_Linux_x64.conf
+
 # login as non-root user
 USER $USERNAME
 

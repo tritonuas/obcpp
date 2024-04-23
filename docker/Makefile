@@ -2,6 +2,9 @@
 all: 
 	echo "select one of the other targets"
 
+build-x86-image:
+	docker buildx build --platform linux/amd64 --tag tritonuas/obcpp:x86 --file Dockerfile.x86 ..
+
 # NOTE: the jetson Docker image is based on a custom base image we generate from  
 # https://github.com/dusty-nv/jetson-containers/
 # - Clone that repo and run the following command: 
@@ -11,11 +14,11 @@ all:
 build-jetson-image:
 	docker buildx build --platform linux/arm64 --tag tritonuas/obcpp:jetson --file Dockerfile.jetson ..
 
-push-jetson-image:
-	docker push tritonuas/obcpp:jetson
-
 build-arm-image:
 	DOCKER_BUILDKIT=1 docker build --tag tritonuas/obcpp:arm --file Dockerfile.arm ..
+
+push-jetson-image:
+	docker push tritonuas/obcpp:jetson
 
 run-jetson-pixhawk-compose:
 	docker compose -f jetson-pixhawk-compose.yml up -d

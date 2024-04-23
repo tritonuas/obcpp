@@ -1,5 +1,4 @@
-// #define ARENA_SDK_INSTALLED
-// #ifdef ARENA_SDK_INSTALLED
+#ifdef ARENA_SDK_INSTALLED
 
 #include "camera/interface.hpp"
 #include "camera/lucid.hpp"
@@ -280,4 +279,4 @@ ImageData LucidCamera::imgConvert(Arena::IImage* pImage) {
     return ImageData(name, path, matCopy, ImageTelemetry(0, 0, 0, 0, 0, 0, 0));
 }
 
-// #endif // ARENA_SDK_INSTALLED
+#endif // ARENA_SDK_INSTALLED

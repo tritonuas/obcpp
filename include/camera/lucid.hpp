@@ -1,7 +1,7 @@
 #ifndef INCLUDE_CAMERA_LUCID_HPP_
 #define INCLUDE_CAMERA_LUCID_HPP_
 
-// #ifdef ARENA_SDK_INSTALLED
+#ifdef ARENA_SDK_INSTALLED
 
 
 #include "camera/interface.hpp"
@@ -87,6 +87,6 @@ class LucidCamera : public CameraInterface {
 };
 
 
-// #endif  // ARENA_SDK_INSTALLED
+#endif  // ARENA_SDK_INSTALLED
 
 #endif  // INCLUDE_CAMERA_LUCID_HPP_
