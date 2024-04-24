@@ -2,7 +2,10 @@
     "configurations": [
         {
             "name": "CMake",
-            "compileCommands": "${workspaceFolder}/build/compile_commands.json"
+            "compileCommands": "${workspaceFolder}/build/compile_commands.json",
+            "includePath": [
+                "${workspaceFolder}/include"
+            ]
         }
     ],
     "version": 4
