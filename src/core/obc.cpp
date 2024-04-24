@@ -19,18 +19,19 @@ extern "C" {
 
 // TODO: allow specifying config filename
 OBC::OBC(OBCConfig config) {
-    int gcs_port = config.network_gcs_port;
+    int gcs_port = config.network.gcs.port;
 
     this->state = std::make_shared<MissionState>();
     this->state->setTick(new MissionPrepTick(this->state));
-
+    this->state->rrt_config = config.rrt_config;
+    this->state->coverage_pathing_config = config.coverage_pathing_config;
     this->gcs_server = std::make_unique<GCSServer>(gcs_port, this->state);
 
     // Don't need to look at these futures at all because the connect functions
     // will set the global mission state themselves when connected, which everything
     // else can check.
     this->connectMavThread = std::thread([this, config]
-        {this->connectMavlink(config.network_mavlink_connect);});
+        {this->connectMavlink(config.network.mavlink.connect);});
     this->connectAirdropThread = std::thread([this]{this->connectAirdrop();});
 }
 

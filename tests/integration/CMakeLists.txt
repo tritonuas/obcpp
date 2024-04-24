@@ -94,6 +94,19 @@ target_include_directories(cv_matching PRIVATE ${ImageMagick_INCLUDE_DIRS})
 target_link_libraries(cv_matching PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
 
+# cv_saliency
+add_executable(cv_saliency ${SOURCES} "cv_saliency.cpp")
+target_link_libraries(cv_saliency PRIVATE obcpp_lib)
+target_include_directories(cv_saliency PRIVATE ${INCLUDE_DIRECTORY})
+target_add_torch(cv_saliency)
+target_add_opencv(cv_saliency) 
+target_add_torchvision(cv_saliency)
+target_add_matplot(cv_saliency)
+target_add_json(cv_saliency)
+target_add_loguru(cv_saliency)
+target_include_directories(cv_saliency PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(cv_saliency PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
+
 # cv_segmentation
 add_executable(cv_segmentation "cv_segmentation.cpp")
 target_link_libraries(cv_segmentation PRIVATE obcpp_lib)
@@ -145,6 +158,23 @@ target_add_loguru(path_planning)
 
 target_include_directories(path_planning PRIVATE ${ImageMagick_INCLUDE_DIRS})
 target_link_libraries(path_planning PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
+
+
+add_executable(pathing_integration "pathing_integration.cpp")
+target_link_libraries(pathing_integration PRIVATE obcpp_lib)
+target_include_directories(pathing_integration PRIVATE ${INCLUDE_DIRECTORY})
+target_add_protobuf(pathing_integration)
+target_add_torch(pathing_integration)
+target_add_torchvision(pathing_integration)
+target_add_json(pathing_integration)
+target_add_opencv(pathing_integration)
+target_add_httplib(pathing_integration)
+target_add_mavsdk(pathing_integration)
+target_add_matplot(pathing_integration)
+target_add_loguru(pathing_integration)
+
+target_include_directories(pathing_integration PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(pathing_integration PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
 add_executable(airdrop_pathing "airdrop_pathing.cpp")
 target_link_libraries(airdrop_pathing PRIVATE obcpp_lib)

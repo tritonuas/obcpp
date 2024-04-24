@@ -8,7 +8,6 @@
 
 using json = nlohmann::json;
 
-
 OBCConfig::OBCConfig(int argc, char* argv[]) {
     // If config-json name is passed in
     if (argc > 1) {
@@ -20,25 +19,41 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
         json configs = json::parse(configStream);
 
         // Set configs
-        this->logging_dir = configs["logging"]["dir"];
-        this->network_mavlink_connect = configs["network"]["mavlink"]["connect"];
-        this->network_gcs_port = configs["network"]["gcs"]["port"];
+        this->logging.dir = configs["logging"]["dir"];
+        this->network.mavlink.connect = configs["network"]["mavlink"]["connect"];
+        this->network.gcs.port = configs["network"]["gcs"]["port"];
+
+        this->rrt_config.iterations_per_waypoint =
+            configs["pathing"]["rrt"]["iterations_per_waypoint"];
+        this->rrt_config.rewire_radius = configs["pathing"]["rrt"]["rewire_radius"];
+        this->rrt_config.optimize = configs["pathing"]["rrt"]["optimize"];
+        this->rrt_config.point_fetch_method = configs["pathing"]["rrt"]["point_fetch_methods"];
+        this->rrt_config.allowed_to_skip_waypoints =
+            configs["pathing"]["rrt"]["allowed_to_skip_waypoints"];
+
+        this->coverage_pathing_config.optimize = configs["pathing"]["coverage"]["optimize"];
+        this->coverage_pathing_config.vertical = configs["pathing"]["coverage"]["vertical"];
+        std::cout << configs["pathing"]["coverage"]["one_way"] << std::endl;
+        this->coverage_pathing_config.one_way = configs["pathing"]["coverage"]["one_way"];
+
     } else {
-        makeDefault();  // Detect if there is already a default-config.json?
+        makeDefault();
     }
 }
 
 void OBCConfig::makeDefault() {
     // Set configs
-    this->logging_dir = "/workspaces/obcpp/logs";
-    this->network_mavlink_connect = "tcp://172.17.0.1:5760";
-    this->network_gcs_port = 5010;
+    this->logging.dir = "/workspaces/obcpp/logs";
+    this->network.mavlink.connect = "tcp://172.17.0.1:5760";
+    this->network.gcs.port = 5010;
 
-    // Create default configs
-    json configs;
-    configs["logging"]["dir"] = this->logging_dir;
-    configs["network"]["mavlink"]["connect"] = this->network_mavlink_connect;
-    configs["network"]["gcs"]["port"] = this->network_gcs_port;
-    std::ofstream configFile(configsPath + "default-config.json");
-    configFile << configs.dump(4);  // Dump to file with 4 space indents
+    this->rrt_config.iterations_per_waypoint = ITERATIONS_PER_WAYPOINT;
+    this->rrt_config.rewire_radius = REWIRE_RADIUS;
+    this->rrt_config.optimize = true;
+    this->rrt_config.point_fetch_method = NEAREST;
+    this->rrt_config.allowed_to_skip_waypoints = false;
+
+    this->coverage_pathing_config.optimize = true;
+    this->coverage_pathing_config.vertical = false;
+    this->coverage_pathing_config.one_way = false;
 }

@@ -86,7 +86,7 @@ DEF_GCS_HANDLE(Get, tick) {
 DEF_GCS_HANDLE(Get, mission) {
     LOG_REQUEST("GET", "/mission");
 
-    auto cached_mission = state->config.getCachedMission();
+    auto cached_mission = state->mission_params.getCachedMission();
     if (cached_mission) {
         std::string output;
         google::protobuf::util::MessageToJsonString(*cached_mission, &output);
@@ -106,7 +106,7 @@ DEF_GCS_HANDLE(Post, mission) {
     // Update the cartesian converter to be centered around the new flight boundary
     state->setCartesianConverter(CartesianConverter(mission.flightboundary()));
 
-    auto err = state->config.setMission(mission, state->getCartesianConverter().value());
+    auto err = state->mission_params.setMission(mission, state->getCartesianConverter().value());
     if (err.has_value()) {
         LOG_RESPONSE(WARNING, err.value().c_str(), BAD_REQUEST);
     } else {
