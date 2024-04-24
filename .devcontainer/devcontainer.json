@@ -16,6 +16,8 @@
 	// 	"--network=host"
 	// ],
 
+	"extensions.verifySignature": false,
+
 	"customizations": {
 		"vscode": {
 			"settings": {
