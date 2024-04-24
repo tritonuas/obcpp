@@ -181,6 +181,8 @@ void AirdropClient::_receiveWorker() {
             continue;
         }
 
+        VLOG_F(TRACE, "RECEIVED AIRDROP PACKET %d %d", (int)packet.hdr, (int)packet.data);
+
         Lock lock(this->recv_mut);
         this->recv_queue.emplace(packet);
     }
