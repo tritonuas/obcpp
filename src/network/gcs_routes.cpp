@@ -11,7 +11,6 @@
 #include "utilities/serialize.hpp"
 #include "utilities/logging.hpp"
 #include "utilities/http.hpp"
-#include "utilities/logging.hpp"
 #include "network/gcs_macros.hpp"
 #include "ticks/tick.hpp"
 #include "ticks/path_gen.hpp"
@@ -244,7 +243,7 @@ DEF_GCS_HANDLE(Post, dodropnow) {
         return;
     }
 
-    state->getAirdrop()->send(ad_packet_t { .hdr=DROP_NOW, .data=bottle });
+    state->getAirdrop()->send(ad_packet_t { .hdr = DROP_NOW, .data = bottle });
 
     LOG_RESPONSE(INFO, "Dropped bottle", OK);
 }
