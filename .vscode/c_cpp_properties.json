@@ -4,8 +4,7 @@
             "name": "CMake",
             "compileCommands": "${workspaceFolder}/build/compile_commands.json",
             "includePath": [
-                "${workspaceFolder}/include",
-                "${workspaceFolder}/build/gen_protos/"
+                "${workspaceFolder}/include"
             ],
             "cppStandard": "c++20"
         }
