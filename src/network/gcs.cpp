@@ -68,4 +68,6 @@ void GCSServer::_bindHandlers() {
     BIND_HANDLER(Get, camera, capture);
     BIND_HANDLER(Get, camera, config);
     BIND_HANDLER(Post, camera, config);
+
+    BIND_HANDLER(Post, dodropnow);
 }

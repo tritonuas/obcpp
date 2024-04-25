@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 /**********************************************************************************************
- * LAST UPDATED: 2024/04/15 by Tyler Lentz
+ * LAST UPDATED: 2024/04/24 by Tyler Lentz
  * 
  * This file defines the packet definitions for Airdrop communications. It is used in two
  * separate repositories: 
@@ -103,6 +103,8 @@ inline int validate_packet_as(enum ad_packet_hdr hdr, ad_packet_t packet) {
         case ACK_REVOKE:
         case ABOUT_TO_RELEASE:
         case HEARTBEAT:
+        case SEND_LATLNG:
+        case ACK_LATLNG:
             return (packet.data >= BOTTLE_A && packet.data <= BOTTLE_E);
         default:
             return 0;

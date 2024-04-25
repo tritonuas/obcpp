@@ -9,8 +9,8 @@
 #include "core/mission_state.hpp"
 #include "protos/obc.pb.h"
 #include "utilities/serialize.hpp"
-#include "utilities/http.hpp"
 #include "utilities/logging.hpp"
+#include "utilities/http.hpp"
 #include "network/gcs_macros.hpp"
 #include "ticks/tick.hpp"
 #include "ticks/path_gen.hpp"
@@ -35,6 +35,7 @@ using namespace std::chrono_literals; // NOLINT
  *        Note: you shouldn't need to access this for most things, as
  *        the LOG_RESPONSE macro will handle it for you.
  */
+
 
 DEF_GCS_HANDLE(Get, connections) {
     LOG_REQUEST_TRACE("GET", "/connections");
@@ -211,4 +212,38 @@ DEF_GCS_HANDLE(Post, camera, config) {
     LOG_REQUEST("POST", "/camera/config");
 
     LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
+}
+
+DEF_GCS_HANDLE(Post, dodropnow) {
+    LOG_REQUEST("POST", "/dodropnow");
+
+    BottleSwap bottle_proto;
+    google::protobuf::util::JsonStringToMessage(request.body, &bottle_proto);
+
+    ad_bottle bottle;
+    if (bottle_proto.index() == BottleDropIndex::A) {
+        bottle = ad_bottle::BOTTLE_A;
+    } else if (bottle_proto.index() == BottleDropIndex::B) {
+        bottle = ad_bottle::BOTTLE_B;
+    } else if (bottle_proto.index() == BottleDropIndex::C) {
+        bottle = ad_bottle::BOTTLE_C;
+    } else if (bottle_proto.index() == BottleDropIndex::D) {
+        bottle = ad_bottle::BOTTLE_D;
+    } else if (bottle_proto.index() == BottleDropIndex::E) {
+        bottle = ad_bottle::BOTTLE_E;
+    } else {
+        LOG_RESPONSE(ERROR, "Invalid bottle index", BAD_REQUEST);
+        return;
+    }
+
+    LOG_F(INFO, "Received signal to drop bottle %d", bottle);
+
+    if (state->getAirdrop() == nullptr) {
+        LOG_RESPONSE(ERROR, "Airdrop not connected", BAD_REQUEST);
+        return;
+    }
+
+    state->getAirdrop()->send(ad_packet_t { .hdr = DROP_NOW, .data = bottle });
+
+    LOG_RESPONSE(INFO, "Dropped bottle", OK);
 }

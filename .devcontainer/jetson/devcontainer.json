@@ -6,15 +6,14 @@
 	// also: need to run obcpp with sudo or add tuas user to dialout group with
 	// 	   `sudo usermod -aG dialout tuas && newgrp && bash`
 	// "runArgs": ["--device=/dev/ttyACM0"], 
-	// "runArgs": [
-	// 	"--network=host"
-	// ],
 
 	// Enable network mode host if on Linux and testing airdrop connectivity
     // "appPort": [ "45906:45906/udp", "45907:45907/udp" ], // port forward airdrop ports for local testing
 	// "runArgs": [
 	// 	"--network=host"
 	// ],
+
+	"extensions.verifySignature": false,
 
 	"customizations": {
 		"vscode": {

@@ -242,3 +242,13 @@ int x = 0; // NOLINT
 ### Formatting
 
 No formatter has been added yet. Formatting will be enforced once one is set up.
+
+## Jetson Setup
+
+### Network is Unreachable
+
+If you are having problems sending UDP broadcast packets from the jetson, ensure that the default gateway ip is set correctly. You can use the following command to do this:
+
+```
+route add default gw 192.168.1.1
+```
