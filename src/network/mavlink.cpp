@@ -2,8 +2,8 @@
 
 #include <mavsdk/mavsdk.h>
 #include <mavsdk/plugins/telemetry/telemetry.h>
-#include <mavsdk/plugins/mission/mission.h>
 #include <mavsdk/plugins/geofence/geofence.h>
+#include <mavsdk/plugins/mission_raw/mission_raw.h>
 
 #include <atomic>
 #include <memory>
@@ -49,7 +49,7 @@ MavlinkClient::MavlinkClient(std::string link):
 
     // Create instance of Telemetry and Mission
     this->telemetry = std::make_unique<mavsdk::Telemetry>(system);
-    this->mission = std::make_unique<mavsdk::Mission>(system);
+    this->mission = std::make_unique<mavsdk::MissionRaw>(system);
     this->geofence = std::make_unique<mavsdk::Geofence>(system);
 
     // Set position update rate (1 Hz)
@@ -190,55 +190,33 @@ bool MavlinkClient::uploadWaypointsUntilSuccess(std::shared_ptr<MissionState> st
     LOG_SCOPE_F(INFO, "Uploading waypoints");
 
     // Parse the waypoint information
-    std::vector<mavsdk::Mission::MissionItem> mission_items;
+    std::vector<mavsdk::MissionRaw::MissionItem> mission_items;
+    int i = 0;
     for (const auto& coord : waypoints) {
-        mavsdk::Mission::MissionItem new_item {};
-        mission_items.push_back(mavsdk::Mission::MissionItem {
-            .latitude_deg {coord.latitude()},
-            .longitude_deg {coord.longitude()},
-            .relative_altitude_m {static_cast<float>(coord.altitude())},
-            .is_fly_through {true}
-        });
+        mavsdk::MissionRaw::MissionItem new_raw_item_nav {};
+        new_raw_item_nav.seq = i;
+        new_raw_item_nav.frame = 6; // MAV_FRAME_GLOBAL_RELATIVE_ALT_INT
+        new_raw_item_nav.command = 16; // MAV_CMD_NAV_WAYPOINT
+        new_raw_item_nav.current = 0;
+        new_raw_item_nav.autocontinue = 1;
+        new_raw_item_nav.param1 = 0.0; // Hold
+        new_raw_item_nav.param2 = 7.0; // Accept Radius 7.0m close to 25ft
+        new_raw_item_nav.param3 = 0.0; // Pass Radius
+        new_raw_item_nav.param4 = NAN; // Yaw
+        new_raw_item_nav.x = int32_t(std::round(coord.latitude() * 1e7));
+        new_raw_item_nav.y = int32_t(std::round(coord.longitude() * 1e7));
+        new_raw_item_nav.z = coord.altitude();
+        new_raw_item_nav.mission_type = 0; // MAV_MISSION_TYPE_MISSION
+        mission_items.push_back(new_raw_item_nav);
+        i++;
     }
 
     while (true) {
         LOG_F(INFO, "Sending waypoint information...");
 
-        mavsdk::Mission::MissionPlan plan {
-            .mission_items = mission_items,
-        };
+        auto result = this->mission->upload_mission(mission_items)
 
-        // Upload the mission, logging out progress as it gets uploaded
-        std::mutex mut;
-        mavsdk::Mission::Result upload_status {mavsdk::Mission::Result::Next};
-        this->mission->upload_mission_with_progress_async(plan,
-            [&upload_status, &mut]
-            (mavsdk::Mission::Result result, mavsdk::Mission::ProgressData data) {
-                Lock lock(mut);
-                upload_status = result;
-                if (result == mavsdk::Mission::Result::Next) {
-                    LOG_F(INFO, "Upload progress: %f", data.progress);
-                }
-            });
-
-        // Wait until the mission is fully uploaded
-        while (true) {
-            {
-                Lock lock(mut);
-                // Check if it is uploaded
-                if (upload_status == mavsdk::Mission::Result::Success) {
-                    LOG_F(INFO, "Successfully uploaded the mission. YIPIEE!");
-                    return true;
-                } else if (upload_status != mavsdk::Mission::Result::Next) {
-                    // Neither success nor "next", signalling that there has been an error
-                    LOG_S(WARNING) << "Mission upload failed: "
-                        << upload_status << ". Trying again...";
-                    break;
-                }
-            }
-            // otherwise in progress, so continue this loop
-            std::this_thread::sleep_for(std::chrono::milliseconds(250));
-        }
+        if (result == mavsdk::MissionRaw::Result::)
 
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }

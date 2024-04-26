@@ -3,7 +3,7 @@
 
 #include <mavsdk/mavsdk.h>
 #include <mavsdk/plugins/telemetry/telemetry.h>
-#include <mavsdk/plugins/mission/mission.h>
+#include <mavsdk/plugins/mission_raw/mission_raw.h>
 #include <mavsdk/plugins/geofence/geofence.h>
 #include <memory>
 #include <vector>
@@ -70,7 +70,7 @@ class MavlinkClient {
     mavsdk::Mavsdk mavsdk;
     std::shared_ptr<mavsdk::System> system;
     std::unique_ptr<mavsdk::Telemetry> telemetry;
-    std::unique_ptr<mavsdk::Mission> mission;
+    std::unique_ptr<mavsdk::MissionRaw> mission;
     std::unique_ptr<mavsdk::Geofence> geofence;
 
     struct Data {

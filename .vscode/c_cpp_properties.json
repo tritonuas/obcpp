@@ -6,7 +6,8 @@
             "includePath": [
                 "${workspaceFolder}/include",
                 "${workspaceFolder}/**",
-                "/usr/include/**"
+                "/usr/include/**",
+                "/usr/local/include/**"
             ],
             "cppStandard": "c++20"
         }
