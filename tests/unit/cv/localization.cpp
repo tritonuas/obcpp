@@ -84,7 +84,6 @@ TEST(CVLocalization, LocalizationAccuracy) {
         // assertLocalizationAccuracy(testCase.expectedTargetCoord, ecefTargetCoord);
 
         GPSCoord gsdTargetCoord = gsdLocalization.localize(testCase.inputImageTelemetry, testCase.inputTargetBbox);
-        //TODO: FLOAT VS DOUBLE
         std::cout << "Error: " << gsdLocalization.distanceInMetersBetweenCords(
             (testCase.expectedTargetCoord.latitude()), 
             (testCase.expectedTargetCoord.longitude()), 

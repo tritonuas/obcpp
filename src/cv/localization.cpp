@@ -147,6 +147,18 @@ GPSCoord GSDLocalization::localize(const ImageTelemetry& telemetry, const Bbox& 
     return calc_coord;
 }
 
+/*
+Takes the in two cordinaates and outputs their distance in meters. 
+
+Parameters:
+- lat1/lon1 (First Cordinate)
+- lat2/lon2 (Second Cordinate)
+
+@returns distance in meters
+
+Reference: http://www.movable-type.co.uk/scripts/latlong.html
+*/
+
 double GSDLocalization::distanceInMetersBetweenCords(const double lat1, const double lon1, const double lat2, const double lon2){
     double e1 = lat1 * M_PI / 180;
     double e2 = lat2 * M_PI / 180;
