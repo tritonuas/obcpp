@@ -1,4 +1,5 @@
-FROM dustynv/l4t-pytorch:r36.2.0
+# FROM dustynv/l4t-pytorch:r36.2.0
+FROM dustynv/pytorch:2.1-r36.2.0
 
 # this base image came from dusty-nv/jetson-containers
 # ./build.sh --name=tritonuas/jetson-base pytorch:2.1 torchvision opencv 
