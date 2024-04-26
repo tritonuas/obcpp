@@ -1,0 +1,13 @@
+{
+    "configurations": [
+        {
+            "name": "CMake",
+            "compileCommands": "${workspaceFolder}/build/compile_commands.json",
+            "includePath": [
+                "${workspaceFolder}/include"
+            ],
+            "cppStandard": "c++20"
+        }
+    ],
+    "version": 4
+}

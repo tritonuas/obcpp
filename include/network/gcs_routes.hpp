@@ -17,6 +17,25 @@
 #include "ticks/tick.hpp"
 #include "ticks/path_gen.hpp"
 
+
+/*
+ * GET /connection
+ * ---
+ * Returns information about the connection status of the OBC
+ * 
+ * 200 OK: Successfully retrieved data
+ */
+DEF_GCS_HANDLE(Get, connections);
+
+/*
+ * GET /tick
+ * ---
+ * Returns the name of the current tick function, for display in the GCS control page
+ * 
+ * 200 OK: No problems occurred
+ **/
+DEF_GCS_HANDLE(Get, tick);
+
 /*
  * GET /mission
  * ---
@@ -166,5 +185,13 @@ DEF_GCS_HANDLE(Get, camera, config);
  * Uploads the new configuration settings to use for the camera.
  */
 DEF_GCS_HANDLE(Post, camera, config);
+
+/**
+ * POST /dodropnow
+ * ---
+ * Tells the OBC to do a drop now, for the given bottle
+ * Expects the body to be a BottleSwap proto message in json format
+ */
+DEF_GCS_HANDLE(Post, dodropnow);
 
 #endif  // INCLUDE_NETWORK_GCS_ROUTES_HPP_

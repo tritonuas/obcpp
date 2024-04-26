@@ -1,29 +1,28 @@
-#ifndef INCLUDE_CORE_MISSION_CONFIG_HPP_
-#define INCLUDE_CORE_MISSION_CONFIG_HPP_
+#ifndef INCLUDE_CORE_MISSION_PARAMETERS_HPP_
+#define INCLUDE_CORE_MISSION_PARAMETERS_HPP_
 
 #include <array>
-#include <vector>
+#include <optional>
+#include <shared_mutex>
 #include <string>
 #include <tuple>
-#include <shared_mutex>
-#include <optional>
 #include <unordered_map>
+#include <vector>
 
-#include "utilities/datatypes.hpp"
-#include "utilities/constants.hpp"
 #include "pathing/cartesian.hpp"
-
 #include "protos/obc.pb.h"
+#include "utilities/constants.hpp"
+#include "utilities/datatypes.hpp"
 
 /*
  *  Thread-safe wrapper around the Mission Configuration options.
  *  Multiple threads can access this same object, and it will handle
  *  all memory accesses with the shared mutex
  */
-class MissionConfig {
+class MissionParameters {
  public:
-    MissionConfig();  // Load default values
-    explicit MissionConfig(std::string filename);  // Load from filename
+    MissionParameters();                               // Load default values
+    explicit MissionParameters(std::string filename);  // Load from filename
 
     // Getters for singular value
     // Use when only need to read one value
@@ -53,10 +52,10 @@ class MissionConfig {
     Polyline waypoints;
     std::vector<Bottle> bottles;
 
-    std::optional<Mission> cached_mission {};
+    std::optional<Mission> cached_mission{};
 
     // internal function which doesn't apply the mutex
     void _setBottle(Bottle bottle);
 };
 
-#endif  // INCLUDE_CORE_MISSION_CONFIG_HPP_
+#endif  // INCLUDE_CORE_MISSION_PARAMETERS_HPP_

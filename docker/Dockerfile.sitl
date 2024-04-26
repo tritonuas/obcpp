@@ -1,0 +1,26 @@
+FROM amd64/ubuntu:22.04
+
+# set up user
+ARG USERNAME=tuas USER_UID=1000 USER_GID=1000 DEBIAN_FRONTEND=noninteractive
+RUN groupadd -f --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
+RUN usermod -a -G dialout $USERNAME
+
+USER $USERNAME
+
+# Steps from https://ardupilot.org/dev/docs/building-setup-linux.html#building-setup-linux
+
+WORKDIR /home/$USERNAME
+
+RUN sudo apt-get update && sudo apt-get install git && sudo apt-get install git
+RUN git clone --recurse-submodules https://github.com/ArduPilot/ardupilot.git
+
+WORKDIR ./ardupilot
+
+RUN Tools/environment_install/install-prereqs-ubuntu.sh -y
+RUN source ~/.profile
+
+# wipe parameters
+RUN timeout 3 ./sim_vehicle.py -w
+
+ENTRYPOINT ./sim_vehicle.py -v ArduPlane -f quadplane --console --map

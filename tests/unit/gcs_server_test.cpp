@@ -16,7 +16,7 @@
 #include "utilities/http.hpp"
 #include "ticks/mission_prep.hpp"
 #include "ticks/path_gen.hpp"
-#include "ticks/mission_upload.hpp"
+#include "ticks/mav_upload.hpp"
 #include "ticks/tick.hpp"
 
 #define DECLARE_HANDLER_PARAMS(STATE, REQ, RESP) \
@@ -32,7 +32,7 @@ TEST(GCSServerTest, GetMissionNoMission) {
     GCS_HANDLE(Get, mission)(state, req, resp);
 
     EXPECT_EQ(BAD_REQUEST, resp.status);
-    EXPECT_EQ(state->config.getCachedMission(), std::nullopt);
+    EXPECT_EQ(state->mission_params.getCachedMission(), std::nullopt);
 }
 
 TEST(GCSServerTest, PostBadMission) {
@@ -59,7 +59,7 @@ TEST(GCSServerTest, PostMissionThenGetMission) {
     EXPECT_EQ(OK, resp.status);
     auto cartesian = state->getCartesianConverter().value();
 
-    auto cached_airdrop_bounds = state->config.getAirdropBoundary();
+    auto cached_airdrop_bounds = state->mission_params.getAirdropBoundary();
     auto request_airdrop_bounds = request_mission.at("AirdropBoundary");
     EXPECT_EQ(cached_airdrop_bounds.size(), request_airdrop_bounds.size());
     for (int i = 0; i < cached_airdrop_bounds.size(); i++) {
@@ -70,7 +70,7 @@ TEST(GCSServerTest, PostMissionThenGetMission) {
         EXPECT_FLOAT_EQ(request_lat, cached_coord.latitude());
         EXPECT_FLOAT_EQ(request_lng, cached_coord.longitude());
     }
-    auto cached_flight_bounds = state->config.getFlightBoundary();
+    auto cached_flight_bounds = state->mission_params.getFlightBoundary();
     auto request_flight_bounds = request_mission.at("FlightBoundary");
     EXPECT_EQ(cached_flight_bounds.size(), request_flight_bounds.size());
     for (int i = 0; i < cached_flight_bounds.size(); i++) {
@@ -81,7 +81,7 @@ TEST(GCSServerTest, PostMissionThenGetMission) {
         EXPECT_FLOAT_EQ(request_lat, cached_coord.latitude());
         EXPECT_FLOAT_EQ(request_lng, cached_coord.longitude());
     }
-    auto cached_waypoints = state->config.getWaypoints();
+    auto cached_waypoints = state->mission_params.getWaypoints();
     auto request_waypoints = request_mission.at("Waypoints");
     EXPECT_EQ(cached_waypoints.size(), request_waypoints.size());
     for (int i = 0; i < cached_waypoints.size(); i++) {
@@ -94,7 +94,7 @@ TEST(GCSServerTest, PostMissionThenGetMission) {
         EXPECT_FLOAT_EQ(request_lng, cached_coord.longitude());
         EXPECT_FLOAT_EQ(request_alt, cached_coord.altitude());
     }
-    auto cached_bottles = state->config.getAirdropBottles();
+    auto cached_bottles = state->mission_params.getAirdropBottles();
     auto request_bottles = request_mission.at("BottleAssignments");
     EXPECT_EQ(cached_bottles.size(), NUM_AIRDROP_BOTTLES);
     EXPECT_EQ(request_bottles.size(), NUM_AIRDROP_BOTTLES);

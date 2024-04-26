@@ -1,18 +1,30 @@
+#include "core/mission_state.hpp"
+
 #include <memory>
 #include <mutex>
+#include <nlohmann/json.hpp>
 
-#include "core/mission_config.hpp"
-#include "core/mission_state.hpp"
+#include "camera/interface.hpp"
+#include "camera/mock.hpp"
+#include "core/mission_parameters.hpp"
+#include "cv/aggregator.hpp"
+#include "cv/pipeline.hpp"
+#include "network/airdrop_client.hpp"
+#include "network/mavlink.hpp"
 #include "ticks/tick.hpp"
 #include "utilities/locks.hpp"
-#include "network/mavlink.hpp"
 #include "utilities/logging.hpp"
+#include "utilities/obc_config.hpp"
 
 // in future might add to this
-MissionState::MissionState() = default;
+MissionState::MissionState() {
+    // TODO: depending on config change from Mock to Real Lucid Camera
+    this->camera = std::make_shared<MockCamera>(CameraConfiguration(nlohmann::json()));
+}
 
 // Need to explicitly define now that Tick is no longer an incomplete class
-// See: https://stackoverflow.com/questions/9954518/stdunique-ptr-with-an-incomplete-type-wont-compile
+// See:
+// https://stackoverflow.com/questions/9954518/stdunique-ptr-with-an-incomplete-type-wont-compile
 MissionState::~MissionState() = default;
 
 const std::optional<CartesianConverter<GPSProtoVec>>& MissionState::getCartesianConverter() {
@@ -54,6 +66,7 @@ void MissionState::_setTick(Tick* newTick) {
 }
 
 TickID MissionState::getTickID() {
+    Lock lock(this->tick_mut);
     return this->tick->getID();
 }
 
@@ -67,20 +80,16 @@ const std::vector<GPSCoord>& MissionState::getInitPath() {
     return this->init_path;
 }
 
-bool MissionState::isInitPathValidated() {
-    Lock lock(this->init_path_mut);
-    return this->init_path_validated;
-}
+std::shared_ptr<MavlinkClient> MissionState::getMav() { return this->mav; }
 
-void MissionState::validateInitPath() {
-    Lock lock(this->init_path_mut);
-    this->init_path_validated = true;
-}
+void MissionState::setMav(std::shared_ptr<MavlinkClient> mav) { this->mav = mav; }
 
-std::shared_ptr<MavlinkClient> MissionState::getMav() {
-    return this->mav;
-}
+std::shared_ptr<AirdropClient> MissionState::getAirdrop() { return this->airdrop; }
 
-void MissionState::setMav(std::shared_ptr<MavlinkClient> mav) {
-    this->mav = mav;
-}
+void MissionState::setAirdrop(std::shared_ptr<AirdropClient> airdrop) { this->airdrop = airdrop; }
+
+std::shared_ptr<CVAggregator> MissionState::getCV() { return this->cv; }
+
+void MissionState::setCV(std::shared_ptr<CVAggregator> cv) { this->cv = cv; }
+
+std::shared_ptr<CameraInterface> MissionState::getCamera() { return this->camera; }

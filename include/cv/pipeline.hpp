@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <utility>
+#include <string>
 
 #include <opencv2/opencv.hpp>
 
@@ -12,6 +13,7 @@
 #include "cv/matching.hpp"
 #include "cv/saliency.hpp"
 #include "cv/segmentation.hpp"
+#include "cv/utilities.hpp"
 
 // Processed image holds all predictions made concerning a given image.
 //
@@ -20,20 +22,33 @@
 // At the same time, an aerial image can have other targets that are not matched
 // with a bottle (or at least the pipeline is not confident in a match).
 struct PipelineResults {
+    PipelineResults(ImageData imageData, std::vector<DetectedTarget> targets)
+        : imageData{imageData}, targets{targets} {}
+
     ImageData imageData;
-    std::vector<AirdropTarget> matchedTargets;
-    // Not sure if unmatchedTargets should hold a different struct than
-    // matchedTargets. Both have basically the same info except unmatched won't
-    // have a bottle index assigned to it. We could populate bottle index to -1
-    // or leave it as the bottle of the target it was closest in similarity to.
-    std::vector<AirdropTarget> unmatchedTargets;
+    std::vector<DetectedTarget> targets;
+};
+
+struct PipelineParams {
+    PipelineParams(std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives,
+        std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages,
+        std::string matchingModelPath, std::string segmentationModelPath,
+        std::string saliencyModelPath)
+        : competitionObjectives{competitionObjectives}, referenceImages{referenceImages},
+          matchingModelPath{matchingModelPath}, segmentationModelPath{segmentationModelPath},
+          saliencyModelPath{saliencyModelPath} {}
+
+    std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives;
+    std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages;
+    std::string matchingModelPath;
+    std::string segmentationModelPath;
+    std::string saliencyModelPath;
 };
 
 // Pipeline handles all infrastructure within the CV pipeline
 class Pipeline {
  public:
-        Pipeline(std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives,
-            std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages);
+    explicit Pipeline(const PipelineParams& p);
 
     PipelineResults run(const ImageData& imageData);
 

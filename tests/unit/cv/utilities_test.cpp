@@ -2,7 +2,9 @@
 
 #include "cv/utilities.hpp"
 
-TEST(CVUtilities, Crop) {
+#include <loguru.hpp>
+
+TEST(CVUtilities, CropValidAndInvalidSizes) {
     struct TestCase {
         std::string name;
         cv::Mat fullSizeImg;
@@ -46,7 +48,7 @@ TEST(CVUtilities, Crop) {
     }};
 
     for (const auto &testCase : testCases) {
-        std::cout << "Test name: " << testCase.name << std::endl;
+        LOG_F(INFO, "Test name: %s\n", testCase.name.c_str());
 
         cv::Mat cropped;
         try {

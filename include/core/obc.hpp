@@ -5,10 +5,11 @@
 #include <memory>
 #include <cstdint>
 
-#include "core/mission_config.hpp"
+#include "core/mission_parameters.hpp"
 #include "core/mission_state.hpp"
 #include "network/gcs.hpp"
 #include "network/mavlink.hpp"
+#include "utilities/obc_config.hpp"
 
 /*
  *  The highest level class for the entire OBC
@@ -16,7 +17,7 @@
  */
 class OBC {
  public:
-    explicit OBC(uint16_t gcs_port);
+    explicit OBC(OBCConfig config);
 
     void run();
 
@@ -25,7 +26,11 @@ class OBC {
 
     std::unique_ptr<GCSServer> gcs_server;
 
-    void connectMavlink();
+    std::thread connectMavThread;
+    std::thread connectAirdropThread;
+
+    void connectMavlink(std::string mavlink_url);
+    void connectAirdrop();
 };
 
 #endif  // INCLUDE_CORE_OBC_HPP_

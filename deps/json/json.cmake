@@ -13,7 +13,7 @@ function(target_add_json target_name)
 
   FetchContent_MakeAvailable(json)
 
-  target_link_libraries(${target_name} PRIVATE
+  target_link_libraries(${target_name} PRIVATE 
       nlohmann_json::nlohmann_json
   )
 endfunction()

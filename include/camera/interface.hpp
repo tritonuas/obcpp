@@ -10,15 +10,14 @@
 
 // class to contain all telemetry that should be tagged with an image.
 // In the future this could be in a mavlink file.
-class ImageTelemetry {
- public:
+struct ImageTelemetry {
     ImageTelemetry(double latitude, double longitude, double altitude, double airspeed, double heading, double yaw,
                    double pitch, double roll);
     const double latitude;
     const double longitude;
     const double altitude;
     const double airspeed;
-    const double heading;
+    const double heading
     const double yaw;
     const double pitch;
     const double roll;
@@ -35,14 +34,15 @@ class ImageTelemetry {
  */
 class ImageData {
  private:
-    const std::string NAME;
-    const std::string PATH;
-    const cv::Mat DATA;
-    const ImageTelemetry TELEMETRY;
+    std::string NAME;
+    std::string PATH;
+    cv::Mat DATA;
+    ImageTelemetry TELEMETRY;
 
  public:
     ImageData(std::string NAME, std::string PATH, cv::Mat DATA, ImageTelemetry TELEMETRY);
     ImageData(const ImageData&) = default;
+
     std::string getName() const;
     std::string getPath() const;
     cv::Mat getData() const;

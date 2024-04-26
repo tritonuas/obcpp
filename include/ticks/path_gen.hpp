@@ -14,6 +14,8 @@
 /*
  * Generates a path, caches the path in the mission state,
  * then waits for it to be validated.
+ *
+ * See https://tritonuas.github.io/wiki/software/obc/tick_architecture/ticks/pathgen/
  */
 class PathGenTick : public Tick {
  public:

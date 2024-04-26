@@ -10,6 +10,8 @@
 /*
  * Checks every second whether or not a valid mission has been uploaded.
  * Transitions to PathGenTick once it has been generated.
+ * 
+ * See https://tritonuas.github.io/wiki/software/obc/tick_architecture/ticks/missionprep/
  */
 class MissionPrepTick : public Tick {
  public:

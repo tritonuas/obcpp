@@ -1,5 +1,7 @@
 #include "cv/matching.hpp"
 
+#include <loguru.hpp>
+
 /*
 * IMPORTANT NOTE:
 * Using torch::from_blob to convert cv::Mat to torch::Tensor results in NaN tensors 
@@ -35,30 +37,31 @@ auto toInput(cv::Mat img, bool show_output = false, bool unsqueeze = false, int 
     if (unsqueeze)
         tensor_image.unsqueeze_(unsqueeze_dim);
 
-    if (show_output)
-        std::cout << tensor_image.slice(2, 0, 1) << std::endl;
+    if (show_output) {
+        std::ostringstream stream;
+        stream << tensor_image.slice(2, 0, 1);
+        LOG_F(INFO, stream.str().c_str());
+    }
 
     return std::vector<torch::jit::IValue>{tensor_image};
 }
 
 Matching::Matching(std::array<Bottle, NUM_AIRDROP_BOTTLES>
-                       competitionObjectives,
-                   double matchThreshold,
+                   competitionObjectives,
                    std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages,
                    const std::string &modelPath)
-    : competitionObjectives(competitionObjectives),
-      matchThreshold(matchThreshold) {
+    : competitionObjectives(competitionObjectives) {
 
     try {
-        this->module = torch::jit::load(modelPath);
+        this->torch_module = torch::jit::load(modelPath);
     }
     catch (const c10::Error& e) {
-        std::cerr << "ERROR: could not load the model, check if model file is present in /bin\n";
+        LOG_F(ERROR, "could not load the model, check if model file is present at %s.  If the file is present, try to verify that it's contents are valid model weights.  Sometimes when pulling from google drive, an error html page will download with the same filename if the model fails to download. \n", modelPath.c_str()); // NOLINT
         throw;
     }
 
     if (referenceImages.size() == 0) {
-        std::cerr << "WARNING: Empty reference image vector passed as argument\n";
+        LOG_F(WARNING, "Empty reference image vector passed as argument\n");
     }
 
     // Populate referenceFeatures by putting each refImg through model
@@ -66,7 +69,7 @@ Matching::Matching(std::array<Bottle, NUM_AIRDROP_BOTTLES>
         cv::Mat image = referenceImages.at(i).first;
         BottleDropIndex bottle = referenceImages.at(i).second;
         std::vector<torch::jit::IValue> input = toInput(image);
-        torch::Tensor output = this->module.forward(input).toTensor();
+        torch::Tensor output = this->torch_module.forward(input).toTensor();
         this->referenceFeatures.push_back(std::make_pair(output, bottle));
     }
 }
@@ -76,13 +79,12 @@ Matching::Matching(std::array<Bottle, NUM_AIRDROP_BOTTLES>
 * (each referenceFeature element corresponds to an element of referenceImages, see constructor).
 * @param croppedTarget - wrapper for cv::Mat image which we extract and use
 * @return MatchResult - struct of bottleIndex, boolean isMatch, and minimum distance found.
-* Boolean isMatch set to true if minimum distance found is below threshold, false otherwise.
 *
 * NOTE: Matching only occurs if loading model and ref. images was successful.
 */
 MatchResult Matching::match(const CroppedTarget& croppedTarget) {
     std::vector<torch::jit::IValue> input = toInput(croppedTarget.croppedImage);
-    torch::Tensor output = this->module.forward(input).toTensor();
+    torch::Tensor output = this->torch_module.forward(input).toTensor();
     int minIndex = 0;
     double minDist = torch::pairwise_distance(output,
                             referenceFeatures.at(minIndex).first).item().to<double>();
@@ -97,6 +99,5 @@ MatchResult Matching::match(const CroppedTarget& croppedTarget) {
         }
     }
     BottleDropIndex bottleIdx = referenceFeatures.at(minIndex).second;
-    bool isMatch = minDist < this->matchThreshold;
-    return MatchResult{bottleIdx, isMatch, minDist};
+    return MatchResult(bottleIdx, minDist);
 }

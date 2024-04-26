@@ -33,10 +33,10 @@ class Localization {
 
  protected:
     struct CameraIntrinsics {
-        double pixelSize;   //mm
-        double focalLength; //mm
-        double resolutionX; //Pixels
-        double resolutionY; //Pixels
+        double pixelSize;    // mm
+        double focalLength;  // mm
+        double resolutionX;  // Pixels
+        double resolutionY;  // Pixels
     };
 
     CameraIntrinsics camera{
@@ -51,36 +51,42 @@ class Localization {
 class ECEFLocalization : Localization {
  public:
     GPSCoord localize(const ImageTelemetry& telemetry, const Bbox& targetBbox) override;
+
  private:
     // ECEF - Earth Centered, Earth Fixed coordinate system. 0,0,0 is the center of the Earth.
     struct ECEFCoordinates {
-        double x; //Meters in the plane of the equator in the direction of the prime meridian
-        double y; //Meters in the plane of the equator in the direction of 90 degrees East
-        double z; //Meters in the direction of the North pole
+        double x;  // Meters in the plane of the equator in the direction of the prime meridian
+        double y;  // Meters in the plane of the equator in the direction of 90 degrees East
+        double z;  // Meters in the direction of the North pole
     };
 
-    // ENU - East, North, Up coordinate system. Used to show an offset from a certain location on the Earth.
+    // ENU - East, North, Up coordinate system.
+    // Used to show an offset from a certain location on the Earth.
     struct ENUCoordinates {
-        double e; //Meters East from reference location
-        double n; //Meters North from reference location
-        double u; //Meters Up from reference location
+        double e;  // Meters East from reference location
+        double n;  // Meters North from reference location
+        double u;  // Meters Up from reference location
     };
 
 
     struct CameraVector {
-        double roll;    //Radians
-        double pitch;   //Radians
-        double heading; //Radians
+        double roll;     // Radians
+        double pitch;    // Radians
+        double heading;  // Radians
     };
 
     ECEFCoordinates GPStoECEF(GPSCoord gps);
     ECEFCoordinates ENUtoECEF(ENUCoordinates offset, GPSCoord originGPS);
     GPSCoord ECEFtoGPS(ECEFCoordinates ecef);
-    CameraVector PixelsToAngle(CameraIntrinsics camera, CameraVector state, double targetX, double targetY);
+    CameraVector PixelsToAngle(
+        CameraIntrinsics camera,
+        CameraVector state,
+        double targetX,
+        double targetY);
     ENUCoordinates AngleToENU(CameraVector target, GPSCoord aircraft, double terrainHeight);
 };
 
-// Localization using GSD (ground sample distance) ratio 
+// Localization using GSD (ground sample distance) ratio
 class GSDLocalization : Localization {
  public:
     GPSCoord localize(const ImageTelemetry& telemetry, const Bbox& targetBbox) override;
