@@ -76,7 +76,7 @@ RUN wget "https://github.com/pytorch/vision/archive/refs/tags/v${TORCHVISION_VER
     && cd vision-${TORCHVISION_VERSION} \
     && mkdir build \
     && cd build \
-    && cmake -DWITH_CUDA=1 -DCUDA_HAS_FP16=1 -DCUDA_NO_HALF_OPERATORS=1 -DCUDA_NO_HALF_CONVERSIONS=1 -DCUDA_NO_HALF2_OPERATORS=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/usr/local/lib/python3.10/dist-packages/torch/share/cmake/Torch" .. \
+    && cmake -DWITH_CUDA=1 -DTORCH_CUDA_ARCH_LIST=8.6 -DCUDA_HAS_FP16=1 -DCUDA_NO_HALF_OPERATORS=1 -DCUDA_NO_HALF_CONVERSIONS=1 -DCUDA_NO_HALF2_OPERATORS=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/usr/local/lib/python3.10/dist-packages/torch/share/cmake/Torch" .. \
     && make -j4 \
     && make install
 
