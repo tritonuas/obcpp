@@ -1,5 +1,5 @@
-# FROM dustynv/l4t-pytorch:r36.2.0
-FROM dustynv/pytorch:2.1-r36.2.0
+FROM dustynv/l4t-pytorch:r36.2.0
+# FROM dustynv/pytorch:2.1-r36.2.0
 
 # this base image came from dusty-nv/jetson-containers
 # ./build.sh --name=tritonuas/jetson-base pytorch:2.1 torchvision opencv 
@@ -87,8 +87,6 @@ RUN wget "https://github.com/pytorch/vision/archive/refs/tags/v${TORCHVISION_VER
 # RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 10
 # RUN update-alternatives --set gcc /usr/bin/gcc-10
 # RUN update-alternatives --set g++ /usr/bin/g++-10
-
-RUN apt-get install -y libopencv-dev
 
 WORKDIR /obcpp
 COPY . .
