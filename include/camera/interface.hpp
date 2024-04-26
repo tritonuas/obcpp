@@ -13,14 +13,14 @@
 struct ImageTelemetry {
     ImageTelemetry(double latitude, double longitude, double altitude, double airspeed, double heading, double yaw,
                    double pitch, double roll);
-    const double latitude;
-    const double longitude;
-    const double altitude;
-    const double airspeed;
-    const double heading;
-    const double yaw;
-    const double pitch;
-    const double roll;
+   double latitude;
+   double longitude;
+   double altitude;
+   double airspeed;
+   double heading;
+   double yaw;
+   double pitch;
+   double roll;
 };
 
 /*
