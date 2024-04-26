@@ -17,7 +17,7 @@ struct ImageTelemetry {
     const double longitude;
     const double altitude;
     const double airspeed;
-    const double heading
+    const double heading;
     const double yaw;
     const double pitch;
     const double roll;
