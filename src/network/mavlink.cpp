@@ -18,7 +18,9 @@
 #include "utilities/logging.hpp"
 #include "core/mission_state.hpp"
 
-MavlinkClient::MavlinkClient(std::string link) {
+MavlinkClient::MavlinkClient(std::string link):
+    mavsdk(mavsdk::Mavsdk::Configuration(mavsdk::Mavsdk::ComponentType::CompanionComputer))
+{
     LOG_F(INFO, "Connecting to Mav at %s", link.c_str());
 
     while (true) {
@@ -141,7 +143,7 @@ bool MavlinkClient::uploadGeofenceUntilSuccess(std::shared_ptr<MissionState> sta
 
     // Parse the flight boundary / geofence information
     mavsdk::Geofence::Polygon flight_bound;
-    flight_bound.fence_type = mavsdk::Geofence::Polygon::FenceType::Inclusion;
+    flight_bound.fence_type = mavsdk::Geofence::FenceType::Inclusion;
     for (const auto& coord : mission->flightboundary()) {
         flight_bound.points.push_back(mavsdk::Geofence::Point {
             .latitude_deg {coord.latitude()},
@@ -158,7 +160,9 @@ bool MavlinkClient::uploadGeofenceUntilSuccess(std::shared_ptr<MissionState> sta
     int geofence_attempts = 5;
     while (true) {
         LOG_F(INFO, "Sending geofence information...");
-        auto geofence_result = this->geofence->upload_geofence({flight_bound});
+        mavsdk::Geofence::GeofenceData geofence_data;
+        geofence_data.polygons = {flight_bound};
+        auto geofence_result = this->geofence->upload_geofence(geofence_data);
         if (geofence_result == mavsdk::Geofence::Result::Success) {
             LOG_F(INFO, "Geofence successfully uploaded");
             break;
