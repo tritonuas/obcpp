@@ -72,7 +72,7 @@ ARG TORCHVISION_VERSION=0.17.0
 WORKDIR ${TORCHVISION_INSTALL_DIR} 
 RUN wget "https://github.com/pytorch/vision/archive/refs/tags/v${TORCHVISION_VERSION}.zip" \
     && unzip "v${TORCHVISION_VERSION}.zip" \
-    && cd vision-0.16.0 \
+    && cd vision-${TORCHVISION_VERSION} \
     && mkdir build \
     && cd build \
     && cmake -DWITH_CUDA=1 -DCUDA_HAS_FP16=1 -DCUDA_NO_HALF_OPERATORS=1 -DCUDA_NO_HALF_CONVERSIONS=1 -DCUDA_NO_HALF2_OPERATORS=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/usr/local/lib/python3.10/dist-packages/torch/share/cmake/Torch" .. \
