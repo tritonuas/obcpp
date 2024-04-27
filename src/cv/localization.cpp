@@ -131,32 +131,33 @@ GPSCoord GSDLocalization::localize(const ImageTelemetry& telemetry, const Bbox& 
     double img_mid_x = IMG_WIDTH_PX / 2;
     double img_mid_y = IMG_HEIGHT_PX / 2;
 
-    //midpoints of bounding box around the target
+    // midpoints of bounding box around the target
     double target_x = (targetBbox.x1 + targetBbox.x2)/2;
     double target_y = (targetBbox.y1 + targetBbox.y2)/2;
 
     // calculations of bearing
-    // L = (distance(middle, bbox))*GSD  
+    // L = (distance(middle, bbox))*GSD
     double length = (sqrt(pow((target_x - img_mid_x), 2) + pow((target_y - img_mid_y), 2) * GSD));
 
-    //Translate Image Cordinates to Camera Cordinate Frame (Origin to Center of Image instead of Top Left)
+    // Translate Image Cordinates to Camera Cordinate (Origin to Center of Image instead of Top Left) NOLINT
     double target_camera_cord_x = target_x - (IMG_WIDTH_PX / 2);
     double target_camera_cord_y = (IMG_HEIGHT_PX / 2) - target_y;
 
-    //Angle of Bearing (Angle from north to target)
-    double thetaB = telemetry.heading + atan(target_camera_cord_x / target_camera_cord_y);   
+    // Angle of Bearing (Angle from north to target)
+    double thetaB = telemetry.heading + atan(target_camera_cord_x / target_camera_cord_y);
 
-    //Translate bearing to the 3 quadrant if applicable
-    if (target_camera_cord_x < 0 && target_camera_cord_y < 0){
+    // Translate bearing to the 3 quadrant if applicable
+    if (target_camera_cord_x < 0 && target_camera_cord_y < 0) {
         thetaB = 180.0 + thetaB;
     }
 
-    //Finds the offset of the bbox 
-    double calc_cam_offset_x = target_camera_cord_x * GSD * 0.001; //mm to M
-    double calc_cam_offset_y = target_camera_cord_y * GSD * 0.001; //mm to M
+    // Finds the offset of the bbox
+    double calc_cam_offset_x = target_camera_cord_x * GSD * 0.001;  // mm to M
+    double calc_cam_offset_y = target_camera_cord_y * GSD * 0.001;  // mm to M
 
-    //Calculates the cordinates using the offset
-    GPSCoord calc_coord = CalcOffset((calc_cam_offset_x), (calc_cam_offset_y), (telemetry.latitude), (telemetry.longitude));
+    // Calculates the cordinates using the offset
+    GPSCoord calc_coord = CalcOffset((calc_cam_offset_x), (calc_cam_offset_y),
+                                    (telemetry.latitude), (telemetry.longitude));
 
     return calc_coord;
 }
@@ -173,7 +174,7 @@ Parameters:
 Reference: http://www.movable-type.co.uk/scripts/latlong.html
 */
 
-double GSDLocalization::distanceInMetersBetweenCords(const double lat1, const double lon1, const double lat2, const double lon2){
+double GSDLocalization::distanceInMetersBetweenCords(const double lat1, const double lon1, const double lat2, const double lon2) { // NOLINT
     double e1 = lat1 * M_PI / 180;
     double e2 = lat2 * M_PI / 180;
 
@@ -199,7 +200,7 @@ Parameters:
 @returns true (mostly) world cordinate of target 
 */
 
-GPSCoord GSDLocalization::CalcOffset(const double offset_x, const double offset_y, const double lat, const double lon)  {
+GPSCoord GSDLocalization::CalcOffset(const double offset_x, const double offset_y, const double lat, const double lon) { // NOLINT
     double dLat = offset_y / EARTH_RADIUS_M;
     double dLon = offset_x / (EARTH_RADIUS_M * cos(M_PI * lat / 180));
 

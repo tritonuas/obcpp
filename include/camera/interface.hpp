@@ -11,16 +11,16 @@
 // class to contain all telemetry that should be tagged with an image.
 // In the future this could be in a mavlink file.
 struct ImageTelemetry {
-    ImageTelemetry(double latitude, double longitude, double altitude, double airspeed, double heading, double yaw,
-                   double pitch, double roll);
-   double latitude;
-   double longitude;
-   double altitude;
-   double airspeed;
-   double heading;
-   double yaw;
-   double pitch;
-   double roll;
+    ImageTelemetry(double latitude, double longitude, double altitude, double airspeed,
+                   double heading, double yaw, double pitch, double roll);
+    double latitude;
+    double longitude;
+    double altitude;
+    double airspeed;
+    double heading;
+    double yaw;
+    double pitch;
+    double roll;
 };
 
 /*
