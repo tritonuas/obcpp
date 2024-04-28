@@ -29,7 +29,7 @@ class MavlinkClient {
      * example:
      *   MavlinkClient("tcp://192.168.65.254:5762")
      */ 
-    explicit MavlinkClient(const char* link);
+    explicit MavlinkClient(std::string link);
 
     /*
      * BLOCKING. Continues to try to upload the mission based on the passed through MissionConfig
@@ -67,6 +67,8 @@ class MavlinkClient {
     double angle2D(double x1, double y1, double x2, double y2);
     bool isPointInPolygon(std::pair<double, double> latlng, std::vector<XYZCoord> region);
     bool isMissionFinished();
+    mavsdk::Telemetry::RcStatus get_conn_status();
+    bool armAndHover();
 
 private:
     mavsdk::Mavsdk mavsdk;

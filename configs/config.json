@@ -1,0 +1,28 @@
+{
+    "logging": {
+        "dir": "/workspaces/obcpp/logs"
+    },
+    "network": {
+        "mavlink": {
+            "connect": "serial:///dev/ttyACM0"
+        },
+        "gcs": {
+            "port": 5010
+        }
+    },
+    "pathing": {
+        "_comment": "Point Fetch Method 2: NEAREST",
+        "rrt": {
+            "iterations_per_waypoint": 200,
+            "rewire_radius": 200.0,
+            "optimize": true,
+            "point_fetch_methods": 2, 
+            "allowed_to_skip_waypoints": false
+        },
+        "coverage": {
+            "optimize": true,
+            "vertical": false,
+            "one_way": false
+        }
+    }
+}

@@ -17,15 +17,16 @@
 #include "utilities/locks.hpp"
 #include "utilities/logging.hpp"
 #include "core/mission_state.hpp"
+#include "mavlink.hpp"
 
-MavlinkClient::MavlinkClient(const char* link) {
-    LOG_F(INFO, "Connecting to Mav at %s", link);
+MavlinkClient::MavlinkClient(std::string link) {
+    LOG_F(INFO, "Connecting to Mav at %s", link.c_str());
 
     while (true) {
         LOG_F(INFO, "Attempting to add mav connection...");
         const auto conn_result = this->mavsdk.add_any_connection(link);
         if (conn_result == mavsdk::ConnectionResult::Success) {
-            LOG_F(INFO, "Mavlink connection successfully established at %s", link);
+            LOG_F(INFO, "Mavlink connection successfully established at %s", link.c_str());
             break;
         }
 
@@ -49,6 +50,7 @@ MavlinkClient::MavlinkClient(const char* link) {
     this->telemetry = std::make_unique<mavsdk::Telemetry>(system);
     this->mission = std::make_unique<mavsdk::Mission>(system);
     this->geofence = std::make_unique<mavsdk::Geofence>(system);
+    this->action = std::make_unique<mavsdk::Action>(system);
 
     // Set position update rate (1 Hz)
     // TODO: set the 1.0 update rate value in the obc config
@@ -129,7 +131,7 @@ bool MavlinkClient::uploadGeofenceUntilSuccess(std::shared_ptr<MissionState> sta
     LOG_SCOPE_F(INFO, "Uploading Geofence");
 
     // Make sure everything is set up
-    auto mission = state->config.getCachedMission();
+    auto mission = state->mission_params.getCachedMission();
     if (!mission.has_value()) {
         LOG_F(ERROR, "Upload failed - no mission");
         return false;  // todo determine return type
@@ -277,6 +279,9 @@ mavsdk::Telemetry::FlightMode MavlinkClient::flight_mode() {
     return this->data.flight_mode;
 }
 
+/**
+ * Helper function that goes along with isPointInPolygon().
+*/
 double MavlinkClient::angle2D(double x1, double y1, double x2, double y2) {
     double dtheta, theta1, theta2;
 
@@ -294,6 +299,10 @@ double MavlinkClient::angle2D(double x1, double y1, double x2, double y2) {
     return(dtheta);
 }
 
+/**
+ * This function checks if a coordiante is inside a polygon region.
+ * Source: https://stackoverflow.com/questions/4287780/detecting-whether-a-gps-coordinate-falls-within-a-polygon-on-a-map
+*/
 bool MavlinkClient::isPointInPolygon(std::pair<double, double> latlng, std::vector<XYZCoord> region){
     int n = region.size();
     double angle = 0;
@@ -314,5 +323,40 @@ bool MavlinkClient::isPointInPolygon(std::pair<double, double> latlng, std::vect
 }
 
 bool MavlinkClient::isMissionFinished(){
+    //Boolean representing if mission is finished
     return this->mission->is_mission_finished().second;
+}
+
+mavsdk::Telemetry::RcStatus MavlinkClient::get_conn_status() {
+    return this->telemetry->rc_status();
+}
+
+std::pair<std::string, bool> MavlinkClient::armAndHover(){
+
+    //Vehicle can only be armed if status is healthy
+    if(this->telemetry.health_all_ok != true){
+        return ("Vehicle not ready to arm", false);
+    }
+
+    //Attemp to arm the vehicle
+    const Action::Result arm_result = this->action.arm();
+    if(arm_result != Action::Result::Success){
+        return ("Arming failed:" + arm_result, false);
+    }
+
+    //Attemp to rise to takeoff altitude
+    const Action::Result takeoff_result = this->action.takeoff();
+    if (takeoff_result != Action::Result::Success) {
+        return ("Take off failed: " + takeoff_result, false)
+    }
+
+    //A check to see if vehicle has reach takeoff altitude
+    float target_alt = action.get_takeoff_altitude_m();
+    float current_position = 0;
+    while (current_position<target_alt) {
+        current_position = this -> telemetry.position().relative_altitude_m;
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+
+    return ("Success", true);
 }

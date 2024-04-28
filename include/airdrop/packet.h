@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 /**********************************************************************************************
- * LAST UPDATED: 2024/02/29
+ * LAST UPDATED: 2024/04/24 by Tyler Lentz
  * 
  * This file defines the packet definitions for Airdrop communications. It is used in two
  * separate repositories: 
@@ -27,17 +27,22 @@
 #define AD_OBC_PORT     45906  // OBC listens on this port, so payloads send to this
 #define AD_PAYLOAD_PORT 45907  // Payloads listen on this port, so OBC sends to this
 
-// All of the values in here are 1 byte long, which means we do not have to worry about
-// the endianness of the information as it is sent over the wire. If we ever add values more
-// than one byte long, we'll have to worry about this.
-
-// gcc specific packing syntax. Technically this should already be packed because it is just
-// two one-byte values, but just making sure.
+// Normal packet, which applies for every kind of packet that is not an ad_latlng_packet
 struct __attribute__((packed)) ad_packet {
     uint8_t hdr;
     uint8_t data;
 };
 typedef struct ad_packet ad_packet_t;
+
+// Separate kind of packet sent by OBC to Payloads to specify drop location
+// for indirect drop
+struct __attribute__((packed)) ad_latlng_packet {
+    uint8_t hdr;
+    uint8_t bottle;
+    double lat;
+    double lng;
+};
+typedef struct ad_latlng_packet ad_latlng_packet_t;
 
 enum ad_packet_hdr {
     // Continually sent by the payloads to confirm they are still operational
@@ -47,6 +52,7 @@ enum ad_packet_hdr {
     // Handshake to establish connection
     SET_MODE    = 1,
     ACK_MODE    = 2,
+    RESET_MODE  = 3,  // TODO:
 
     // Direct Drop
     DROP_NOW    = 100,
@@ -56,6 +62,8 @@ enum ad_packet_hdr {
     ACK_SIGNAL  = 201,
     REVOKE      = 202,
     ACK_REVOKE  = 203,
+    SEND_LATLNG = 204,  // special packet format!
+    ACK_LATLNG  = 205,
 
     // Direct & Indirect
     ABOUT_TO_RELEASE = 255,
@@ -84,7 +92,6 @@ inline int validate_packet_as(enum ad_packet_hdr hdr, ad_packet_t packet) {
     }
 
     switch (packet.hdr) {
-        case HEARTBEAT:
         case ACK_MODE:
             return 1;
         case SET_MODE:
@@ -95,6 +102,9 @@ inline int validate_packet_as(enum ad_packet_hdr hdr, ad_packet_t packet) {
         case REVOKE:
         case ACK_REVOKE:
         case ABOUT_TO_RELEASE:
+        case HEARTBEAT:
+        case SEND_LATLNG:
+        case ACK_LATLNG:
             return (packet.data >= BOTTLE_A && packet.data <= BOTTLE_E);
         default:
             return 0;

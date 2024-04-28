@@ -32,14 +32,17 @@ struct PipelineResults {
 struct PipelineParams {
     PipelineParams(std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives,
         std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages,
-        std::string matchingModelPath, std::string segmentationModelPath)
+        std::string matchingModelPath, std::string segmentationModelPath,
+        std::string saliencyModelPath)
         : competitionObjectives{competitionObjectives}, referenceImages{referenceImages},
-          matchingModelPath{matchingModelPath}, segmentationModelPath{segmentationModelPath} {}
+          matchingModelPath{matchingModelPath}, segmentationModelPath{segmentationModelPath},
+          saliencyModelPath{saliencyModelPath} {}
 
     std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives;
     std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages;
     std::string matchingModelPath;
     std::string segmentationModelPath;
+    std::string saliencyModelPath;
 };
 
 // Pipeline handles all infrastructure within the CV pipeline

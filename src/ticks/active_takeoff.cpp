@@ -14,8 +14,17 @@ std::chrono::milliseconds ActiveTakeoffTick::getWait() const {
 }
 
 Tick* ActiveTakeoffTick::tick() {
-    // TODO: figure out how to check mavsdk for flight mode, and if flight mode is
-    // autonomous then go to next state
+    std::future <std::pair <std::string, bool> > takeoffResult = std::async(std::launch::async, [this](){
+        return this->state->getMav()->armAndHover();
+    });
     
+    std::pair <std::string, bool> result = takeoffResult.get();
+
+    if(result.second == true){
+        LOG_F(INFO, "Plane has finished take off.");
+        return new FlyWaypointsTick(this->state);
+    }
+
+    LOG_F(INFO, result.first);
     return nullptr;
 }

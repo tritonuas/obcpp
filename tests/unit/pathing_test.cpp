@@ -46,7 +46,7 @@ TEST(StaticPathingTest, RRTTest) {
 
     // actually new test
     // validate the path
-    Environment env(state->config.getFlightBoundary(), {}, {}, {});
+    Environment env(state->mission_params.getFlightBoundary(), {}, {}, {});
 
     std::vector<GPSCoord> path = state->getInitPath();
 

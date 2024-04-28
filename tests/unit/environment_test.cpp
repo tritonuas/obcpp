@@ -207,9 +207,9 @@ TEST(EnvironmentTest, IntersectTest) {
 }
 
 /*
- *   tests Environment::rayIntersectsEdge()
+ *   tests Environment::verticalRayIntersectsEdge()
  */
-TEST(EnvironmentTest, RayIntersectsEdge) {
+TEST(EnvironmentTest, VerticalRayIntersectsEdge) {
     Polygon airdrop_zone = {
         {XYZCoord(0, 0, 0), XYZCoord(100, 0, 0), XYZCoord(100, 100, 0), XYZCoord(50, 100, 0)}};
 
@@ -220,29 +220,29 @@ TEST(EnvironmentTest, RayIntersectsEdge) {
     XYZCoord expect1(75, 0, 0);
     XYZCoord expect2(75, 100, 0);
 
-    EXPECT_TRUE(test.rayIntersectsEdge(airdrop_zone[0], airdrop_zone[1], edge1.first, edge1.second,
+    EXPECT_TRUE(test.verticalRayIntersectsEdge(airdrop_zone[0], airdrop_zone[1], edge1.first, edge1.second,
                                        intersect1));
     EXPECT_EQ(intersect1, expect1);
-    EXPECT_FALSE(test.rayIntersectsEdge(airdrop_zone[1], airdrop_zone[2], edge1.first, edge1.second,
+    EXPECT_FALSE(test.verticalRayIntersectsEdge(airdrop_zone[1], airdrop_zone[2], edge1.first, edge1.second,
                                         intersect1));
-    EXPECT_TRUE(test.rayIntersectsEdge(airdrop_zone[2], airdrop_zone[3], edge1.first, edge1.second,
+    EXPECT_TRUE(test.verticalRayIntersectsEdge(airdrop_zone[2], airdrop_zone[3], edge1.first, edge1.second,
                                        intersect1));
     EXPECT_EQ(intersect1, expect2);
-    EXPECT_FALSE(test.rayIntersectsEdge(airdrop_zone[3], airdrop_zone[0], edge1.first, edge1.second,
+    EXPECT_FALSE(test.verticalRayIntersectsEdge(airdrop_zone[3], airdrop_zone[0], edge1.first, edge1.second,
                                         intersect1));
 
     std::pair<XYZCoord, XYZCoord> edge2 = {XYZCoord(25, 9999, 0), XYZCoord(25, -9999, 0)};
     XYZCoord intersect2(0, 0, 0);
     XYZCoord expect3(25, 0, 0);
     XYZCoord expect4(25, 50, 0);
-    EXPECT_TRUE(test.rayIntersectsEdge(airdrop_zone[0], airdrop_zone[1], edge2.first, edge2.second,
+    EXPECT_TRUE(test.verticalRayIntersectsEdge(airdrop_zone[0], airdrop_zone[1], edge2.first, edge2.second,
                                        intersect2));
     EXPECT_EQ(intersect2, expect3);
-    EXPECT_FALSE(test.rayIntersectsEdge(airdrop_zone[1], airdrop_zone[2], edge2.first, edge2.second,
+    EXPECT_FALSE(test.verticalRayIntersectsEdge(airdrop_zone[1], airdrop_zone[2], edge2.first, edge2.second,
                                         intersect2));
-    EXPECT_FALSE(test.rayIntersectsEdge(airdrop_zone[2], airdrop_zone[3], edge2.first, edge2.second,
+    EXPECT_FALSE(test.verticalRayIntersectsEdge(airdrop_zone[2], airdrop_zone[3], edge2.first, edge2.second,
                                         intersect2));
-    EXPECT_TRUE(test.rayIntersectsEdge(airdrop_zone[3], airdrop_zone[0], edge2.first, edge2.second,
+    EXPECT_TRUE(test.verticalRayIntersectsEdge(airdrop_zone[3], airdrop_zone[0], edge2.first, edge2.second,
                                        intersect2));
     EXPECT_EQ(intersect2, expect4);
 }
