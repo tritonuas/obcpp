@@ -10,7 +10,7 @@ ActiveTakeoffTick::ActiveTakeoffTick(std::shared_ptr<MissionState> state)
     :Tick(state, TickID::Takeoff) {}
 
 std::chrono::milliseconds ActiveTakeoffTick::getWait() const {
-    return TAKEOFF_TICK_WAIT;
+    return ACTIVE_TAKEOFF_TICK_WAIT;
 }
 
 Tick* ActiveTakeoffTick::tick() {
