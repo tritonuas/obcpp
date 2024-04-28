@@ -17,7 +17,6 @@
 #include "utilities/locks.hpp"
 #include "utilities/logging.hpp"
 #include "core/mission_state.hpp"
-#include "mavlink.hpp"
 
 MavlinkClient::MavlinkClient(std::string link) {
     LOG_F(INFO, "Connecting to Mav at %s", link.c_str());
