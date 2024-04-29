@@ -17,7 +17,7 @@ jobs:
     name: cpplint 
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/tritonuas/obcpp:main
+      image: ghcr.io/tritonuas/obcpp:x86
     steps:
       - name: Create directory
         run: mkdir -p "$HOME_DIR/obcpp"
