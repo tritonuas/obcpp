@@ -9,7 +9,9 @@
                 "/usr/include/**",
                 "/usr/local/include/**"
             ],
-            "cppStandard": "c++20"
+            "cppStandard": "c++20",
+            "intelliSenseMode": "linux-gcc-x64",
+            "compilerPath": "/usr/bin/g++"
         }
     ],
     "version": 4

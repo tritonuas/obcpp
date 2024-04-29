@@ -18,6 +18,8 @@
 #include "utilities/logging.hpp"
 #include "core/mission_state.hpp"
 
+using namespace std::chrono_literals;
+
 MavlinkClient::MavlinkClient(std::string link):
     mavsdk(mavsdk::Mavsdk::Configuration(mavsdk::Mavsdk::ComponentType::CompanionComputer))
 {
@@ -195,9 +197,9 @@ bool MavlinkClient::uploadWaypointsUntilSuccess(std::shared_ptr<MissionState> st
     for (const auto& coord : waypoints) {
         mavsdk::MissionRaw::MissionItem new_raw_item_nav {};
         new_raw_item_nav.seq = i;
-        new_raw_item_nav.frame = 6; // MAV_FRAME_GLOBAL_RELATIVE_ALT_INT
+        new_raw_item_nav.frame = 3; // MAV_FRAME_GLOBAL_RELATIVE_ALT
         new_raw_item_nav.command = 16; // MAV_CMD_NAV_WAYPOINT
-        new_raw_item_nav.current = 0;
+        new_raw_item_nav.current = (i == 0) ? 1 : 0;
         new_raw_item_nav.autocontinue = 1;
         new_raw_item_nav.param1 = 0.0; // Hold
         new_raw_item_nav.param2 = 7.0; // Accept Radius 7.0m close to 25ft
@@ -214,11 +216,23 @@ bool MavlinkClient::uploadWaypointsUntilSuccess(std::shared_ptr<MissionState> st
     while (true) {
         LOG_F(INFO, "Sending waypoint information...");
 
-        auto result = this->mission->upload_mission(mission_items)
+        std::optional<mavsdk::MissionRaw::Result> result {};
 
-        if (result == mavsdk::MissionRaw::Result::)
+        this->mission->upload_mission_async(mission_items, 
+            [&result](const mavsdk::MissionRaw::Result& res) {
+                result = res;
+            });
 
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        while (!result.has_value());
+
+        if (result == mavsdk::MissionRaw::Result::Success) {
+            LOG_F(INFO, "Successfully uploaded mission");
+            break;
+        } else {
+            LOG_S(ERROR) << "Error uploading mission: " << result.value() << ". Trying again.";
+        }
+
+        std::this_thread::sleep_for(500ms);
     }
 
     return true;
