@@ -1,7 +1,4 @@
-FROM tritonuas/jetson-base:r35.3.1
-
-# this base image came from dusty-nv/jetson-containers
-# ./build.sh --name=tritonuas/jetson-base pytorch:2.1 torchvision opencv 
+FROM dustynv/l4t-pytorch:r36.2.0
 
 ARG USERNAME=tuas USER_UID=1000 USER_GID=1000 DEBIAN_FRONTEND=noninteractive
 
@@ -67,35 +64,33 @@ RUN wget https://github.com/mavlink/MAVSDK/releases/download/v${MAVSDK_VERSION}/
 
 # pull and build torchvision
 # refer to this page for version compatibilty with pytorch (libtorch) https://github.com/pytorch/pytorch/wiki/PyTorch-Versions
-ARG TORCHVISION_VERSION=0.16.0
-#ARG TORCHVISION_INSTALL_DIR=/torchvision-tmp
+ARG TORCHVISION_VERSION=0.17.0
+# Space separated list of CUDA architecture versions.
+# The version nubmers depend on the NVIDIA GPU model we're using and the installed CUDA version. 
+# For the Jetson Orin Nano with the "Ampere" architecture and CUDA 12.1 we can use version 8.6 (written as 86 in CUDA_ARCH_LIST).
+# Can also run "nvcc --list-gpu-arch" on the Jetson to verify.
+# See https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#gpu-feature-list
+# and https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/
+ARG CUDA_ARCH_LIST="8.6"
 WORKDIR ${TORCHVISION_INSTALL_DIR} 
 RUN wget "https://github.com/pytorch/vision/archive/refs/tags/v${TORCHVISION_VERSION}.zip" \
     && unzip "v${TORCHVISION_VERSION}.zip" \
-    && cd vision-0.16.0 \
+    && cd vision-${TORCHVISION_VERSION} \
     && mkdir build \
     && cd build \
-    && cmake -DWITH_CUDA=1 -DCUDA_HAS_FP16=1 -DCUDA_NO_HALF_OPERATORS=1 -DCUDA_NO_HALF_CONVERSIONS=1 -DCUDA_NO_HALF2_OPERATORS=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/usr/local/lib/python3.8/dist-packages/torch/share/cmake/Torch" .. \
+    && cmake -DWITH_CUDA=1 -DTORCH_CUDA_ARCH_LIST="${CUDA_ARCH_LIST}" -DCUDA_HAS_FP16=1 -DCUDA_NO_HALF_OPERATORS=1 -DCUDA_NO_HALF_CONVERSIONS=1 -DCUDA_NO_HALF2_OPERATORS=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/usr/local/lib/python3.10/dist-packages/torch/share/cmake/Torch" .. \
     && make -j4 \
     && make install
-
-# Install g++10 and replace the older version. For some reason some c++ 20 features aren't working with g++9 even though
-# we have CMake configured to use c++ 20 https://stackoverflow.com/questions/69037873/why-am-i-missing-c20-headers-and-how-do-i-fix-this
-RUN apt-get update && apt-get install -y g++-10 gcc-10
-RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 10
-RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 10
-RUN update-alternatives --set gcc /usr/bin/gcc-10
-RUN update-alternatives --set g++ /usr/bin/g++-10
 
 WORKDIR /obcpp
 COPY . .
 
 RUN rm -rf /obcpp/build
 WORKDIR /obcpp/build
-ENV CMAKE_PREFIX_PATH="/usr/local/lib/python3.8/dist-packages/torch/share/cmake/Torch;/usr/local/share/cmake/TorchVision"
-RUN GITHUB_ACTIONS=true cmake -DCMAKE_PREFIX_PATH="/usr/local/lib/python3.8/dist-packages/torch/share/cmake/Torch;/usr/local/share/cmake/TorchVision" -DCMAKE_MODULE_PATH="/usr/local/share/cmake/TorchVision" -DCMAKE_BUILD_TYPE="Release" ..
+ENV CMAKE_PREFIX_PATH="/usr/local/lib/python3.10/dist-packages/torch/share/cmake/Torch;/usr/local/share/cmake/TorchVision"
+RUN GITHUB_ACTIONS=true cmake -DCMAKE_PREFIX_PATH="/usr/local/lib/python3.10/dist-packages/torch/share/cmake/Torch;/usr/local/share/cmake/TorchVision" -DCMAKE_MODULE_PATH="/usr/local/share/cmake/TorchVision" -DCMAKE_BUILD_TYPE="Release" ..
 
-RUN make obcpp cuda_check load_torchvision_model VERBOSE=1
+RUN ninja obcpp 
 
 # login as non-root user
 # USER $USERNAME
