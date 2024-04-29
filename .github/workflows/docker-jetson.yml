@@ -3,12 +3,12 @@ name: Push Jetson Docker Image
 on:
   push:
     branches:
-      - chore/debug-jetson-docker-jetpack36
+      - main 
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  TAG: "debug-jetson-docker-jetpack36"
+  TAG: "main"
   DOCKERFILE_PATH: 'docker/Dockerfile.jetson'
 
 jobs:
