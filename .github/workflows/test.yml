@@ -17,7 +17,7 @@ jobs:
     name: C++ Tests 
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/tritonuas/obcpp:main
+      image: ghcr.io/tritonuas/obcpp:x86
       env:
         GITHUB_ACTIONS: "true"
     steps:
