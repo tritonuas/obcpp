@@ -7,6 +7,7 @@
 
 #include "protos/obc.pb.h"
 #include "utilities/constants.hpp"
+#include "airdrop/packet.h"
 
 struct XYZCoord {
     XYZCoord(double x, double y, double z) : x(x), y(y), z(z) {}
@@ -109,6 +110,11 @@ struct AirdropSearchConfig {
     bool optimize;  // whether to ignore the config below and run all ways.
     bool vertical;  // if true, will search in vertical lines
     bool one_way;   // if true, path returned will only be in 1 direction
+};
+
+struct AirdropApproachConfig {
+    ad_mode drop_mode;
+    std::unordered_set<int> bottle_ids;
 };
 
 #endif  // INCLUDE_UTILITIES_DATATYPES_HPP_

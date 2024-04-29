@@ -197,6 +197,32 @@ class AirdropSearch {
     const AirdropSearchConfig config;
 };
 
+class AirdropApproach {
+    AirdropApproach(const RRTPoint &start, const XYZCoord &goal, RRTPoint wind, Polygon bounds,
+                    std::vector<Polygon> obstacles = {}, AirdropApproachConfig config = {
+                        .drop_mode = DIRECT_DROP,
+                        .bottle_ids = {1, 2, 3, 4, 5}
+                    })
+        : start(start),
+          goal(goal),
+          wind(wind),
+          airspace(Environment(bounds, {}, {}, obstacles)),
+          dubins(Dubins(TURNING_RADIUS, POINT_SEPARATION)),
+          config(config) {}
+
+    std::vector<XYZCoord> run() const {
+        return dubins.dubinsPath(start, RRTPoint(goal, 0));
+    }
+
+    const XYZCoord goal;
+    const RRTPoint start;
+    const Environment airspace;
+    const Dubins dubins;
+    const AirdropApproachConfig config;
+
+    RRTPoint wind;
+};
+
 std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state);
 
 #endif  // INCLUDE_PATHING_STATIC_HPP_
