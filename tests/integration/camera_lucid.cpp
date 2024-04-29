@@ -10,10 +10,29 @@
 using namespace std::chrono_literals;
 
 int main (int argc, char *argv[]) {
-    CameraConfiguration config({
-       {"SampleConfigKey", 100},
-       {"ExposureTime", 1000},
-    });
+    json config = 
+    CameraConfiguration config(json::parse(R"(
+{
+    "TriggerSelector":"FrameStart",
+    "TriggerMode":"On",
+    "TriggerSource":"Software",
+    "SensorShutterMode":"Rolling",
+    "ExposureAuto":"Continuous",
+    "AcquisitionFrameRateEnable":true,
+    "TargetBrightness": 70,
+    "GammaEnable":true,
+    "Gamma": 0.5,
+    "GainAuto":"Continuous",
+    "ExposureAutoDamping":1,
+    "ExposureAutoAlgorithm":"Median",
+    "ExposureAutoUpperLimit": 500,
+    "ExposureAutoLowerLimit": 360,
+    "GainAutoUpperLimit": 10,
+    "GainAutoLowerLimit": 1,
+    "StreamAutoNegotiatePacketSize":true,  
+    "StreamPacketResendEnable":true
+}
+)"));
     LucidCamera camera(config);
 
     LOG_F(INFO, "Trying to connect to LUCID camera\n");
