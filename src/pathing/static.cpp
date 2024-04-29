@@ -337,7 +337,6 @@ std::vector<XYZCoord> AirdropSearch::run() const {
 
 std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
     // first waypoint is start
-    RRTPoint start(state->mission_params.getWaypoints().front(), 0);
 
     // the other waypoitns is the goals
     if (state->mission_params.getWaypoints().size() < 2) {
@@ -355,7 +354,12 @@ std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
         goals.emplace_back(state->mission_params.getWaypoints()[i]);
     }
 
-        LOG_F(ERROR, "Iterations Per Waypoint: %d", state->rrt_config.iterations_per_waypoint);
+    LOG_F(ERROR, "Iterations Per Waypoint: %d", state->rrt_config.iterations_per_waypoint);
+
+    double init_angle =
+        std::atan2(goals.front().y - state->mission_params.getWaypoints().front().y,
+                   goals.front().x - state->mission_params.getWaypoints().front().x);
+    RRTPoint start(state->mission_params.getWaypoints().front(), init_angle);
 
     RRT rrt(start, goals, SEARCH_RADIUS, state->mission_params.getFlightBoundary(), {},
             state->rrt_config);
