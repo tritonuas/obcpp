@@ -354,8 +354,6 @@ std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
         goals.emplace_back(state->mission_params.getWaypoints()[i]);
     }
 
-    LOG_F(ERROR, "Iterations Per Waypoint: %d", state->rrt_config.iterations_per_waypoint);
-
     double init_angle =
         std::atan2(goals.front().y - state->mission_params.getWaypoints().front().y,
                    goals.front().x - state->mission_params.getWaypoints().front().x);
