@@ -17,14 +17,15 @@ std::chrono::milliseconds FlySearchTick::getWait() const {
 
 Tick* FlySearchTick::tick() {
 
-    // Run Mavlink flight to find targets
-    // Take Photos
+    // TODO: Run Mavlink flight to find targets
     // Finish Loop
 
-   
     // Deconstructor
+    // TODO: Detect when path is completed
     if (false) {
-        getAllImages
+        //Take
+        //this.state.camera.stopTakingPictures();
+        //std::vector<ImageData> images = this.state.camera.getAllImages();
         return new CVLoiterTick(this->state);
     }
     //return nullptr;
