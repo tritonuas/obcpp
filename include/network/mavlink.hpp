@@ -5,6 +5,7 @@
 #include <mavsdk/plugins/telemetry/telemetry.h>
 #include <mavsdk/plugins/mission/mission.h>
 #include <mavsdk/plugins/geofence/geofence.h>
+#include <mavsdk/plugins/action/action.h>
 #include <memory>
 #include <vector>
 #include <mutex>
@@ -68,7 +69,8 @@ class MavlinkClient {
     bool isPointInPolygon(std::pair<double, double> latlng, std::vector<XYZCoord> region);
     bool isMissionFinished();
     mavsdk::Telemetry::RcStatus get_conn_status();
-    bool armAndHover();
+    std::pair< std::string, bool > armAndHover();
+    std::pair< std::string, bool > startMission();
 
 private:
     mavsdk::Mavsdk mavsdk;
@@ -76,6 +78,7 @@ private:
     std::unique_ptr<mavsdk::Telemetry> telemetry;
     std::unique_ptr<mavsdk::Mission> mission;
     std::unique_ptr<mavsdk::Geofence> geofence;
+    std::unique_ptr<mavsdk::Action> action;
 
     struct Data {
         double lat_deg {};

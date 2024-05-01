@@ -7,24 +7,37 @@
 #include "ticks/fly_waypoints.hpp"
 
 ActiveTakeoffTick::ActiveTakeoffTick(std::shared_ptr<MissionState> state)
-    :Tick(state, TickID::Takeoff) {}
+    :Tick(state, TickID::ActiveTakeoff) {}
 
 std::chrono::milliseconds ActiveTakeoffTick::getWait() const {
     return ACTIVE_TAKEOFF_TICK_WAIT;
 }
 
-Tick* ActiveTakeoffTick::tick() {
-    std::future <std::pair <std::string, bool> > takeoffResult = std::async(std::launch::async, [this](){
-        return this->state->getMav()->armAndHover();
-    });
-    
-    std::pair <std::string, bool> result = takeoffResult.get();
+void ActiveTakeoffTick::armAndHover() {
+    this->takeoffResult = std::async(std::launch::async, [this](){ return this->state->getMav()->armAndHover(); });
+}
 
-    if(result.second == true){
-        LOG_F(INFO, "Plane has finished take off.");
-        return new FlyWaypointsTick(this->state);
+Tick* ActiveTakeoffTick::tick() {
+    auto takeoff = this->takeoffResult.wait_for(std::chrono::milliseconds(0));
+
+    if(takeoff != std::future_status::ready) {
+        return nullptr;
     }
 
-    LOG_F(INFO, result.first);
-    return nullptr;
+    if(takeoff.second != true) {
+        LOG_F(INFO, takeoff.first);
+        return nullptr;
+    }
+
+    LOG_F(INFO, "Vehicle at required altitude");
+    
+    auto startMission = this->state->getMav()->startMission();
+
+    if(startMIssion.second != true){
+        LOG_F(INFO, startMission.first);
+        return nullptr;
+    }
+            
+    LOG_F(INFO, startMission.first);
+    return new FlyWaypointsTick(this->state);
 }
