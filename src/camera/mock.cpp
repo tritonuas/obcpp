@@ -10,7 +10,7 @@
 #include "utilities/locks.hpp"
 
 
-MockCamera::MockCamera(CameraConfiguration config) : CameraInterface(config) {}
+MockCamera::MockCamera(CameraConfig config) : CameraInterface(config) {}
 
 MockCamera::~MockCamera() {
     this->stopTakingPictures();

@@ -12,6 +12,8 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/mat.hpp>
 
+#include "utilities/datatypes.hpp"
+
 using json = nlohmann::json;
 using Mat = cv::Mat;
 
@@ -28,61 +30,6 @@ struct ImageTelemetry {
     double yaw;
     double pitch;
     double roll;
-};
-
-template <typename T> 
-class CameraConfigMetadata {
-    private:
-        std::string name {};
-        T value {};
-        std::string valueType {};
-        bool configurable {};
-        bool executable {};
-    public:
-        CameraConfigMetadata() 
-        {
-        }
-        CameraConfigMetadata(std::string name, T value, bool configurable, bool executable)
-        {
-            this->name = name; 
-            this->value = value;
-            this->valueType = typeid(this->value).name();
-            this->configurable = configurable;
-            this->executable = executable;
-        }
-
-        std::string getName()
-        {
-            return this->name;
-        }
-
-        T getValue()
-        {
-            return this->value;
-        }
-
-        void setValue(T value)
-        {
-            this->value = value;
-        }
-
-        std::string getValueType() 
-        {
-            return this->valueType;
-        }
-
-        CameraConfigMetadata<T>& operator=(const CameraConfigMetadata<T>& other) 
-        {
-            name = other.name;
-            value = other.value;
-            valueType = other.valueType;
-            configurable = other.configurable;
-            executable = other.executable;
-
-            return *this;
-        } 
-
-        // TODO: overwrite the = operator
 };
 
 /*
@@ -111,24 +58,13 @@ class ImageData {
     ImageTelemetry getTelemetry() const;
 };
 
-// ? possibly convert most common / important json fields to
-// ? data fields
-class CameraConfiguration {
- private:
-    nlohmann::json configJson;
- public:
-    explicit CameraConfiguration(nlohmann::json config);
-
-    nlohmann::json getConfig();
-   //  void updateConfigField(std::string key, T value);
-};
 
 class CameraInterface {
  private:
-    CameraConfiguration config;
+    CameraConfig config;
 
  public:
-    explicit CameraInterface(CameraConfiguration config);
+    explicit CameraInterface(const CameraConfig& config);
     virtual ~CameraInterface() = default;
 
     virtual void connect() = 0;
@@ -139,10 +75,6 @@ class CameraInterface {
 
     virtual std::optional<ImageData> getLatestImage() = 0;
     virtual std::deque<ImageData> getAllImages() = 0;
-
-    CameraConfiguration getConfig();
-    void updateConfig(CameraConfiguration newConfig);
-    void updateConfig(nlohmann::json newJsonConfig);
 };
 
 #endif  // INCLUDE_CAMERA_INTERFACE_HPP_

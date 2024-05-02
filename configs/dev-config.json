@@ -23,5 +23,11 @@
             "vertical": false,
             "one_way": true
         }
+    },
+    "camera": {
+        "camera_type": "mock",
+        "mock": {
+            "images_dir": "/workspaces/obcpp/tests/integration/images/saliency/"
+        }
     }
 }

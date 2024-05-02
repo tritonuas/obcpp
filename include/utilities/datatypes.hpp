@@ -111,4 +111,33 @@ struct AirdropSearchConfig {
     bool one_way;   // if true, path returned will only be in 1 direction
 };
 
+struct CameraConfig {
+    // either "mock" or "lucid"
+    std::string type;
+    struct {
+        std::string images_dir;
+    } mock;
+    struct {
+        std::string sensor_shutter_mode;
+        bool acquisition_frame_rate_enable;
+        bool stream_auto_negotiate_packet_size;
+        bool stream_packet_resend_enable;
+
+        int64_t target_brightness;
+
+        bool gamma_enable;
+        double gamma;
+
+        std::string gain_auto;
+        double gain_auto_upper_limit;
+        double gain_auto_lower_limit;
+
+        std::string exposure_auto;
+        double exposure_auto_damping;
+        std::string exposure_auto_algorithm;
+        double exposure_auto_upper_limit;
+        double exposure_auto_lower_limit;
+    } lucid;
+};
+
 #endif  // INCLUDE_UTILITIES_DATATYPES_HPP_

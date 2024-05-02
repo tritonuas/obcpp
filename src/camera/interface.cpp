@@ -22,6 +22,4 @@ cv::Mat ImageData::getData() const { return DATA; }
 
 ImageTelemetry ImageData::getTelemetry() const { return TELEMETRY; }
 
-CameraConfiguration::CameraConfiguration(nlohmann::json config) : configJson(config) {}
-
-CameraInterface::CameraInterface(CameraConfiguration config) : config(config) {}
+CameraInterface::CameraInterface(const CameraConfig& config) : config(config) {}

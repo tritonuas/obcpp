@@ -7,10 +7,11 @@
 #include <deque>
 
 #include "camera/interface.hpp"
+#include "utilities/datatypes.hpp"
 
 class MockCamera : public CameraInterface {
  public:
-    explicit MockCamera(CameraConfiguration config);
+    explicit MockCamera(CameraConfig config);
     ~MockCamera();
 
     void connect() override;

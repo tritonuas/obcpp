@@ -1,10 +1,5 @@
 #ifdef ARENA_SDK_INSTALLED
 
-#include "camera/interface.hpp"
-#include "camera/lucid.hpp"
-#include <nlohmann/json.hpp>
-#include "utilities/locks.hpp"
-
 #include <chrono>
 #include <thread>
 #include <optional>
@@ -12,49 +7,20 @@
 #include <unordered_map>
 #include <deque>
 
+#include <nlohmann/json.hpp>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core.hpp>
 #include <loguru.hpp>
 
+#include "camera/lucid.hpp"
+#include "camera/interface.hpp"
+#include "utilities/locks.hpp"
+#include "utilities/datatypes.hpp"
+
 using json = nlohmann::json;
 
-LucidCameraConfig::LucidCameraConfig(json config) {
-    this->configJson = config;
-}
-
-void LucidCameraConfig::updateConfig(json newSetting)
-{
-    this->configJson = newSetting;
-}
-
-
-// // TODO: skipped for now. This is purely for testing
-// void LucidCameraConfig::updateConfigField(std::string key, std::string value)
-// {
-//     return;
-// }
-
-json LucidCameraConfig::getConfig() 
-{
-    return this->configJson;
-}
-
-json LucidCameraConfig::getConfigField(std::string name)
-{
-    json returnJ;
-    if (this->configJson.contains(name))
-    {
-        returnJ[name] = this->configJson[name];
-    } else {
-        std::cout << "Field " + name + " doesn't exist" << std::endl;
-    }
-
-    return returnJ;
-}
-
-
-LucidCamera::LucidCamera(CameraConfiguration config) :
+LucidCamera::LucidCamera(CameraConfig config) :
     CameraInterface(config) {
 }
 
@@ -276,7 +242,7 @@ ImageData LucidCamera::imgConvert(Arena::IImage* pImage) {
     cv::Mat mat = cv::Mat(static_cast<int>(pConverted->GetHeight()), static_cast<int>(pConverted->GetWidth()), CV_8UC3, data);
     cv::Mat matCopy = mat.clone();
 
-    return ImageData(name, path, matCopy, ImageTelemetry(0, 0, 0, 0, 0, 0, 0));
+    return ImageData(name, path, matCopy, ImageTelemetry(0, 0, 0, 0, 0, 0, 0, 0));
 }
 
 #endif // ARENA_SDK_INSTALLED

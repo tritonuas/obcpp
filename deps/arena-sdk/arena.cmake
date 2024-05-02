@@ -1,7 +1,10 @@
 function(target_add_arena target_name)
     if(UNIX AND NOT APPLE)
+        # check if the ARENA_EXTRACTED_PATH environment variable is set
+        # before trying to add arena to a target. 
+        # See the Dockerfile for how this is set. 
         set(ARENA_SDK_DIR $ENV{ARENA_EXTRACTED_PATH})
-        if(${ARENA_SDK_DIR})
+        if(NOT "${ARENA_SDK_DIR}" STREQUAL "")
             # Add a preprocessor macro that will enable us to compile
             # functionality that depends on the Arena SDK.
             target_compile_definitions(${target_name} PRIVATE 

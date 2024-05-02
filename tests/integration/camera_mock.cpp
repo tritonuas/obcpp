@@ -2,16 +2,18 @@
 
 #include "camera/interface.hpp"
 #include "camera/mock.hpp"
+#include "core/mission_state.hpp"
 
+#include <memory>
 #include <optional>
 
 using namespace std::chrono_literals;
 
 int main (int argc, char *argv[]) {
-    CameraConfiguration config({
-       {"SampleConfigKey", 100},
-       {"ExposureTime", 1000},
-    });
+    std::shared_ptr<MissionState> state = std::make_shared<MissionState>();
+    CameraConfig config;
+    config.type = "mock";
+    config.mock.images_dir =  "/workspaces/obcpp/tests/integration/images/saliency/";
     MockCamera camera(config);
 
     camera.connect();

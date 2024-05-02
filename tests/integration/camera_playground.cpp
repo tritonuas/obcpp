@@ -208,6 +208,11 @@ void ConfigureTriggerAndAcquireImage(Arena::IDevice *pDevice)
 		"StreamPacketResendEnable",
 		true);
 
+
+	/**
+	 * Windows settings 
+	*/
+
 	// Start stream
 	//    When trigger mode is off and the acquisition mode is set to stream
 	//    continuously, starting the stream will have the camera begin acquiring

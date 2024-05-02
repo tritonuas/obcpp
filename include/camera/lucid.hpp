@@ -21,29 +21,9 @@ using json = nlohmann::json;
 
 using namespace std::chrono_literals;
 
-class LucidCameraConfig {
-    private:
-        json configJson;
-    public:
-        LucidCameraConfig();
-
-        LucidCameraConfig(json config);
-        void updateConfig(json newSetting);
-
-        json getConfig();
-
-        json getConfigField(std::string name);
-
-        // void updateConfigField(std::string key, std::string value) override;
-
-        // void updateConfigField(std::string key, int value) override;
-
-        // void updateConfigField(std::string key, bool value) override;
-};
-
 class LucidCamera : public CameraInterface {
  public:
-    explicit LucidCamera(CameraConfiguration config);
+    explicit LucidCamera(CameraConfig config);
     ~LucidCamera();
 
     void connect() override;
@@ -62,8 +42,6 @@ class LucidCamera : public CameraInterface {
 
    ImageData imgConvert(Arena::IImage * pImage); 
    void configureDefaults();
-
-   LucidCameraConfig* config;
 
    inline static std::shared_mutex arenaSystemLock;
    inline static Arena::ISystem* system;

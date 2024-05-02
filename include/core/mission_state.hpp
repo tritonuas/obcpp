@@ -84,11 +84,18 @@ class MissionState {
      */
     std::shared_ptr<CVAggregator> getCV();
     void setCV(std::shared_ptr<CVAggregator> cv);
+
+    /*
+     * Gets a shared_ptr to the camera client, which lets you
+     * take photos of ground targets.
+     */
     std::shared_ptr<CameraInterface> getCamera();
+    void setCamera(std::shared_ptr<CameraInterface> camera);
 
     MissionParameters mission_params;  // has its own mutex
     RRTConfig rrt_config;
     AirdropSearchConfig coverage_pathing_config;
+    CameraConfig camera_config;
 
  private:
     std::mutex converter_mut;
