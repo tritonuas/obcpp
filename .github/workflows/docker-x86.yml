@@ -3,12 +3,12 @@ name: Push x86 Docker Image
 on:
   push:
     branches:
-      - chore/update-mavsdk
+      - main
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  TAG: "testmav"
+  TAG: "x86"
   DOCKERFILE_PATH: 'docker/Dockerfile.x86'
 
 jobs:
