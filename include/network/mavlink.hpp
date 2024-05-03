@@ -6,6 +6,7 @@
 #include <mavsdk/plugins/mission_raw/mission_raw.h>
 #include <mavsdk/plugins/geofence/geofence.h>
 #include <mavsdk/plugins/action/action.h>
+#include "mavlink_passthrough.h"
 #include <memory>
 #include <vector>
 #include <mutex>
@@ -79,6 +80,7 @@ private:
     std::unique_ptr<mavsdk::MissionRaw> mission;
     std::unique_ptr<mavsdk::Geofence> geofence;
     std::unique_ptr<mavsdk::Action> action;
+    std::unique_ptr<mavsdk::MavlinkPassthrough> passthrough;
 
     struct Data {
         double lat_deg {};

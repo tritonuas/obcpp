@@ -5,6 +5,7 @@
 #include <mavsdk/plugins/geofence/geofence.h>
 #include <mavsdk/plugins/action/action.h>
 #include <mavsdk/plugins/mission_raw/mission_raw.h>
+#include "mavlink_passthrough.h"
 
 #include <atomic>
 #include <memory>
@@ -54,6 +55,7 @@ MavlinkClient::MavlinkClient(std::string link):
     this->mission = std::make_unique<mavsdk::MissionRaw>(system);
     this->geofence = std::make_unique<mavsdk::Geofence>(system);
     this->action = std::make_unique<mavsdk::Action>(system);
+    this->passthrough = std::make_unique<mavsdk::MavlinkPassthrough>(system);
 
     // Set position update rate (1 Hz)
     // TODO: set the 1.0 update rate value in the obc config
@@ -347,14 +349,32 @@ bool MavlinkClient::armAndHover(){
     }
 
     LOG_F(INFO, "Attempting to take off...");
-    //Attemp to rise to takeoff altitude
-    const mavsdk::Action::Result takeoff_result = this->action->takeoff();
-    if (takeoff_result != mavsdk::Action::Result::Success) {
-        LOG_F(ERROR, "Take off failed");
-        return false;
-    }
+    // TODO: use passthrough to send takeoff command
+    // should refactor to another function eventually, but brainstorming here...
+    // leaving original code for reference below v
+    // Attempt to rise to takeoff altitude
+    // const mavsdk::Action::Result takeoff_result = this->action->takeoff();
+    // if (takeoff_result != mavsdk::Action::Result::Success) {
+    //     LOG_F(ERROR, "Take off failed");
+    //     return false;
+    // }
 
-    // TODO: config 
+    // need to figure out correct values to send for a VTOL takeoff command
+    this->passthrough->send_command_int(mavsdk::MavlinkPassthrough::CommandInt {
+        .target_sysid = 0,
+        .target_compid = 0,
+        .command = 0,
+        .frame = MAV_FRAME::MAV_FRAME_GLOBAL_RELATIVE_ALT,
+        .param1 = 0,
+        .param2 = 0,
+        .param3 = 0,
+        .param4 = 0,
+        .x = 0,
+        .y = 0,
+        .z = 0
+    });
+
+    // TODO: config option for this
     const float TAKEOFF_ALT = 30.0f;
     LOG_F(INFO, "Setting takeoff altitude to %fm", TAKEOFF_ALT);
     auto result = this->action->set_takeoff_altitude(TAKEOFF_ALT);
