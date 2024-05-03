@@ -285,15 +285,17 @@ std::optional<ImageData> LucidCamera::takePicture(const std::chrono::millisecond
     LOG_F(INFO, "Taking image: %d", imageCounter++);
     LOG_F(INFO, "Missed packet: %ld", Arena::GetNodeValue<int64_t>(device->GetTLStreamNodeMap(), "StreamMissedPacketCount"));
 
+    LOG_F(WARNING, "Image buffer size: %lu", pImage->GetSizeOfBuffer());
     if (pImage->IsIncomplete()) {
         LOG_F(ERROR, "Image has incomplete data\n");
         // TODO: determine if we want to return images with incomplete data
         // return {};
     }
 
+    
     ImageData returnImg = imgConvert(pImage);
 
-    this->device->RequeueBuffer(pImage);
+    this->device->RequeueBuffer(pImage); // frees the data of pImage
 
     return returnImg;
 }
@@ -304,13 +306,19 @@ ImageData LucidCamera::imgConvert(Arena::IImage* pImage) {
         BGR8);
 
     std::string name = "img_"+pConverted->GetTimestamp();
-    void * data = (void *)pConverted->GetData();
     std::string path = "";
 
-    cv::Mat mat = cv::Mat(static_cast<int>(pConverted->GetHeight()), static_cast<int>(pConverted->GetWidth()), CV_8UC3, data);
-    cv::Mat matCopy = mat.clone();
+    cv::Mat mat = cv::Mat(
+        static_cast<int>(pConverted->GetHeight()),
+        static_cast<int>(pConverted->GetWidth()),
+        CV_8UC3,
+        (void *)pConverted->GetData())
+    .clone();
+    
+    // freeing underlying lucid buffers
+    Arena::ImageFactory::Destroy(pConverted);
 
-    return ImageData(name, path, matCopy, ImageTelemetry(0, 0, 0, 0, 0, 0, 0, 0));
+    return ImageData(name, path, mat, ImageTelemetry(0, 0, 0, 0, 0, 0, 0, 0));
 }
 
 #endif // ARENA_SDK_INSTALLED
