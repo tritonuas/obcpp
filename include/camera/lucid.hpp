@@ -61,6 +61,7 @@ class LucidCamera : public CameraInterface {
    const std::chrono::milliseconds connectionTimeout = 1000ms;
    const std::chrono::milliseconds connectionRetry = 500ms;
 
+   // TODO: need to catch timeout exception
    const std::chrono::milliseconds takePictureTimeout = 1000ms;
 };
 

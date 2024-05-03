@@ -35,9 +35,11 @@ int main (int argc, char *argv[]) {
     camera.connect();
     LOG_F(INFO, "Connected to LUCID camera!\n");
 
-    camera.startTakingPictures(1s);
+    camera.startTakingPictures(0s);
 
-    std::this_thread::sleep_for(10s);
+    std::this_thread::sleep_for(30s);
+
+    camera.stopTakingPictures();
 
     std::deque<ImageData> images = camera.getAllImages();
     int imageNum = 0;
@@ -45,6 +47,4 @@ int main (int argc, char *argv[]) {
         cv::imwrite("lucid_img" + std::to_string(imageNum) + ".jpg", image.getData());
         imageNum++;
     }
-
-    camera.stopTakingPictures();
 }

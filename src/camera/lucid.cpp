@@ -102,6 +102,69 @@ void LucidCamera::stopTakingPictures() {
 };
 
 void LucidCamera::configureDefaults() {
+    // factory reset
+    // LOG_F(INFO, "Factory reset the camera");
+    // Arena::ExecuteNode(
+    //     device->GetNodeMap(),
+    //     "DeviceFactoryReset"
+    // );
+
+	// enable  rolling shutter
+ 	Arena::SetNodeValue<GenICam::gcstring>(
+		device->GetNodeMap(),
+		"SensorShutterMode",
+		"Rolling");
+
+	// enable auto exposure
+	// Arena::SetNodeValue<GenICam::gcstring>(
+	// 	device->GetNodeMap(),
+	// 	"ExposureAuto",
+	// 	"Continuous");
+	// // Arena::SetNodeValue<double>(
+	// // 	device->GetNodeMap(),
+	// // 	"ExposureTime",
+	// // 	3000);
+	// // Arena::SetNodeValue<double>(
+	// // 	device->GetNodeMap(),
+	// // 	"ExposureTime",
+	// // 	3000);
+
+	Arena::SetNodeValue<GenICam::gcstring>(
+		device->GetNodeMap(),
+		"DeviceLinkThroughputLimitMode",
+		"On");
+
+	GenApi::CIntegerPtr bruh = device->GetNodeMap()->GetNode("DeviceLinkThroughputLimit");
+	int64_t b = bruh->GetMin();
+    LOG_F(WARNING, "max %lu", b);
+
+	Arena::SetNodeValue<int64_t>(
+		device->GetNodeMap(),
+		"DeviceLinkThroughputLimit",
+		125000000); //max 125 000 000 min 31 250 000
+
+	// turn on acquisition frame rate & set to max value
+	Arena::SetNodeValue<bool>(
+		device->GetNodeMap(),
+		"AcquisitionFrameRateEnable",
+		true);
+	// GenApi::CFloatPtr pAcquisitionFrameRate = device->GetNodeMap()->GetNode("AcquisitionFrameRate");
+	// double acquisitionFrameRate = pAcquisitionFrameRate->GetMax();
+	// pAcquisitionFrameRate->SetValue(acquisitionFrameRate);
+
+
+
+	// enable stream auto negotiate packet size
+	Arena::SetNodeValue<bool>(
+		device->GetTLStreamNodeMap(),
+		"StreamAutoNegotiatePacketSize",
+		true);
+
+	// enable stream packet resend
+	Arena::SetNodeValue<bool>(
+		device->GetTLStreamNodeMap(),
+		"StreamPacketResendEnable",
+		true);
 
 }
 
@@ -217,6 +280,11 @@ std::optional<ImageData> LucidCamera::takePicture(const std::chrono::millisecond
     WriteLock lock(this->arenaDeviceLock);
 
     Arena::IImage* pImage = this->device->GetImage(timeout.count());
+
+    static int imageCounter = 0;
+    LOG_F(INFO, "Taking image: %d", imageCounter++);
+    LOG_F(INFO, "Missed packet: %ld", Arena::GetNodeValue<int64_t>(device->GetTLStreamNodeMap(), "StreamMissedPacketCount"));
+
     if (pImage->IsIncomplete()) {
         LOG_F(ERROR, "Image has incomplete data\n");
         // TODO: determine if we want to return images with incomplete data

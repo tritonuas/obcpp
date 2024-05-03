@@ -208,6 +208,22 @@ void ConfigureTriggerAndAcquireImage(Arena::IDevice *pDevice)
 		"StreamPacketResendEnable",
 		true);
 
+	Arena::SetNodeValue<bool>(
+		pDevice->GetTLStreamNodeMap(),
+		"PacketResendEnable",
+		true);
+/* 
+	Arena::SetNodeValue<bool>(
+		pDevice->GetTLStreamNodeMap(),
+		"StreamPacketResendEnable",
+		true);
+
+	Arena::SetNodeValue<bool>(
+		pDevice->GetTLStreamNodeMap(),
+		"StreamPacketResendEnable",
+		true);
+ */
+
 
 	/**
 	 * Windows settings 
