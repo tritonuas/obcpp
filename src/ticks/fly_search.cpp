@@ -9,6 +9,7 @@ FlySearchTick::FlySearchTick(std::shared_ptr<MissionState> state)
     :Tick(state, TickID::FlySearch) {
         const std::chrono::milliseconds interval {2000};
         //this.state.camera.startTakingPictures(&interval) = 0;
+
     }
 
 std::chrono::milliseconds FlySearchTick::getWait() const {
@@ -16,6 +17,7 @@ std::chrono::milliseconds FlySearchTick::getWait() const {
 }
 
 Tick* FlySearchTick::tick() {
+    // TODO: Eventually implement dynamic avoidance so we dont crash brrr
 
     // TODO: Run Mavlink flight to find targets
     // Finish Loop
