@@ -47,7 +47,8 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
                            # imagemagick with c++ dependency
                            libmagick++-dev \
                            # needed for pytorch 
-                           libopenblas-dev
+                           libopenblas-dev \
+                           ninja-build
 
 RUN pip3 install typing-extensions PyYAML cpplint
 
@@ -56,7 +57,7 @@ RUN echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
 
 # install MAVSDK from source
 RUN git clone --depth 1 https://github.com/mavlink/MAVSDK.git --branch v2.9.1 --single-branch \
-    cd MAVSDK \
+    && cd MAVSDK \
     && git submodule update --init --recursive \
     && cmake -DCMAKE_BUILD_TYPE=Release -Bbuild/default -H. \
     && cmake --build build/default -j2 --target install
@@ -70,7 +71,8 @@ ARG TORCHVISION_VERSION=0.17.0
 # Can also run "nvcc --list-gpu-arch" on the Jetson to verify.
 # See https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#gpu-feature-list
 # and https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/
-ARG CUDA_ARCH_LIST="8.6"
+# and https://stackoverflow.com/a/74962874
+ARG CUDA_ARCH_LIST="5.0 5.2 5.3 6.0 6.1 6.2 7.0 7.2 7.5 8.0 8.6 8.7 8.9 9.0"
 WORKDIR ${TORCHVISION_INSTALL_DIR} 
 RUN wget "https://github.com/pytorch/vision/archive/refs/tags/v${TORCHVISION_VERSION}.zip" \
     && unzip "v${TORCHVISION_VERSION}.zip" \
@@ -80,6 +82,18 @@ RUN wget "https://github.com/pytorch/vision/archive/refs/tags/v${TORCHVISION_VER
     && cmake -DWITH_CUDA=1 -DTORCH_CUDA_ARCH_LIST="${CUDA_ARCH_LIST}" -DCUDA_HAS_FP16=1 -DCUDA_NO_HALF_OPERATORS=1 -DCUDA_NO_HALF_CONVERSIONS=1 -DCUDA_NO_HALF2_OPERATORS=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/usr/local/lib/python3.10/dist-packages/torch/share/cmake/Torch" .. \
     && make -j4 \
     && make install
+
+RUN pip3 install gdown
+ENV PATH="${PATH}:${HOME}/.local/bin"
+
+ARG ARENA_INSTALL_DIR=/arena-tmp
+ARG ARENA_TAR_PATH="${ARENA_INSTALL_DIR}/ArenaSDK_Linux.tar.gz"
+ENV ARENA_EXTRACTED_PATH="${ARENA_INSTALL_DIR}/ArenaSDK_Linux_ARM64"
+WORKDIR ${ARENA_INSTALL_DIR}
+RUN gdown 1VtBji-cWfetM5nXZwt55JuHPWPGahQOH -O ${ARENA_TAR_PATH}
+RUN tar -xvzf ${ARENA_TAR_PATH}
+WORKDIR ${ARENA_EXTRACTED_PATH}
+RUN sh Arena_SDK_ARM64.conf
 
 WORKDIR /obcpp
 COPY . .
