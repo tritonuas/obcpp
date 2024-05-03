@@ -2,9 +2,9 @@
 
 #include <mavsdk/mavsdk.h>
 #include <mavsdk/plugins/telemetry/telemetry.h>
-#include <mavsdk/plugins/mission/mission.h>
 #include <mavsdk/plugins/geofence/geofence.h>
 #include <mavsdk/plugins/action/action.h>
+#include <mavsdk/plugins/mission_raw/mission_raw.h>
 
 #include <atomic>
 #include <memory>
@@ -19,7 +19,10 @@
 #include "utilities/logging.hpp"
 #include "core/mission_state.hpp"
 
-MavlinkClient::MavlinkClient(std::string link) {
+using namespace std::chrono_literals; // NOLINT
+
+MavlinkClient::MavlinkClient(std::string link):
+    mavsdk(mavsdk::Mavsdk::Configuration(mavsdk::Mavsdk::ComponentType::CompanionComputer)) {
     LOG_F(INFO, "Connecting to Mav at %s", link.c_str());
 
     while (true) {
@@ -48,7 +51,7 @@ MavlinkClient::MavlinkClient(std::string link) {
 
     // Create instance of Telemetry and Mission
     this->telemetry = std::make_unique<mavsdk::Telemetry>(system);
-    this->mission = std::make_unique<mavsdk::Mission>(system);
+    this->mission = std::make_unique<mavsdk::MissionRaw>(system);
     this->geofence = std::make_unique<mavsdk::Geofence>(system);
     this->action = std::make_unique<mavsdk::Action>(system);
 
@@ -143,7 +146,7 @@ bool MavlinkClient::uploadGeofenceUntilSuccess(std::shared_ptr<MissionState> sta
 
     // Parse the flight boundary / geofence information
     mavsdk::Geofence::Polygon flight_bound;
-    flight_bound.fence_type = mavsdk::Geofence::Polygon::FenceType::Inclusion;
+    flight_bound.fence_type = mavsdk::Geofence::FenceType::Inclusion;
     for (const auto& coord : mission->flightboundary()) {
         flight_bound.points.push_back(mavsdk::Geofence::Point {
             .latitude_deg {coord.latitude()},
@@ -160,7 +163,9 @@ bool MavlinkClient::uploadGeofenceUntilSuccess(std::shared_ptr<MissionState> sta
     int geofence_attempts = 5;
     while (true) {
         LOG_F(INFO, "Sending geofence information...");
-        auto geofence_result = this->geofence->upload_geofence({flight_bound});
+        mavsdk::Geofence::GeofenceData geofence_data;
+        geofence_data.polygons = {flight_bound};
+        auto geofence_result = this->geofence->upload_geofence(geofence_data);
         if (geofence_result == mavsdk::Geofence::Result::Success) {
             LOG_F(INFO, "Geofence successfully uploaded");
             break;
@@ -188,57 +193,47 @@ bool MavlinkClient::uploadWaypointsUntilSuccess(std::shared_ptr<MissionState> st
     LOG_SCOPE_F(INFO, "Uploading waypoints");
 
     // Parse the waypoint information
-    std::vector<mavsdk::Mission::MissionItem> mission_items;
+    std::vector<mavsdk::MissionRaw::MissionItem> mission_items;
+    int i = 0;
     for (const auto& coord : waypoints) {
-        mavsdk::Mission::MissionItem new_item {};
-        mission_items.push_back(mavsdk::Mission::MissionItem {
-            .latitude_deg {coord.latitude()},
-            .longitude_deg {coord.longitude()},
-            .relative_altitude_m {static_cast<float>(coord.altitude())},
-            .is_fly_through {true}
-        });
+        mavsdk::MissionRaw::MissionItem new_raw_item_nav {};
+        new_raw_item_nav.seq = i;
+        new_raw_item_nav.frame = 3;  // MAV_FRAME_GLOBAL_RELATIVE_ALT
+        new_raw_item_nav.command = 16;  // MAV_CMD_NAV_WAYPOINT
+        new_raw_item_nav.current = (i == 0) ? 1 : 0;
+        new_raw_item_nav.autocontinue = 1;
+        new_raw_item_nav.param1 = 0.0;  // Hold
+        new_raw_item_nav.param2 = 7.0;  // Accept Radius 7.0m close to 25ft
+        new_raw_item_nav.param3 = 0.0;  // Pass Radius
+        new_raw_item_nav.param4 = NAN;  // Yaw
+        new_raw_item_nav.x = int32_t(std::round(coord.latitude() * 1e7));
+        new_raw_item_nav.y = int32_t(std::round(coord.longitude() * 1e7));
+        new_raw_item_nav.z = coord.altitude();
+        new_raw_item_nav.mission_type = 0;  // MAV_MISSION_TYPE_MISSION
+        mission_items.push_back(new_raw_item_nav);
+        i++;
     }
 
     while (true) {
         LOG_F(INFO, "Sending waypoint information...");
 
-        mavsdk::Mission::MissionPlan plan {
-            .mission_items = mission_items,
-        };
+        std::optional<mavsdk::MissionRaw::Result> result {};
 
-        // Upload the mission, logging out progress as it gets uploaded
-        std::mutex mut;
-        mavsdk::Mission::Result upload_status {mavsdk::Mission::Result::Next};
-        this->mission->upload_mission_with_progress_async(plan,
-            [&upload_status, &mut]
-            (mavsdk::Mission::Result result, mavsdk::Mission::ProgressData data) {
-                Lock lock(mut);
-                upload_status = result;
-                if (result == mavsdk::Mission::Result::Next) {
-                    LOG_F(INFO, "Upload progress: %f", data.progress);
-                }
+        this->mission->upload_mission_async(mission_items,
+            [&result](const mavsdk::MissionRaw::Result& res) {
+                result = res;
             });
 
-        // Wait until the mission is fully uploaded
-        while (true) {
-            {
-                Lock lock(mut);
-                // Check if it is uploaded
-                if (upload_status == mavsdk::Mission::Result::Success) {
-                    LOG_F(INFO, "Successfully uploaded the mission. YIPIEE!");
-                    return true;
-                } else if (upload_status != mavsdk::Mission::Result::Next) {
-                    // Neither success nor "next", signalling that there has been an error
-                    LOG_S(WARNING) << "Mission upload failed: "
-                        << upload_status << ". Trying again...";
-                    break;
-                }
-            }
-            // otherwise in progress, so continue this loop
-            std::this_thread::sleep_for(std::chrono::milliseconds(250));
+        while (!result.has_value()) {}
+
+        if (result == mavsdk::MissionRaw::Result::Success) {
+            LOG_F(INFO, "Successfully uploaded mission");
+            break;
+        } else {
+            LOG_S(ERROR) << "Error uploading mission: " << result.value() << ". Trying again.";
         }
 
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(500ms);
     }
 
     return true;
@@ -324,7 +319,7 @@ bool MavlinkClient::isPointInPolygon(std::pair<double, double> latlng, std::vect
 
 bool MavlinkClient::isMissionFinished(){
     //Boolean representing if mission is finished
-    return this->mission->is_mission_finished().second;
+    return this->mission->mission_progress().current == this->mission->mission_progress().total;
 }
 
 mavsdk::Telemetry::RcStatus MavlinkClient::get_conn_status() {
@@ -375,9 +370,9 @@ std::pair< std::string, bool > MavlinkClient::startMission() {
         return std::make_pair("Vehicle has not reach desire altitude", false);
     }
 
-    const mavsdk::Mission::Result result = this->mission->start_mission();
+    const mavsdk::MissionRaw::Result result = this->mission->start_mission();
 
-    if (result != mavsdk::Mission::Result::Success) {
+    if (result != mavsdk::MissionRaw::Result::Success) {
         return std::make_pair("Mission start failed", false);
     }
 
