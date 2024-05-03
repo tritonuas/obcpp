@@ -329,58 +329,90 @@ mavsdk::Telemetry::RcStatus MavlinkClient::get_conn_status() {
 /**
  * Goes through the sequence of checking vehicle health -> arm vehicle -> takeoff -> hover at set altitude.
 */
-std::pair< std::string, bool > MavlinkClient::armAndHover(){
-
+bool MavlinkClient::armAndHover(){
+    LOG_F(INFO, "Attempting to arm and hover");
+    LOG_F(INFO, "Checking vehicle health...");
     //Vehicle can only be armed if status is healthy
     if(this->telemetry->health_all_ok() != true){
-        return std::make_pair("Vehicle not ready to arm", false);
+        LOG_F(ERROR, "Vehicle not ready to arm");
+        return false;
     }
 
+    LOG_F(INFO, "Attempting to arm...");
     //Attemp to arm the vehicle
     const mavsdk::Action::Result arm_result = this->action->arm();
     if(arm_result != mavsdk::Action::Result::Success){
-        return std::make_pair("Arming failed.", false);
+        LOG_F(ERROR, "Arming failed");
+        return false;
     }
 
+    LOG_F(INFO, "Attempting to take off...");
     //Attemp to rise to takeoff altitude
     const mavsdk::Action::Result takeoff_result = this->action->takeoff();
     if (takeoff_result != mavsdk::Action::Result::Success) {
-        return std::make_pair("Take off failed", false);
+        LOG_F(ERROR, "Take off failed");
+        return false;
+    }
+
+    // TODO: config 
+    const float TAKEOFF_ALT = 30.0f;
+    LOG_F(INFO, "Setting takeoff altitude to %fm", TAKEOFF_ALT);
+    auto result = this->action->set_takeoff_altitude(TAKEOFF_ALT);
+    if (result != mavsdk::Action::Result::Success) {
+        LOG_S(ERROR) << "FAIL: cannot set takeoff altitude: " << result;
+        return false;
     }
 
     //A check to see if vehicle has reach takeoff altitude
-    std::pair<mavsdk::Action::Result, float> target_alt = this->action->get_takeoff_altitude();
+    const auto& [altitude_result, target_alt] = this->action->get_takeoff_altitude();
+    LOG_F(INFO, "Waiting to reach target altitude of %f", target_alt);
     float current_position = 0;
-    while (current_position<target_alt.second) {
+    while (current_position < target_alt) {
         current_position = this->telemetry->position().relative_altitude_m;
+        LOG_F(INFO, "At alt %f", current_position);
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
-    return std::make_pair("Take off success", true);
+    LOG_F(INFO, "Take off success");
+    return true;
 }
 
 /**
  * Starts the mavlink mission and transitions vehicle from VTOL to fix wing.
 */
-std::pair< std::string, bool > MavlinkClient::startMission() {
-    std::pair<mavsdk::Action::Result, float> target_alt = this->action->get_takeoff_altitude();
+bool MavlinkClient::startMission() {
+    LOG_F(INFO, "Attempting to start mission...");
+    LOG_F(INFO, "Querying target takeoff altitude");
+    const auto& [takeoff_result, target_alt] = this->action->get_takeoff_altitude();
+    if (takeoff_result != mavsdk::Action::Result::Success) {
+        LOG_S(ERROR) << "FAIL: could not query takeoff altitude: " << target_alt;
+        return false;
+    }
+    LOG_F(INFO, "Target takeoff altitude is %f", target_alt);
+
     float current_position = this->telemetry->position().relative_altitude_m;
 
-    if(current_position < target_alt.second){
-        return std::make_pair("Vehicle has not reach desire altitude", false);
+    LOG_F(INFO, "Checking target altitude");
+    if(current_position < target_alt){
+        LOG_F(ERROR, "FAIL: Vehicle has not reached desired altitude (%f < %f)", current_position, target_alt);
+        return false;
     }
 
-    const mavsdk::MissionRaw::Result result = this->mission->start_mission();
-
-    if (result != mavsdk::MissionRaw::Result::Success) {
-        return std::make_pair("Mission start failed", false);
+    LOG_F(INFO, "About to send start command");
+    auto start_result = this->mission->start_mission();
+    if (start_result != mavsdk::MissionRaw::Result::Success) {
+        LOG_F(ERROR, "Mission Start Failed");
+        return false;
     }
 
+    LOG_F(INFO, "About to transition to forward flight");
     const mavsdk::Action::Result fw_result = this->action->transition_to_fixedwing();
 
     if (fw_result != mavsdk::Action::Result::Success) {
-        return std::make_pair("Transition to fixed wing failed", false);
+        LOG_F(ERROR, "Transition to fixed wing failed");
+        return false;
     }
 
-    return std::make_pair("Mission started", true); 
+    LOG_F(INFO, "Mission Started!");
+    return true;
 }

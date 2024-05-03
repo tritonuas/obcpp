@@ -69,8 +69,8 @@ class MavlinkClient {
     bool isPointInPolygon(std::pair<double, double> latlng, std::vector<XYZCoord> region);
     bool isMissionFinished();
     mavsdk::Telemetry::RcStatus get_conn_status();
-    std::pair< std::string, bool > armAndHover();
-    std::pair< std::string, bool > startMission();
+    bool armAndHover();
+    bool startMission();
 
 private:
     mavsdk::Mavsdk mavsdk;

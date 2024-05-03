@@ -2,6 +2,7 @@
 #define INCLUDE_TICKS_ACTIVETAKEOFF_HPP_
 
 #include <memory>
+#include <string>
 #include <chrono>
 
 #include "ticks/tick.hpp"
@@ -21,7 +22,9 @@ class ActiveTakeoffTick: public Tick {
     Tick* tick() override;
 
  private:
-    std::future<std::pair<std::basic_ostream<char, std::char_traits<char>>, bool>> takeoffResult;
+    bool started;
+
+    std::future<bool> takeoffResult;
 
     void armAndHover();
 };
