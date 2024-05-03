@@ -115,6 +115,9 @@ struct AirdropSearchConfig {
 struct AirdropApproachConfig {
     ad_mode drop_mode;
     std::unordered_set<int> bottle_ids;
+    double drop_altitude;
+    double guided_drop_distance;
+    double unguided_drop_distance;
 };
 
 #endif  // INCLUDE_UTILITIES_DATATYPES_HPP_

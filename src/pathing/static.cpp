@@ -27,6 +27,14 @@ RRT::RRT(RRTPoint start, std::vector<XYZCoord> goals, double search_radius, Poly
            Dubins(TURNING_RADIUS, POINT_SEPARATION)),
       config(config) {}
 
+RRT::RRT(RRTPoint start, std::vector<XYZCoord> goals, double search_radius, Environment airspace,
+         RRTConfig config)
+    : iterations_per_waypoint(config.iterations_per_waypoint),
+      search_radius(search_radius),
+      rewire_radius(config.rewire_radius),
+      tree(start, airspace, Dubins(TURNING_RADIUS, POINT_SEPARATION)),
+      config(config) {}
+
 void RRT::run() {
     /*
      * RRT algorithm

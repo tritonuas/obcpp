@@ -28,6 +28,12 @@ class RRT {
                             .optimize = false,
                             .point_fetch_method = POINT_FETCH_METHODS::NONE,
                             .allowed_to_skip_waypoints = false});
+    RRT(RRTPoint start, std::vector<XYZCoord> goals, double search_radius, Environment airspace,
+        RRTConfig config = {.iterations_per_waypoint = ITERATIONS_PER_WAYPOINT,
+                            .rewire_radius = REWIRE_RADIUS,
+                            .optimize = false,
+                            .point_fetch_method = POINT_FETCH_METHODS::NONE,
+                            .allowed_to_skip_waypoints = false});
 
     /**
      * RRT(-star) algorithm
@@ -199,10 +205,12 @@ class AirdropSearch {
 
 class AirdropApproach {
     AirdropApproach(const RRTPoint &start, const XYZCoord &goal, RRTPoint wind, Polygon bounds,
-                    std::vector<Polygon> obstacles = {}, AirdropApproachConfig config = {
-                        .drop_mode = DIRECT_DROP,
-                        .bottle_ids = {1, 2, 3, 4, 5}
-                    })
+                    std::vector<Polygon> obstacles = {},
+                    AirdropApproachConfig config = {.drop_mode = DIRECT_DROP,
+                                                    .bottle_ids = {1, 2, 3, 4, 5},
+                                                    .drop_altitude = 26.0,
+                                                    .guided_drop_distance = 50.0,
+                                                    .unguided_drop_distance = 50.0})
         : start(start),
           goal(goal),
           wind(wind),
@@ -211,7 +219,17 @@ class AirdropApproach {
           config(config) {}
 
     std::vector<XYZCoord> run() const {
-        return dubins.dubinsPath(start, RRTPoint(goal, 0));
+        RRT rrt(start, {getDropLocation()}, SEARCH_RADIUS, airspace);
+        rrt.run();
+
+        return rrt.getPointsToGoal();
+    }
+
+    XYZCoord getDropLocation() const {
+        double drop_offset = config.drop_mode == DIRECT_DROP ? config.unguided_drop_distance
+                                                             : config.guided_drop_distance;
+
+        return XYZCoord(goal.x - drop_offset, goal.y, config.drop_altitude);
     }
 
     const XYZCoord goal;
