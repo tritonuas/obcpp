@@ -13,5 +13,15 @@ std::chrono::milliseconds CVLoiterTick::getWait() const {
 }
 
 Tick* CVLoiterTick::tick() {
+    //Tick is called if Search Zone coverage path is finished
+
+    //Check if all expected targets are found 
+    if (false) {
+        return new AirdropPrepTick(this->state);
+    } 
+    // If not all targets are validated invoke Flysearch again to attept to locate the target
+    else if (false) {
+        return new FlySearchTick(this->state);
+    }
     return nullptr;
 }
