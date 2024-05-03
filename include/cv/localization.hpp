@@ -12,6 +12,9 @@
 #define FOCAL_LENGTH_MM 50
 #define IMG_WIDTH_PX 5472
 #define IMG_HEIGHT_PX 3648
+#define EARTH_RADIUS_M 6378137
+#define SENSOR_WIDTH 15.86  // mm
+#define METER_TO_FT 3.28084
 
 // Localization is responsible for calculating the real world latitude/longitude
 // of competition targets.
@@ -87,6 +90,10 @@ class ECEFLocalization : Localization {
 class GSDLocalization : Localization {
  public:
     GPSCoord localize(const ImageTelemetry& telemetry, const Bbox& targetBbox) override;
+    GPSCoord CalcOffset(const double offset_x, const double offset_y,
+                        const double lat, const double lon);
+    double distanceInMetersBetweenCords(const double lat1, const double lon1,
+                                        const double lat2, const double lon2);
 };
 
 #endif  // INCLUDE_CV_LOCALIZATION_HPP_

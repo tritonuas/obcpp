@@ -9,7 +9,7 @@ bool MockCamera::verifyConnection() { return true; }
 void MockCamera::takePicture() {
     ImageData newImg("mock_image.jpg", "/real/path/mock_image.jpg",
                      cv::Mat(cv::Size(4000, 3000), CV_8UC3, cv::Scalar(255)),
-                     ImageTelemetry(38.31568, 76.55006, 75, 20, 100, 5, 3));
+                     ImageTelemetry(38.31568, 76.55006, 75, 20, 0, 100, 5, 3));
 
     lastPicture = std::make_unique<ImageData>(newImg);
 }

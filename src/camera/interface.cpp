@@ -1,11 +1,13 @@
 #include "camera/interface.hpp"
 
-ImageTelemetry::ImageTelemetry(double latitude, double longitude, double altitude, double airspeed,
+ImageTelemetry::ImageTelemetry(double latitude, double longitude, double altitude,
+                               double airspeed, double heading,
                                double yaw, double pitch, double roll)
     : latitude(latitude),
       longitude(longitude),
       altitude(altitude),
       airspeed(airspeed),
+      heading(heading),
       yaw(yaw),
       pitch(pitch),
       roll(roll) {}
