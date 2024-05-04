@@ -6,7 +6,7 @@
 #include <mavsdk/plugins/mission_raw/mission_raw.h>
 #include <mavsdk/plugins/geofence/geofence.h>
 #include <mavsdk/plugins/action/action.h>
-#include "mavlink_passthrough.h"
+#include <mavsdk/plugins/mavlink_passthrough/mavlink_passthrough.h>
 #include <memory>
 #include <vector>
 #include <mutex>
@@ -65,6 +65,7 @@ class MavlinkClient {
     double groundspeed_m_s();
     double airspeed_m_s();
     double heading_deg();
+    bool isArmed();
     mavsdk::Telemetry::FlightMode flight_mode();
     double angle2D(double x1, double y1, double x2, double y2);
     bool isPointInPolygon(std::pair<double, double> latlng, std::vector<XYZCoord> region);
@@ -91,6 +92,7 @@ private:
         double airspeed_m_s {};
         double heading_deg {};
         mavsdk::Telemetry::FlightMode flight_mode {};
+        bool armed {};
     } data;
     std::mutex data_mut;
 };

@@ -5,7 +5,7 @@
 #include <mavsdk/plugins/geofence/geofence.h>
 #include <mavsdk/plugins/action/action.h>
 #include <mavsdk/plugins/mission_raw/mission_raw.h>
-#include "mavlink_passthrough.h"
+#include <mavsdk/plugins/mavlink_passthrough/mavlink_passthrough.h>
 
 #include <atomic>
 #include <memory>
@@ -114,6 +114,12 @@ MavlinkClient::MavlinkClient(std::string link):
 
             Lock lock(this->data_mut);
             this->data.groundspeed_m_s = groundspeed_m_s;
+        });
+    this->telemetry->subscribe_armed(
+        [this](bool armed) {
+            VLOG_F(DEBUG, "Armed: %d", armed);
+            Lock lock(this->data_mut);
+            this->data.armed = armed;
         });
 }
 
@@ -271,6 +277,11 @@ double MavlinkClient::heading_deg() {
     return this->data.heading_deg;
 }
 
+bool MavlinkClient::isArmed() {
+    Lock lock(this->data_mut);
+    return this->data.armed;
+}
+
 mavsdk::Telemetry::FlightMode MavlinkClient::flight_mode() {
     Lock lock(this->data_mut);
     return this->data.flight_mode;
@@ -348,46 +359,46 @@ bool MavlinkClient::armAndHover(){
         return false;
     }
 
-    LOG_F(INFO, "Attempting to take off...");
-    // TODO: use passthrough to send takeoff command
-    // should refactor to another function eventually, but brainstorming here...
-    // leaving original code for reference below v
-    // Attempt to rise to takeoff altitude
-    // const mavsdk::Action::Result takeoff_result = this->action->takeoff();
-    // if (takeoff_result != mavsdk::Action::Result::Success) {
-    //     LOG_F(ERROR, "Take off failed");
-    //     return false;
-    // }
-
-    // need to figure out correct values to send for a VTOL takeoff command
-    this->passthrough->send_command_int(mavsdk::MavlinkPassthrough::CommandInt {
-        .target_sysid = 0,
-        .target_compid = 0,
-        .command = 0,
-        .frame = MAV_FRAME::MAV_FRAME_GLOBAL_RELATIVE_ALT,
-        .param1 = 0,
-        .param2 = 0,
-        .param3 = 0,
-        .param4 = 0,
-        .x = 0,
-        .y = 0,
-        .z = 0
-    });
 
     // TODO: config option for this
     const float TAKEOFF_ALT = 30.0f;
-    LOG_F(INFO, "Setting takeoff altitude to %fm", TAKEOFF_ALT);
-    auto result = this->action->set_takeoff_altitude(TAKEOFF_ALT);
-    if (result != mavsdk::Action::Result::Success) {
-        LOG_S(ERROR) << "FAIL: cannot set takeoff altitude: " << result;
+    auto r1 = this->action->set_takeoff_altitude(TAKEOFF_ALT);
+    if (r1 != mavsdk::Action::Result::Success) {
+        LOG_S(ERROR) << "FAIL: could not set takeoff alt " << r1;
+        return false;
+    }
+    auto [r2, alt_checked ]= this->action->get_takeoff_altitude();
+    LOG_S(INFO) << "Queried takeoff alt to be " << alt_checked << " with status " << r2;
+
+    LOG_F(INFO, "Attempting to take off to %fm...", TAKEOFF_ALT);
+    const mavsdk::Action::Result takeoff_result = this->action->takeoff();
+    if (takeoff_result != mavsdk::Action::Result::Success) {
+        LOG_F(ERROR, "Take off failed");
         return false;
     }
 
-    //A check to see if vehicle has reach takeoff altitude
-    const auto& [altitude_result, target_alt] = this->action->get_takeoff_altitude();
-    LOG_F(INFO, "Waiting to reach target altitude of %f", target_alt);
+    // need to figure out correct values to send for a VTOL takeoff command
+    // auto result = this->passthrough->send_command_int(mavsdk::MavlinkPassthrough::CommandInt {
+    //     .target_sysid = this->passthrough->get_our_sysid(),
+    //     .target_compid = this->passthrough->get_our_compid(),
+    //     .command = MAV_CMD_NAV_VTOL_TAKEOFF,
+    //     .frame = MAV_FRAME_GLOBAL_RELATIVE_ALT,
+    //     .param1 = 0,
+    //     .param2 = VTOL_TRANSITION_HEADING_NEXT_WAYPOINT, // unsure if arduplane will respect this
+    //     .param3 = 0,
+    //     .param4 = NAN,
+    //     .x = 0,
+    //     .y = 0,
+    //     .z = TAKEOFF_ALT // currently hard coded to 30m (~100ft)
+    // });
+    // if (result != mavsdk::MavlinkPassthrough::Result::Success) {
+    //     LOG_S(ERROR) << "FAIL: takeoff cmd not accepted because " << result;
+    //     // return false;
+    // }
+
+    LOG_F(INFO, "Waiting to reach target altitude of %f", TAKEOFF_ALT);
     float current_position = 0;
-    while (current_position < target_alt) {
+    while (current_position < TAKEOFF_ALT) {
         current_position = this->telemetry->position().relative_altitude_m;
         LOG_F(INFO, "At alt %f", current_position);
         std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -421,15 +432,14 @@ bool MavlinkClient::startMission() {
     LOG_F(INFO, "About to send start command");
     auto start_result = this->mission->start_mission();
     if (start_result != mavsdk::MissionRaw::Result::Success) {
-        LOG_F(ERROR, "Mission Start Failed");
+        LOG_S(ERROR) << "FAIL: Mission could not start " << start_result;
         return false;
     }
 
     LOG_F(INFO, "About to transition to forward flight");
-    const mavsdk::Action::Result fw_result = this->action->transition_to_fixedwing();
-
+    auto fw_result = this->action->transition_to_fixedwing();
     if (fw_result != mavsdk::Action::Result::Success) {
-        LOG_F(ERROR, "Transition to fixed wing failed");
+        LOG_S(ERROR) << "FAIL: Transition to fix wing " << fw_result;
         return false;
     }
 
