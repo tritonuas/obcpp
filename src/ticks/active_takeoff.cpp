@@ -18,7 +18,8 @@ std::chrono::milliseconds ActiveTakeoffTick::getWait() const {
 }
 
 void ActiveTakeoffTick::armAndHover() {
-    this->takeoffResult = std::async(std::launch::async, [this](){ return this->state->getMav()->armAndHover(); });
+    this->takeoffResult = std::async(std::launch::async,
+        [this](){ return this->state->getMav()->armAndHover(); });
 }
 
 Tick* ActiveTakeoffTick::tick() {
@@ -27,26 +28,26 @@ Tick* ActiveTakeoffTick::tick() {
         this->armAndHover();
         return nullptr;
     }
-    
+
     auto takeoff = this->takeoffResult.wait_for(std::chrono::milliseconds(0));
 
-    if(takeoff != std::future_status::ready) {
+    if (takeoff != std::future_status::ready) {
         return nullptr;
     }
 
     auto result = takeoffResult.get();
 
-    if(result != true) {
+    if (result != true) {
         return new MissionPrepTick(this->state);
     }
 
     LOG_F(INFO, "Vehicle at required altitude");
-    
+
     auto startMission = this->state->getMav()->startMission();
 
-    if(startMission != true){
+    if (startMission != true) {
         return new MissionPrepTick(this->state);
     }
-            
+
     return new FlyWaypointsTick(this->state);
 }

@@ -74,7 +74,7 @@ class MavlinkClient {
     bool armAndHover();
     bool startMission();
 
-private:
+ private:
     mavsdk::Mavsdk mavsdk;
     std::shared_ptr<mavsdk::System> system;
     std::unique_ptr<mavsdk::Telemetry> telemetry;
