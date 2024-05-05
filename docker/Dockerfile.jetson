@@ -55,13 +55,12 @@ RUN pip3 install typing-extensions PyYAML cpplint
 RUN echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME
 
-# install prebuilt MAVSDK to system
-# https://github.com/mavlink/MAVSDK/releases
-ARG MAVSDK_VERSION=1.4.17
-ARG MAVSDK_DEB=libmavsdk-dev_${MAVSDK_VERSION}_debian11_arm64.deb
-RUN wget https://github.com/mavlink/MAVSDK/releases/download/v${MAVSDK_VERSION}/${MAVSDK_DEB} \
-    && dpkg -i ${MAVSDK_DEB} \
-    && rm ${MAVSDK_DEB}
+# install MAVSDK from source
+RUN git clone --depth 1 https://github.com/mavlink/MAVSDK.git --branch v2.9.1 --single-branch \
+    && cd MAVSDK \
+    && git submodule update --init --recursive \
+    && cmake -DCMAKE_BUILD_TYPE=Release -Bbuild/default -H. \
+    && cmake --build build/default -j2 --target install
 
 # pull and build torchvision
 # refer to this page for version compatibilty with pytorch (libtorch) https://github.com/pytorch/pytorch/wiki/PyTorch-Versions
@@ -72,7 +71,8 @@ ARG TORCHVISION_VERSION=0.17.0
 # Can also run "nvcc --list-gpu-arch" on the Jetson to verify.
 # See https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#gpu-feature-list
 # and https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/
-ARG CUDA_ARCH_LIST="8.6"
+# and https://stackoverflow.com/a/74962874
+ARG CUDA_ARCH_LIST="5.0 5.2 5.3 6.0 6.1 6.2 7.0 7.2 7.5 8.0 8.6 8.7 8.9 9.0"
 WORKDIR ${TORCHVISION_INSTALL_DIR} 
 RUN wget "https://github.com/pytorch/vision/archive/refs/tags/v${TORCHVISION_VERSION}.zip" \
     && unzip "v${TORCHVISION_VERSION}.zip" \
