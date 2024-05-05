@@ -17,6 +17,10 @@ struct OBCConfig {
         } mavlink;
     } network;
 
+    struct {
+        float m_altitude;
+    } takeoff;
+
     RRTConfig rrt_config;
     AirdropSearchConfig coverage_pathing_config;
 
