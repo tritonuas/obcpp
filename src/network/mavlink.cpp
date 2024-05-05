@@ -343,7 +343,7 @@ mavsdk::Telemetry::RcStatus MavlinkClient::get_conn_status() {
 /**
  * Goes through the sequence of checking vehicle health -> arm vehicle -> takeoff -> hover at set altitude.
 */
-bool MavlinkClient::armAndHover() {
+bool MavlinkClient::armAndHover(std::shared_ptr<MissionState> state) {
     LOG_F(INFO, "Attempting to arm and hover");
     LOG_F(INFO, "Checking vehicle health...");
     // Vehicle can only be armed if status is healthy
@@ -362,7 +362,7 @@ bool MavlinkClient::armAndHover() {
 
 
     // TODO: config option for this
-    const float TAKEOFF_ALT = 30.0f;
+    const float TAKEOFF_ALT = state->m_takeoff_alt;
     auto r1 = this->action->set_takeoff_altitude(TAKEOFF_ALT);
     if (r1 != mavsdk::Action::Result::Success) {
         LOG_S(ERROR) << "FAIL: could not set takeoff alt " << r1;

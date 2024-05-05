@@ -19,7 +19,7 @@ std::chrono::milliseconds ActiveTakeoffTick::getWait() const {
 
 void ActiveTakeoffTick::armAndHover() {
     this->takeoffResult = std::async(std::launch::async,
-        [this](){ return this->state->getMav()->armAndHover(); });
+        [this](){ return this->state->getMav()->armAndHover(this->state); });
 }
 
 Tick* ActiveTakeoffTick::tick() {

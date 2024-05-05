@@ -36,6 +36,7 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
         std::cout << configs["pathing"]["coverage"]["one_way"] << std::endl;
         this->coverage_pathing_config.one_way = configs["pathing"]["coverage"]["one_way"];
 
+        this->takeoff.m_altitude = configs["takeoff"]["m_altitude"];
     } else {
         makeDefault();
     }
@@ -56,4 +57,6 @@ void OBCConfig::makeDefault() {
     this->coverage_pathing_config.optimize = true;
     this->coverage_pathing_config.vertical = false;
     this->coverage_pathing_config.one_way = false;
+
+    this->takeoff.m_altitude = 30.0;
 }
