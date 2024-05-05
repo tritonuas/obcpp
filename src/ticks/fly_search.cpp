@@ -22,12 +22,13 @@ Tick* FlySearchTick::tick() {
     // TODO: Run Mavlink flight to find targets
     // Finish Loop
 
+    
+
     // Deconstructor
     // TODO: Detect when path is completed
     if (false) {
-        //Take
         //this.state.camera.stopTakingPictures();
-        //std::vector<ImageData> images = this.state.camera.getAllImages();
+        //images = this.state.camera.getAllImages();
         return new CVLoiterTick(this->state);
     }
     //return nullptr;

@@ -41,6 +41,9 @@ std::chrono::milliseconds CVLoiterTick::getWait() const {
 Tick* CVLoiterTick::tick() {
     //Tick is called if Search Zone coverage path is finished
 
+// TODO: add config option?
+// If the config is set to "manual annotation" for CV, then only transition to AirdropApproach once a signal has been received from the GCS.
+// If the config is set to "full automatic" for CV, then transition to AirdropApproach
 
     //Check if all expected targets are found 
     if (false) {

@@ -25,7 +25,7 @@ class CVLoiterTick : public Tick {
 
     Tick* tick() override;
  private:
-    std::array<Bottle> bottlesToDrop;
+    std::array<Bottle, 8> bottlesToDrop;
     std::vector<ImageData> flightImages;
     std::vector<ImageData> referenceImages;
 

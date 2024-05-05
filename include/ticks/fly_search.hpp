@@ -19,6 +19,9 @@ class FlySearchTick : public Tick {
     std::chrono::milliseconds getWait() const override;
 
     Tick* tick() override;
+
+    //std::vector<ImageData> images;
+
 };
 
 #endif  // INCLUDE_TICKS_FLY_SEARCH_HPP_
