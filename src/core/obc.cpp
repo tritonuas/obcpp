@@ -56,7 +56,7 @@ void OBC::connectAirdrop() {
     ad_socket_result_t result;
     while (true) {
         LOG_F(INFO, "Attempting to create airdrop socket.");
-        result = make_ad_socket(AD_OBC_PORT, AD_PAYLOAD_PORT);
+        result = make_ad_socket(UDP2_OBC_PORT, UDP2_PAYLOAD_PORT);
         if (!result.is_err) {
             LOG_F(INFO, "Established airdrop socket.");
             break;
