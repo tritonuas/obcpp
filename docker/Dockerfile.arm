@@ -1,4 +1,4 @@
-FROM arm64/ubuntu:22.04
+FROM arm64v8/ubuntu:22.04
 
 ARG USERNAME=tuas USER_UID=1000 USER_GID=1000 DEBIAN_FRONTEND=noninteractive
 
