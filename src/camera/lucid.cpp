@@ -241,6 +241,7 @@ bool LucidCamera::isConnected() {
 }
 
 void LucidCamera::captureEvery(const std::chrono::milliseconds& interval) {
+    loguru::set_thread_name("lucid camera");
     if (!this->isConnected()) {
         LOG_F(ERROR, "LUCID Camera not connected. Cannot capture photos");
         return;
