@@ -4,13 +4,31 @@
 #include <thread>
 #include <optional>
 #include <deque>
+#include <filesystem>
 
 #include <loguru.hpp>
 
 #include "utilities/locks.hpp"
+#include "utilities/rng.hpp"
 
 
-MockCamera::MockCamera(CameraConfig config) : CameraInterface(config) {}
+MockCamera::MockCamera(CameraConfig config) : CameraInterface(config) {
+    std::ranges::for_each(
+        std::filesystem::directory_iterator{this->config.mock.images_dir},
+        [this](const auto& dir_entry) {
+            cv::Mat img = cv::imread(dir_entry.path().string());
+            // if the image is read 
+            if (img.data != NULL) {
+                ImageData img_data(
+                    dir_entry.path().filename().string(),
+                    dir_entry.path().string(),
+                    img,
+                    ImageTelemetry(38.31568, 76.55006, 75, 20, 0, 100, 5, 3));
+                this->mock_images.push_back(img_data);
+            }
+        }
+    );
+}
 
 MockCamera::~MockCamera() {
     this->stopTakingPictures();
@@ -55,7 +73,8 @@ std::deque<ImageData> MockCamera::getAllImages() {
 
 void MockCamera::captureEvery(const std::chrono::milliseconds& interval) {
     while (this->isTakingPictures) {
-        LOG_F(INFO, "Taking picture with mock camera\n");
+        LOG_F(INFO, "Taking picture with mock camera. Using images from %s. \n",
+            this->config.mock.images_dir.c_str());
         ImageData newImage = this->takePicture();
 
         WriteLock lock(this->imageQueueLock);
@@ -67,8 +86,7 @@ void MockCamera::captureEvery(const std::chrono::milliseconds& interval) {
 } 
 
 ImageData MockCamera::takePicture() {
-    return ImageData("mock_image.jpg", "/real/path/mock_image.jpg",
-                     cv::Mat(cv::Size(4000, 3000), CV_8UC3, cv::Scalar(255)),
-                     ImageTelemetry(38.31568, 76.55006, 75, 20, 0, 100, 5, 3));
+    int random_idx = randomInt(0, this->mock_images.size()-1);
+    return this->mock_images.at(random_idx);
 }
 

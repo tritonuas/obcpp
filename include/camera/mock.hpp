@@ -24,6 +24,8 @@ class MockCamera : public CameraInterface {
     std::deque<ImageData> getAllImages() override;
 
  private:
+   std::vector<ImageData> mock_images;
+
    std::atomic_bool isTakingPictures;
 
    void captureEvery(const std::chrono::milliseconds& interval);

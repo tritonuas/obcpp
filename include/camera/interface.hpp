@@ -60,21 +60,20 @@ class ImageData {
 
 
 class CameraInterface {
- private:
-    CameraConfig config;
-
+ protected:
+  CameraConfig config;
  public:
-    explicit CameraInterface(const CameraConfig& config);
-    virtual ~CameraInterface() = default;
+  explicit CameraInterface(const CameraConfig& config);
+  virtual ~CameraInterface() = default;
 
-    virtual void connect() = 0;
-    virtual bool isConnected() = 0;
+  virtual void connect() = 0;
+  virtual bool isConnected() = 0;
 
-    virtual void startTakingPictures(const std::chrono::milliseconds& interval) = 0;
-    virtual void stopTakingPictures() = 0;
+  virtual void startTakingPictures(const std::chrono::milliseconds& interval) = 0;
+  virtual void stopTakingPictures() = 0;
 
-    virtual std::optional<ImageData> getLatestImage() = 0;
-    virtual std::deque<ImageData> getAllImages() = 0;
+  virtual std::optional<ImageData> getLatestImage() = 0;
+  virtual std::deque<ImageData> getAllImages() = 0;
 };
 
 #endif  // INCLUDE_CAMERA_INTERFACE_HPP_

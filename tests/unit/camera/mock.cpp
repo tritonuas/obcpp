@@ -5,10 +5,8 @@
 
 // test that the mock camera returns a valid image
 TEST(MockCamera, TakePicture) {
-    CameraConfiguration config({
-       {"SampleConfigKey", 100},
-       {"ExposureTime", 1000},
-    });
+    CameraConfig config;
+    config.type = "mock";
     MockCamera camera(config);
 
     camera.connect();
