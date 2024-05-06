@@ -26,7 +26,7 @@ class RRT {
         RRTConfig config = {.iterations_per_waypoint = ITERATIONS_PER_WAYPOINT,
                             .rewire_radius = REWIRE_RADIUS,
                             .optimize = false,
-                            .point_fetch_method = POINT_FETCH_METHODS::NONE,
+                            .point_fetch_method = POINT_FETCH_METHODS::NEAREST,
                             .allowed_to_skip_waypoints = false});
 
     /**

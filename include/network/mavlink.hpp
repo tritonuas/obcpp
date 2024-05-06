@@ -3,8 +3,10 @@
 
 #include <mavsdk/mavsdk.h>
 #include <mavsdk/plugins/telemetry/telemetry.h>
-#include <mavsdk/plugins/mission/mission.h>
+#include <mavsdk/plugins/mission_raw/mission_raw.h>
 #include <mavsdk/plugins/geofence/geofence.h>
+#include <mavsdk/plugins/action/action.h>
+#include <mavsdk/plugins/mavlink_passthrough/mavlink_passthrough.h>
 #include <memory>
 #include <vector>
 #include <mutex>
@@ -63,15 +65,23 @@ class MavlinkClient {
     double groundspeed_m_s();
     double airspeed_m_s();
     double heading_deg();
+    bool isArmed();
     mavsdk::Telemetry::FlightMode flight_mode();
+    double angle2D(double x1, double y1, double x2, double y2);
+    bool isPointInPolygon(std::pair<double, double> latlng, std::vector<XYZCoord> region);
+    bool isMissionFinished();
     mavsdk::Telemetry::RcStatus get_conn_status();
+    bool armAndHover(std::shared_ptr<MissionState> state);
+    bool startMission();
 
  private:
     mavsdk::Mavsdk mavsdk;
     std::shared_ptr<mavsdk::System> system;
     std::unique_ptr<mavsdk::Telemetry> telemetry;
-    std::unique_ptr<mavsdk::Mission> mission;
+    std::unique_ptr<mavsdk::MissionRaw> mission;
     std::unique_ptr<mavsdk::Geofence> geofence;
+    std::unique_ptr<mavsdk::Action> action;
+    std::unique_ptr<mavsdk::MavlinkPassthrough> passthrough;
 
     struct Data {
         double lat_deg {};
@@ -82,6 +92,7 @@ class MavlinkClient {
         double airspeed_m_s {};
         double heading_deg {};
         mavsdk::Telemetry::FlightMode flight_mode {};
+        bool armed {};
     } data;
     std::mutex data_mut;
 };

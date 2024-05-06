@@ -10,6 +10,9 @@
             "port": 5010
         }
     },
+    "takeoff": {
+        "m_altitude": 30.0
+    },
     "pathing": {
         "_comment": "Point Fetch Method 2: NEAREST",
         "rrt": {
