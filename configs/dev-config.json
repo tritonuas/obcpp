@@ -25,9 +25,30 @@
         }
     },
     "camera": {
-        "camera_type": "mock",
+        "type": "mock",
         "mock": {
             "images_dir": "/workspaces/obcpp/tests/integration/images/saliency/"
+        },
+        "lucid": {
+            "sensor_shuttle_mode": "Rolling",
+            "acquisition_frame_rate_enable": true,
+            "stream_auto_negotiate_packet_size": true,
+            "stream_packet_resend_enable": true,
+
+            "target_brightness": 70,
+
+            "gamma_enable": true,
+            "gamma": 0.5,
+
+            "gain_auto": "Continuous",
+            "gain_auto_upper_limit": 10,
+            "gain_auto_lower_limit": 1,
+
+            "exposure_auto": "Continuous",
+            "exposure_auto_damping": 1,
+            "exposure_auto_algorithm": "Median",
+            "exposure_auto_upper_limit": 500,
+            "exposure_auto_lower_limit": 360
         }
     }
 }

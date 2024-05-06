@@ -26,7 +26,10 @@
         }
     },
     "camera": {
-        "camera_type": "lucid",
+        "type": "lucid",
+        "mock": {
+            "images_dir": "/workspaces/obcpp/tests/integration/images/saliency/"
+        },
         "lucid": {
             "sensor_shuttle_mode": "Rolling",
             "acquisition_frame_rate_enable": true,
