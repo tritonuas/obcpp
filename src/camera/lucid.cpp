@@ -67,7 +67,7 @@ void LucidCamera::connect() {
         throw std::exception();
     }
 
-    this->configureDefaults();
+    this->configureSettings();
 }
 
 LucidCamera::~LucidCamera() {
@@ -101,7 +101,132 @@ void LucidCamera::stopTakingPictures() {
     this->captureThread.join();
 };
 
-void LucidCamera::configureDefaults() {
+void LucidCamera::configureSettings() {
+    const std::string sensor_shutter_mode_name = "SensorShutterMode";
+    CATCH_ARENA_EXCEPTION((std::string("setting ") + sensor_shutter_mode_name).c_str(),
+        Arena::SetNodeValue<GenICam::gcstring>(
+            device->GetNodeMap(),
+            sensor_shutter_mode_name.c_str(),
+            this->config.lucid.sensor_shutter_mode.c_str());
+    );
+
+    const std::string acquisition_frame_rate_enable_name = "AcquisitionFrameRateEnable";
+    CATCH_ARENA_EXCEPTION((std::string("setting ") + acquisition_frame_rate_enable_name).c_str(),
+        Arena::SetNodeValue<bool>(
+            device->GetNodeMap(),
+            acquisition_frame_rate_enable_name.c_str(),
+            this->config.lucid.acquisition_frame_rate_enable);
+    );
+
+    // Note that this modifies the TLStreamNodeMap and not the standard NodeMap
+    const std::string stream_auto_negotiate_packet_size_name = "StreamAutoNegotiatePacketSize";
+    CATCH_ARENA_EXCEPTION((std::string("setting ") + stream_auto_negotiate_packet_size_name).c_str(),
+        Arena::SetNodeValue<bool>(
+            device->GetTLStreamNodeMap(),
+            stream_auto_negotiate_packet_size_name.c_str(),
+            this->config.lucid.stream_auto_negotiate_packet_size);
+    );
+
+    // Note that this modifies the TLStreamNodeMap and not the standard NodeMap
+    const std::string stream_packet_resend_enable_name = "StreamPacketResendEnable";
+    CATCH_ARENA_EXCEPTION((std::string("setting ") + stream_packet_resend_enable_name).c_str(),
+        Arena::SetNodeValue<bool>(
+            device->GetTLStreamNodeMap(),
+            stream_packet_resend_enable_name.c_str(),
+            this->config.lucid.stream_packet_resend_enable);
+    );
+
+    const std::string target_brightness_name = "TargetBrightness";
+    CATCH_ARENA_EXCEPTION((std::string("setting ") + target_brightness_name).c_str(),
+        Arena::SetNodeValue<int64_t>(
+            device->GetNodeMap(),
+            target_brightness_name.c_str(),
+            this->config.lucid.target_brightness);
+    );
+
+    const std::string gamma_enable_name = "GammaEnable";
+    CATCH_ARENA_EXCEPTION((std::string("setting ") + gamma_enable_name).c_str(),
+        Arena::SetNodeValue<bool>(
+            device->GetNodeMap(),
+            gamma_enable_name.c_str(),
+            this->config.lucid.gamma_enable);
+    );
+
+    const std::string gamma_name = "Gamma";
+    CATCH_ARENA_EXCEPTION((std::string("setting ") + gamma_name).c_str(),
+        Arena::SetNodeValue<double>(
+            device->GetNodeMap(),
+            gamma_name.c_str(),
+            this->config.lucid.gamma);
+    );
+
+    const std::string gain_auto_name = "GainAuto";
+    CATCH_ARENA_EXCEPTION((std::string("setting ") + gain_auto_name).c_str(),
+        Arena::SetNodeValue<GenICam::gcstring>(
+            device->GetNodeMap(),
+            gain_auto_name.c_str(),
+            this->config.lucid.gain_auto.c_str());
+    );
+
+    const std::string gain_auto_upper_limit_name = "GainAutoUpperLimit";
+    CATCH_ARENA_EXCEPTION((std::string("setting ") + gain_auto_upper_limit_name).c_str(),
+        Arena::SetNodeValue<double>(
+            device->GetNodeMap(),
+            gain_auto_upper_limit_name.c_str(),
+            this->config.lucid.gain_auto_upper_limit);
+    );
+
+    const std::string gain_auto_lower_limit_name = "GainAutoLowerLimit";
+    CATCH_ARENA_EXCEPTION((std::string("setting ") + gain_auto_lower_limit_name).c_str(),
+        Arena::SetNodeValue<double>(
+            device->GetNodeMap(),
+            gain_auto_lower_limit_name.c_str(),
+            this->config.lucid.gain_auto_lower_limit);
+    );
+
+    const std::string exposure_auto_name = "ExposureAuto";
+    CATCH_ARENA_EXCEPTION((std::string("setting ") + exposure_auto_name).c_str(),
+        Arena::SetNodeValue<GenICam::gcstring>(
+            device->GetNodeMap(),
+            exposure_auto_name.c_str(),
+            this->config.lucid.exposure_auto.c_str());
+    );
+
+    const std::string exposure_auto_damping_name = "ExposureAutoDamping";
+    CATCH_ARENA_EXCEPTION((std::string("setting ") + exposure_auto_damping_name).c_str(),
+        Arena::SetNodeValue<double>(
+            device->GetNodeMap(),
+            exposure_auto_damping_name.c_str(),
+            this->config.lucid.exposure_auto_damping);
+    );
+
+    const std::string exposure_auto_algorithm_name = "ExposureAutoAlgorithm";
+    CATCH_ARENA_EXCEPTION((std::string("setting ") + exposure_auto_algorithm_name).c_str(),
+        Arena::SetNodeValue<GenICam::gcstring>(
+            device->GetNodeMap(),
+            exposure_auto_algorithm_name.c_str(),
+            this->config.lucid.exposure_auto_algorithm.c_str());
+    );
+
+    const std::string exposure_auto_upper_limit_name = "ExposureAutoUpperLimit";
+    CATCH_ARENA_EXCEPTION((std::string("setting ") + exposure_auto_upper_limit_name).c_str(),
+        Arena::SetNodeValue<double>(
+            device->GetNodeMap(),
+            exposure_auto_upper_limit_name.c_str(),
+            this->config.lucid.exposure_auto_upper_limit);
+    );
+
+    const std::string exposure_auto_lower_limit_name = "ExposureAutoLowerLimit";
+    CATCH_ARENA_EXCEPTION((std::string("setting ") + exposure_auto_lower_limit_name).c_str(),
+        Arena::SetNodeValue<double>(
+            device->GetNodeMap(),
+            exposure_auto_lower_limit_name.c_str(),
+            this->config.lucid.exposure_auto_lower_limit);
+    );
+
+    /**
+     * commented out settings from black bar camera testing
+     
     // factory reset
     // LOG_F(INFO, "Factory reset the camera");
     // Arena::ExecuteNode(
@@ -165,7 +290,7 @@ void LucidCamera::configureDefaults() {
 		device->GetTLStreamNodeMap(),
 		"StreamPacketResendEnable",
 		true);
-
+    */
 }
 
 std::optional<ImageData> LucidCamera::getLatestImage() {

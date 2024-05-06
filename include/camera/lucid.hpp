@@ -78,7 +78,7 @@ class LucidCamera : public CameraInterface {
    */
    ImageData imgConvert(Arena::IImage* pImage); 
 
-   void configureDefaults();
+   void configureSettings();
 
    // Lock around Arena system.
    inline static std::shared_mutex arenaSystemLock;
@@ -111,6 +111,28 @@ class LucidCamera : public CameraInterface {
    const std::chrono::milliseconds takePictureTimeout = 1000ms;
 };
 
+/**
+ * Macro to gracefully catch Arena SDK exceptions, print an error,
+ * and not propogate the exceptions and crash the OBC.
+ * 
+ * context is an std::string that explains what the code is doing
+ * 
+ * code is the code itself
+*/
+#define CATCH_ARENA_EXCEPTION(context, code) \
+   try { \
+      code \
+   } \
+   catch (GenICam::GenericException &ge) { \
+      LOG_F(ERROR, "GenICam exception thrown when %s: %s", context, ge.what()); \
+   } \
+   catch (std::exception &ex) { \
+      LOG_F(ERROR, "Standard exception thrown when %s: %s", context, ex.what()); \
+   } \
+   catch (...) { \
+      LOG_F(ERROR, "Unexpected exception thrown when %s", context); \
+   } \
+   LOG_F(INFO, "%s succeeded", context)
 
 #endif  // ARENA_SDK_INSTALLED
 
