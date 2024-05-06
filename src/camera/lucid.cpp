@@ -33,10 +33,12 @@ void LucidCamera::connect() {
     WriteLock systemLock(this->arenaSystemLock);
     WriteLock deviceLock(this->arenaDeviceLock);
 
-    try {
+    CATCH_ARENA_EXCEPTION("opening Arena System",
         this->system = Arena::OpenSystem();
+    );
 
-        while (true) {
+    while (true) {
+        CATCH_ARENA_EXCEPTION("attempting to connect to LUCID camera",
             // ArenaSystem broadcasts a discovery packet on the network to discover
             // any cameras on the network.
             // We provide a timeout in milliseconds for this broadcasting sequence.
@@ -48,23 +50,10 @@ void LucidCamera::connect() {
                 this->device = this->system->CreateDevice(deviceInfos[0]);
                 break;
             }
+        );
 
-            LOG_F(ERROR,"Lucid camera connection failed! Retrying in %ld ms", this->connectionRetry.count());
-            std::this_thread::sleep_for(this->connectionRetry);
-
-        }
-    }
-    catch (GenICam::GenericException &ge) {
-        LOG_F(ERROR, "GenICam exception thrown: %s", ge.what());
-        throw ge;
-    }
-    catch (std::exception &ex) {
-        LOG_F(ERROR, "Standard exception thrown: %s", ex.what());
-        throw ex;
-    }
-    catch (...) {
-        LOG_F(ERROR, "Unexpected exception thrown:");
-        throw std::exception();
+        LOG_F(ERROR,"Lucid camera connection failed! Retrying in %ld ms", this->connectionRetry.count());
+        std::this_thread::sleep_for(this->connectionRetry);
     }
 
     this->configureSettings();
@@ -75,8 +64,10 @@ LucidCamera::~LucidCamera() {
     WriteLock systemLock(this->arenaSystemLock);
     WriteLock deviceLock(this->arenaDeviceLock);
 
-    this->system->DestroyDevice(this->device);
-    Arena::CloseSystem(this->system);
+    CATCH_ARENA_EXCEPTION("closing Arena System",
+        this->system->DestroyDevice(this->device);
+        Arena::CloseSystem(this->system);
+    );
 }
 
 
@@ -362,7 +353,9 @@ bool LucidCamera::isConnected() {
     }
 
     ReadLock lock(this->arenaDeviceLock);
-    return this->device->IsConnected();
+    CATCH_ARENA_EXCEPTION("checking camera connection",
+        return this->device->IsConnected();
+    );
 }
 
 void LucidCamera::captureEvery(const std::chrono::milliseconds& interval) {
@@ -373,7 +366,9 @@ void LucidCamera::captureEvery(const std::chrono::milliseconds& interval) {
     }
 
     this->arenaDeviceLock.lock();
-    this->device->StartStream();
+    CATCH_ARENA_EXCEPTION("starting stream",
+        this->device->StartStream();
+    );
     this->arenaDeviceLock.unlock();
 
     while (this->isTakingPictures) {
@@ -393,7 +388,9 @@ void LucidCamera::captureEvery(const std::chrono::milliseconds& interval) {
     }
 
     this->arenaDeviceLock.lock();
-    this->device->StopStream();
+    CATCH_ARENA_EXCEPTION("stopping stream",
+        this->device->StopStream();
+    );
     this->arenaDeviceLock.unlock();
 }
 
@@ -405,46 +402,51 @@ std::optional<ImageData> LucidCamera::takePicture(const std::chrono::millisecond
 
     WriteLock lock(this->arenaDeviceLock);
 
-    Arena::IImage* pImage = this->device->GetImage(timeout.count());
+    CATCH_ARENA_EXCEPTION("getting image",
+        Arena::IImage* pImage = this->device->GetImage(timeout.count());
 
-    static int imageCounter = 0;
-    LOG_F(INFO, "Taking image: %d", imageCounter++);
-    LOG_F(INFO, "Missed packet: %ld", Arena::GetNodeValue<int64_t>(device->GetTLStreamNodeMap(), "StreamMissedPacketCount"));
+        static int imageCounter = 0;
+        LOG_F(INFO, "Taking image: %d", imageCounter++);
+        LOG_F(INFO, "Missed packet: %ld", Arena::GetNodeValue<int64_t>(device->GetTLStreamNodeMap(), "StreamMissedPacketCount"));
 
-    LOG_F(WARNING, "Image buffer size: %lu", pImage->GetSizeOfBuffer());
-    if (pImage->IsIncomplete()) {
-        LOG_F(ERROR, "Image has incomplete data");
-        // TODO: determine if we want to return images with incomplete data
-        // return {};
-    }
-
+        LOG_F(WARNING, "Image buffer size: %lu", pImage->GetSizeOfBuffer());
+        if (pImage->IsIncomplete()) {
+            LOG_F(ERROR, "Image has incomplete data");
+            // TODO: determine if we want to return images with incomplete data
+            // return {};
+        }
+    );
     
     ImageData returnImg = imgConvert(pImage);
 
-    this->device->RequeueBuffer(pImage); // frees the data of pImage
+    CATCH_ARENA_EXCEPTION("freeing image buffer",
+        this->device->RequeueBuffer(pImage); // frees the data of pImage
+    );
 
     return returnImg;
 }
 
 ImageData LucidCamera::imgConvert(Arena::IImage* pImage) {
-    Arena::IImage *pConverted = Arena::ImageFactory::Convert(
-        pImage,
-        BGR8);
+    CATCH_ARENA_EXCEPTION("converting Arena Image to OpenCV",
+        Arena::IImage *pConverted = Arena::ImageFactory::Convert(
+            pImage,
+            BGR8);
 
-    std::string name = "img_"+pConverted->GetTimestamp();
-    std::string path = "";
+        std::string name = "img_"+pConverted->GetTimestamp();
+        std::string path = "";
 
-    cv::Mat mat = cv::Mat(
-        static_cast<int>(pConverted->GetHeight()),
-        static_cast<int>(pConverted->GetWidth()),
-        CV_8UC3,
-        (void *)pConverted->GetData())
-    .clone();
-    
-    // freeing underlying lucid buffers
-    Arena::ImageFactory::Destroy(pConverted);
+        cv::Mat mat = cv::Mat(
+            static_cast<int>(pConverted->GetHeight()),
+            static_cast<int>(pConverted->GetWidth()),
+            CV_8UC3,
+            (void *)pConverted->GetData())
+        .clone();
+        
+        // freeing underlying lucid buffers
+        Arena::ImageFactory::Destroy(pConverted);
 
-    return ImageData(name, path, mat, ImageTelemetry(0, 0, 0, 0, 0, 0, 0, 0));
+        return ImageData(name, path, mat, ImageTelemetry(0, 0, 0, 0, 0, 0, 0, 0));
+    );
 }
 
 #endif // ARENA_SDK_INSTALLED
