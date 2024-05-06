@@ -10,19 +10,23 @@
 using namespace std::chrono_literals;
 
 int main (int argc, char *argv[]) {
-    std::shared_ptr<MissionState> state = std::make_shared<MissionState>();
-    CameraConfig config;
-    config.type = "mock";
-    config.mock.images_dir =  "/workspaces/obcpp/tests/integration/images/saliency/";
-    MockCamera camera(config);
+    if (argc < 2) {
+        LOG_F(ERROR, "Usage: ./bin/camera_mock [path_to_config]");
+        exit(1);
+    }
+    OBCConfig config(argc, argv);
+    MockCamera camera(config.camera_config);
 
     camera.connect();
 
+    // start taking pictures every second
     camera.startTakingPictures(1s);
+    // need to sleep to let camera background thread to run
     std::this_thread::sleep_for(2s);
+    camera.stopTakingPictures();
+
     std::optional<ImageData> image = camera.getLatestImage();
     if (image.has_value()) {
         cv::imwrite("mock_img.jpg", image.value().getData());
     }
-    camera.stopTakingPictures();
 }
