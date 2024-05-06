@@ -5,7 +5,7 @@
 #include <semaphore.h>
 #include <stdio.h>
 
-#include "airdrop/packet.h"
+#include "udp_squared/protocol.h"
 
 void pqueue_init(packet_queue_t* q) {
     q->_front = 0;
@@ -33,7 +33,7 @@ int pqueue_full(packet_queue_t* q) {
     return is_full;
 }
 
-void pqueue_push(packet_queue_t* q, ad_packet_t packet) {
+void pqueue_push(packet_queue_t* q, packet_t packet) {
     sem_wait(&q->_mutex);
     q->_arr[q->_back] = packet;
     q->_back++;
@@ -50,9 +50,9 @@ void pqueue_push(packet_queue_t* q, ad_packet_t packet) {
     sem_post(&q->_mutex);
 }
 
-ad_packet_t pqueue_pop(packet_queue_t* q) {
+packet_t pqueue_pop(packet_queue_t* q) {
     sem_wait(&q->_mutex);
-    ad_packet_t packet = q->_arr[q->_front];
+    packet_t packet = q->_arr[q->_front];
     q->_front++;
     if (q->_front == MAX_PACKETS) {
         q->_front = 0;
@@ -63,7 +63,7 @@ ad_packet_t pqueue_pop(packet_queue_t* q) {
 }
 
 
-ad_packet_t pqueue_wait_pop(packet_queue_t* q) {
+packet_t pqueue_wait_pop(packet_queue_t* q) {
     sem_wait(&q->_mutex);
     if (q->_num_elems == 0) {
         q->_num_waiting_for_recv++;

@@ -74,9 +74,8 @@ void AirdropClient::_establishConnection() {
     LOG_F(INFO, "Payload connection established in %s mode",
         (this->mode == GUIDED) ? "Guided" : "Unguided");
 
-    // TODO: ack bottles specifically as you get their SET MODES
     send_ad_packet(this->socket, 
-        makeModePacket(ACK_MODE, UDP2_ALL, static_cast<payload_state_t>(0), *this->mode));
+        makeModePacket(ACK_MODE, UDP2_ALL, OBC_NULL, *this->mode));
 
     this->worker_future = std::async(std::launch::async, &AirdropClient::_receiveWorker, this);
 }
