@@ -115,7 +115,7 @@ class LucidCamera : public CameraInterface {
  * Macro to gracefully catch Arena SDK exceptions, print an error,
  * and not propogate the exceptions and crash the OBC.
  * 
- * context is an std::string that explains what the code is doing
+ * context is a C string (char*) that explains what the code is doing
  * 
  * code is the code itself
 */
