@@ -22,8 +22,6 @@ Tick* FlySearchTick::tick() {
     // TODO: Run Mavlink flight to find targets
     // Finish Loop
 
-    
-
     // Deconstructor
     // TODO: Detect when path is completed
     if (false) {

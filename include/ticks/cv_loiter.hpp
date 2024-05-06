@@ -33,7 +33,6 @@ class CVLoiterTick : public Tick {
     const std::string segmentationModelPath;
     
     Pipeline pipeline;
-    CVAggregator aggregator;
     std::shared_ptr<CVResults> results;
 };
 

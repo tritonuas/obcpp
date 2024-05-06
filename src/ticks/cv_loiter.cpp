@@ -22,12 +22,12 @@ CVLoiterTick::CVLoiterTick(std::shared_ptr<MissionState> state)
         // Initalizes pipeline 
         pipeline(PipelineParams(bottlesToDrop, referenceImages, matchingModelPath, segmentationModelPath));
 
-        // Creates a CV aggregator instance
+        // TODO: Change to reference mission_state 
         aggregator(pipeline);
 
         for (ImageData imageData : flightImages) {
             // Runs the pipeline on the image data
-            aggregator.runPipeline(imageData);
+            state.getCV().aggregator.runPipeline(imageData);
         }
 
         // Gets the results from the aggregator
