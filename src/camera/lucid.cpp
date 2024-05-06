@@ -44,26 +44,26 @@ void LucidCamera::connect() {
 
             std::vector<Arena::DeviceInfo> deviceInfos = this->system->GetDevices();
             if (deviceInfos.size() != 0) {
-                LOG_F(INFO,"Lucid camera connection succeeded!\n");
+                LOG_F(INFO,"Lucid camera connection succeeded!");
                 this->device = this->system->CreateDevice(deviceInfos[0]);
                 break;
             }
 
-            LOG_F(ERROR,"Lucid camera connection failed! Retrying in %ld ms\n", this->connectionRetry.count());
+            LOG_F(ERROR,"Lucid camera connection failed! Retrying in %ld ms", this->connectionRetry.count());
             std::this_thread::sleep_for(this->connectionRetry);
 
         }
     }
     catch (GenICam::GenericException &ge) {
-        LOG_F(ERROR, "GenICam exception thrown: %s \n", ge.what());
+        LOG_F(ERROR, "GenICam exception thrown: %s", ge.what());
         throw ge;
     }
     catch (std::exception &ex) {
-        LOG_F(ERROR, "Standard exception thrown: %s \n", ex.what());
+        LOG_F(ERROR, "Standard exception thrown: %s", ex.what());
         throw ex;
     }
     catch (...) {
-        LOG_F(ERROR, "Unexpected exception thrown:\n");
+        LOG_F(ERROR, "Unexpected exception thrown:");
         throw std::exception();
     }
 
@@ -242,7 +242,7 @@ bool LucidCamera::isConnected() {
 
 void LucidCamera::captureEvery(const std::chrono::milliseconds& interval) {
     if (!this->isConnected()) {
-        LOG_F(ERROR, "LUCID Camera not connected. Cannot capture photos\n");
+        LOG_F(ERROR, "LUCID Camera not connected. Cannot capture photos");
         return;
     }
 
@@ -251,16 +251,16 @@ void LucidCamera::captureEvery(const std::chrono::milliseconds& interval) {
     this->arenaDeviceLock.unlock();
 
     while (this->isTakingPictures) {
-        LOG_F(INFO, "Taking picture with LUCID camera\n");
+        LOG_F(INFO, "Taking picture with LUCID camera");
         std::optional<ImageData> newImage = this->takePicture(this->takePictureTimeout);
 
         if (newImage.has_value()) {
             WriteLock lock(this->imageQueueLock);
             this->imageQueue.push_back(newImage.value());
             lock.unlock();
-            LOG_F(INFO, "Took picture with LUCID camera\n");
+            LOG_F(INFO, "Took picture with LUCID camera");
         } else {
-            LOG_F(ERROR, "Unable to take picture. Trying again in %ld ms\n", interval.count());
+            LOG_F(ERROR, "Unable to take picture. Trying again in %ld ms", interval.count());
         }
 
         std::this_thread::sleep_for(interval);
@@ -273,7 +273,7 @@ void LucidCamera::captureEvery(const std::chrono::milliseconds& interval) {
 
 std::optional<ImageData> LucidCamera::takePicture(const std::chrono::milliseconds& timeout) {
     if (!this->isConnected()) {
-        LOG_F(ERROR, "LUCID Camera not connected. Cannot take picture\n");
+        LOG_F(ERROR, "LUCID Camera not connected. Cannot take picture");
         return {};
     }
 
@@ -287,7 +287,7 @@ std::optional<ImageData> LucidCamera::takePicture(const std::chrono::millisecond
 
     LOG_F(WARNING, "Image buffer size: %lu", pImage->GetSizeOfBuffer());
     if (pImage->IsIncomplete()) {
-        LOG_F(ERROR, "Image has incomplete data\n");
+        LOG_F(ERROR, "Image has incomplete data");
         // TODO: determine if we want to return images with incomplete data
         // return {};
     }

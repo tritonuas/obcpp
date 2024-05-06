@@ -73,7 +73,7 @@ std::deque<ImageData> MockCamera::getAllImages() {
 
 void MockCamera::captureEvery(const std::chrono::milliseconds& interval) {
     while (this->isTakingPictures) {
-        LOG_F(INFO, "Taking picture with mock camera. Using images from %s. \n",
+        LOG_F(INFO, "Taking picture with mock camera. Using images from %s",
             this->config.mock.images_dir.c_str());
         ImageData newImage = this->takePicture();
 
