@@ -17,12 +17,25 @@ class MockCamera : public CameraInterface {
     void connect() override;
     bool isConnected() override;
 
+    /**
+     * Start taking photos at an interval in a background thread
+    */
     void startTakingPictures(const std::chrono::milliseconds& interval) override;
     void stopTakingPictures() override;
 
+   /**
+    * Get the latest image that the camera took. This pops the latest
+    * image from a queue of images which means that the same image won't.
+    * be returned in two subsequent calls
+    */ 
     std::optional<ImageData> getLatestImage() override;
-    std::deque<ImageData> getAllImages() override;
 
+    /**
+     * getAllImages returns a queue of all the images that have been
+     * cached since the last call to getAllImages. Once this is called,
+     * it returns the cached images and clears the internal cache.
+    */
+    std::deque<ImageData> getAllImages() override;
  private:
    std::vector<ImageData> mock_images;
 
