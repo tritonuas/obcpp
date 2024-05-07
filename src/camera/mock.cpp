@@ -19,11 +19,9 @@ MockCamera::MockCamera(CameraConfig config) : CameraInterface(config) {
             cv::Mat img = cv::imread(dir_entry.path().string());
             // if the image is read 
             if (img.data != NULL) {
-                ImageData img_data(
-                    dir_entry.path().filename().string(),
-                    dir_entry.path().string(),
+                ImageData img_data{
                     img,
-                    ImageTelemetry(38.31568, 76.55006, 75, 20, 0, 100, 5, 3));
+                    ImageTelemetry(38.31568, 76.55006, 75, 20, 0, 100, 5, 3)};
                 this->mock_images.push_back(img_data);
             }
         }

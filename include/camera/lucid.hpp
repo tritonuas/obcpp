@@ -76,7 +76,7 @@ class LucidCamera : public CameraInterface {
    /**
     * Converts between ArenaSDK Image type to an OpenCV cv::Mat 
    */
-   ImageData imgConvert(Arena::IImage* pImage); 
+   std::optional<cv::Mat> imgConvert(Arena::IImage* pImage); 
 
    void configureSettings();
 
@@ -110,6 +110,8 @@ class LucidCamera : public CameraInterface {
    // TODO: need to catch timeout exception
    const std::chrono::milliseconds takePictureTimeout = 1000ms;
 };
+
+#define SINGLE_ARG(...) __VA_ARGS__
 
 /**
  * Macro to gracefully catch Arena SDK exceptions, print an error,

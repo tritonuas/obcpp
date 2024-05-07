@@ -239,6 +239,7 @@ bool LucidCamera::isConnected() {
     CATCH_ARENA_EXCEPTION("checking camera connection",
         return this->device->IsConnected();
     );
+    return false;
 }
 
 void LucidCamera::captureEvery(const std::chrono::milliseconds& interval) {
@@ -285,7 +286,9 @@ std::optional<ImageData> LucidCamera::takePicture(const std::chrono::millisecond
 
     WriteLock lock(this->arenaDeviceLock);
 
-    CATCH_ARENA_EXCEPTION("getting image",
+    // need this SINGLE_ARG macro because otherwise the preprocessor gets confused 
+    // by commans in the code and thinks that additional arguments are passed in
+    CATCH_ARENA_EXCEPTION("getting image", SINGLE_ARG(
         Arena::IImage* pImage = this->device->GetImage(timeout.count());
 
         static int imageCounter = 0;
@@ -298,26 +301,38 @@ std::optional<ImageData> LucidCamera::takePicture(const std::chrono::millisecond
             // TODO: determine if we want to return images with incomplete data
             // return {};
         }
-    );
-    
-    ImageData returnImg = imgConvert(pImage);
 
-    CATCH_ARENA_EXCEPTION("freeing image buffer",
+        std::optional<cv::Mat> mat = imgConvert(pImage);
+
         this->device->RequeueBuffer(pImage); // frees the data of pImage
+
+        if (!mat.has_value()) {
+            return {};
+        }
+
+        // TODO: replace with mavlink telemtry
+        return ImageData{
+            mat.value(),
+            ImageTelemetry(0, 0, 0, 0, 0, 0, 0, 0) }
+        );
     );
 
-    return returnImg;
+    // return nullopt if an exception is thrown while getting image
+    return {};
 }
 
-ImageData LucidCamera::imgConvert(Arena::IImage* pImage) {
+std::optional<cv::Mat> LucidCamera::imgConvert(Arena::IImage* pImage) {
     CATCH_ARENA_EXCEPTION("converting Arena Image to OpenCV",
+        // convert original image to BGR8 which is what opencv expects.
+        // note that this allocates a new image buffer that must be
+        // freed by Arena::ImageFactory::Destroy
         Arena::IImage *pConverted = Arena::ImageFactory::Convert(
             pImage,
             BGR8);
 
-        std::string name = "img_"+pConverted->GetTimestamp();
-        std::string path = "";
-
+        // create an image using the raw data from the converted BGR image.
+        // note that we need to clone this cv::Mat since otherwise the underlying
+        // data gets freed by Arena::ImageFactory::Destroy
         cv::Mat mat = cv::Mat(
             static_cast<int>(pConverted->GetHeight()),
             static_cast<int>(pConverted->GetWidth()),
@@ -328,8 +343,11 @@ ImageData LucidCamera::imgConvert(Arena::IImage* pImage) {
         // freeing underlying lucid buffers
         Arena::ImageFactory::Destroy(pConverted);
 
-        return ImageData(name, path, mat, ImageTelemetry(0, 0, 0, 0, 0, 0, 0, 0));
+        return mat;
     );
+
+    // return nullopt if an exception is thrown during conversion
+    return {};
 }
 
 #endif // ARENA_SDK_INSTALLED

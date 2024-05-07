@@ -39,6 +39,6 @@ int main (int argc, char *argv[]) {
             output_dir / 
             (std::string("lucid_") + std::to_string(getUnixTime_ms().count()) + std::string(".jpg"));
         LOG_F(INFO, "Saving LUCID image to %s", output_file.string().c_str());
-        cv::imwrite(output_file, image.getData());
+        cv::imwrite(output_file, image.DATA);
     }
 }
