@@ -141,7 +141,7 @@ struct CameraConfig {
 
         // Device Control (https://support.thinklucid.com/triton-tri200s/#2959)
         std::string device_link_throughput_limit_mode; // Either "On" or "Off"
-        int64_t device_link_throughput_limit;
+        int64_t device_link_throughput_limit; // for Triton 200S: max 125,000,000 min 31,250,000
 
         // Analog Control (https://support.thinklucid.com/triton-tri200s/#2953)
         bool gamma_enable;

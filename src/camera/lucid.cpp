@@ -214,74 +214,6 @@ void LucidCamera::configureSettings() {
             exposure_auto_lower_limit_name.c_str(),
             this->config.lucid.exposure_auto_lower_limit);
     );
-
-    /**
-     * commented out settings from black bar camera testing
-     
-    // factory reset
-    // LOG_F(INFO, "Factory reset the camera");
-    // Arena::ExecuteNode(
-    //     device->GetNodeMap(),
-    //     "DeviceFactoryReset"
-    // );
-
-	// enable  rolling shutter
- 	Arena::SetNodeValue<GenICam::gcstring>(
-		device->GetNodeMap(),
-		"SensorShutterMode",
-		"Rolling");
-
-	// enable auto exposure
-	// Arena::SetNodeValue<GenICam::gcstring>(
-	// 	device->GetNodeMap(),
-	// 	"ExposureAuto",
-	// 	"Continuous");
-	// // Arena::SetNodeValue<double>(
-	// // 	device->GetNodeMap(),
-	// // 	"ExposureTime",
-	// // 	3000);
-	// // Arena::SetNodeValue<double>(
-	// // 	device->GetNodeMap(),
-	// // 	"ExposureTime",
-	// // 	3000);
-
-	Arena::SetNodeValue<GenICam::gcstring>(
-		device->GetNodeMap(),
-		"DeviceLinkThroughputLimitMode",
-		"On");
-
-	GenApi::CIntegerPtr bruh = device->GetNodeMap()->GetNode("DeviceLinkThroughputLimit");
-	int64_t b = bruh->GetMin();
-    LOG_F(WARNING, "max %lu", b);
-
-	Arena::SetNodeValue<int64_t>(
-		device->GetNodeMap(),
-		"DeviceLinkThroughputLimit",
-		125000000); //max 125 000 000 min 31 250 000
-
-	// turn on acquisition frame rate & set to max value
-	Arena::SetNodeValue<bool>(
-		device->GetNodeMap(),
-		"AcquisitionFrameRateEnable",
-		true);
-	// GenApi::CFloatPtr pAcquisitionFrameRate = device->GetNodeMap()->GetNode("AcquisitionFrameRate");
-	// double acquisitionFrameRate = pAcquisitionFrameRate->GetMax();
-	// pAcquisitionFrameRate->SetValue(acquisitionFrameRate);
-
-
-
-	// enable stream auto negotiate packet size
-	Arena::SetNodeValue<bool>(
-		device->GetTLStreamNodeMap(),
-		"StreamAutoNegotiatePacketSize",
-		true);
-
-	// enable stream packet resend
-	Arena::SetNodeValue<bool>(
-		device->GetTLStreamNodeMap(),
-		"StreamPacketResendEnable",
-		true);
-    */
 }
 
 std::optional<ImageData> LucidCamera::getLatestImage() {
@@ -297,55 +229,6 @@ std::deque<ImageData> LucidCamera::getAllImages() {
     this->imageQueue = std::deque<ImageData>();
     return outputQueue;
 }
-
-// void LucidCamera::configureTrigger() 
-// {
-//     json configJson = config->getConfig();
-
-//     for (auto it = configJson.begin(); it != configJson.end(); it++)
-//     {
-//         std::string key = it.key();
-
-
-//         if (it.value().type() == json::value_t::number_unsigned)
-//         {
-//             int value = it.value();
-//             Arena::SetNodeValue<int64_t>(
-//                 this->device->GetNodeMap(),
-//                 key.c_str(),
-//                 value);
-//         }
-//         else if (it.value().type() == json::value_t::boolean)
-//         {
-//             bool value = it.value();
-//             Arena::SetNodeValue<bool>(
-//                 this->device->GetNodeMap(),
-//                 key.c_str(),
-//                 value);
-//         }
-//         else if (it.value().type() == json::value_t::number_float)
-//         {
-
-//             float value_float = it.value();
-//             double value = value_float;
-
-//             Arena::SetNodeValue<double>(
-//                 this->device->GetNodeMap(),
-//                 key.c_str(),
-//                 value);
-//         }
-//         else if (it.value().type() == json::value_t::string)
-//         {
-//             std::string value = it.value();
-//             Arena::SetNodeValue<GenICam::gcstring>(
-//                 this->device->GetNodeMap(),
-//                 key.c_str(),
-//                 value.c_str());
-//         } else {
-//             std::cout << "Unkown type of varible. Skipping " << key << std::endl;
-//         }
-//     }
-// }
 
 bool LucidCamera::isConnected() {
     if (this->device == nullptr) {
