@@ -16,6 +16,7 @@
 #include <deque>
 
 #include "camera/interface.hpp"
+#include "network/mavlink.hpp"
 
 using json = nlohmann::json;
 
@@ -44,7 +45,7 @@ class LucidCamera : public CameraInterface {
     /**
      * Start taking photos at an interval in a background thread
     */
-    void startTakingPictures(const std::chrono::milliseconds& interval) override;
+    void startTakingPictures(const std::chrono::milliseconds& interval, std::shared_ptr<MavlinkClient> mavlinkClient) override;
     void stopTakingPictures() override;
 
    /**
@@ -65,13 +66,13 @@ class LucidCamera : public CameraInterface {
     * Blocking call that takes an image. If it takes longer than the timeout 
     * to capture the image, no image is returned.
    */
-   std::optional<ImageData> takePicture(const std::chrono::milliseconds& timeout);
+   std::optional<ImageData> takePicture(const std::chrono::milliseconds& timeout, std::shared_ptr<MavlinkClient> mavlinkClient);
 
    /**
     * Takes an image and sleeps for the specified interval before
     * taking another image
    */
-   void captureEvery(const std::chrono::milliseconds& interval);
+   void captureEvery(const std::chrono::milliseconds& interval, std::shared_ptr<MavlinkClient> mavlinkClient);
 
    /**
     * Converts between ArenaSDK Image type to an OpenCV cv::Mat 

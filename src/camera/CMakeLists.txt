@@ -8,6 +8,7 @@ set(FILES
 
 SET(LIB_DEPS
     obcpp_protos
+    obcpp_network
 )
 
 add_library(${LIB_NAME} STATIC

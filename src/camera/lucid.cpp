@@ -15,6 +15,7 @@
 
 #include "camera/lucid.hpp"
 #include "camera/interface.hpp"
+#include "network/mavlink.hpp"
 #include "utilities/locks.hpp"
 #include "utilities/datatypes.hpp"
 
@@ -72,14 +73,14 @@ LucidCamera::~LucidCamera() {
 
 
 
-void LucidCamera::startTakingPictures(const std::chrono::milliseconds& interval) {
+void LucidCamera::startTakingPictures(const std::chrono::milliseconds& interval, std::shared_ptr<MavlinkClient> mavlinkClient) {
     if (this->isTakingPictures) {
         return;
     }
 
     this->isTakingPictures = true;
 
-    this->captureThread = std::thread(&LucidCamera::captureEvery, this, interval);
+    this->captureThread = std::thread(&LucidCamera::captureEvery, this, interval, mavlinkClient);
 }
 
 void LucidCamera::stopTakingPictures() {
@@ -242,7 +243,7 @@ bool LucidCamera::isConnected() {
     return false;
 }
 
-void LucidCamera::captureEvery(const std::chrono::milliseconds& interval) {
+void LucidCamera::captureEvery(const std::chrono::milliseconds& interval, std::shared_ptr<MavlinkClient> mavlinkClient) {
     loguru::set_thread_name("lucid camera");
     if (!this->isConnected()) {
         LOG_F(ERROR, "LUCID Camera not connected. Cannot capture photos");
@@ -257,7 +258,7 @@ void LucidCamera::captureEvery(const std::chrono::milliseconds& interval) {
 
     while (this->isTakingPictures) {
         LOG_F(INFO, "Taking picture with LUCID camera");
-        std::optional<ImageData> newImage = this->takePicture(this->takePictureTimeout);
+        std::optional<ImageData> newImage = this->takePicture(this->takePictureTimeout, mavlinkClient);
 
         if (newImage.has_value()) {
             WriteLock lock(this->imageQueueLock);
@@ -278,7 +279,7 @@ void LucidCamera::captureEvery(const std::chrono::milliseconds& interval) {
     this->arenaDeviceLock.unlock();
 }
 
-std::optional<ImageData> LucidCamera::takePicture(const std::chrono::milliseconds& timeout) {
+std::optional<ImageData> LucidCamera::takePicture(const std::chrono::milliseconds& timeout, std::shared_ptr<MavlinkClient> mavlinkClient) {
     if (!this->isConnected()) {
         LOG_F(ERROR, "LUCID Camera not connected. Cannot take picture");
         return {};
@@ -287,9 +288,10 @@ std::optional<ImageData> LucidCamera::takePicture(const std::chrono::millisecond
     WriteLock lock(this->arenaDeviceLock);
 
     // need this SINGLE_ARG macro because otherwise the preprocessor gets confused 
-    // by commans in the code and thinks that additional arguments are passed in
+    // by commas in the code and thinks that additional arguments are passed in
     CATCH_ARENA_EXCEPTION("getting image", SINGLE_ARG(
         Arena::IImage* pImage = this->device->GetImage(timeout.count());
+        std::optional<ImageTelemetry> telemetry = queryMavlinkImageTelemetry(mavlinkClient);
 
         static int imageCounter = 0;
         LOG_F(INFO, "Taking image: %d", imageCounter++);
@@ -312,10 +314,10 @@ std::optional<ImageData> LucidCamera::takePicture(const std::chrono::millisecond
 
         // TODO: replace with mavlink telemtry
         return ImageData{
-            mat.value(),
-            ImageTelemetry(0, 0, 0, 0, 0, 0, 0, 0) }
-        );
-    );
+            .DATA = mat.value(),
+            .TELEMETRY = telemetry
+        };
+    ));
 
     // return nullopt if an exception is thrown while getting image
     return {};

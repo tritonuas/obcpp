@@ -48,8 +48,12 @@ PipelineResults Pipeline::run(const ImageData &imageData) {
         MatchResult potentialMatch = this->matcher.match(target);
 
         VLOG_F(TRACE, "Localization Start");
-        GPSCoord targetPosition(this->ecefLocalizer.localize(
-            imageData.TELEMETRY, target.bbox));
+        // TODO: determine what to do if image is missing telemetry metadata
+        GPSCoord targetPosition;
+        if (imageData.TELEMETRY.has_value()) {
+            targetPosition = GPSCoord(this->ecefLocalizer.localize(
+                imageData.TELEMETRY.value(), target.bbox));
+        }
 
         VLOG_F(TRACE, "Detected target %ld/%ld at [%f, %f] matched to bottle %d with %f distance.",
             curr_target_num, saliencyResults.size(),

@@ -8,6 +8,7 @@
 
 #include <loguru.hpp>
 
+#include "network/mavlink.hpp"
 #include "utilities/locks.hpp"
 #include "utilities/rng.hpp"
 
@@ -19,10 +20,7 @@ MockCamera::MockCamera(CameraConfig config) : CameraInterface(config) {
             cv::Mat img = cv::imread(dir_entry.path().string());
             // if the image is read 
             if (img.data != NULL) {
-                ImageData img_data{
-                    img,
-                    ImageTelemetry(38.31568, 76.55006, 75, 20, 0, 100, 5, 3)};
-                this->mock_images.push_back(img_data);
+                this->mock_images.push_back(img);
             }
         }
     );
@@ -36,10 +34,10 @@ void MockCamera::connect() { return; }
 
 bool MockCamera::isConnected() { return true; }
 
-void MockCamera::startTakingPictures(const std::chrono::milliseconds& interval) {
+void MockCamera::startTakingPictures(const std::chrono::milliseconds& interval, std::shared_ptr<MavlinkClient> mavlinkClient) {
     this->isTakingPictures = true;
     try {
-        this->captureThread = std::thread(&MockCamera::captureEvery, this, interval);
+        this->captureThread = std::thread(&MockCamera::captureEvery, this, interval, mavlinkClient);
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
     }
@@ -69,22 +67,28 @@ std::deque<ImageData> MockCamera::getAllImages() {
     return outputQueue;
 }
 
-void MockCamera::captureEvery(const std::chrono::milliseconds& interval) {
+void MockCamera::captureEvery(const std::chrono::milliseconds& interval, std::shared_ptr<MavlinkClient> mavlinkClient) {
     loguru::set_thread_name("mock camera");
     while (this->isTakingPictures) {
         LOG_F(INFO, "Taking picture with mock camera. Using images from %s",
             this->config.mock.images_dir.c_str());
-        ImageData newImage = this->takePicture();
+        cv::Mat newImage = this->takePicture();
+        std::optional<ImageTelemetry> telemetry = queryMavlinkImageTelemetry(mavlinkClient);
+
+        ImageData imageData {
+            .DATA = newImage,
+            .TELEMETRY = telemetry, 
+        };
 
         WriteLock lock(this->imageQueueLock);
-        this->imageQueue.push_back(newImage);
+        this->imageQueue.push_back(imageData);
         lock.unlock();
 
         std::this_thread::sleep_for(interval);
     }
 } 
 
-ImageData MockCamera::takePicture() {
+cv::Mat MockCamera::takePicture() {
     int random_idx = randomInt(0, this->mock_images.size()-1);
     return this->mock_images.at(random_idx);
 }

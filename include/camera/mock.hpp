@@ -7,6 +7,7 @@
 #include <deque>
 
 #include "camera/interface.hpp"
+#include "network/mavlink.hpp"
 #include "utilities/datatypes.hpp"
 
 class MockCamera : public CameraInterface {
@@ -20,7 +21,7 @@ class MockCamera : public CameraInterface {
     /**
      * Start taking photos at an interval in a background thread
     */
-    void startTakingPictures(const std::chrono::milliseconds& interval) override;
+    void startTakingPictures(const std::chrono::milliseconds& interval, std::shared_ptr<MavlinkClient> mavlinkClient) override;
     void stopTakingPictures() override;
 
    /**
@@ -37,18 +38,18 @@ class MockCamera : public CameraInterface {
     */
     std::deque<ImageData> getAllImages() override;
  private:
-   std::vector<ImageData> mock_images;
+   std::vector<cv::Mat> mock_images;
 
    std::atomic_bool isTakingPictures;
 
-   void captureEvery(const std::chrono::milliseconds& interval);
+   void captureEvery(const std::chrono::milliseconds& interval, std::shared_ptr<MavlinkClient> mavlinkClient);
 
    std::deque<ImageData> imageQueue;
    std::shared_mutex imageQueueLock;
 
    std::thread captureThread;
 
-   ImageData takePicture();
+   cv::Mat takePicture();
 };
 
 #endif  // INCLUDE_CAMERA_MOCK_HPP_

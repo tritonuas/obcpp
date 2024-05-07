@@ -26,7 +26,7 @@ int main (int argc, char *argv[]) {
     camera.connect();
 
     // start taking pictures every second
-    camera.startTakingPictures(1s);
+    camera.startTakingPictures(1s, nullptr);
     // need to sleep to let camera background thread to run
     std::this_thread::sleep_for(5s);
     camera.stopTakingPictures();
@@ -37,6 +37,6 @@ int main (int argc, char *argv[]) {
             output_dir / 
             (std::string("mock_") + std::to_string(getUnixTime_ms().count()) + std::string(".jpg"));
         LOG_F(INFO, "Saving mock image to %s", output_file.string().c_str());
-        cv::imwrite(output_file, image.getData());
+        cv::imwrite(output_file, image.DATA);
     }
 }
