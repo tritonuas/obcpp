@@ -46,20 +46,31 @@ struct ImageData {
 
 class CameraInterface {
  protected:
-  CameraConfig config;
+    CameraConfig config;
+
  public:
-  explicit CameraInterface(const CameraConfig& config);
-  virtual ~CameraInterface() = default;
+    explicit CameraInterface(const CameraConfig& config);
+    virtual ~CameraInterface() = default;
 
-  virtual void connect() = 0;
-  virtual bool isConnected() = 0;
+    virtual void connect() = 0;
+    virtual bool isConnected() = 0;
 
-  virtual void startTakingPictures(const std::chrono::milliseconds& interval,
+    /**
+     * Start taking photos at an interval in a background thread.
+     * Also requires a shared_ptr to a MavlinkClient to tag 
+     * images with flight telemetry at capture time.
+    */
+    virtual void startTakingPictures(const std::chrono::milliseconds& interval,
     std::shared_ptr<MavlinkClient> mavlinkClient) = 0;
-  virtual void stopTakingPictures() = 0;
+    /**
+     * Close background thread started by startTakingPictures
+    */
+    virtual void stopTakingPictures() = 0;
 
-  virtual std::optional<ImageData> getLatestImage() = 0;
-  virtual std::deque<ImageData> getAllImages() = 0;
+    // Get the latest buffered image
+    virtual std::optional<ImageData> getLatestImage() = 0;
+    // Get all the recently buffered images
+    virtual std::deque<ImageData> getAllImages() = 0;
 };
 
 #endif  // INCLUDE_CAMERA_INTERFACE_HPP_

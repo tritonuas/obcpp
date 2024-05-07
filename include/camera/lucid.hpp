@@ -42,10 +42,16 @@ class LucidCamera : public CameraInterface {
     bool isConnected() override;
 
     /**
-     * Start taking photos at an interval in a background thread
+     * Start taking photos at an interval in a background thread.
+     * Also requires a shared_ptr to a MavlinkClient to tag 
+     * images with flight telemetry at capture time.
     */
     void startTakingPictures(const std::chrono::milliseconds& interval,
         std::shared_ptr<MavlinkClient> mavlinkClient) override;
+
+    /**
+     * Close background thread started by startTakingPictures
+    */
     void stopTakingPictures() override;
 
    /**
