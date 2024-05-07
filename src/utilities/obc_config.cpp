@@ -41,20 +41,27 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
         this->camera_config.mock.images_dir = configs["camera"]["mock"]["images_dir"];
 
         this->camera_config.lucid.sensor_shutter_mode = configs["camera"]["lucid"]["sensor_shuttle_mode"];
+
         this->camera_config.lucid.acquisition_frame_rate_enable = configs["camera"]["lucid"]["acquisition_frame_rate_enable"];
+        this->camera_config.lucid.target_brightness = configs["camera"]["lucid"]["target_brightness"];
+        this->camera_config.lucid.exposure_auto = configs["camera"]["lucid"]["exposure_auto"];
+        this->camera_config.lucid.exposure_time = configs["camera"]["lucid"]["exposure_time"];
+        this->camera_config.lucid.exposure_auto_damping = configs["camera"]["lucid"]["exposure_auto_damping"];
+        this->camera_config.lucid.exposure_auto_algorithm = configs["camera"]["lucid"]["exposure_auto_algorithm"];
+        this->camera_config.lucid.exposure_auto_upper_limit = configs["camera"]["lucid"]["exposure_auto_upper_limit"];
+        this->camera_config.lucid.exposure_auto_lower_limit = configs["camera"]["lucid"]["exposure_auto_lower_limit"];
+
         this->camera_config.lucid.stream_auto_negotiate_packet_size = configs["camera"]["lucid"]["stream_auto_negotiate_packet_size"];
         this->camera_config.lucid.stream_packet_resend_enable = configs["camera"]["lucid"]["stream_packet_resend_enable"];
-        this->camera_config.lucid.target_brightness = configs["camera"]["lucid"]["target_brightness"];
+
+        this->camera_config.lucid.device_link_throughput_limit_mode = configs["camera"]["lucid"]["device_link_throughput_limit_mode"];
+        this->camera_config.lucid.device_link_throughput_limit = configs["camera"]["lucid"]["device_link_throughput_limit"];
+
         this->camera_config.lucid.gamma_enable = configs["camera"]["lucid"]["gamma_enable"];
         this->camera_config.lucid.gamma = configs["camera"]["lucid"]["gamma"];
         this->camera_config.lucid.gain_auto = configs["camera"]["lucid"]["gain_auto"];
         this->camera_config.lucid.gain_auto_upper_limit = configs["camera"]["lucid"]["gain_auto_upper_limit"];
         this->camera_config.lucid.gain_auto_lower_limit = configs["camera"]["lucid"]["gain_auto_lower_limit"];
-        this->camera_config.lucid.exposure_auto = configs["camera"]["lucid"]["exposure_auto"];
-        this->camera_config.lucid.exposure_auto_damping = configs["camera"]["lucid"]["exposure_auto_damping"];
-        this->camera_config.lucid.exposure_auto_algorithm = configs["camera"]["lucid"]["exposure_auto_algorithm"];
-        this->camera_config.lucid.exposure_auto_upper_limit = configs["camera"]["lucid"]["exposure_auto_upper_limit"];
-        this->camera_config.lucid.exposure_auto_lower_limit = configs["camera"]["lucid"]["exposure_auto_lower_limit"];
     } else {
         makeDefault();
     }
@@ -81,18 +88,25 @@ void OBCConfig::makeDefault() {
     this->camera_config.mock.images_dir = "/workspaces/obcpp/tests/integration/images/saliency/";
 
     this->camera_config.lucid.sensor_shutter_mode = "Rolling";
+
     this->camera_config.lucid.acquisition_frame_rate_enable = true;
+    this->camera_config.lucid.target_brightness = 70;
+    this->camera_config.lucid.exposure_auto = "Continuous";
+    this->camera_config.lucid.exposure_time = 3000;
+    this->camera_config.lucid.exposure_auto_damping = 1;
+    this->camera_config.lucid.exposure_auto_algorithm = "Median";
+    this->camera_config.lucid.exposure_auto_upper_limit = 500;
+    this->camera_config.lucid.exposure_auto_lower_limit = 360;
+
     this->camera_config.lucid.stream_auto_negotiate_packet_size = true;
     this->camera_config.lucid.stream_packet_resend_enable = true;
-    this->camera_config.lucid.target_brightness = 70;
+
+    this->camera_config.lucid.device_link_throughput_limit_mode = "On";
+    this->camera_config.lucid.device_link_throughput_limit = 125000000;
+
     this->camera_config.lucid.gamma_enable = true;
     this->camera_config.lucid.gamma = 0.5;
     this->camera_config.lucid.gain_auto = "Continuous";
     this->camera_config.lucid.gain_auto_upper_limit = 10;
     this->camera_config.lucid.gain_auto_lower_limit = 1;
-    this->camera_config.lucid.exposure_auto = "Continuous";
-    this->camera_config.lucid.exposure_auto_damping = 1;
-    this->camera_config.lucid.exposure_auto_algorithm = "Median";
-    this->camera_config.lucid.exposure_auto_upper_limit = 500;
-    this->camera_config.lucid.exposure_auto_lower_limit = 360;
 }
