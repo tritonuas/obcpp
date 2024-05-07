@@ -5,6 +5,7 @@
 #include <memory>
 #include <shared_mutex>
 #include <deque>
+#include <vector>
 
 #include "camera/interface.hpp"
 #include "network/mavlink.hpp"
@@ -21,13 +22,14 @@ class MockCamera : public CameraInterface {
     /**
      * Start taking photos at an interval in a background thread
     */
-    void startTakingPictures(const std::chrono::milliseconds& interval, std::shared_ptr<MavlinkClient> mavlinkClient) override;
+    void startTakingPictures(const std::chrono::milliseconds& interval,
+        std::shared_ptr<MavlinkClient> mavlinkClient) override;
     void stopTakingPictures() override;
 
-   /**
-    * Get the latest image that the camera took. This pops the latest
-    * image from a queue of images which means that the same image won't.
-    * be returned in two subsequent calls
+    /**
+     * Get the latest image that the camera took. This pops the latest
+     * image from a queue of images which means that the same image won't.
+     * be returned in two subsequent calls
     */ 
     std::optional<ImageData> getLatestImage() override;
 
@@ -37,19 +39,21 @@ class MockCamera : public CameraInterface {
      * it returns the cached images and clears the internal cache.
     */
     std::deque<ImageData> getAllImages() override;
+
  private:
-   std::vector<cv::Mat> mock_images;
+    std::vector<cv::Mat> mock_images;
 
-   std::atomic_bool isTakingPictures;
+    std::atomic_bool isTakingPictures;
 
-   void captureEvery(const std::chrono::milliseconds& interval, std::shared_ptr<MavlinkClient> mavlinkClient);
+    void captureEvery(const std::chrono::milliseconds& interval,
+        std::shared_ptr<MavlinkClient> mavlinkClient);
 
-   std::deque<ImageData> imageQueue;
-   std::shared_mutex imageQueueLock;
+    std::deque<ImageData> imageQueue;
+    std::shared_mutex imageQueueLock;
 
-   std::thread captureThread;
+    std::thread captureThread;
 
-   cv::Mat takePicture();
+    cv::Mat takePicture();
 };
 
 #endif  // INCLUDE_CAMERA_MOCK_HPP_

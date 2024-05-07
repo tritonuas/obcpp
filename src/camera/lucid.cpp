@@ -35,8 +35,7 @@ void LucidCamera::connect() {
     WriteLock deviceLock(this->arenaDeviceLock);
 
     CATCH_ARENA_EXCEPTION("opening Arena System",
-        this->system = Arena::OpenSystem();
-    );
+        this->system = Arena::OpenSystem(););
 
     while (true) {
         CATCH_ARENA_EXCEPTION("attempting to connect to LUCID camera",
@@ -47,13 +46,13 @@ void LucidCamera::connect() {
 
             std::vector<Arena::DeviceInfo> deviceInfos = this->system->GetDevices();
             if (deviceInfos.size() != 0) {
-                LOG_F(INFO,"Lucid camera connection succeeded!");
+                LOG_F(INFO, "Lucid camera connection succeeded!");
                 this->device = this->system->CreateDevice(deviceInfos[0]);
                 break;
-            }
-        );
+            });
 
-        LOG_F(ERROR,"Lucid camera connection failed! Retrying in %ld ms", this->connectionRetry.count());
+        LOG_F(ERROR, "Lucid camera connection failed! Retrying in %ld ms",
+            this->connectionRetry.count());
         std::this_thread::sleep_for(this->connectionRetry);
     }
 
@@ -67,13 +66,13 @@ LucidCamera::~LucidCamera() {
 
     CATCH_ARENA_EXCEPTION("closing Arena System",
         this->system->DestroyDevice(this->device);
-        Arena::CloseSystem(this->system);
-    );
+        Arena::CloseSystem(this->system););
 }
 
 
 
-void LucidCamera::startTakingPictures(const std::chrono::milliseconds& interval, std::shared_ptr<MavlinkClient> mavlinkClient) {
+void LucidCamera::startTakingPictures(const std::chrono::milliseconds& interval,
+    std::shared_ptr<MavlinkClient> mavlinkClient) {
     if (this->isTakingPictures) {
         return;
     }
@@ -91,7 +90,7 @@ void LucidCamera::stopTakingPictures() {
     this->isTakingPictures = false;
 
     this->captureThread.join();
-};
+}
 
 void LucidCamera::configureSettings() {
     const std::string sensor_shutter_mode_name = "SensorShutterMode";
@@ -99,25 +98,23 @@ void LucidCamera::configureSettings() {
         Arena::SetNodeValue<GenICam::gcstring>(
             device->GetNodeMap(),
             sensor_shutter_mode_name.c_str(),
-            this->config.lucid.sensor_shutter_mode.c_str());
-    );
+            this->config.lucid.sensor_shutter_mode.c_str()););
 
     const std::string acquisition_frame_rate_enable_name = "AcquisitionFrameRateEnable";
     CATCH_ARENA_EXCEPTION((std::string("setting ") + acquisition_frame_rate_enable_name).c_str(),
         Arena::SetNodeValue<bool>(
             device->GetNodeMap(),
             acquisition_frame_rate_enable_name.c_str(),
-            this->config.lucid.acquisition_frame_rate_enable);
-    );
+            this->config.lucid.acquisition_frame_rate_enable););
 
     // Note that this modifies the TLStreamNodeMap and not the standard NodeMap
     const std::string stream_auto_negotiate_packet_size_name = "StreamAutoNegotiatePacketSize";
-    CATCH_ARENA_EXCEPTION((std::string("setting ") + stream_auto_negotiate_packet_size_name).c_str(),
+    CATCH_ARENA_EXCEPTION((
+        std::string("setting ") + stream_auto_negotiate_packet_size_name).c_str(),
         Arena::SetNodeValue<bool>(
             device->GetTLStreamNodeMap(),
             stream_auto_negotiate_packet_size_name.c_str(),
-            this->config.lucid.stream_auto_negotiate_packet_size);
-    );
+            this->config.lucid.stream_auto_negotiate_packet_size););
 
     // Note that this modifies the TLStreamNodeMap and not the standard NodeMap
     const std::string stream_packet_resend_enable_name = "StreamPacketResendEnable";
@@ -125,96 +122,84 @@ void LucidCamera::configureSettings() {
         Arena::SetNodeValue<bool>(
             device->GetTLStreamNodeMap(),
             stream_packet_resend_enable_name.c_str(),
-            this->config.lucid.stream_packet_resend_enable);
-    );
+            this->config.lucid.stream_packet_resend_enable););
 
     const std::string target_brightness_name = "TargetBrightness";
     CATCH_ARENA_EXCEPTION((std::string("setting ") + target_brightness_name).c_str(),
         Arena::SetNodeValue<int64_t>(
             device->GetNodeMap(),
             target_brightness_name.c_str(),
-            this->config.lucid.target_brightness);
-    );
+            this->config.lucid.target_brightness););
 
     const std::string gamma_enable_name = "GammaEnable";
     CATCH_ARENA_EXCEPTION((std::string("setting ") + gamma_enable_name).c_str(),
         Arena::SetNodeValue<bool>(
             device->GetNodeMap(),
             gamma_enable_name.c_str(),
-            this->config.lucid.gamma_enable);
-    );
+            this->config.lucid.gamma_enable););
 
     const std::string gamma_name = "Gamma";
     CATCH_ARENA_EXCEPTION((std::string("setting ") + gamma_name).c_str(),
         Arena::SetNodeValue<double>(
             device->GetNodeMap(),
             gamma_name.c_str(),
-            this->config.lucid.gamma);
-    );
+            this->config.lucid.gamma););
 
     const std::string gain_auto_name = "GainAuto";
     CATCH_ARENA_EXCEPTION((std::string("setting ") + gain_auto_name).c_str(),
         Arena::SetNodeValue<GenICam::gcstring>(
             device->GetNodeMap(),
             gain_auto_name.c_str(),
-            this->config.lucid.gain_auto.c_str());
-    );
+            this->config.lucid.gain_auto.c_str()););
 
     const std::string gain_auto_upper_limit_name = "GainAutoUpperLimit";
     CATCH_ARENA_EXCEPTION((std::string("setting ") + gain_auto_upper_limit_name).c_str(),
         Arena::SetNodeValue<double>(
             device->GetNodeMap(),
             gain_auto_upper_limit_name.c_str(),
-            this->config.lucid.gain_auto_upper_limit);
-    );
+            this->config.lucid.gain_auto_upper_limit););
 
     const std::string gain_auto_lower_limit_name = "GainAutoLowerLimit";
     CATCH_ARENA_EXCEPTION((std::string("setting ") + gain_auto_lower_limit_name).c_str(),
         Arena::SetNodeValue<double>(
             device->GetNodeMap(),
             gain_auto_lower_limit_name.c_str(),
-            this->config.lucid.gain_auto_lower_limit);
-    );
+            this->config.lucid.gain_auto_lower_limit););
 
     const std::string exposure_auto_name = "ExposureAuto";
     CATCH_ARENA_EXCEPTION((std::string("setting ") + exposure_auto_name).c_str(),
         Arena::SetNodeValue<GenICam::gcstring>(
             device->GetNodeMap(),
             exposure_auto_name.c_str(),
-            this->config.lucid.exposure_auto.c_str());
-    );
+            this->config.lucid.exposure_auto.c_str()););
 
     const std::string exposure_auto_damping_name = "ExposureAutoDamping";
     CATCH_ARENA_EXCEPTION((std::string("setting ") + exposure_auto_damping_name).c_str(),
         Arena::SetNodeValue<double>(
             device->GetNodeMap(),
             exposure_auto_damping_name.c_str(),
-            this->config.lucid.exposure_auto_damping);
-    );
+            this->config.lucid.exposure_auto_damping););
 
     const std::string exposure_auto_algorithm_name = "ExposureAutoAlgorithm";
     CATCH_ARENA_EXCEPTION((std::string("setting ") + exposure_auto_algorithm_name).c_str(),
         Arena::SetNodeValue<GenICam::gcstring>(
             device->GetNodeMap(),
             exposure_auto_algorithm_name.c_str(),
-            this->config.lucid.exposure_auto_algorithm.c_str());
-    );
+            this->config.lucid.exposure_auto_algorithm.c_str()););
 
     const std::string exposure_auto_upper_limit_name = "ExposureAutoUpperLimit";
     CATCH_ARENA_EXCEPTION((std::string("setting ") + exposure_auto_upper_limit_name).c_str(),
         Arena::SetNodeValue<double>(
             device->GetNodeMap(),
             exposure_auto_upper_limit_name.c_str(),
-            this->config.lucid.exposure_auto_upper_limit);
-    );
+            this->config.lucid.exposure_auto_upper_limit););
 
     const std::string exposure_auto_lower_limit_name = "ExposureAutoLowerLimit";
     CATCH_ARENA_EXCEPTION((std::string("setting ") + exposure_auto_lower_limit_name).c_str(),
         Arena::SetNodeValue<double>(
             device->GetNodeMap(),
             exposure_auto_lower_limit_name.c_str(),
-            this->config.lucid.exposure_auto_lower_limit);
-    );
+            this->config.lucid.exposure_auto_lower_limit););
 }
 
 std::optional<ImageData> LucidCamera::getLatestImage() {
@@ -222,11 +207,11 @@ std::optional<ImageData> LucidCamera::getLatestImage() {
     ImageData lastImage = this->imageQueue.front();
     this->imageQueue.pop_front();
     return lastImage;
-};
+}
 
 std::deque<ImageData> LucidCamera::getAllImages() {
     ReadLock lock(this->imageQueueLock);
-    std::deque<ImageData> outputQueue = this->imageQueue; 
+    std::deque<ImageData> outputQueue = this->imageQueue;
     this->imageQueue = std::deque<ImageData>();
     return outputQueue;
 }
@@ -238,12 +223,12 @@ bool LucidCamera::isConnected() {
 
     ReadLock lock(this->arenaDeviceLock);
     CATCH_ARENA_EXCEPTION("checking camera connection",
-        return this->device->IsConnected();
-    );
+        return this->device->IsConnected(););
     return false;
 }
 
-void LucidCamera::captureEvery(const std::chrono::milliseconds& interval, std::shared_ptr<MavlinkClient> mavlinkClient) {
+void LucidCamera::captureEvery(const std::chrono::milliseconds& interval,
+    std::shared_ptr<MavlinkClient> mavlinkClient) {
     loguru::set_thread_name("lucid camera");
     if (!this->isConnected()) {
         LOG_F(ERROR, "LUCID Camera not connected. Cannot capture photos");
@@ -252,13 +237,13 @@ void LucidCamera::captureEvery(const std::chrono::milliseconds& interval, std::s
 
     this->arenaDeviceLock.lock();
     CATCH_ARENA_EXCEPTION("starting stream",
-        this->device->StartStream();
-    );
+        this->device->StartStream(););
     this->arenaDeviceLock.unlock();
 
     while (this->isTakingPictures) {
         LOG_F(INFO, "Taking picture with LUCID camera");
-        std::optional<ImageData> newImage = this->takePicture(this->takePictureTimeout, mavlinkClient);
+        std::optional<ImageData> newImage =
+            this->takePicture(this->takePictureTimeout, mavlinkClient);
 
         if (newImage.has_value()) {
             WriteLock lock(this->imageQueueLock);
@@ -274,12 +259,12 @@ void LucidCamera::captureEvery(const std::chrono::milliseconds& interval, std::s
 
     this->arenaDeviceLock.lock();
     CATCH_ARENA_EXCEPTION("stopping stream",
-        this->device->StopStream();
-    );
+        this->device->StopStream(););
     this->arenaDeviceLock.unlock();
 }
 
-std::optional<ImageData> LucidCamera::takePicture(const std::chrono::milliseconds& timeout, std::shared_ptr<MavlinkClient> mavlinkClient) {
+std::optional<ImageData> LucidCamera::takePicture(const std::chrono::milliseconds& timeout,
+    std::shared_ptr<MavlinkClient> mavlinkClient) {
     if (!this->isConnected()) {
         LOG_F(ERROR, "LUCID Camera not connected. Cannot take picture");
         return {};
@@ -287,7 +272,7 @@ std::optional<ImageData> LucidCamera::takePicture(const std::chrono::millisecond
 
     WriteLock lock(this->arenaDeviceLock);
 
-    // need this SINGLE_ARG macro because otherwise the preprocessor gets confused 
+    // need this SINGLE_ARG macro because otherwise the preprocessor gets confused
     // by commas in the code and thinks that additional arguments are passed in
     CATCH_ARENA_EXCEPTION("getting image", SINGLE_ARG(
         Arena::IImage* pImage = this->device->GetImage(timeout.count());
@@ -295,7 +280,8 @@ std::optional<ImageData> LucidCamera::takePicture(const std::chrono::millisecond
 
         static int imageCounter = 0;
         LOG_F(INFO, "Taking image: %d", imageCounter++);
-        LOG_F(INFO, "Missed packet: %ld", Arena::GetNodeValue<int64_t>(device->GetTLStreamNodeMap(), "StreamMissedPacketCount"));
+        LOG_F(INFO, "Missed packet: %ld",
+            Arena::GetNodeValue<int64_t>(device->GetTLStreamNodeMap(), "StreamMissedPacketCount"));
 
         LOG_F(WARNING, "Image buffer size: %lu", pImage->GetSizeOfBuffer());
         if (pImage->IsIncomplete()) {
@@ -306,7 +292,7 @@ std::optional<ImageData> LucidCamera::takePicture(const std::chrono::millisecond
 
         std::optional<cv::Mat> mat = imgConvert(pImage);
 
-        this->device->RequeueBuffer(pImage); // frees the data of pImage
+        this->device->RequeueBuffer(pImage);  // frees the data of pImage
 
         if (!mat.has_value()) {
             return {};
@@ -316,8 +302,7 @@ std::optional<ImageData> LucidCamera::takePicture(const std::chrono::millisecond
         return ImageData{
             .DATA = mat.value(),
             .TELEMETRY = telemetry
-        };
-    ));
+        };));
 
     // return nullopt if an exception is thrown while getting image
     return {};
@@ -339,17 +324,16 @@ std::optional<cv::Mat> LucidCamera::imgConvert(Arena::IImage* pImage) {
             static_cast<int>(pConverted->GetHeight()),
             static_cast<int>(pConverted->GetWidth()),
             CV_8UC3,
-            (void *)pConverted->GetData())
+            reinterpret_cast<void *>(pConverted->GetData()))
         .clone();
-        
+
         // freeing underlying lucid buffers
         Arena::ImageFactory::Destroy(pConverted);
 
-        return mat;
-    );
+        return mat;);
 
     // return nullopt if an exception is thrown during conversion
     return {};
 }
 
-#endif // ARENA_SDK_INSTALLED
+#endif  // ARENA_SDK_INSTALLED

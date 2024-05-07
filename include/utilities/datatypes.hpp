@@ -4,6 +4,7 @@
 #include <matplot/matplot.h>
 
 #include <vector>
+#include <string>
 
 #include "protos/obc.pb.h"
 #include "utilities/constants.hpp"
@@ -115,7 +116,7 @@ struct CameraConfig {
     // either "mock" or "lucid"
     std::string type;
     struct {
-        // directory to randomly pick images from 
+        // directory to randomly pick images from
         // for the mock camera
         std::string images_dir;
     } mock;
@@ -123,14 +124,14 @@ struct CameraConfig {
     // https://support.thinklucid.com/triton-tri200s/
     struct {
         // Image Format Control (https://support.thinklucid.com/triton-tri200s/#2976)
-        std::string sensor_shutter_mode; // Either "Rolling" or "GlobalReset"
+        std::string sensor_shutter_mode;  // Either "Rolling" or "GlobalReset"
 
         // Acquisition Control (https://support.thinklucid.com/triton-tri200s/#2934)
         bool acquisition_frame_rate_enable;
         int64_t target_brightness;
-        std::string exposure_auto; // either "Continuous" or "Off"
-        double exposure_time; // manual exposure time. only applies when exposure_auto is "Off"
-        std::string exposure_auto_algorithm; // either "Median" or "Mean"
+        std::string exposure_auto;  // either "Continuous" or "Off"
+        double exposure_time;  // manual exposure time. only applies when exposure_auto is "Off"
+        std::string exposure_auto_algorithm;  // either "Median" or "Mean"
         double exposure_auto_damping;
         double exposure_auto_upper_limit;
         double exposure_auto_lower_limit;
@@ -140,13 +141,13 @@ struct CameraConfig {
         bool stream_packet_resend_enable;
 
         // Device Control (https://support.thinklucid.com/triton-tri200s/#2959)
-        std::string device_link_throughput_limit_mode; // Either "On" or "Off"
-        int64_t device_link_throughput_limit; // for Triton 200S: max 125,000,000 min 31,250,000
+        std::string device_link_throughput_limit_mode;  // Either "On" or "Off"
+        int64_t device_link_throughput_limit;  // for Triton 200S: max 125,000,000 min 31,250,000
 
         // Analog Control (https://support.thinklucid.com/triton-tri200s/#2953)
         bool gamma_enable;
         double gamma;
-        std::string gain_auto; // either "Continuous" or "Off"
+        std::string gain_auto;  // either "Continuous" or "Off"
         double gain_auto_upper_limit;
         double gain_auto_lower_limit;
     } lucid;

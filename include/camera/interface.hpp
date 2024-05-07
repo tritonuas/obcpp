@@ -36,7 +36,8 @@ struct ImageTelemetry {
  * 
  * If nullptr is passed for mavlinkClient, nullopt is returned 
 */
-std::optional<ImageTelemetry> queryMavlinkImageTelemetry(std::shared_ptr<MavlinkClient> mavlinkClient);
+std::optional<ImageTelemetry> queryMavlinkImageTelemetry(
+    std::shared_ptr<MavlinkClient> mavlinkClient);
 
 struct ImageData {
     cv::Mat DATA;
@@ -53,7 +54,8 @@ class CameraInterface {
   virtual void connect() = 0;
   virtual bool isConnected() = 0;
 
-  virtual void startTakingPictures(const std::chrono::milliseconds& interval, std::shared_ptr<MavlinkClient> mavlinkClient) = 0;
+  virtual void startTakingPictures(const std::chrono::milliseconds& interval,
+    std::shared_ptr<MavlinkClient> mavlinkClient) = 0;
   virtual void stopTakingPictures() = 0;
 
   virtual std::optional<ImageData> getLatestImage() = 0;

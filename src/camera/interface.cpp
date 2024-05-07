@@ -4,7 +4,8 @@
 
 CameraInterface::CameraInterface(const CameraConfig& config) : config(config) {}
 
-std::optional<ImageTelemetry> queryMavlinkImageTelemetry(std::shared_ptr<MavlinkClient> mavlinkClient) {
+std::optional<ImageTelemetry> queryMavlinkImageTelemetry(
+  std::shared_ptr<MavlinkClient> mavlinkClient) {
   if (mavlinkClient == nullptr) {
     return {};
   }

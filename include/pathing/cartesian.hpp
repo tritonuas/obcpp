@@ -1,11 +1,12 @@
 #ifndef INCLUDE_PATHING_CARTESIAN_HPP_
 #define INCLUDE_PATHING_CARTESIAN_HPP_
 
+#include <math.h>
+
 #include <vector>
 #include <tuple>
 #include <algorithm>
 #include <limits>
-#include "math.h"
 
 #include "protos/obc.pb.h"
 #include "utilities/datatypes.hpp"

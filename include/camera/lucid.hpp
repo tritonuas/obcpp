@@ -3,10 +3,7 @@
 
 #ifdef ARENA_SDK_INSTALLED
 
-
-#include "camera/interface.hpp"
-#include <nlohmann/json.hpp>
-#include "ArenaApi.h"
+#include <ArenaApi.h>
 
 #include <string>
 #include <memory>
@@ -15,12 +12,14 @@
 #include <thread>
 #include <deque>
 
+#include <nlohmann/json.hpp>
+
 #include "camera/interface.hpp"
 #include "network/mavlink.hpp"
 
 using json = nlohmann::json;
 
-using namespace std::chrono_literals;
+using namespace std::chrono_literals; // NOLINT
 
 /**
  * LucidCamera is the class to interface with cameras from 
@@ -35,17 +34,18 @@ class LucidCamera : public CameraInterface {
     explicit LucidCamera(CameraConfig config);
     ~LucidCamera();
 
-   /**
-    * Connect to the LUCID camera. Note that this function will synchronously
-    * block indefintely until a connection to the camera can be established.
-   */
+    /**
+     * Connect to the LUCID camera. Note that this function will synchronously
+     * block indefintely until a connection to the camera can be established.
+    */
     void connect() override;
     bool isConnected() override;
 
     /**
      * Start taking photos at an interval in a background thread
     */
-    void startTakingPictures(const std::chrono::milliseconds& interval, std::shared_ptr<MavlinkClient> mavlinkClient) override;
+    void startTakingPictures(const std::chrono::milliseconds& interval,
+        std::shared_ptr<MavlinkClient> mavlinkClient) override;
     void stopTakingPictures() override;
 
    /**
@@ -61,55 +61,58 @@ class LucidCamera : public CameraInterface {
      * it returns the cached images and clears the internal cache.
     */
     std::deque<ImageData> getAllImages() override;
+
  private:
-   /**
+    /**
     * Blocking call that takes an image. If it takes longer than the timeout 
     * to capture the image, no image is returned.
-   */
-   std::optional<ImageData> takePicture(const std::chrono::milliseconds& timeout, std::shared_ptr<MavlinkClient> mavlinkClient);
+    */
+    std::optional<ImageData> takePicture(const std::chrono::milliseconds& timeout,
+        std::shared_ptr<MavlinkClient> mavlinkClient);
 
-   /**
+    /**
     * Takes an image and sleeps for the specified interval before
     * taking another image
-   */
-   void captureEvery(const std::chrono::milliseconds& interval, std::shared_ptr<MavlinkClient> mavlinkClient);
+    */
+    void captureEvery(const std::chrono::milliseconds& interval,
+        std::shared_ptr<MavlinkClient> mavlinkClient);
 
-   /**
+    /**
     * Converts between ArenaSDK Image type to an OpenCV cv::Mat 
-   */
-   std::optional<cv::Mat> imgConvert(Arena::IImage* pImage); 
+    */
+    std::optional<cv::Mat> imgConvert(Arena::IImage* pImage);
 
-   void configureSettings();
+    void configureSettings();
 
-   // Lock around Arena system.
-   inline static std::shared_mutex arenaSystemLock;
-   // Arena system must be static since only a single system
-   // can be active on the same machine regardless of how 
-   // many LucidCamera instances are created.
-   inline static Arena::ISystem* system;
+    // Lock around Arena system.
+    inline static std::shared_mutex arenaSystemLock;
+    // Arena system must be static since only a single system
+    // can be active on the same machine regardless of how
+    // many LucidCamera instances are created.
+    inline static Arena::ISystem* system;
 
-   // Lock around Arena device.
-   inline static std::shared_mutex arenaDeviceLock;
-   // Arena device must be static since only a single device 
-   // can be active on the same machine regardless of how 
-   // many LucidCamera instances are created.
-   inline static Arena::IDevice* device;
+    // Lock around Arena device.
+    inline static std::shared_mutex arenaDeviceLock;
+    // Arena device must be static since only a single device
+    // can be active on the same machine regardless of how
+    // many LucidCamera instances are created.
+    inline static Arena::IDevice* device;
 
-   std::atomic_bool isTakingPictures;
+    std::atomic_bool isTakingPictures;
 
-   std::deque<ImageData> imageQueue;
-   std::shared_mutex imageQueueLock;
+    std::deque<ImageData> imageQueue;
+    std::shared_mutex imageQueueLock;
 
-   // thread that will capture images on a set interval
-   std::thread captureThread;
+    // thread that will capture images on a set interval
+    std::thread captureThread;
 
-   std::shared_mutex imageQueueMut;
+    std::shared_mutex imageQueueMut;
 
-   const std::chrono::milliseconds connectionTimeout = 1000ms;
-   const std::chrono::milliseconds connectionRetry = 500ms;
+    const std::chrono::milliseconds connectionTimeout = 1000ms;
+    const std::chrono::milliseconds connectionRetry = 500ms;
 
-   // TODO: need to catch timeout exception
-   const std::chrono::milliseconds takePictureTimeout = 1000ms;
+    // TODO: need to catch timeout exception
+    const std::chrono::milliseconds takePictureTimeout = 1000ms;
 };
 
 #define SINGLE_ARG(...) __VA_ARGS__
@@ -123,19 +126,19 @@ class LucidCamera : public CameraInterface {
  * code is the code itself
 */
 #define CATCH_ARENA_EXCEPTION(context, code) \
-   try { \
-      code \
-   } \
-   catch (GenICam::GenericException &ge) { \
-      LOG_F(ERROR, "GenICam exception thrown when %s: %s", context, ge.what()); \
-   } \
-   catch (std::exception &ex) { \
-      LOG_F(ERROR, "Standard exception thrown when %s: %s", context, ex.what()); \
-   } \
-   catch (...) { \
-      LOG_F(ERROR, "Unexpected exception thrown when %s", context); \
-   } \
-   LOG_F(INFO, "%s succeeded", context)
+    try { \
+        code \
+    } \
+    catch (GenICam::GenericException &ge) { \
+        LOG_F(ERROR, "GenICam exception thrown when %s: %s", context, ge.what()); \
+    } \
+    catch (std::exception &ex) { \
+        LOG_F(ERROR, "Standard exception thrown when %s: %s", context, ex.what()); \
+    } \
+    catch (...) { \
+        LOG_F(ERROR, "Unexpected exception thrown when %s", context); \
+    } \
+    LOG_F(INFO, "%s succeeded", context)
 
 #endif  // ARENA_SDK_INSTALLED
 
