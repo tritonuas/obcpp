@@ -324,7 +324,8 @@ std::optional<cv::Mat> LucidCamera::imgConvert(Arena::IImage* pImage) {
             static_cast<int>(pConverted->GetHeight()),
             static_cast<int>(pConverted->GetWidth()),
             CV_8UC3,
-            reinterpret_cast<void *>(pConverted->GetData()))
+            // welcome to casting hell :)
+            const_cast<void*>(reinterpret_cast<const void*>(pConverted->GetData())))
         .clone();
 
         // freeing underlying lucid buffers
