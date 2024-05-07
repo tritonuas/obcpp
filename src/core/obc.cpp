@@ -26,6 +26,7 @@ OBC::OBC(OBCConfig config) {
     this->state->setTick(new MissionPrepTick(this->state));
     this->state->rrt_config = config.rrt_config;
     this->state->camera_config = config.camera_config;
+    this->state->m_takeoff_alt = config.takeoff.m_altitude;
     this->state->coverage_pathing_config = config.coverage_pathing_config;
     this->gcs_server = std::make_unique<GCSServer>(gcs_port, this->state);
 

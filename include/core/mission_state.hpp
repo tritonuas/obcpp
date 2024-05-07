@@ -96,6 +96,7 @@ class MissionState {
     RRTConfig rrt_config;
     AirdropSearchConfig coverage_pathing_config;
     CameraConfig camera_config;
+    float m_takeoff_alt;
 
  private:
     std::mutex converter_mut;
