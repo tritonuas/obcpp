@@ -98,7 +98,6 @@ RUN sh Arena_SDK_ARM64.conf
 WORKDIR /obcpp
 COPY . .
 
-RUN git submodule update --init
 RUN rm -rf /obcpp/build
 WORKDIR /obcpp/build
 ENV CMAKE_PREFIX_PATH="/usr/local/lib/python3.10/dist-packages/torch/share/cmake/Torch;/usr/local/share/cmake/TorchVision"
