@@ -274,6 +274,7 @@ int main() {
     std::vector<Polygon> obstacles = {obs1, obs2};
 
     RRTPoint start = RRTPoint(state->mission_params.getWaypoints()[0], 0);
+    start.coord.z = 30.0; // 30 meters takeoff
 
     // RRT settings (manually put in)
     int num_iterations = 512;

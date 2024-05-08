@@ -143,6 +143,17 @@ class RRT {
                        int total_options = TOTAL_OPTIONS_FOR_GOAL_CONNECTION);
 
     /**
+     * Does the logistical work when found one waypoint to another 
+     *  - adds the node to the tree
+     *  - finds the path
+     *      - adds altitude to the path
+     * 
+     * @param goal_node  ==> node to add to the tree
+     * @param current_goal_index ==> index of the goal that we are trying to
+    */
+    void addNodeToTree(RRTNode *goal_node, int current_goal_index);
+
+    /**
      * Goes through generated options to try to connect the sample to the tree
      *
      * @param options   ==> list of options to connect the sample to the tree

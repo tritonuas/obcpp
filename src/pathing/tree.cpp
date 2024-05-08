@@ -408,6 +408,8 @@ std::vector<XYZCoord> RRTTree::getPathSegment(RRTNode* node) const {
     return path;
 }
 
+RRTPoint& RRTTree::getStart() const { return root->getPoint(); }
+
 /*-----------------*/
 /* RRTTree Private */
 /*-----------------*/
