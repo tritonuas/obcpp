@@ -302,7 +302,7 @@ int main() {
     std::cout << "Path size: " << path.size() << std::endl;
     std::cout << "Path length: " << (path.size() * POINT_SEPARATION) << std::endl;
     for (const XYZCoord& point : path) {
-        file << point.x << ", " << point.y << std::endl;
+        file << point.z << std::endl;
     }
 
     // plot the path

@@ -132,7 +132,19 @@ bool RRT::epochEvaluation(RRTNode *goal_node, int current_goal_index) {
 
     tree.addNode(new_node->getParent(), new_node);
     std::vector<XYZCoord> local_path = tree.getPathSegment(goal_node);
-    flight_path.insert(flight_path.end(), local_path.begin() , local_path.end());
+
+    double height_increment = (tree.getAirspace().getGoal(current_goal_index).z -
+                               tree.getAirspace().getGoal(current_goal_index - 1).z) /
+                              local_path.size();
+
+    double current_height = tree.getAirspace().getGoal(current_goal_index - 1).z;
+
+    for (XYZCoord &point : local_path) {
+        point.z = current_height;
+        current_height += height_increment;
+    }
+
+    flight_path.insert(flight_path.end(), local_path.begin(), local_path.end());
     tree.setCurrentHead(new_node);
 
     return true;
@@ -212,6 +224,18 @@ bool RRT::connectToGoal(int current_goal_index, int total_options) {
     tree.addNode(goal_node->getParent(), goal_node);
 
     std::vector<XYZCoord> local_path = tree.getPathSegment(goal_node);
+
+    double height_increment = (tree.getAirspace().getGoal(current_goal_index).z -
+                               tree.getAirspace().getGoal(current_goal_index - 1).z) /
+                              local_path.size();
+
+    double current_height = tree.getAirspace().getGoal(current_goal_index - 1).z;
+
+    for (XYZCoord &point : local_path) {
+        point.z = current_height;
+        current_height += height_increment;
+    }
+
     flight_path.insert(flight_path.end(), local_path.begin() + 1, local_path.end());
 
     tree.setCurrentHead(goal_node);
