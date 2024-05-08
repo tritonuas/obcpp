@@ -59,6 +59,7 @@ class RRT {
     const double search_radius;         // !!NOT USED!! max radius to move off the tree
     const double rewire_radius;         // ONLY FOR RRT-STAR, max radius from new node to rewire
     const RRTConfig config;             // optimization options
+    std::vector<XYZCoord> flight_path;
 
     // the different of final approaches to the goal
     // yes, this is the default unit circle diagram used in High-School

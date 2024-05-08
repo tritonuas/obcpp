@@ -51,7 +51,10 @@ void RRT::run() {
     }
 }
 
-std::vector<XYZCoord> RRT::getPointsToGoal() const { return tree.getPathToGoal(); }
+std::vector<XYZCoord> RRT::getPointsToGoal() const {
+    // return tree.getPathToGoal();
+    return flight_path;
+}
 
 bool RRT::RRTIteration(int tries, int current_goal_index) {
     const int epoch_interval = tries / NUM_EPOCHS;
@@ -128,7 +131,10 @@ bool RRT::epochEvaluation(RRTNode *goal_node, int current_goal_index) {
     }
 
     tree.addNode(new_node->getParent(), new_node);
+    std::vector<XYZCoord> local_path = tree.getPathSegment(goal_node);
+    flight_path.insert(flight_path.end(), local_path.begin() , local_path.end());
     tree.setCurrentHead(new_node);
+
     return true;
 }
 
@@ -204,6 +210,10 @@ bool RRT::connectToGoal(int current_goal_index, int total_options) {
 
     // sets the new head
     tree.addNode(goal_node->getParent(), goal_node);
+
+    std::vector<XYZCoord> local_path = tree.getPathSegment(goal_node);
+    flight_path.insert(flight_path.end(), local_path.begin() + 1, local_path.end());
+
     tree.setCurrentHead(goal_node);
     return true;
 }
@@ -358,6 +368,7 @@ std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
         std::atan2(goals.front().y - state->mission_params.getWaypoints().front().y,
                    goals.front().x - state->mission_params.getWaypoints().front().x);
     RRTPoint start(state->mission_params.getWaypoints().front(), init_angle);
+    start.coord.z = state->m_takeoff_alt;
 
     RRT rrt(start, goals, SEARCH_RADIUS, state->mission_params.getFlightBoundary(), {},
             state->rrt_config);

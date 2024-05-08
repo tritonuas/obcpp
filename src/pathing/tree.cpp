@@ -7,8 +7,8 @@
 #include "pathing/dubins.hpp"
 #include "pathing/environment.hpp"
 #include "utilities/datatypes.hpp"
-#include "utilities/rng.hpp"
 #include "utilities/logging.hpp"
+#include "utilities/rng.hpp"
 
 RRTNode::RRTNode(const RRTPoint& point, double cost, double path_length,
                  const std::vector<XYZCoord> path)
@@ -373,19 +373,38 @@ void RRTTree::setCurrentHead(RRTNode* goal) {
     current_head = goal;
 }
 
-std::vector<XYZCoord> RRTTree::getPathToGoal() const {
-    RRTNode* current_node = current_head;
+// std::vector<XYZCoord> RRTTree::getPathToGoal() const {
+//     RRTNode* current_node = current_head;
+//     std::vector<XYZCoord> path = {};
+
+//     while (current_node != nullptr && current_node->getParent() != nullptr) {
+//         const std::vector<XYZCoord>& edge_path = current_node->getPath();
+
+//         path.insert(path.begin(), edge_path.begin() + 1, edge_path.end());
+//         current_node = current_node->getParent();
+//     }
+
+//     // loop above misses the first node, this adds it manually
+//     path.insert(path.begin(), current_node->getPoint().coord);
+//     return path;
+// }
+
+std::vector<XYZCoord> RRTTree::getPathSegment(RRTNode* node) const {
+    RRTNode* current_node = node;
     std::vector<XYZCoord> path = {};
 
-    while (current_node != nullptr && current_node->getParent() != nullptr) {
+    while (current_node != current_head) {
+        if (current_node == nullptr) {
+            LOG_F(ERROR, "TREE: Segement does not find a path");
+            return {};
+        }
+
         const std::vector<XYZCoord>& edge_path = current_node->getPath();
 
         path.insert(path.begin(), edge_path.begin() + 1, edge_path.end());
         current_node = current_node->getParent();
     }
 
-    // loop above misses the first node, this adds it manually
-    path.insert(path.begin(), current_node->getPoint().coord);
     return path;
 }
 
