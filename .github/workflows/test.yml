@@ -14,7 +14,7 @@ env:
   # this is needed for CMake to find where ArenaSDK is
   # installed to. See the Dockerfile for what is installed
   # to this path
-  ARENA_EXTRACTED_PATH: "/arena-tmp/ArenaSDK_Linux_ARM64"
+  ARENA_EXTRACTED_PATH: "/arena-tmp/ArenaSDK_Linux_x64"
 
 jobs:
   test:
@@ -42,7 +42,7 @@ jobs:
 
       - name: Set up CMake
         # uses ${CMAKE_PREFIX_PATH} set in Dockerfile env
-        run: cd "$HOME_DIR/obcpp" && rm -rf build && mkdir build && cd build && sudo cmake -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" -DCMAKE_JOB_POOLS="j=4" ..
+        run: ARENA_EXTRACTED_PATH="/arena-tmp/ArenaSDK_Linux_x64" cd "$HOME_DIR/obcpp" && rm -rf build && mkdir build && cd build && sudo cmake -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" -DCMAKE_JOB_POOLS="j=4" ..
 
       - name: Run Tests
         run: cd "$HOME_DIR/obcpp/build" && sudo ninja test
