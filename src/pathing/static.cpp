@@ -226,8 +226,8 @@ void RRT::addNodeToTree(RRTNode *goal_node, int current_goal_index) {
     double height_increment = height_difference / local_path.size();
 
     for (XYZCoord &point : local_path) {
-        start_height += height_increment;
         point.z = start_height;
+        start_height += height_increment;
     }
 
     // adds local path to the flight path, and updates the tree
@@ -385,7 +385,7 @@ std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
         std::atan2(goals.front().y - state->mission_params.getWaypoints().front().y,
                    goals.front().x - state->mission_params.getWaypoints().front().x);
     RRTPoint start(state->mission_params.getWaypoints().front(), init_angle);
-    start.coord.z = state->m_takeoff_alt;
+    start.coord.z = state->takeoff_alt_m;
 
     RRT rrt(start, goals, SEARCH_RADIUS, state->mission_params.getFlightBoundary(), {},
             state->rrt_config);

@@ -362,7 +362,7 @@ bool MavlinkClient::armAndHover(std::shared_ptr<MissionState> state) {
 
 
     // TODO: config option for this
-    const float TAKEOFF_ALT = state->m_takeoff_alt;
+    const float TAKEOFF_ALT = state->takeoff_alt_m;
     auto r1 = this->action->set_takeoff_altitude(TAKEOFF_ALT);
     if (r1 != mavsdk::Action::Result::Success) {
         LOG_S(ERROR) << "FAIL: could not set takeoff alt " << r1;
