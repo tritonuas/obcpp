@@ -78,7 +78,7 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
         this->camera_config.lucid.gain_auto_lower_limit =
             configs["camera"]["lucid"]["gain_auto_lower_limit"];
 
-        this->takeoff.m_altitude = configs["takeoff"]["m_altitude"];
+        this->takeoff.altitude_m = configs["takeoff"]["altitude_m"];
     } else {
         makeDefault();
     }
@@ -127,5 +127,5 @@ void OBCConfig::makeDefault() {
     this->camera_config.lucid.gain_auto_upper_limit = 10;
     this->camera_config.lucid.gain_auto_lower_limit = 1;
 
-    this->takeoff.m_altitude = 30.0;
+    this->takeoff.altitude_m = TAKEOFF_ALTITUDE_M;
 }
