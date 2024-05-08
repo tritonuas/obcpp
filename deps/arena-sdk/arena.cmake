@@ -12,14 +12,14 @@ function(target_add_arena target_name)
             )
 
             target_include_directories(${target_name} PRIVATE 
-                "ENV{ARENA_EXTRACTED_PATH}/include/Arena"
-                "ENV{ARENA_EXTRACTED_PATH}/GenICam/library/CPP/include"
-                "ENV{ARENA_EXTRACTED_PATH}/include/GenTL"
-                "ENV{ARENA_EXTRACTED_PATH}/include/Save"
+                "$ENV{ARENA_EXTRACTED_PATH}/include/Arena"
+                "$ENV{ARENA_EXTRACTED_PATH}/GenICam/library/CPP/include"
+                "$ENV{ARENA_EXTRACTED_PATH}/include/GenTL"
+                "$ENV{ARENA_EXTRACTED_PATH}/include/Save"
             )
             file(GLOB_RECURSE ARENA_LIBS 
-                "ENV{ARENA_EXTRACTED_PATH}/lib64/*.so" 
-                "ENV{ARENA_EXTRACTED_PATH}/**/*.so"
+                "$ENV{ARENA_EXTRACTED_PATH}/lib64/*.so" 
+                "$ENV{ARENA_EXTRACTED_PATH}/**/*.so"
             )
             target_link_libraries(${target_name} PRIVATE
                 ${ARENA_LIBS}
