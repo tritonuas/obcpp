@@ -231,7 +231,7 @@ void RRT::addNodeToTree(RRTNode *goal_node, int current_goal_index) {
     }
 
     // adds local path to the flight path, and updates the tree
-    flight_path.insert(flight_path.end(), local_path.begin() + 1, local_path.end());
+    flight_path.insert(flight_path.end(), local_path.begin(), local_path.end());
     tree.setCurrentHead(goal_node);
 }
 
