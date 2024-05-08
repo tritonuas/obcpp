@@ -11,6 +11,10 @@ env:
   HOME_DIR: /home/tuas
   # https://stackoverflow.com/a/71158878
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
+  # this is needed for CMake to find where ArenaSDK is
+  # installed to. See the Dockerfile for what is installed
+  # to this path
+  ARENA_EXTRACTED_PATH: "/arena-tmp/ArenaSDK_Linux_ARM64"
 
 jobs:
   test:
