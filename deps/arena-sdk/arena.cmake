@@ -5,6 +5,7 @@ function(target_add_arena target_name)
         # See the Dockerfile for how this is set. 
         set(ARENA_SDK_DIR $ENV{ARENA_EXTRACTED_PATH})
         if(NOT "${ARENA_SDK_DIR}" STREQUAL "")
+            message("Adding ArenaSDK for target ${target_name}")
             # Add a preprocessor macro that will enable us to compile
             # functionality that depends on the Arena SDK.
             target_compile_definitions(${target_name} PRIVATE 
