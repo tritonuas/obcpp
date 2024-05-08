@@ -18,7 +18,7 @@ struct OBCConfig {
     } network;
 
     struct {
-        float m_altitude;
+        float altitude_m;
     } takeoff;
 
     RRTConfig rrt_config;

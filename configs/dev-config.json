@@ -10,6 +10,9 @@
             "port": 5010
         }
     },
+    "takeoff": {
+        "altitude_m": 30.0
+    },
     "pathing": {
         "rrt": {
             "iterations_per_waypoint": 200,
