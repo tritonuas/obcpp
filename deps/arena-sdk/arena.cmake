@@ -3,10 +3,8 @@ function(target_add_arena target_name)
         # check if the ARENA_EXTRACTED_PATH environment variable is set
         # before trying to add arena to a target. 
         # See the Dockerfile for how this is set. 
-        set(ARENA_SDK_DIR $ENV{ARENA_EXTRACTED_PATH})
-        message("ArenaSDK is installed at: ${ARENA_SDK_DIR}")
-        if(NOT "${ARENA_SDK_DIR}" STREQUAL "")
-            message("Adding ArenaSDK for target ${target_name}")
+        if(DEFINED ENV{ARENA_EXTRACTED_PATH})
+            message("Adding ArenaSDK found at $ENV{ARENA_EXTRACTED_PATH} for target ${target_name}")
             # Add a preprocessor macro that will enable us to compile
             # functionality that depends on the Arena SDK.
             target_compile_definitions(${target_name} PRIVATE 
@@ -27,7 +25,7 @@ function(target_add_arena target_name)
                 ${ARENA_LIBS}
             )
         else()
-            message("ArenaSDK not found. NOT adding to target ${target_name}")
+            message("ArenaSDK not found. NOT adding to target ${target_name}. Note that the ARENA_EXTRACTED_PATH environment variable must be set to the path where ArenaSDK is extracted to.")
         endif()
 
     endif()
