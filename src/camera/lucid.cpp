@@ -173,6 +173,13 @@ void LucidCamera::configureSettings() {
             exposure_auto_name.c_str(),
             this->config.lucid.exposure_auto.c_str()););
 
+    const std::string exposure_time_name = "ExposureTime";
+    CATCH_ARENA_EXCEPTION((std::string("setting ") + exposure_time_name).c_str(),
+        Arena::SetNodeValue<double>(
+            device->GetNodeMap(),
+            exposure_time_name.c_str(),
+            this->config.lucid.exposure_time););
+
     const std::string exposure_auto_damping_name = "ExposureAutoDamping";
     CATCH_ARENA_EXCEPTION((std::string("setting ") + exposure_auto_damping_name).c_str(),
         Arena::SetNodeValue<double>(

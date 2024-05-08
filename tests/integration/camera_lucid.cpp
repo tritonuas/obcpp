@@ -26,10 +26,10 @@ int main (int argc, char *argv[]) {
     camera.connect();
     LOG_F(INFO, "Connected to LUCID camera!");
 
-    camera.startTakingPictures(0s, nullptr);
+    camera.startTakingPictures(1s, nullptr);
 
     // need to sleep to let camera background thread to run
-    std::this_thread::sleep_for(30s);
+    std::this_thread::sleep_for(10s);
 
     camera.stopTakingPictures();
 
