@@ -4,6 +4,7 @@ function(target_add_arena target_name)
         # before trying to add arena to a target. 
         # See the Dockerfile for how this is set. 
         set(ARENA_SDK_DIR $ENV{ARENA_EXTRACTED_PATH})
+        message("ArenaSDK is installed at: ${ARENA_SDK_DIR}")
         if(NOT "${ARENA_SDK_DIR}" STREQUAL "")
             message("Adding ArenaSDK for target ${target_name}")
             # Add a preprocessor macro that will enable us to compile
@@ -25,6 +26,8 @@ function(target_add_arena target_name)
             target_link_libraries(${target_name} PRIVATE
                 ${ARENA_LIBS}
             )
+        else()
+            message("ArenaSDK not found. NOT adding to target ${target_name}")
         endif()
 
     endif()
