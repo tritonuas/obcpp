@@ -7,7 +7,7 @@
 #include "ticks/mav_upload.hpp"
 #include "ticks/path_gen.hpp"
 #include "ticks/takeoff.hpp"
-#include "ticks/active_takeoff.hpp"
+#include "ticks/wait_for_takeoff.hpp"
 #include "utilities/locks.hpp"
 
 PathValidateTick::PathValidateTick(std::shared_ptr<MissionState> state)
@@ -20,7 +20,7 @@ std::chrono::milliseconds PathValidateTick::getWait() const {
 Tick* PathValidateTick::tick() {
     if (status == Status::Validated) {
         if (this->state->getMav() != nullptr) {
-            return new MavUploadTick(this->state, new ActiveTakeoffTick(this->state),
+            return new MavUploadTick(this->state, new WaitForTakeoffTick(this->state),
                 state->getInitPath(), true);
         } else {
             LOG_F(WARNING, "Path Validated, but cannot continue because mavlink not connected.");

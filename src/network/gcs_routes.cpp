@@ -15,6 +15,7 @@
 #include "ticks/tick.hpp"
 #include "ticks/path_gen.hpp"
 #include "ticks/path_validate.hpp"
+#include "ticks/wait_for_takeoff.hpp"
 
 using namespace std::chrono_literals; // NOLINT
 
@@ -246,4 +247,30 @@ DEF_GCS_HANDLE(Post, dodropnow) {
     state->getAirdrop()->send(ad_packet_t { .hdr = DROP_NOW, .data = bottle });
 
     LOG_RESPONSE(INFO, "Dropped bottle", OK);
+}
+
+DEF_GCS_HANDLE(Post, takeoff, manual){
+    LOG_REQUEST("POST", "takeoff/manual");
+
+    auto lock_ptr = state->getTickLockPtr<WaitForTakeoffTick>();
+    if(!lock_ptr.has_value()){
+        LOG_RESPONSE(WARNING, "Not currently in WaitForTakeoff Tick", BAD_REQUEST);
+        return;
+    }
+    lock_ptr->ptr->setStatus(WaitForTakeoffTick::Status::Manual);
+
+    LOG_RESPONSE(INFO, "Set status of WaitForTakeoff Tick to manaul", OK);
+}
+
+DEF_GCS_HANDLE(Post, takeoff, autonomous){
+    LOG_REQUEST("POST", "takeoff/autonomous");
+
+    auto lock_ptr = state->getTickLockPtr<WaitForTakeoffTick>();
+    if(!lock_ptr.has_value()){
+        LOG_RESPONSE(WARNING, "Not currently in WaitForTakeoff Tick", BAD_REQUEST);
+        return;
+    }
+    lock_ptr->ptr->setStatus(WaitForTakeoffTick::Status::Autonomous);
+    
+    LOG_RESPONSE(INFO, "Set status of WaitForTakeoff Tick to autonomous", OK);
 }
