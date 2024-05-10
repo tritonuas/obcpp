@@ -274,25 +274,25 @@ AirdropSearch::AirdropSearch(const RRTPoint &start, double scan_radius, Polygon 
       config(config) {}
 
 std::vector<XYZCoord> AirdropSearch::run() const {
-    if (!config.optimize) {
-        // generates the endpoints for the lines (including headings)
-        std::vector<RRTPoint> waypoints =
-            airspace.getAirdropWaypoints(scan_radius, config.one_way, config.vertical);
+    return config.optimize ? coverageOptimal() : coverageDefault();
+}
 
-        // generates the path connecting the q
-        std::vector<XYZCoord> path;
-        RRTPoint current = start;
-        for (const RRTPoint &waypoint : waypoints) {
-            std::vector<XYZCoord> dubins_path = dubins.dubinsPath(current, waypoint);
-            path.insert(path.end(), dubins_path.begin() + 1, dubins_path.end());
-            current = waypoint;
-        }
+std::vector<XYZCoord> AirdropSearch::coverageDefault() const {
+    // generates the endpoints for the lines (including headings)
+    std::vector<RRTPoint> waypoints =
+        airspace.getAirdropWaypoints(scan_radius, config.one_way, config.vertical);
+    waypoints.emplace(waypoints.begin(), start);
 
-        return path;
+    // generates the path connecting the q
+    std::vector<RRTOption> dubins_options;
+    for (int i = 0; i < waypoints.size() - 1; i++) {
+        dubins_options.push_back(dubins.bestOption(waypoints[i], waypoints[i + 1]));
     }
 
-    // if optimizing, we store dubins options and then compare lengths
+    return generatePath(dubins_options, waypoints);
+}
 
+std::vector<XYZCoord> AirdropSearch::coverageOptimal() const {
     /*
      * The order of paths
      * [0] - alt, vertical
@@ -337,28 +337,24 @@ std::vector<XYZCoord> AirdropSearch::run() const {
         }
     }
 
-    // actually makes the path
-    std::vector<XYZCoord> path;
-    RRTPoint current = start;
-
     // gets the path
     std::vector<RRTPoint> waypoints = airspace.getAirdropWaypoints(
         scan_radius, configs[shortest_path_index].first, configs[shortest_path_index].second);
 
-    // initial path to the region is a special case, so we deal with it individually
-    std::vector<XYZCoord> init_path = dubins.generatePoints(
-        current, waypoints[0], dubins_paths[shortest_path_index][0].dubins_path,
-        dubins_paths[shortest_path_index][0].has_straight);
-    path.insert(path.end(), init_path.begin(), init_path.end());
+    waypoints.emplace(waypoints.begin(), start);
 
-    // go through all the waypoints
-    for (int i = 0; i < dubins_paths[shortest_path_index].size() - 1; i++) {
-        std::vector<XYZCoord> path_coordinates = dubins.generatePoints(
-            waypoints[i], waypoints[i + 1], dubins_paths[shortest_path_index][i + 1].dubins_path,
-            dubins_paths[shortest_path_index][i + 1].has_straight);
+    return generatePath(dubins_paths[shortest_path_index], waypoints);
+}
+
+std::vector<XYZCoord> AirdropSearch::generatePath(const std::vector<RRTOption> &dubins_options,
+                                                  const std::vector<RRTPoint> &waypoints) const {
+    std::vector<XYZCoord> path;
+    for (int i = 0; i < dubins_options.size(); i++) {
+        std::vector<XYZCoord> path_coordinates =
+            dubins.generatePoints(waypoints[i], waypoints[i + 1], dubins_options[i].dubins_path,
+                                  dubins_options[i].has_straight);
         path.insert(path.end(), path_coordinates.begin() + 1, path_coordinates.end());
     }
-
     return path;
 }
 
