@@ -8,36 +8,16 @@
 
 CVLoiterTick::CVLoiterTick(std::shared_ptr<MissionState> state)
     :Tick(state, TickID::CVLoiter) {
-        // Get the airdrop bottles from the mission parameters
-        bottlesToDropV = state->mission_params.getAirdropBottles();
-
-        // Fill Bottles array because Aggregator wants that idrk why
-        std::copy_n(bottlesToDropV.begin(), NUMBOTTLES, bottlesToDrop.begin()); 
-
         // Get the images from the camera
         flightImages = state->getCamera()->getAllImages();
 
-        // TODO: Add path config to the models
-        // matching model can be downloaded from here: https://drive.google.com/drive/folders/1ciDfycNyJiLvRhJhwQZoeKH7vgV6dGHJ?usp=drive_link
-        matchingModelPath = "../models/target_siamese_1.pt";
-        // segmentation model can be downloaded from here: https://drive.google.com/file/d/1U2EbfJFzcjVnjTuD6ud-bIf8YOiEassf/view?usp=drive_link
-        segmentationModelPath = "../models/fcn.pth";
-
-        saliencyModelPath = "../models/torchscript_19.pth";
-
-        // Initalizes pipeline 
-        pipeline(PipelineParams(bottlesToDrop, referenceImages, matchingModelPath, segmentationModelPath, saliencyModelPath));
-
-        // TODO: Change to reference mission_state 
-        state->getCV()(pipeline);
-
         for (ImageData imageData : flightImages) {
             // Runs the pipeline on the image data
-            state.getCV().aggregator.runPipeline(imageData);
+            state->getCV()->runPipeline(imageData);
         }
 
         // Gets the results from the aggregator
-        results = aggregator.getResults();
+        results = state->getCV()->getResults();
     }
 
 std::chrono::milliseconds CVLoiterTick::getWait() const {

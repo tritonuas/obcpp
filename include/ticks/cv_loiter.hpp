@@ -11,8 +11,6 @@
 #include "cv/pipeline.hpp"
 #include "cv/aggregator.hpp"
 
-#define NUMBOTTLES 5
-
 /*
  * Stop taking photos, loiter away from the search zone
  * and wait until CV processing is done. 
@@ -27,18 +25,8 @@ class CVLoiterTick : public Tick {
 
     Tick* tick() override;
  private:
-    std::vector<Bottle> bottlesToDropV;
-    std::array<Bottle, NUMBOTTLES> bottlesToDrop;
-
     std::deque<ImageData> flightImages;
-    std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages;
-
-    std::string matchingModelPath;
-    std::string segmentationModelPath;
-    std::string saliencyModelPath;
-    
-    Pipeline pipeline;
-    std::shared_ptr<CVResults> results;
+    LockPtr<CVResults> results;
 };
 
 #endif  // INCLUDE_TICKS_CV_LOITER_HPP_

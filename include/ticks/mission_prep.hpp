@@ -6,6 +6,10 @@
 #include <string>
 
 #include "ticks/tick.hpp"
+#include "cv/pipeline.hpp"
+#include "cv/aggregator.hpp"
+
+#define NUMBOTTLES 5
 
 /*
  * Checks every second whether or not a valid mission has been uploaded.
@@ -16,6 +20,16 @@
 class MissionPrepTick : public Tick {
  public:
     explicit MissionPrepTick(std::shared_ptr<MissionState> state);
+
+    std::vector<Bottle> bottlesToDropV;
+    std::array<Bottle, NUMBOTTLES> bottlesToDrop;
+    std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages;
+
+    std::string matchingModelPath;
+    std::string segmentationModelPath;
+    std::string saliencyModelPath;
+    
+    std::unique_ptr<Pipeline> pipeline;
 
     std::chrono::milliseconds getWait() const override;
 
