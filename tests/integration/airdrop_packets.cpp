@@ -2,7 +2,7 @@
 #include <chrono>
 
 extern "C" {
-    #include "airdrop/packet.h"
+    #include "udp_squared/protocol.h"
     #include "network/airdrop_sockets.h"
 }
 
@@ -14,7 +14,7 @@ using namespace std::chrono_literals;
 int main(int argc, char** argv) {
     initLogging("/workspaces/obcpp/logs", true, argc, argv);
 
-    ad_socket_result_t result = make_ad_socket(AD_OBC_PORT, AD_PAYLOAD_PORT);
+    ad_socket_result_t result = make_ad_socket(UDP2_OBC_PORT, UDP2_PAYLOAD_PORT);
 
     if (result.is_err) {
         std::cerr << "SOCKET ERROR: " << result.data.err << std::endl;
@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
     }
 
     AirdropClient airdrop(result.data.res);
-    airdrop.send(ad_latlng_packet_t {.hdr=SEND_LATLNG, .bottle=BOTTLE_A, .lat=32.12345, .lng=76.98765});
+    airdrop.send(makeLatLngPacket(SEND_LATLNG, UDP2_A, OBC_NULL, 32.123, 76.321, 100));
     std::this_thread::sleep_for(5s);
     LOG_F(INFO, "Checking for ack latlng...");
     while (true) {
@@ -30,26 +30,32 @@ int main(int argc, char** argv) {
         if (!packet) {
             break;
         }
-        LOG_F(INFO, "test %d %d", static_cast<int>(packet->data), static_cast<int>(packet->hdr));
+        uint8_t bottle, state;
+        parseID(packet->id, &bottle, &state);
+        LOG_F(INFO, "test %d %d %d", static_cast<int>(packet->header), static_cast<int>(bottle), static_cast<int>(state));
     }
     LOG_F(INFO, "Done with checking for ack latlng");
-    airdrop.send(ad_packet_t {.hdr=SIGNAL, .data=BOTTLE_A});
+    airdrop.send(makeArmPacket(ARM, UDP2_A, OBC_NULL, 105));
     std::this_thread::sleep_for(1s);
     while (true) {
         auto packet = airdrop.receive(); 
         if (!packet) {
             break;
         }
-        LOG_F(INFO, "test2 %d %d", static_cast<int>(packet->data), static_cast<int>(packet->hdr));
+        uint8_t bottle, state;
+        parseID(packet->id, &bottle, &state);
+        LOG_F(INFO, "test2 %d %d %d", static_cast<int>(packet->header), static_cast<int>(bottle), static_cast<int>(state));
     }
-    airdrop.send(ad_packet_t {.hdr=REVOKE, .data=BOTTLE_A});
+    airdrop.send(makeArmPacket(DISARM, UDP2_A, OBC_NULL, 100));
     std::this_thread::sleep_for(1s);
     while (true) {
         auto packet = airdrop.receive(); 
         if (!packet) {
             break;
         }
-        LOG_F(INFO, "test2 %d %d", static_cast<int>(packet->data), static_cast<int>(packet->hdr));
+        uint8_t bottle, state;
+        parseID(packet->id, &bottle, &state);
+        LOG_F(INFO, "test2 %d %d %d", static_cast<int>(packet->header), static_cast<int>(bottle), static_cast<int>(state));
     }
 
     while (true) {
