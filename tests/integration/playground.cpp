@@ -24,7 +24,7 @@ int main (int argc, char *argv[]) {
     
     // test mavsdk
     LOG_F(INFO, "Testing mavsdk installation\n");
-    mavsdk::Mavsdk mavsdk;
+    mavsdk::Mavsdk mavsdk(mavsdk::Mavsdk::Configuration(mavsdk::Mavsdk::ComponentType::CompanionComputer));
     std::string connection_address = "tcp://127.0.0.1:5760";
     mavsdk::ConnectionResult conn_result = mavsdk.add_any_connection(connection_address);
     LOG_F(INFO, "Expected connection to be refused\n");

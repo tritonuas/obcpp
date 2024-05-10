@@ -18,8 +18,6 @@
 
 // in future might add to this
 MissionState::MissionState() {
-    // TODO: depending on config change from Mock to Real Lucid Camera
-    this->camera = std::make_shared<MockCamera>(CameraConfiguration(nlohmann::json()));
 }
 
 // Need to explicitly define now that Tick is no longer an incomplete class
@@ -93,3 +91,5 @@ std::shared_ptr<CVAggregator> MissionState::getCV() { return this->cv; }
 void MissionState::setCV(std::shared_ptr<CVAggregator> cv) { this->cv = cv; }
 
 std::shared_ptr<CameraInterface> MissionState::getCamera() { return this->camera; }
+
+void MissionState::setCamera(std::shared_ptr<CameraInterface> camera) { this->camera = camera; }
