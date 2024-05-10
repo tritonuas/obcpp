@@ -7,6 +7,7 @@
 #include <opencv2/opencv.hpp>
 #include "utilities/logging.hpp"
 
+
 #define REGULAR_TARGET 1
 #define MANNIKIN 2
 
@@ -25,6 +26,7 @@ Saliency::Saliency(std::string modelPath) {
     catch (const c10::Error& e) {
         LOG_F(ERROR, "error loading the model %s", e.msg().c_str());
     }
+
 }
 
 std::vector<CroppedTarget> Saliency::salience(cv::Mat image) {

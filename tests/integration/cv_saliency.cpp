@@ -5,6 +5,7 @@
 #include <string>
 
 #include "cv/saliency.hpp"
+#include "utilities/common.hpp"
 #include "loguru.hpp"
 
 // expected arguments: <path-to-model> <path-to-image> 
@@ -18,11 +19,18 @@ int main(int argc, const char* argv[]) {
   // convert image to tensor
  
   const char* modelPath = argv[1];
+  auto startLoad = getUnixTime_ms().count();
   Saliency sal(modelPath);
+  auto endLoad = getUnixTime_ms().count();
+  LOG_F(INFO, "time to load: %u milliseconds", endLoad - startLoad);
+
   const char* imgPath = argv[2];
   cv::Mat img = cv::imread(imgPath, cv::IMREAD_COLOR);
 
+  auto startSalience = getUnixTime_ms().count();
   std::vector<CroppedTarget> predictions = sal.salience(img); 
+  auto endSalience = getUnixTime_ms().count();
+  LOG_F(INFO, "time to saliency: %u milliseconds", endSalience - startSalience);
   
   img = cv::imread(imgPath, cv::IMREAD_COLOR);
   
