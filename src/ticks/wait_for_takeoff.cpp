@@ -24,7 +24,11 @@ Tick* WaitForTakeoffTick::tick() {
         return new ActiveTakeoffTick(this->state);
     }
     
-    LOG_F(INFO, "Takeoff status has not been set.");
+    static int counter = 0;
+    counter++;
+    if (counter % 50 == 0) {
+        LOG_F(INFO, "Takeoff status has not been set.");
+    }
     return nullptr;
 }
 
