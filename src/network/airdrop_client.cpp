@@ -160,7 +160,9 @@ packet_t AirdropClient::_receiveBlocking() {
         }
 
         // TODO: helper to go from packet -> str
-        VLOG_F(TRACE, "received airdrop packet: %hhu %hhu", packet.header, packet.id);
+        uint8_t bottle, state;
+        parseID(packet.id, &bottle, &state);
+        VLOG_F(TRACE, "received airdrop packet: %hhu %hhu %hhu", packet.header, bottle, state);
 
         return packet;
     }
