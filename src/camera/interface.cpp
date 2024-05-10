@@ -1,27 +1,31 @@
 #include "camera/interface.hpp"
 
-ImageTelemetry::ImageTelemetry(double latitude, double longitude, double altitude,
-                               double airspeed, double heading,
-                               double yaw, double pitch, double roll)
-    : latitude(latitude),
-      longitude(longitude),
-      altitude(altitude),
-      airspeed(airspeed),
-      heading(heading),
-      yaw(yaw),
-      pitch(pitch),
-      roll(roll) {}
+#include <optional>
 
-ImageData::ImageData(std::string NAME, std::string PATH, cv::Mat DATA, ImageTelemetry TELEMETRY)
-    : NAME(NAME), PATH(PATH), DATA(DATA), TELEMETRY(TELEMETRY) {}
+CameraInterface::CameraInterface(const CameraConfig& config) : config(config) {}
 
-std::string ImageData::getName() const { return NAME; }
-std::string ImageData::getPath() const { return PATH; }
+std::optional<ImageTelemetry> queryMavlinkImageTelemetry(
+  std::shared_ptr<MavlinkClient> mavlinkClient) {
+  if (mavlinkClient == nullptr) {
+    return {};
+  }
 
-cv::Mat ImageData::getData() const { return DATA; }
+  auto [lat_deg, lon_deg] = mavlinkClient->latlng_deg();
+  double altitude_agl_m = mavlinkClient->altitude_agl_m();
+  double airspeed_m_s = mavlinkClient->airspeed_m_s();
+  double heading_deg = mavlinkClient->heading_deg();
+  double yaw_deg = mavlinkClient->yaw_deg();
+  double pitch_deg = mavlinkClient->pitch_deg();
+  double roll_deg = mavlinkClient->roll_deg();
 
-ImageTelemetry ImageData::getTelemetry() const { return TELEMETRY; }
-
-CameraConfiguration::CameraConfiguration(nlohmann::json config) : configJson(config) {}
-
-CameraInterface::CameraInterface(CameraConfiguration config) : config(config) {}
+  return ImageTelemetry {
+    .latitude_deg = lat_deg,
+    .longitude_deg = lon_deg,
+    .altitude_agl_m = altitude_agl_m,
+    .airspeed_m_s = airspeed_m_s,
+    .heading_deg = heading_deg,
+    .yaw_deg = yaw_deg,
+    .pitch_deg = pitch_deg,
+    .roll_deg = roll_deg
+  };
+}

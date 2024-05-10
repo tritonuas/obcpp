@@ -18,11 +18,12 @@ struct OBCConfig {
     } network;
 
     struct {
-        float m_altitude;
+        float altitude_m;
     } takeoff;
 
     RRTConfig rrt_config;
     AirdropSearchConfig coverage_pathing_config;
+    CameraConfig camera_config;
 
     // Load user specified config json, or make a new one
     OBCConfig(int argc, char* argv[]);
