@@ -25,12 +25,12 @@ class CVLoiterTick : public Tick {
 
     Tick* tick() override;
  private:
-    std::array<Bottle, 8> bottlesToDrop;
-    std::vector<ImageData> flightImages;
+    std::vector<Bottle> bottlesToDrop;
+    std::deque<ImageData> flightImages;
     std::vector<ImageData> referenceImages;
 
-    const std::string matchingModelPath;
-    const std::string segmentationModelPath;
+    std::string matchingModelPath;
+    std::string segmentationModelPath;
     
     Pipeline pipeline;
     std::shared_ptr<CVResults> results;

@@ -9,9 +9,9 @@
 CVLoiterTick::CVLoiterTick(std::shared_ptr<MissionState> state)
     :Tick(state, TickID::CVLoiter) {
         // Get the airdrop bottles from the mission parameters
-        bottlesToDrop = state.mission_params.getAirdropBottles();
+        bottlesToDrop = state->mission_params.getAirdropBottles();
         // Get the images from the camera
-        flightImages = this.state.camera.getAllImages();
+        flightImages = state->getCamera()->getAllImages();
 
         // TODO: Add path config to the models
         // matching model can be downloaded from here: https://drive.google.com/drive/folders/1ciDfycNyJiLvRhJhwQZoeKH7vgV6dGHJ?usp=drive_link
