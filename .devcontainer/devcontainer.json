@@ -1,6 +1,6 @@
 // See this page for reference of options: https://containers.dev/implementors/json_reference
 {
-	"name": "Existing Dockerfile",
+	"name": "x86",
 	"image": "ghcr.io/tritonuas/obcpp:x86",
 	// enable when need to connect over USB to pixhawk
 	// also: need to run obcpp with sudo or add tuas user to dialout group with
@@ -9,9 +9,9 @@
 
 	// Enable network mode host if on Linux and testing airdrop connectivity
     // "appPort": [ "45906:45906/udp", "45907:45907/udp" ], // port forward airdrop ports for local testing
-	"runArgs": [
-		"--network=host"
-	],
+	// "runArgs": [
+	// 	"--network=host"
+	// ],
 
 	"extensions.verifySignature": false,
 

@@ -20,6 +20,7 @@
 
 #include "protos/obc.pb.h"
 
+#include "utilities/datatypes.hpp"
 
 class MissionState;
 
@@ -65,13 +66,16 @@ class MavlinkClient {
     double groundspeed_m_s();
     double airspeed_m_s();
     double heading_deg();
+    double yaw_deg();
+    double pitch_deg();
+    double roll_deg();
     bool isArmed();
     mavsdk::Telemetry::FlightMode flight_mode();
     double angle2D(double x1, double y1, double x2, double y2);
     bool isPointInPolygon(std::pair<double, double> latlng, std::vector<XYZCoord> region);
     bool isMissionFinished();
     mavsdk::Telemetry::RcStatus get_conn_status();
-    bool armAndHover();
+    bool armAndHover(std::shared_ptr<MissionState> state);
     bool startMission();
 
  private:
@@ -91,6 +95,9 @@ class MavlinkClient {
         double groundspeed_m_s {};
         double airspeed_m_s {};
         double heading_deg {};
+        double yaw_deg {};
+        double pitch_deg {};
+        double roll_deg {};
         mavsdk::Telemetry::FlightMode flight_mode {};
         bool armed {};
     } data;

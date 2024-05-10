@@ -26,7 +26,7 @@ class RRT {
         RRTConfig config = {.iterations_per_waypoint = ITERATIONS_PER_WAYPOINT,
                             .rewire_radius = REWIRE_RADIUS,
                             .optimize = false,
-                            .point_fetch_method = POINT_FETCH_METHODS::NONE,
+                            .point_fetch_method = POINT_FETCH_METHODS::NEAREST,
                             .allowed_to_skip_waypoints = false});
 
     /**
@@ -59,6 +59,7 @@ class RRT {
     const double search_radius;         // !!NOT USED!! max radius to move off the tree
     const double rewire_radius;         // ONLY FOR RRT-STAR, max radius from new node to rewire
     const RRTConfig config;             // optimization options
+    std::vector<XYZCoord> flight_path;
 
     // the different of final approaches to the goal
     // yes, this is the default unit circle diagram used in High-School
@@ -140,6 +141,17 @@ class RRT {
      */
     bool connectToGoal(int current_goal_index,
                        int total_options = TOTAL_OPTIONS_FOR_GOAL_CONNECTION);
+
+    /**
+     * Does the logistical work when found one waypoint to another 
+     *  - adds the node to the tree
+     *  - finds the path
+     *      - adds altitude to the path
+     * 
+     * @param goal_node  ==> node to add to the tree
+     * @param current_goal_index ==> index of the goal that we are trying to
+    */
+    void addNodeToTree(RRTNode *goal_node, int current_goal_index);
 
     /**
      * Goes through generated options to try to connect the sample to the tree

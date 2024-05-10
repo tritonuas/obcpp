@@ -121,6 +121,16 @@ MavlinkClient::MavlinkClient(std::string link):
             Lock lock(this->data_mut);
             this->data.armed = armed;
         });
+    // this->telemetry->subscribe_attitude_euler(
+    //     [this](mavsdk::Telemetry::EulerAngle attitude) {
+    //         VLOG_F(DEBUG, "Yaw: %f, Pitch: %f, Roll: %f)",
+    //             attitude.yaw_deg, attitude.pitch_deg, attitude.roll_deg);
+
+    //         Lock lock(this->data_mut);
+    //         this->data.yaw_deg = attitude.yaw_deg;
+    //         this->data.pitch_deg = attitude.pitch_deg;
+    //         this->data.roll_deg = attitude.roll_deg;
+    //     });
 }
 
 bool MavlinkClient::uploadMissionUntilSuccess(std::shared_ptr<MissionState> state,
@@ -277,6 +287,22 @@ double MavlinkClient::heading_deg() {
     return this->data.heading_deg;
 }
 
+double MavlinkClient::yaw_deg() {
+    Lock lock(this->data_mut);
+    return this->data.yaw_deg;
+}
+
+double MavlinkClient::pitch_deg() {
+    Lock lock(this->data_mut);
+    return this->data.pitch_deg;
+}
+
+double MavlinkClient::roll_deg() {
+    Lock lock(this->data_mut);
+    return this->data.roll_deg;
+}
+
+
 bool MavlinkClient::isArmed() {
     Lock lock(this->data_mut);
     return this->data.armed;
@@ -343,7 +369,7 @@ mavsdk::Telemetry::RcStatus MavlinkClient::get_conn_status() {
 /**
  * Goes through the sequence of checking vehicle health -> arm vehicle -> takeoff -> hover at set altitude.
 */
-bool MavlinkClient::armAndHover() {
+bool MavlinkClient::armAndHover(std::shared_ptr<MissionState> state) {
     LOG_F(INFO, "Attempting to arm and hover");
     LOG_F(INFO, "Checking vehicle health...");
     // Vehicle can only be armed if status is healthy
@@ -362,7 +388,7 @@ bool MavlinkClient::armAndHover() {
 
 
     // TODO: config option for this
-    const float TAKEOFF_ALT = 30.0f;
+    const float TAKEOFF_ALT = state->takeoff_alt_m;
     auto r1 = this->action->set_takeoff_altitude(TAKEOFF_ALT);
     if (r1 != mavsdk::Action::Result::Success) {
         LOG_S(ERROR) << "FAIL: could not set takeoff alt " << r1;

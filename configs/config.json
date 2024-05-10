@@ -10,6 +10,9 @@
             "port": 5010
         }
     },
+    "takeoff": {
+        "altitude_m": 30.0
+    },
     "pathing": {
         "_comment": "Point Fetch Method 2: NEAREST",
         "rrt": {
@@ -23,6 +26,37 @@
             "optimize": true,
             "vertical": false,
             "one_way": false
+        }
+    },
+    "camera": {
+        "_comment": "See CameraConfig struct in datatypes.hpp for detailed explanations",
+        "type": "lucid",
+        "mock": {
+            "images_dir": "/workspaces/obcpp/tests/integration/images/saliency/"
+        },
+        "lucid": {
+            "sensor_shuttle_mode": "Rolling",
+
+            "acquisition_frame_rate_enable": true,
+            "target_brightness": 70,
+            "exposure_auto": "Continuous",
+            "exposure_time": 3000,
+            "exposure_auto_damping": 1,
+            "exposure_auto_algorithm": "Median",
+            "exposure_auto_upper_limit": 500,
+            "exposure_auto_lower_limit": 360,
+
+            "stream_auto_negotiate_packet_size": true,
+            "stream_packet_resend_enable": true,
+
+            "device_link_throughput_limit_mode": "On",
+            "device_link_throughput_limit": 125000000,
+
+            "gamma_enable": true,
+            "gamma": 0.5,
+            "gain_auto": "Continuous",
+            "gain_auto_upper_limit": 10,
+            "gain_auto_lower_limit": 1
         }
     }
 }

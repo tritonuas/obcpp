@@ -134,6 +134,12 @@ class RRTTree {
     RRTNode* generateNode(RRTNode* anchor_node, const RRTPoint& new_point,
                           const RRTOption& option) const;
 
+    /**
+     * Adds a node to the tree
+     *
+     * @param anchor_node   ==> the node to connect to
+     * @param new_node      ==> the node to add
+     */
     bool addNode(RRTNode* anchor_node, RRTNode* new_node);
 
     /*
@@ -207,14 +213,15 @@ class RRTTree {
      */
     void setCurrentHead(RRTNode* goal);
 
-    /**
-     * Returns a path to the goal from the root
-     *
-     * The currentHead must be the goal for this to properly
-     * generate a complete path
-     * @return  ==> list of 2-vectors to the goal region
-     */
-    std::vector<XYZCoord> getPathToGoal() const;
+    //  /**
+    //   *  _____| UNUSED |_____
+    //   * Returns a path to the goal from the root
+    //   *
+    //   * The currentHead must be the goal for this to properly
+    //   * generate a complete path
+    //   * @return  ==> list of 2-vectors to the goal region
+    //   */
+    //  std::vector<XYZCoord> getPathToGoal() const;
 
     /**
      * Rewires an edge from an old path to a new path.
@@ -278,6 +285,21 @@ class RRTTree {
      */
     void fillOptionsNodes(std::vector<std::pair<RRTNode*, RRTOption>>& options,
                           const std::vector<RRTNode*>& nodes, const RRTPoint& sample) const;
+
+    /**
+     * Returns the segment of path from the given node to the current head
+     *
+     * @param node  ==> the node to start the path from
+     * @return      ==> the path from the node to the current head
+     */
+    std::vector<XYZCoord> getPathSegment(RRTNode* node) const;
+
+    /**
+     * Returns the start RRTPoint
+     *
+     * @return RRTPoint start point
+     */
+    RRTPoint& getStart() const;
 
  private:
     RRTNode* root;
