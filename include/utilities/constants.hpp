@@ -42,6 +42,7 @@ const int NUM_AIRDROP_BOTTLES = 5;
 
 const char MISSION_CONFIG_PATH[] = "./mission-config.json";
 const double TAKEOFF_ALTITUDE_M = 30.0;
+const double COVERAGE_ALTITUDE_M = 30.0;
 
 const matplot::color FLIGHT_BOUND_COLOR = matplot::color::red;
 const matplot::color AIRDROP_BOUND_COLOR = matplot::color::magenta;

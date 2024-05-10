@@ -107,6 +107,7 @@ struct RRTConfig {
 };
 
 struct AirdropSearchConfig {
+    double coverage_altitude_m;
     bool optimize;  // whether to ignore the config below and run all ways.
     bool vertical;  // if true, will search in vertical lines
     bool one_way;   // if true, path returned will only be in 1 direction

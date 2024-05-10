@@ -23,6 +23,7 @@
             "allowed_to_skip_waypoints": false
         },
         "coverage": {
+            "coverage_altitude_m": 30.0,
             "optimize": true,
             "vertical": false,
             "one_way": false

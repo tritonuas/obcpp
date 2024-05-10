@@ -188,7 +188,10 @@ class AirdropSearch {
     AirdropSearch(const RRTPoint &start, double scan_radius, Polygon bounds, Polygon airdrop_zone,
                   std::vector<Polygon> obstacles = {},
                   AirdropSearchConfig config = {
-                      .optimize = false, .vertical = false, .one_way = false});
+                      .coverage_altitude_m = 30.0,
+                      .optimize = false,
+                      .vertical = false,
+                      .one_way = false});
 
     /**
      * Generates a path of parallel lines to cover a given area
