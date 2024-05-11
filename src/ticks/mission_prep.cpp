@@ -16,7 +16,7 @@ std::chrono::milliseconds MissionPrepTick::getWait() const {
 }
 
 Tick* MissionPrepTick::tick() {
-    if (this->state->config.getCachedMission().has_value()) {
+    if (this->state->mission_params.getCachedMission().has_value()) {
         LOG_F(INFO, "Valid mission configuration detected");
         return new PathGenTick(this->state);
     } else {

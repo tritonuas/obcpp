@@ -1,24 +1,59 @@
 #ifndef INCLUDE_CAMERA_MOCK_HPP_
 #define INCLUDE_CAMERA_MOCK_HPP_
 
+#include <thread>
 #include <memory>
+#include <shared_mutex>
+#include <deque>
+#include <vector>
 
 #include "camera/interface.hpp"
+#include "network/mavlink.hpp"
+#include "utilities/datatypes.hpp"
 
 class MockCamera : public CameraInterface {
  public:
-    explicit MockCamera(CameraConfiguration config);
-    ~MockCamera() = default;
+    explicit MockCamera(CameraConfig config);
+    ~MockCamera();
+
     void connect() override;
-    bool verifyConnection() override;
-    void takePicture() override;
-    ImageData getLastPicture() override;
-    bool takePictureForSeconds(int sec) override;
-    void startTakingPictures(double intervalSec) override;
-    bool isDoneTakingPictures() override;
+    bool isConnected() override;
+
+    /**
+     * Start taking photos at an interval in a background thread
+    */
+    void startTakingPictures(const std::chrono::milliseconds& interval,
+        std::shared_ptr<MavlinkClient> mavlinkClient) override;
+    void stopTakingPictures() override;
+
+    /**
+     * Get the latest image that the camera took. This pops the latest
+     * image from a queue of images which means that the same image won't.
+     * be returned in two subsequent calls
+    */ 
+    std::optional<ImageData> getLatestImage() override;
+
+    /**
+     * getAllImages returns a queue of all the images that have been
+     * cached since the last call to getAllImages. Once this is called,
+     * it returns the cached images and clears the internal cache.
+    */
+    std::deque<ImageData> getAllImages() override;
 
  private:
-    std::unique_ptr<ImageData> lastPicture;
+    std::vector<cv::Mat> mock_images;
+
+    std::atomic_bool isTakingPictures;
+
+    void captureEvery(const std::chrono::milliseconds& interval,
+        std::shared_ptr<MavlinkClient> mavlinkClient);
+
+    std::deque<ImageData> imageQueue;
+    std::shared_mutex imageQueueLock;
+
+    std::thread captureThread;
+
+    cv::Mat takePicture();
 };
 
 #endif  // INCLUDE_CAMERA_MOCK_HPP_

@@ -3,6 +3,8 @@
 #include <torchvision/vision.h>
 #include <iostream>
 
+#include <loguru.hpp>
+
 /*
 * Test loading a model that uses torchvision operators 
 * bin/load_torchvision_model [model_file] 
@@ -10,17 +12,22 @@
 */ 
 int main (int argc, char *argv[]) {
     if (argc < 2) {
-        std::cout << "did not provide model_file as argument" << std::endl;
+        LOG_F(ERROR, "did not provide model_file as argument");
         return 1;
     }
     torch::jit::script::Module module;
     try {
         module = torch::jit::load(argv[1]);
     } catch (const c10::Error& e) {
-        std::cerr << "error loading the model: : " << e.msg() << std::endl;
+        LOG_S(ERROR) << "error loading the model: : " << e.msg() << "\n";
         return 1;
     }
 
-    std::cout << "loaded model without crashing" << std::endl;
+    if (torch::cuda::is_available()) {
+	    module.to(torch::kCUDA);
+        LOG_F(INFO, "successfully moved model to GPU (CUDA)");
+    }
+
+    LOG_F(INFO, "loaded model without crashing");
     return 0;
 }

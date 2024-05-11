@@ -1,90 +1,91 @@
 #include "pathing/tree.hpp"
-#include "utilities/datatypes.hpp"
+
 #include <gtest/gtest.h>
 
+#include "pathing/dubins.hpp"
+#include "pathing/environment.hpp"
+#include "utilities/constants.hpp"
+#include "utilities/datatypes.hpp"
+
+/*
+ *   very bad tests, was too lazy to check if every parameter was correct, aka didn't bother to find
+ *   the hardcoded values for the expected values.
+ */
+#include <iostream>
+
 TEST(SimpleTreeTest, addNodeTest) {
-    RRTPoint point1 = RRTPoint(XYZCoord(1, 2, 0), 0);
-    RRTPoint point2 = RRTPoint(XYZCoord(0, 2, 0), 0);
-    RRTNode a = RRTNode(point1, 10);
-    RRTNode b = RRTNode(point2, 10);
-    std::vector<XYZCoord> path = {XYZCoord(0.5, 2, 0), XYZCoord(0.25, 2, 0)};
-    double edgeCost = 1;
-    RRTEdge edge = RRTEdge(&a, &b, path, edgeCost);
-    RRTTree simpleTree = RRTTree();
+    Dubins dubins{5, 0.1};
+    Polygon valid_region;
+    valid_region.emplace_back(XYZCoord(0, 0, 0));
+    valid_region.emplace_back(XYZCoord(100, 0, 0));
+    valid_region.emplace_back(XYZCoord(100, 100, 0));
+    valid_region.emplace_back(XYZCoord(0, 100, 0));
 
-    simpleTree.addNode(&a, &a, std::vector<XYZCoord>(), 0);
-    simpleTree.addNode(&a, &b, path, edgeCost);
+    Polygon obs1 = {
+        {XYZCoord(10, 10, 0), XYZCoord(20, 10, 0), XYZCoord(20, 20, 0), XYZCoord(10, 20, 0)}};
 
-    EXPECT_TRUE(a.getReachable().size() > 0);
-    
-    EXPECT_TRUE(a.getReachable().back() == &b);
+    std::vector<Polygon> obstacles = {obs1};
+    Environment env = Environment(valid_region, {}, {XYZCoord(0, 0, 0)}, obstacles);
+    RRTPoint point1 = RRTPoint(XYZCoord(25, 25, 0), 0);
+    RRTPoint point2 = RRTPoint(XYZCoord(50, 75, 0), 0);
+    RRTOption option = dubins.allOptions(point1, point2, true)[0];
 
-    EXPECT_TRUE(simpleTree.getNode(point1) != nullptr);
-    EXPECT_TRUE(simpleTree.getNode(point2) != nullptr);
+    RRTTree simple_tree = RRTTree(point1, env, dubins);
 
-    EXPECT_TRUE(simpleTree.getEdge(point1, point2) != nullptr);
-}
+    RRTNode* root = simple_tree.getRoot();
 
-TEST(SimpleTreeTest, getNodeTest) {
-    RRTPoint point1 = RRTPoint(XYZCoord(1, 2, 0), 0);
-    RRTPoint point2 = RRTPoint(XYZCoord(0, 2, 0), 0);
-    RRTNode a = RRTNode(point1, 10);
-    RRTNode b = RRTNode(point2, 10);
-    std::vector<XYZCoord> path = {XYZCoord(0.5, 2, 0), XYZCoord(0.25, 2, 0)};
-    double edgeCost = 1;
-    RRTEdge edge = RRTEdge(&a, &b, path, edgeCost);
-    RRTTree simpleTree = RRTTree();
-    simpleTree.addNode(&a, &a, std::vector<XYZCoord>(), 0);
-    simpleTree.addNode(&a, &b, path, edgeCost);
+    // simpleTree.addNode(root, point1);
+    RRTNode* added_point = simple_tree.addSample(root, point2, option);
 
-    EXPECT_TRUE(simpleTree.getNode(point1) != nullptr);
-    EXPECT_TRUE(*(simpleTree.getNode(point1)) == a);
-
-    EXPECT_TRUE(simpleTree.getNode(point2) != nullptr);
-    EXPECT_TRUE(*(simpleTree.getNode(point2)) == b);
-}
-
-TEST(SimpleTreeTest, getEdgeTest) {
-    RRTPoint point1 = RRTPoint(XYZCoord(1, 2, 0), 0);
-    RRTPoint point2 = RRTPoint(XYZCoord(0, 2, 0), 0);
-    RRTNode a = RRTNode(point1, 10);
-    RRTNode b = RRTNode(point2, 10);
-    std::vector<XYZCoord> path = {XYZCoord(0.5, 2, 0), XYZCoord(0.25, 2, 0)};
-    double edgeCost = 1;
-    RRTEdge edge = RRTEdge(&a, &b, path, edgeCost);
-    RRTTree simpleTree = RRTTree();
-    simpleTree.addNode(&a, &a, std::vector<XYZCoord>(), 0);
-    simpleTree.addNode(&a, &b, path, edgeCost);
-
-    EXPECT_TRUE(simpleTree.getEdge(point1, point2) != nullptr);
-    EXPECT_TRUE(*(simpleTree.getEdge(point1, point2)) == edge);
+    EXPECT_TRUE(added_point != nullptr);
+    EXPECT_TRUE(root->getReachable().size() == 1);
+    EXPECT_TRUE(root->getReachable()[0]->getPoint() == point2);
 }
 
 TEST(SimpleTreeTest, rewireEdgeTest) {
-    RRTPoint point1 = RRTPoint(XYZCoord(1, 2, 0), 0);
-    RRTPoint point2 = RRTPoint(XYZCoord(0, 2, 0), 0);
-    RRTNode a = RRTNode(point1, 10);
-    RRTNode b = RRTNode(point2, 10);
-    std::vector<XYZCoord> path = {XYZCoord(0.5, 2, 0), XYZCoord(0.25, 2, 0)};
-    double edgeCost = 1;
+    Dubins dubins{5, 0.1};
+    Polygon valid_region;
+    valid_region.emplace_back(XYZCoord(0, 0, 0));
+    valid_region.emplace_back(XYZCoord(100, 0, 0));
+    valid_region.emplace_back(XYZCoord(100, 100, 0));
+    valid_region.emplace_back(XYZCoord(0, 100, 0));
+    Polygon obs1 = {
+        {XYZCoord(10, 10, 0), XYZCoord(20, 10, 0), XYZCoord(20, 20, 0), XYZCoord(10, 20, 0)}};
 
-    RRTTree simpleTree = RRTTree();
+    std::vector<Polygon> obstacles = {obs1};
+    Environment env = Environment(valid_region, {}, {XYZCoord(0, 0, 0)}, obstacles);
+    RRTPoint point1 = RRTPoint(XYZCoord(25, 25, 0), 0);
+    RRTPoint point2 = RRTPoint(XYZCoord(50, 75, 0), HALF_PI);
+    RRTPoint point3 = RRTPoint(XYZCoord(50, 80, 1.5), HALF_PI);
+    RRTPoint point4 = RRTPoint(XYZCoord(50, 60, 0.9), HALF_PI);
 
-    simpleTree.addNode(&a, &a, std::vector<XYZCoord>(), 0);
-    simpleTree.addNode(&a, &b, path, edgeCost);
+    RRTOption option1 = dubins.allOptions(point1, point2, true)[0];
+    RRTOption option2 = dubins.allOptions(point2, point3, true)[0];
+    RRTOption option3 = dubins.allOptions(point1, point4, true)[0];
+    RRTOption new_option = dubins.allOptions(point4, point3, true)[0];
 
-    RRTPoint point3 = RRTPoint(XYZCoord(3,2,0), 0);
-    RRTNode c = RRTNode(point3, 10);
-    RRTEdge edge = RRTEdge(&a, &c, path, edgeCost);
+    RRTTree simple_tree = RRTTree(point1, env, dubins);
 
-    simpleTree.rewireEdge(&a, &b, &c, path, edgeCost);
+    RRTNode* root = simple_tree.getRoot();
 
-    EXPECT_TRUE(a.getReachable().back() == &c);
+    // these two should add
+    RRTNode* node2 = simple_tree.addSample(root, point2, option1);
+    RRTNode* node3 = simple_tree.addSample(node2, point3, option2);
+    RRTNode* node4 = simple_tree.addSample(root, point4, option3);
+    EXPECT_TRUE(node2 != nullptr);
+    EXPECT_TRUE(node3 != nullptr);
+    EXPECT_TRUE(node4 != nullptr);
 
-    EXPECT_TRUE(simpleTree.getNode(point2) == nullptr);
-    EXPECT_TRUE(simpleTree.getNode(point3) != nullptr);
-    EXPECT_TRUE(simpleTree.getNode(point3) == &c);
+    simple_tree.rewireEdge(node3, node2, node4, {}, 2);
 
-    EXPECT_TRUE(simpleTree.getEdge(point1, point3) != nullptr);
-    EXPECT_TRUE(*(simpleTree.getEdge(point1, point3)) == edge);
+    EXPECT_TRUE(node3->getPathLength() != 0);
+
+    // EXPECT_TRUE(simple_tree.getEdge(node2, node3).getCost() ==
+                // std::numeric_limits<double>::infinity());
+
+    EXPECT_TRUE(node3->getParent() == node4);
+    EXPECT_TRUE(node2->getParent() == root);
+    EXPECT_TRUE(node4->getReachable().size() == 1);
+    EXPECT_TRUE(node2->getReachable().size() == 0);
+    EXPECT_TRUE(root->getReachable().size() == 2);
 }

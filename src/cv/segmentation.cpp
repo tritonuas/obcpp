@@ -1,11 +1,13 @@
 #include "cv/segmentation.hpp"
 
+#include <loguru.hpp>
+
 Segmentation::Segmentation(const std::string &modelPath) {
             try {
                 this->module = torch::jit::load(modelPath);
             }
             catch (const c10::Error& e) {
-                std::cerr << "ERROR: could not load the model\n";
+                LOG_F(ERROR, "could not load the model, check if model file is present at %s. If the file is present, try to verify that it's contents are valid model weights. Sometimes when pulling from google drive, an error html page will download with the same filename if the model fails to download. \n", modelPath.c_str()); // NOLINT
                 throw;
             }
         }
@@ -63,7 +65,7 @@ std::string get_image_type(const cv::Mat& img, bool more_info = true) {
     r += (chans + '0');
 
     if (more_info) {
-        std::cout << "depth: " << img.depth() << " channels: " << img.channels() << std::endl;
+        LOG_F(INFO, "depth: %d channels: %d\n", img.depth(), img.channels());
     }
     return r;
 }
@@ -88,9 +90,6 @@ int unsqueeze_dim = 0) {
         tensor_image.unsqueeze_(unsqueeze_dim);
     }
 
-    if (show_output) {
-        std::cout << tensor_image.slice(2, 0, 1) << std::endl;
-    }
     return tensor_image;
 }
 
@@ -109,7 +108,7 @@ cv::Mat ToCvImage(at::Tensor tensor) {
         return output_mat.clone();
     }
     catch (const c10::Error& e) {
-        std::cout << "an error has occured : " << e.msg() << std::endl;
+        LOG_S(ERROR) << "error loading the model: : " << e.msg() << "\n";
     }
     return cv::Mat(height, width, CV_8UC3);
 }

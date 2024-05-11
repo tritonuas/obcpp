@@ -1,18 +1,17 @@
-#include <gtest/gtest.h>
-#include <cmath>
-
 #include "utilities/datatypes.hpp"
+
+#include <gtest/gtest.h>
+
+#include <cmath>
 /*
  *   Way the tests are written is non-standarzied
  *   becuase I'm lazy
  */
 
-
 /*
-*   tests XYZCoord::==
-*/
-TEST(XYZCoordOperations, equals)
-{
+ *   tests XYZCoord::==
+ */
+TEST(XYZCoordOperations, equals) {
     XYZCoord origin{0, 0, 0};
     EXPECT_EQ(origin == (XYZCoord{0, 0, 0}), true);
     EXPECT_EQ(origin == (XYZCoord{1, 0, 0}), false);
@@ -31,10 +30,9 @@ TEST(XYZCoordOperations, equals)
 }
 
 /*
-*   tests XYZCoord::+=
-*/
-TEST(XYZCoordOperations, plusEquals)
-{
+ *   tests XYZCoord::+=
+ */
+TEST(XYZCoordOperations, plusEquals) {
     XYZCoord mutated_coord{0, 0, 0};
     EXPECT_EQ(mutated_coord, (XYZCoord{0, 0, 0}));
 
@@ -51,10 +49,9 @@ TEST(XYZCoordOperations, plusEquals)
 }
 
 /*
-*   tests XYZCoord::+
-*/
-TEST(XYZCoordOperations, addition)
-{
+ *   tests XYZCoord::+
+ */
+TEST(XYZCoordOperations, addition) {
     XYZCoord origin{0, 0, 0};
     EXPECT_EQ(origin, (XYZCoord{0, 0, 0}));
 
@@ -69,10 +66,9 @@ TEST(XYZCoordOperations, addition)
 }
 
 /*
-*   tests XYZCoord::-=
-*/
-TEST(XYZCoordOperations, minusEquals)
-{
+ *   tests XYZCoord::-=
+ */
+TEST(XYZCoordOperations, minusEquals) {
     XYZCoord mutated_coord{0, 0, 0};
     EXPECT_EQ(mutated_coord, (XYZCoord{0, 0, 0}));
 
@@ -89,10 +85,9 @@ TEST(XYZCoordOperations, minusEquals)
 }
 
 /*
-*   tests XYZCoord::-
-*/
-TEST(XYZCoordOperations, subtraction)
-{
+ *   tests XYZCoord::-
+ */
+TEST(XYZCoordOperations, subtraction) {
     XYZCoord origin{0, 0, 0};
     EXPECT_EQ(origin, (XYZCoord{0, 0, 0}));
 
@@ -107,13 +102,12 @@ TEST(XYZCoordOperations, subtraction)
 }
 
 /*
-*   tests XYZCoord::*
-*   
-*   tests when the scalar is both on the left and right 
-*   of the vector
-*/
-TEST(XYZCoordOperations, scalarMultiplication)
-{
+ *   tests XYZCoord::*
+ *
+ *   tests when the scalar is both on the left and right
+ *   of the vector
+ */
+TEST(XYZCoordOperations, scalarMultiplication) {
     XYZCoord ones{1, 1, 1};
 
     EXPECT_EQ(ones * 1, (XYZCoord{1, 1, 1}));
@@ -148,10 +142,39 @@ TEST(XYZCoordOperations, scalarMultiplication)
 }
 
 /*
-*   tests XYZCoord::norm()
-*/
-TEST(XYZCoordOperations, norm)
-{
+ *   Tests XYZCoord::distanceTo()
+ */
+TEST(XYZCoordOperations, DistanceBetweenVectors) {
+    // 3-4-5 right triangle
+    XYZCoord start_vector1{3.0, 0.0, 0};
+    XYZCoord end_vector1{0.0, 4.0, 0};
+
+    // trivial case
+    XYZCoord start_vector2{0.0, 0.0, 0};
+    XYZCoord end_vector2{0.0, 0.0, 0};
+
+    // scalar multiples
+    XYZCoord start_vector3{1.0, 0.0, 0};
+    XYZCoord end_vector3{2.0, 0.0, 0};
+
+    XYZCoord start_vector4{3.0, 4.0, 0};
+    XYZCoord end_vector4{0.0, 0.0, 0};
+
+    XYZCoord start_vector5{102.5, -125.5, 0};
+    XYZCoord end_vector5{1825.0, 2389.8, 0};
+
+    EXPECT_DOUBLE_EQ(start_vector1.distanceTo(end_vector1), 5.0);
+    EXPECT_DOUBLE_EQ(start_vector2.distanceTo(end_vector2), 0.0);
+    EXPECT_DOUBLE_EQ(start_vector3.distanceTo(end_vector3), 1.0);
+    EXPECT_DOUBLE_EQ(start_vector4.distanceTo(end_vector4), 5.0);
+    EXPECT_NEAR(start_vector5.distanceTo(end_vector5), 3048.56, 0.1);
+}
+
+
+/*
+ *   tests XYZCoord::norm()
+ */
+TEST(XYZCoordOperations, norm) {
     XYZCoord origin{0, 0, 0};
     XYZCoord ones{1, 1, 1};
     XYZCoord arbitrary_vector{5.26, 48.54, -4.523};
@@ -164,33 +187,30 @@ TEST(XYZCoordOperations, norm)
 }
 
 /*
-*   tests XYZCoord::normalized()
-*/
-TEST(XYZCoordOperations, normalized)
-{
+ *   tests XYZCoord::normalized()
+ */
+TEST(XYZCoordOperations, normalized) {
     std::vector<XYZCoord> original_vectors{
-        XYZCoord{0, 0, 0},             // origin
-        XYZCoord{1, 1, 1},             // ones
-        XYZCoord{5.26, 48.54, -4.523}, // arbitrary
-        XYZCoord{0.1, 0.2, 0.3}        // norm < one
+        XYZCoord{0, 0, 0},              // origin
+        XYZCoord{1, 1, 1},              // ones
+        XYZCoord{5.26, 48.54, -4.523},  // arbitrary
+        XYZCoord{0.1, 0.2, 0.3}         // norm < one
     };
 
     std::vector<XYZCoord> expected_normalized{
-        XYZCoord{0, 0, 0},                                 // origin
-        XYZCoord{0.57736721, 0.57736721, 0.57736721},      // ones
-        XYZCoord{0.1072742098, 0.9899410918, -0.09224358}, // arbitrary
-        XYZCoord{0.26726124, 0.53452248, 0.80178372}       // norm < one
+        XYZCoord{0, 0, 0},                                  // origin
+        XYZCoord{0.57736721, 0.57736721, 0.57736721},       // ones
+        XYZCoord{0.1072742098, 0.9899410918, -0.09224358},  // arbitrary
+        XYZCoord{0.26726124, 0.53452248, 0.80178372}        // norm < one
     };
 
-    for (int i = 0; i < original_vectors.size(); i++)
-    {
+    for (int i = 0; i < original_vectors.size(); i++) {
         XYZCoord normalized_vector = original_vectors[i].normalized();
 
-        if (normalized_vector.norm() != 0)
-        {
+        if (normalized_vector.norm() != 0) {
             EXPECT_NEAR(normalized_vector.norm(), 1, 0.001);
         }
-        
+
         EXPECT_NEAR(normalized_vector.x, expected_normalized[i].x, 0.001);
         EXPECT_NEAR(normalized_vector.y, expected_normalized[i].y, 0.001);
         EXPECT_NEAR(normalized_vector.z, expected_normalized[i].z, 0.001);

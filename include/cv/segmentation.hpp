@@ -1,8 +1,6 @@
 #ifndef INCLUDE_CV_SEGMENTATION_HPP_
 #define INCLUDE_CV_SEGMENTATION_HPP_
 
-
-#include <opencv2/opencv.hpp>
 #include <torch/script.h>
 
 #include <iostream>
@@ -10,6 +8,8 @@
 #include <string>
 #include <vector>
 #include <utility>
+
+#include <opencv2/opencv.hpp>
 
 #include "cv/utilities.hpp"
 
@@ -29,8 +29,6 @@ struct SegmentationResults {
 // https://github.com/tritonuas/hutzler-571
 class Segmentation {
  public:
-        Segmentation() {}
-
         explicit Segmentation(const std::string &modelPath);
         SegmentationResults segment(const CroppedTarget &target);
  private:

@@ -1,0 +1,19 @@
+version: "3"
+services:
+  obcpp:
+    image: tritonuas/obcpp:jetson
+    runtime: nvidia
+    network_mode: "host"
+    devices:
+      - /dev/ttyACM0:/dev/ttyACM0
+
+    # TODO: set an env variable or point to a config that defines how to connecto the plane. Right now it's a string hard-coded to the plane but eventually we should have an ENV variable here that says "serial:/dev/ttyACM0" or point to a config file that defines that
+  dozzle:
+    container_name: dozzle
+    image: amir20/dozzle:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 9999:8080
+volumes:
+  sitl:

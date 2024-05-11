@@ -1,22 +1,32 @@
 #include <iostream>
 
 #include <opencv2/opencv.hpp>
+#include <loguru.hpp>
 
 #include "protos/obc.pb.h"
 
 #include "cv/matching.hpp"
 #include "utilities/constants.hpp"
 
-const std::string refImagePath0 = "../bin/test/test/000000910.jpg"; // bottle 4
-const std::string refImagePath1 = "../bin/test/test/000000920.jpg"; // bottle 3
-const std::string refImagePath2 = "../bin/test/test/000000003.jpg"; // bottle 2
-const std::string refImagePath3 = "../bin/test/test/000000004.jpg"; // bottle 1
-const std::string refImagePath4 = "../bin/test/test/000000005.jpg"; // bottle 0
-// Note: images are given reverse order bottleIndexes, e.g. refImagePath0 -> index 4, etc.
-const std::string modelPath = "../bin/target_siamese_1.pt";
-const std::string imageMatchPath = "../bin/test/test/000000920.jpg";
+// Download these test images by running "make pull_matching_test_images" or from the test.zip here https://drive.google.com/drive/u/1/folders/1opXBWx6bBF7J3-JSFtrhfFIkYis9qhGR
+// Or, any cropped not-stolen images will work
+// NOTE: images are given reverse order bottleIndexes, e.g. refImagePath0 -> index 4, etc.
+const std::string imageTestDir = "../tests/integration/images/matching_cropped/test/";
+const std::string refImagePath0 = imageTestDir + "000000910.jpg"; // bottle 4
+const std::string refImagePath1 = imageTestDir + "000000920.jpg"; // bottle 3
+const std::string refImagePath2 = imageTestDir + "000000003.jpg"; // bottle 2
+const std::string refImagePath3 = imageTestDir + "000000004.jpg"; // bottle 1
+const std::string refImagePath4 = imageTestDir + "000000005.jpg"; // bottle 0
+
+// model can be downloaded by running "make pull_matching" or from here: https://drive.google.com/drive/folders/1ciDfycNyJiLvRhJhwQZoeKH7vgV6dGHJ?usp=drive_link
+const std::string modelPath = "../models/target_siamese_1.pt";
+
+// These images can also come from the same source as the reference images. To accurately
+// run this test, provide one image that is a positive match and one that doesn't match
+// any of the references.
+const std::string imageMatchPath = imageTestDir + "000000920.jpg";
 const int matchIndex = 3; 
-const std::string imageNotMatchPath = "../bin/test/test/000000016.jpg";
+const std::string imageNotMatchPath = imageTestDir + "000000016.jpg";
 
 int main(int argc, char* argv[]) {
     // purely for the constructor, doesn't do much in matching
@@ -59,17 +69,17 @@ int main(int argc, char* argv[]) {
 
     std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages;
     cv::Mat ref0 = cv::imread(refImagePath0);
-    referenceImages.push_back(std::make_pair(ref0, BottleDropIndex(4)));
+    referenceImages.push_back(std::make_pair(ref0, BottleDropIndex(5)));
     cv::Mat ref1 = cv::imread(refImagePath1);
-    referenceImages.push_back(std::make_pair(ref1, BottleDropIndex(3)));
+    referenceImages.push_back(std::make_pair(ref1, BottleDropIndex(4)));
     cv::Mat ref2 = cv::imread(refImagePath2);
-    referenceImages.push_back(std::make_pair(ref2, BottleDropIndex(2)));
+    referenceImages.push_back(std::make_pair(ref2, BottleDropIndex(3)));
     cv::Mat ref3 = cv::imread(refImagePath3);
-    referenceImages.push_back(std::make_pair(ref3, BottleDropIndex(1)));
+    referenceImages.push_back(std::make_pair(ref3, BottleDropIndex(2)));
     cv::Mat ref4 = cv::imread(refImagePath4);
-    referenceImages.push_back(std::make_pair(ref4, BottleDropIndex(0)));
+    referenceImages.push_back(std::make_pair(ref4, BottleDropIndex(1)));
 
-    Matching matcher(bottlesToDrop, 0.5, referenceImages, modelPath);
+    Matching matcher(bottlesToDrop, referenceImages, modelPath);
     cv::Mat image = cv::imread(imageMatchPath);
     Bbox dummyBox(0, 0, 0, 0);
     CroppedTarget cropped = {
@@ -86,18 +96,14 @@ int main(int argc, char* argv[]) {
     };
 
     MatchResult result = matcher.match(cropped);
-    std::cout << "TRUE MATCH TEST:" << std::endl;
-    std::cout << "Found a match with bottle at index " << int(result.bottleDropIndex) << std::endl;
-    std::cout << "Expected bottle " << matchIndex << std::endl;
-    std::cout << "foundMatch is " << result.foundMatch << std::endl;
-    std::cout << "The similarity is " << result.similarity << std::endl;
-
+    LOG_F(INFO, "\nTRUE MATCH TEST:\nClosest is bottle at index %d\nThe similarity is %.3f\n",
+        int(result.bottleDropIndex),
+        result.distance);
 
     MatchResult resultFalse = matcher.match(croppedFalse);
-    std::cout << "\nFALSE MATCH TEST:" << std::endl;
-    std::cout << "Closest is bottle at index " << int(resultFalse.bottleDropIndex) << std::endl;
-    std::cout << "foundMatch is " << resultFalse.foundMatch << std::endl;
-    std::cout << "The similarity is " << resultFalse.similarity << std::endl;
+    LOG_F(INFO, "\nFALSE MATCH TEST:\nClosest is bottle at index %d\nThe similarity is %.3f\n",
+        int(resultFalse.bottleDropIndex),
+        resultFalse.distance);
 
     return 0;
 }

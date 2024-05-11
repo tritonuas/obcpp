@@ -1,8 +1,12 @@
 #include <iostream>
 
 #include <opencv2/opencv.hpp>
+#include <loguru.hpp>
 
 #include "cv/pipeline.hpp"
+
+// Download these test images from one of the zips here https://drive.google.com/drive/u/1/folders/1opXBWx6bBF7J3-JSFtrhfFIkYis9qhGR
+// Or, any cropped not-stolen images will work
 
 // this image should be located at a relative path to the CMake build dir
 const std::string imagePath = "mock_image.jpg";
@@ -13,6 +17,11 @@ const std::string refImagePath2 = "../bin/test/test/000000003.jpg";
 const std::string refImagePath3 = "../bin/test/test/000000004.jpg";
 const std::string refImagePath4 = "../bin/test/test/000000005.jpg";
 
+// matching model can be downloaded from here: https://drive.google.com/drive/folders/1ciDfycNyJiLvRhJhwQZoeKH7vgV6dGHJ?usp=drive_link
+const std::string matchingModelPath = "../models/target_siamese_1.pt";
+// segmentation model can be downloaded from here: https://drive.google.com/file/d/1U2EbfJFzcjVnjTuD6ud-bIf8YOiEassf/view?usp=drive_link
+const std::string segmentationModelPath = "../models/fcn.pth";
+
 // mock telemetry data
 const double latitude = 38.31568;
 const double longitude = 76.55006;
@@ -22,6 +31,8 @@ const double yaw = 100;
 const double pitch = 5;
 const double roll = 3;
 
+// integration test to test all stages of the CV pipeline
+// with an arbitrary image as input
 int main() {
     cv::Mat image = cv::imread(imagePath);
     ImageTelemetry mockTelemetry(latitude, longitude, altitude, airspeed,
@@ -65,31 +76,28 @@ int main() {
     bottle5.set_alphanumeric("F");
     bottlesToDrop[4] = bottle5;
 
-    std::vector<std::pair<cv::Mat, uint8_t>> referenceImages;
+    std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages;
     cv::Mat ref0 = cv::imread(refImagePath0);
-    referenceImages.push_back(std::make_pair(ref0, 4));
+    referenceImages.push_back(std::make_pair(ref0, BottleDropIndex(5)));
     cv::Mat ref1 = cv::imread(refImagePath1);
-    referenceImages.push_back(std::make_pair(ref1, 3));
+    referenceImages.push_back(std::make_pair(ref1, BottleDropIndex(4)));
     cv::Mat ref2 = cv::imread(refImagePath2);
-    referenceImages.push_back(std::make_pair(ref2, 2));
+    referenceImages.push_back(std::make_pair(ref2, BottleDropIndex(3)));
     cv::Mat ref3 = cv::imread(refImagePath3);
-    referenceImages.push_back(std::make_pair(ref3, 1));
+    referenceImages.push_back(std::make_pair(ref3, BottleDropIndex(2)));
     cv::Mat ref4 = cv::imread(refImagePath4);
-    referenceImages.push_back(std::make_pair(ref4, 0));
+    referenceImages.push_back(std::make_pair(ref4, BottleDropIndex(1)));
 
-    Pipeline pipeline(bottlesToDrop, referenceImages);
+    Pipeline pipeline(PipelineParams(bottlesToDrop, referenceImages, matchingModelPath, segmentationModelPath));
 
     PipelineResults output = pipeline.run(imageData);
 
-    size_t numTargets = output.matchedTargets.size() +
-        output.unmatchedTargets.size();
-    size_t numMatches = output.matchedTargets.size();
+    size_t numTargets = output.targets.size();
 
-    std::cout << "Found " << numTargets << " targets" << std::endl;
-    std::cout << "Found " << numMatches << " matches" << std::endl;
+    LOG_F(INFO, "Detected %ld targets", numTargets);
 
-    for (AirdropTarget& match: output.matchedTargets) {
-        std::cout << "Found match assigned to bottle index " << 
-            match.index() << std::endl;
+    for (DetectedTarget& t: output.targets) {
+        LOG_F(INFO, "Detected Bottle %d at (%f %f) with match distance %f \n",
+            t.likely_bottle, t.coord.latitude(), t.coord.longitude(), t.match_distance);
     }
 }
