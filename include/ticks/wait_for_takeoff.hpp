@@ -1,5 +1,5 @@
-#ifndef INCLUDE_TICKS_WAITFORTAKEOFF_HPP_
-#define INCLUDE_TICKS_WAITFORTAKEOFF_HPP_
+#ifndef INCLUDE_TICKS_WAIT_FOR_TAKEOFF_HPP_
+#define INCLUDE_TICKS_WAIT_FOR_TAKEOFF_HPP_
 
 #include <memory>
 #include <string>
@@ -27,4 +27,4 @@ class WaitForTakeoffTick: public Tick {
     Status status;
 };
 
-#endif  // INCLUDE_TICKS_WAITFORTAKEOFF_HPP_
+#endif  // INCLUDE_TICKS_WAIT_FOR_TAKEOFF_HPP_

@@ -249,11 +249,11 @@ DEF_GCS_HANDLE(Post, dodropnow) {
     LOG_RESPONSE(INFO, "Dropped bottle", OK);
 }
 
-DEF_GCS_HANDLE(Post, takeoff, manual){
+DEF_GCS_HANDLE(Post, takeoff, manual) {
     LOG_REQUEST("POST", "takeoff/manual");
 
     auto lock_ptr = state->getTickLockPtr<WaitForTakeoffTick>();
-    if(!lock_ptr.has_value()){
+    if (!lock_ptr.has_value()) {
         LOG_RESPONSE(WARNING, "Not currently in WaitForTakeoff Tick", BAD_REQUEST);
         return;
     }
@@ -262,11 +262,11 @@ DEF_GCS_HANDLE(Post, takeoff, manual){
     LOG_RESPONSE(INFO, "Set status of WaitForTakeoff Tick to manaul", OK);
 }
 
-DEF_GCS_HANDLE(Post, takeoff, autonomous){
+DEF_GCS_HANDLE(Post, takeoff, autonomous) {
     LOG_REQUEST("POST", "takeoff/autonomous");
 
     auto lock_ptr = state->getTickLockPtr<WaitForTakeoffTick>();
-    if(!lock_ptr.has_value()){
+    if (!lock_ptr.has_value()) {
         LOG_RESPONSE(WARNING, "Not currently in WaitForTakeoff Tick", BAD_REQUEST);
         return;
     }
