@@ -3,7 +3,9 @@
 #include <mavsdk/mavsdk.h>
 #include <mavsdk/plugins/telemetry/telemetry.h>
 #include <mavsdk/plugins/geofence/geofence.h>
+#include <mavsdk/plugins/action/action.h>
 #include <mavsdk/plugins/mission_raw/mission_raw.h>
+#include <mavsdk/plugins/mavlink_passthrough/mavlink_passthrough.h>
 
 #include <atomic>
 #include <memory>
@@ -52,6 +54,8 @@ MavlinkClient::MavlinkClient(std::string link):
     this->telemetry = std::make_unique<mavsdk::Telemetry>(system);
     this->mission = std::make_unique<mavsdk::MissionRaw>(system);
     this->geofence = std::make_unique<mavsdk::Geofence>(system);
+    this->action = std::make_unique<mavsdk::Action>(system);
+    this->passthrough = std::make_unique<mavsdk::MavlinkPassthrough>(system);
 
     // Set position update rate (1 Hz)
     // TODO: set the 1.0 update rate value in the obc config
@@ -111,6 +115,22 @@ MavlinkClient::MavlinkClient(std::string link):
             Lock lock(this->data_mut);
             this->data.groundspeed_m_s = groundspeed_m_s;
         });
+    this->telemetry->subscribe_armed(
+        [this](bool armed) {
+            VLOG_F(DEBUG, "Armed: %d", armed);
+            Lock lock(this->data_mut);
+            this->data.armed = armed;
+        });
+    // this->telemetry->subscribe_attitude_euler(
+    //     [this](mavsdk::Telemetry::EulerAngle attitude) {
+    //         VLOG_F(DEBUG, "Yaw: %f, Pitch: %f, Roll: %f)",
+    //             attitude.yaw_deg, attitude.pitch_deg, attitude.roll_deg);
+
+    //         Lock lock(this->data_mut);
+    //         this->data.yaw_deg = attitude.yaw_deg;
+    //         this->data.pitch_deg = attitude.pitch_deg;
+    //         this->data.roll_deg = attitude.roll_deg;
+    //     });
 }
 
 bool MavlinkClient::uploadMissionUntilSuccess(std::shared_ptr<MissionState> state,
@@ -267,11 +287,185 @@ double MavlinkClient::heading_deg() {
     return this->data.heading_deg;
 }
 
+double MavlinkClient::yaw_deg() {
+    Lock lock(this->data_mut);
+    return this->data.yaw_deg;
+}
+
+double MavlinkClient::pitch_deg() {
+    Lock lock(this->data_mut);
+    return this->data.pitch_deg;
+}
+
+double MavlinkClient::roll_deg() {
+    Lock lock(this->data_mut);
+    return this->data.roll_deg;
+}
+
+
+bool MavlinkClient::isArmed() {
+    Lock lock(this->data_mut);
+    return this->data.armed;
+}
+
 mavsdk::Telemetry::FlightMode MavlinkClient::flight_mode() {
     Lock lock(this->data_mut);
     return this->data.flight_mode;
 }
 
+/**
+ * Helper function that goes along with isPointInPolygon().
+*/
+double MavlinkClient::angle2D(double x1, double y1, double x2, double y2) {
+    double dtheta, theta1, theta2;
+
+    theta1 = atan2(y1, x1);
+    theta2 = atan2(y2, x2);
+    dtheta = theta2 - theta1;
+
+    while (dtheta > M_PI) {
+        dtheta -= 2*M_PI;
+    }
+    while (dtheta < -M_PI) {
+        dtheta += 2*M_PI;
+    }
+
+    return(dtheta);
+}
+
+/**
+ * This function checks if a coordiante is inside a polygon region.
+ * Source: https://stackoverflow.com/questions/4287780/detecting-whether-a-gps-coordinate-falls-within-a-polygon-on-a-map
+*/
+bool MavlinkClient::isPointInPolygon(std::pair<double, double> latlng,
+    std::vector<XYZCoord> region) {
+    int n = region.size();
+    double angle = 0;
+
+    for (int i = 0; i < n; i++) {
+        double point_1_lat = region[i].x - latlng.first;
+        double point_1_lng = region[i].y - latlng.second;
+        double point_2_lat = region[(i+1)%n].x - latlng.first;
+        double point_2_lng = region[(i+1)%n].y - latlng.second;
+        angle += MavlinkClient::angle2D(point_1_lat, point_1_lng, point_2_lat, point_2_lng);
+    }
+
+    if (std::abs(angle) < M_PI) {
+        return false;
+    }
+
+    return true;
+}
+
+bool MavlinkClient::isMissionFinished() {
+    // Boolean representing if mission is finished
+    return this->mission->mission_progress().current == this->mission->mission_progress().total;
+}
+
 mavsdk::Telemetry::RcStatus MavlinkClient::get_conn_status() {
     return this->telemetry->rc_status();
+}
+
+/**
+ * Goes through the sequence of checking vehicle health -> arm vehicle -> takeoff -> hover at set altitude.
+*/
+bool MavlinkClient::armAndHover(std::shared_ptr<MissionState> state) {
+    LOG_F(INFO, "Attempting to arm and hover");
+    LOG_F(INFO, "Checking vehicle health...");
+    // Vehicle can only be armed if status is healthy
+    if (this->telemetry->health_all_ok() != true) {
+        LOG_F(ERROR, "Vehicle not ready to arm");
+        return false;
+    }
+
+    LOG_F(INFO, "Attempting to arm...");
+    // Attempt to arm the vehicle
+    const mavsdk::Action::Result arm_result = this->action->arm();
+    if (arm_result != mavsdk::Action::Result::Success) {
+        LOG_F(ERROR, "Arming failed");
+        return false;
+    }
+
+
+    // TODO: config option for this
+    const float TAKEOFF_ALT = state->takeoff_alt_m;
+    auto r1 = this->action->set_takeoff_altitude(TAKEOFF_ALT);
+    if (r1 != mavsdk::Action::Result::Success) {
+        LOG_S(ERROR) << "FAIL: could not set takeoff alt " << r1;
+        return false;
+    }
+    auto [r2, alt_checked ]= this->action->get_takeoff_altitude();
+    LOG_S(INFO) << "Queried takeoff alt to be " << alt_checked << " with status " << r2;
+
+    LOG_F(INFO, "Attempting to take off to %fm...", TAKEOFF_ALT);
+    const mavsdk::Action::Result takeoff_result = this->action->takeoff();
+    if (takeoff_result != mavsdk::Action::Result::Success) {
+        LOG_F(ERROR, "Take off failed");
+        return false;
+    }
+
+    // need to figure out correct values to send for a VTOL takeoff command
+    // auto result = this->passthrough->send_command_int(mavsdk::MavlinkPassthrough::CommandInt {
+    //     .target_sysid = this->passthrough->get_our_sysid(),
+    //     .target_compid = this->passthrough->get_our_compid(),
+    //     .command = MAV_CMD_NAV_VTOL_TAKEOFF,
+    //     .frame = MAV_FRAME_GLOBAL_RELATIVE_ALT,
+    //     .param1 = 0,
+    //     .param2 = VTOL_TRANSITION_HEADING_NEXT_WAYPOINT, // unsure if arduplane will respect this
+    //     .param3 = 0,
+    //     .param4 = NAN,
+    //     .x = 0,
+    //     .y = 0,
+    //     .z = TAKEOFF_ALT // currently hard coded to 30m (~100ft)
+    // });
+    // if (result != mavsdk::MavlinkPassthrough::Result::Success) {
+    //     LOG_S(ERROR) << "FAIL: takeoff cmd not accepted because " << result;
+    //     // return false;
+    // }
+
+    LOG_F(INFO, "Waiting to reach target altitude of %f", TAKEOFF_ALT);
+    float current_position = 0;
+    while (current_position < TAKEOFF_ALT) {
+        current_position = this->telemetry->position().relative_altitude_m;
+        LOG_F(INFO, "At alt %f", current_position);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+
+    LOG_F(INFO, "Take off success");
+    return true;
+}
+
+/**
+ * Starts the mavlink mission and transitions vehicle from VTOL to fix wing.
+*/
+bool MavlinkClient::startMission() {
+    LOG_F(INFO, "Attempting to start mission...");
+    LOG_F(INFO, "Querying target takeoff altitude");
+    const auto& [takeoff_result, target_alt] = this->action->get_takeoff_altitude();
+    if (takeoff_result != mavsdk::Action::Result::Success) {
+        LOG_S(ERROR) << "FAIL: could not query takeoff altitude: " << target_alt;
+        return false;
+    }
+    LOG_F(INFO, "Target takeoff altitude is %f", target_alt);
+
+    float current_position = this->telemetry->position().relative_altitude_m;
+
+    LOG_F(INFO, "Checking target altitude");
+    if (current_position < target_alt) {
+        LOG_F(ERROR, "FAIL: Vehicle has not reached desired altitude (%f < %f)",
+            current_position, target_alt);
+        return false;
+    }
+
+    LOG_F(INFO, "About to send start command");
+    auto start_result = this->mission->start_mission();
+    if (start_result != mavsdk::MissionRaw::Result::Success) {
+        LOG_S(ERROR) << "FAIL: Mission could not start " << start_result;
+        return false;
+    }
+
+    // will by default transition to forward flight
+
+    LOG_F(INFO, "Mission Started!");
+    return true;
 }
