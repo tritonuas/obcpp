@@ -193,11 +193,10 @@ class AirdropSearch {
  public:
     AirdropSearch(const RRTPoint &start, double scan_radius, Polygon bounds, Polygon airdrop_zone,
                   std::vector<Polygon> obstacles = {},
-                  AirdropSearchConfig config = {
-                      .coverage_altitude_m = 30.0,
-                      .optimize = false,
-                      .vertical = false,
-                      .one_way = false});
+                  AirdropSearchConfig config = {.coverage_altitude_m = 30.0,
+                                                .optimize = false,
+                                                .vertical = false,
+                                                .one_way = false});
 
     /**
      * Generates a path of parallel lines to cover a given area
@@ -261,19 +260,18 @@ class AirdropApproach {
         return rrt.getPointsToGoal();
     }
 
-
-    XYZCoord getDropLocation() const {
-        return directDropLocation();
-    }
+    XYZCoord getDropLocation() const { return directDropLocation(); }
 
     XYZCoord directDropLocation() const {
         double drop_offset = config.drop_mode == DIRECT_DROP ? config.unguided_drop_distance
                                                              : config.guided_drop_distance;
-        
-        double wind_strength_coef = wind.coord.norm() * WIND_CONST_PER_ALTITUDE
-        XYZCoord wind_offset(wind_strength_coef * std::cos(wind.psi), wind_strength_coef, * std::sin(wind.psi), 0);
 
-        return XYZCoord(goal.x - drop_offset + wind_offset.x, goal.y + wind_offset.y, config.drop_altitude);
+        double wind_strength_coef = wind.coord.norm() * WIND_CONST_PER_ALTITUDE;
+        XYZCoord wind_offset(wind_strength_coef * std::cos(wind.psi), wind_strength_coef * 
+                             std::sin(wind.psi), 0);
+
+        return XYZCoord(goal.x - drop_offset + wind_offset.x, goal.y + wind_offset.y,
+                        config.drop_altitude);
     }
 
     const XYZCoord goal;

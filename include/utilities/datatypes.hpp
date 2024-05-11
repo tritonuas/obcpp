@@ -120,7 +120,7 @@ struct AirdropApproachConfig {
     double drop_altitude;
     double guided_drop_distance;
     double unguided_drop_distance;
-}
+};
 
 struct CameraConfig {
     // either "mock" or "lucid"
