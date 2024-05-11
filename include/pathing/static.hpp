@@ -21,11 +21,12 @@
 
 class RRT {
  public:
-    RRT(RRTPoint start, std::vector<XYZCoord> goals, int iterations_per_waypoint,
-        double search_radius, double rewire_radius, Polygon bounds,
+    RRT(RRTPoint start, std::vector<XYZCoord> goals, double search_radius, Polygon bounds,
         std::vector<Polygon> obstacles = {},
-        RRTConfig config = {.optimize = false,
-                            .point_fetch_method = POINT_FETCH_METHODS::NONE,
+        RRTConfig config = {.iterations_per_waypoint = ITERATIONS_PER_WAYPOINT,
+                            .rewire_radius = REWIRE_RADIUS,
+                            .optimize = false,
+                            .point_fetch_method = POINT_FETCH_METHODS::NEAREST,
                             .allowed_to_skip_waypoints = false});
 
     /**
@@ -58,6 +59,7 @@ class RRT {
     const double search_radius;         // !!NOT USED!! max radius to move off the tree
     const double rewire_radius;         // ONLY FOR RRT-STAR, max radius from new node to rewire
     const RRTConfig config;             // optimization options
+    std::vector<XYZCoord> flight_path;
 
     // the different of final approaches to the goal
     // yes, this is the default unit circle diagram used in High-School
@@ -141,6 +143,17 @@ class RRT {
                        int total_options = TOTAL_OPTIONS_FOR_GOAL_CONNECTION);
 
     /**
+     * Does the logistical work when found one waypoint to another
+     *  - adds the node to the tree
+     *  - finds the path
+     *      - adds altitude to the path
+     *
+     * @param goal_node  ==> node to add to the tree
+     * @param current_goal_index ==> index of the goal that we are trying to
+     */
+    void addNodeToTree(RRTNode *goal_node, int current_goal_index);
+
+    /**
      * Goes through generated options to try to connect the sample to the tree
      *
      * @param options   ==> list of options to connect the sample to the tree
@@ -173,14 +186,42 @@ class RRT {
 class AirdropSearch {
  public:
     AirdropSearch(const RRTPoint &start, double scan_radius, Polygon bounds, Polygon airdrop_zone,
-                  std::vector<Polygon> obstacles = {});
+                  std::vector<Polygon> obstacles = {},
+                  AirdropSearchConfig config = {
+                      .coverage_altitude_m = 30.0,
+                      .optimize = false,
+                      .vertical = false,
+                      .one_way = false});
 
     /**
      * Generates a path of parallel lines to cover a given area
      *
+     * TODO - optimize dubins to not have to go to each line, rather search every other line then
+     * loop back
+     *
      * @return  ==> list of 2-vectors describing the path through the aridrop_zone
      */
     std::vector<XYZCoord> run() const;
+
+    /**
+     *   The algorithm run if not optimizing the path legnth
+     */
+    std::vector<XYZCoord> coverageDefault() const;
+
+    /**
+     *   The algorithm run if optimizing path length
+     */
+    std::vector<XYZCoord> coverageOptimal() const;
+
+    /**
+     * From a list of dubins paths and waypoints, generate a path
+     *
+     * @param dubins_options  ==> list of dubins options to connect the waypoints
+     * @param waypoints       ==> list of waypoints to connect (always 1 more element than
+     * dubins_options)
+     */
+    std::vector<XYZCoord> generatePath(const std::vector<RRTOption> &dubins_options,
+                                       const std::vector<RRTPoint> &waypoints) const;
 
  private:
     const double scan_radius;    // how far each side of the plane we intend to look (half dist
@@ -188,6 +229,7 @@ class AirdropSearch {
     const RRTPoint start;        // start location (doesn't have to be near polygon)
     const Environment airspace;  // information aobut the airspace
     const Dubins dubins;         // dubins object to generate paths
+    const AirdropSearchConfig config;
 };
 
 std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state);

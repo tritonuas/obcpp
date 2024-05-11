@@ -1,9 +1,9 @@
 #ifndef INCLUDE_CV_SALIENCY_HPP_
 #define INCLUDE_CV_SALIENCY_HPP_
-
+#include <torch/torch.h>
 #include <vector>
+#include <string>
 #include <opencv2/opencv.hpp>
-
 #include "cv/utilities.hpp"
 
 // Saliency is responsible for detecting targets within a full-size aerial image
@@ -22,7 +22,20 @@ class Saliency {
     // it will predict the location within the full-size image (using
     // coordinates of bounding box) and a prediction of whether or not a
     // target is emergent (mannikin) or not.
-    std::vector<CroppedTarget> salience(cv::Mat image);
+
+    explicit Saliency(std::string modelPath);   // constructor with model path
+
+    std::vector<CroppedTarget> salience(cv::Mat image);     // saliency function
+
+    // helper functions
+    at::Tensor ToTensor(cv::Mat img, bool show_output, bool unsqueeze, int unsqueeze_dim);
+    at::Tensor transpose(at::Tensor tensor, c10::IntArrayRef dims);
+    std::vector<torch::jit::IValue> ToInput(at::Tensor tensor_image);
+    std::vector<CroppedTarget> extractTargets(c10::List<c10::IValue> listDetections, cv::Mat image);
+
+ private:
+    std::string modelPath;              // path to prediction model
+    torch::jit::script::Module module;  // the loaded model
 };
 
 #endif  // INCLUDE_CV_SALIENCY_HPP_

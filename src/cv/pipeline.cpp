@@ -8,7 +8,8 @@
 Pipeline::Pipeline(const PipelineParams& p) :
     // assumes reference images passed to pipeline from not_stolen
         matcher(p.competitionObjectives, p.referenceImages, p.matchingModelPath),
-        segmentor(p.segmentationModelPath) {}
+        segmentor(p.segmentationModelPath),
+        detector(p.saliencyModelPath) {}
 
 /*
  *  Entrypoint of CV Pipeline. At a high level, it will include the following
@@ -27,11 +28,10 @@ Pipeline::Pipeline(const PipelineParams& p) :
  *        target matching stage is replaced by segmentation/classification.
  */
 PipelineResults Pipeline::run(const ImageData &imageData) {
-    LOG_F(INFO, "Running pipeline on %s/%s",
-        imageData.getPath().c_str(), imageData.getName().c_str());
+    LOG_F(INFO, "Running pipeline on an image");
 
     VLOG_F(TRACE, "Saliency Start");
-    std::vector<CroppedTarget> saliencyResults = this->detector.salience(imageData.getData());
+    std::vector<CroppedTarget> saliencyResults = this->detector.salience(imageData.DATA);
 
     // if saliency finds no potential targets, end early with no results
     if (saliencyResults.empty()) {
@@ -48,8 +48,12 @@ PipelineResults Pipeline::run(const ImageData &imageData) {
         MatchResult potentialMatch = this->matcher.match(target);
 
         VLOG_F(TRACE, "Localization Start");
-        GPSCoord targetPosition(this->ecefLocalizer.localize(
-            imageData.getTelemetry(), target.bbox));
+        // TODO: determine what to do if image is missing telemetry metadata
+        GPSCoord targetPosition;
+        if (imageData.TELEMETRY.has_value()) {
+            targetPosition = GPSCoord(this->ecefLocalizer.localize(
+                imageData.TELEMETRY.value(), target.bbox));
+        }
 
         VLOG_F(TRACE, "Detected target %ld/%ld at [%f, %f] matched to bottle %d with %f distance.",
             curr_target_num, saliencyResults.size(),
@@ -59,7 +63,6 @@ PipelineResults Pipeline::run(const ImageData &imageData) {
             potentialMatch.bottleDropIndex, potentialMatch.distance));
     }
 
-    LOG_F(INFO, "Finished Pipeline on %s/%s",
-        imageData.getPath().c_str(), imageData.getName().c_str());
+    LOG_F(INFO, "Finished Pipeline on an image");
     return PipelineResults(imageData, detectedTargets);
 }

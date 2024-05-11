@@ -19,7 +19,7 @@ const double TURNING_RADIUS = 30.0;
 const double POINT_SEPARATION = 10.0;
 
 // RRT CONSTANTS
-const int ITERATIONS_PER_WAYPOINT = 200;  // number of times RRT is ran per waypoint
+const int ITERATIONS_PER_WAYPOINT = 256;  // number of times RRT is ran per waypoint
 const double SEARCH_RADIUS =
     1000.0;  // DOES NOTHING, limits how far off the tree the new node can be
 const double REWIRE_RADIUS = 200.0;  // ONLY FOR RRT-STAR, max radius from new node to rewire
@@ -41,6 +41,8 @@ const int DEFAULT_GCS_PORT = 5010;
 const int NUM_AIRDROP_BOTTLES = 5;
 
 const char MISSION_CONFIG_PATH[] = "./mission-config.json";
+const double TAKEOFF_ALTITUDE_M = 30.0;
+const double COVERAGE_ALTITUDE_M = 30.0;
 
 // Colors
 const matplot::color FLIGHT_BOUND_COLOR = matplot::color::red;
@@ -66,6 +68,8 @@ const std::chrono::milliseconds AIRDROP_APPROACH_TICK_WAIT = std::chrono::millis
 const std::chrono::milliseconds MANUAL_LANDING_TICK_WAIT = std::chrono::milliseconds(100);
 const std::chrono::milliseconds AUTO_LANDING_TICK_WAIT = std::chrono::milliseconds(100);
 const std::chrono::milliseconds MISSION_DONE_TICK_WAIT = std::chrono::milliseconds(100);
+const std::chrono::milliseconds ACTIVE_TAKEOFF_TICK_WAIT = std::chrono::milliseconds(100);
+const std::chrono::milliseconds WAIT_FOR_TAKEOFF_TICK_WAIT = std::chrono::milliseconds(100);
 
 const double EARTH_RADIUS_METERS = 6378137.0;
 

@@ -1,29 +1,30 @@
 #ifndef INCLUDE_CORE_MISSION_STATE_HPP_
 #define INCLUDE_CORE_MISSION_STATE_HPP_
 
+#include <array>
+#include <chrono>
+#include <functional>
 #include <memory>
 #include <mutex>
-#include <functional>
-#include <chrono>
-#include <vector>
 #include <optional>
 #include <queue>
-#include <array>
+#include <vector>
 
-#include "core/mission_config.hpp"
-#include "cv/utilities.hpp"
-#include "cv/aggregator.hpp"
 #include "camera/interface.hpp"
-#include "utilities/datatypes.hpp"
-#include "utilities/constants.hpp"
-#include "utilities/locks.hpp"
-#include "utilities/lockptr.hpp"
-#include "utilities/logging.hpp"
-#include "protos/obc.pb.h"
-#include "pathing/cartesian.hpp"
-#include "ticks/ids.hpp"
-#include "network/mavlink.hpp"
+#include "core/mission_parameters.hpp"
+#include "cv/aggregator.hpp"
+#include "cv/utilities.hpp"
 #include "network/airdrop_client.hpp"
+#include "network/mavlink.hpp"
+#include "pathing/cartesian.hpp"
+#include "protos/obc.pb.h"
+#include "ticks/ids.hpp"
+#include "utilities/constants.hpp"
+#include "utilities/datatypes.hpp"
+#include "utilities/lockptr.hpp"
+#include "utilities/locks.hpp"
+#include "utilities/logging.hpp"
+#include "utilities/obc_config.hpp"
 
 class Tick;
 
@@ -45,7 +46,7 @@ class MissionState {
 
     /*
      * Gets a locking reference to the underlying tick for the given tick subclass T.
-     * 
+     *
      * Needs to be defined in the header file unless we want to manually list out
      * template derivations.
      */
@@ -83,9 +84,19 @@ class MissionState {
      */
     std::shared_ptr<CVAggregator> getCV();
     void setCV(std::shared_ptr<CVAggregator> cv);
-    std::shared_ptr<CameraInterface> getCamera();
 
-    MissionConfig config;  // has its own mutex
+    /*
+     * Gets a shared_ptr to the camera client, which lets you
+     * take photos of ground targets.
+     */
+    std::shared_ptr<CameraInterface> getCamera();
+    void setCamera(std::shared_ptr<CameraInterface> camera);
+
+    MissionParameters mission_params;  // has its own mutex
+    RRTConfig rrt_config;
+    AirdropSearchConfig coverage_pathing_config;
+    CameraConfig camera_config;
+    float takeoff_alt_m;
 
  private:
     std::mutex converter_mut;

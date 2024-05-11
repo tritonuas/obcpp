@@ -235,40 +235,72 @@ const static char* mission_json_2020 = R"(
  * FILE OUTPUT LOCATIONS
  *  |- build
  *    |- pathing_output
- *      |- test_airdrop_pathing.jpg
- *      |- test_airdrop_pathing.gif (if enabled)
- *    |- airdop_search_coords.txt
+ *      |- test_final_path.jpg
+ *      |- test_final_path.gif (if enabled)
+ *    |- path_coordinates.txt
  *
- *  This rough integration test is to test the airdrop search pathing algorithm
+ * This integration test runs static path finding once, and generates a plot as
+ * well as returns the coordinates for the path.
  */
 int main() {
-    std::cout << "Messing with Airdrop Zone Search Pathing" << std::endl;
+    std::cout << "Messing with RRT*" << std::endl;
     // First upload a mission so that we generate a path
     // this is roughly the mission from 2020
     DECLARE_HANDLER_PARAMS(state, req, resp);
     req.body = mission_json_2020;
     state->setTick(new MissionPrepTick(state));
+    std::cout << state->rrt_config.iterations_per_waypoint << std::endl;
 
     GCS_HANDLE(Post, mission)(state, req, resp);
 
     // files to put path_coordinates to
     std::ofstream file;
-    file.open("airdop_search_coords.txt");
+    file.open("path_coordinates.txt");
 
-    RRTPoint start = RRTPoint(state->config.getWaypoints()[0], 0);
+    // infrastructure to set up all the pararmeters of the environment
+    std::vector<XYZCoord> goals;
 
-    AirdropSearch search(start, 20, state->config.getFlightBoundary(),
-                         state->config.getAirdropBoundary());
+    for (const XYZCoord& waypoint : state->mission_params.getWaypoints()) {
+        goals.push_back(waypoint);
+    }
 
-    std::vector<XYZCoord> path = search.run();
+    goals.erase(goals.begin());
+
+    Polygon obs1 = {XYZCoord(-200, 150, 0), XYZCoord(100, 75, 0), XYZCoord(-125, 300, 0),
+                    XYZCoord(-300, 300, 0)};
+
+    Polygon obs2 = {XYZCoord(-200, -600, 0), XYZCoord(100, -600, 0), XYZCoord(250, -300, 0),
+                    XYZCoord(0, -300, 0)};
+
+    std::vector<Polygon> obstacles = {obs1, obs2};
+
+    RRTPoint start = RRTPoint(state->mission_params.getWaypoints()[0], 0);
+
+    // runs the pathing 
+    state->doTick();
+
+    std::vector<GPSCoord> gps_path = state->getInitPath();
+
+    std::vector<XYZCoord> path;
+
+    for (GPSCoord &point : gps_path) {
+        path.push_back(state->getCartesianConverter().value().toXYZ(point));
+    }
+
+    // get the path, put it into the file
+    std::cout << "Path size: " << path.size() << std::endl;
+    std::cout << "Path length: " << (path.size() * POINT_SEPARATION) << std::endl;
+    for (const XYZCoord& point : path) {
+        file << point.x << ", " << point.y << std::endl;
+    }
 
     // plot the path
     std::cout << "Start Plotting" << std::endl;
-    PathingPlot plotter("pathing_output", state->config.getFlightBoundary(),
-                        state->config.getAirdropBoundary(), {});
+    PathingPlot plotter("pathing_output", state->mission_params.getFlightBoundary(), obstacles[1], goals);
 
     plotter.addFinalPolyline(path);
-    plotter.output("test_airdrop_pathing", PathOutputType::STATIC);
+    plotter.output("test_final_path", PathOutputType::STATIC);
+
     file.close();
     return 0;
 }

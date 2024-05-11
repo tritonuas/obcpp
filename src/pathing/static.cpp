@@ -18,12 +18,11 @@
 #include "utilities/datatypes.hpp"
 #include "utilities/rng.hpp"
 
-RRT::RRT(RRTPoint start, std::vector<XYZCoord> goals, int iterations_per_waypoint,
-         double search_radius, double rewire_radius, Polygon bounds, std::vector<Polygon> obstacles,
-         RRTConfig config)
-    : iterations_per_waypoint(iterations_per_waypoint),
+RRT::RRT(RRTPoint start, std::vector<XYZCoord> goals, double search_radius, Polygon bounds,
+         std::vector<Polygon> obstacles, RRTConfig config)
+    : iterations_per_waypoint(config.iterations_per_waypoint),
       search_radius(search_radius),
-      rewire_radius(rewire_radius),
+      rewire_radius(config.rewire_radius),
       tree(start, Environment(bounds, {}, goals, obstacles),
            Dubins(TURNING_RADIUS, POINT_SEPARATION)),
       config(config) {}
@@ -52,7 +51,10 @@ void RRT::run() {
     }
 }
 
-std::vector<XYZCoord> RRT::getPointsToGoal() const { return tree.getPathToGoal(); }
+std::vector<XYZCoord> RRT::getPointsToGoal() const {
+    // return tree.getPathToGoal();
+    return flight_path;
+}
 
 bool RRT::RRTIteration(int tries, int current_goal_index) {
     const int epoch_interval = tries / NUM_EPOCHS;
@@ -118,18 +120,17 @@ bool RRT::epochEvaluation(RRTNode *goal_node, int current_goal_index) {
         return false;
     }
 
-    delete (goal_node);
-    goal_node = new_node;
-
-    // If the new node is within ~X% of the goal, then we are done.
-    // It should be impossible for new_node to be more inefficient than
-    // goal_node as it uses a superset of the tree goal_node used
+    /* If the new node is within ~X% of the goal, then we are done.
+     * It should be impossible for new_node to be more inefficient than
+     * goal_node as it uses a superset of the tree goal_node used
+     */
     if (new_node->getCost() < EPOCH_TEST_MARGIN * goal_node->getCost()) {
+        delete (goal_node);
+        goal_node = new_node;
         return false;
     }
 
-    tree.addNode(new_node->getParent(), new_node);
-    tree.setCurrentHead(new_node);
+    addNodeToTree(new_node, current_goal_index);
     return true;
 }
 
@@ -203,10 +204,35 @@ bool RRT::connectToGoal(int current_goal_index, int total_options) {
         return false;
     }
 
-    // sets the new head
-    tree.addNode(goal_node->getParent(), goal_node);
-    tree.setCurrentHead(goal_node);
+    addNodeToTree(goal_node, current_goal_index);
     return true;
+}
+
+void RRT::addNodeToTree(RRTNode *goal_node, int current_goal_index) {
+    // add the node to the tree
+    tree.addNode(goal_node->getParent(), goal_node);
+
+    // inserts the altitude into the path
+    std::vector<XYZCoord> local_path = tree.getPathSegment(goal_node);
+
+    double start_height;
+    if (current_goal_index == 0) {
+        start_height = tree.getStart().coord.z;
+    } else {
+        start_height = tree.getAirspace().getGoal(current_goal_index - 1).z;
+    }
+
+    double height_difference = tree.getAirspace().getGoal(current_goal_index).z - start_height;
+    double height_increment = height_difference / local_path.size();
+
+    for (XYZCoord &point : local_path) {
+        point.z = start_height;
+        start_height += height_increment;
+    }
+
+    // adds local path to the flight path, and updates the tree
+    flight_path.insert(flight_path.end(), local_path.begin(), local_path.end());
+    tree.setCurrentHead(goal_node);
 }
 
 RRTNode *RRT::parseOptions(const std::vector<std::pair<RRTNode *, RRTOption>> &options,
@@ -238,15 +264,129 @@ RRTNode *RRT::parseOptions(const std::vector<std::pair<RRTNode *, RRTOption>> &o
 
 void RRT::optimizeTree(RRTNode *sample) { tree.RRTStar(sample, rewire_radius); }
 
+AirdropSearch::AirdropSearch(const RRTPoint &start, double scan_radius, Polygon bounds,
+                             Polygon airdrop_zone, std::vector<Polygon> obstacles,
+                             AirdropSearchConfig config)
+    : start(start),
+      scan_radius(scan_radius),
+      airspace(Environment(bounds, airdrop_zone, {}, obstacles)),
+      dubins(Dubins(TURNING_RADIUS, POINT_SEPARATION)),
+      config(config) {}
+
+std::vector<XYZCoord> AirdropSearch::run() const {
+    return config.optimize ? coverageOptimal() : coverageDefault();
+}
+
+std::vector<XYZCoord> AirdropSearch::coverageDefault() const {
+    // generates the endpoints for the lines (including headings)
+    std::vector<RRTPoint> waypoints =
+        airspace.getAirdropWaypoints(scan_radius, config.one_way, config.vertical);
+    waypoints.emplace(waypoints.begin(), start);
+
+    // generates the path connecting the q
+    std::vector<RRTOption> dubins_options;
+    for (int i = 0; i < waypoints.size() - 1; i++) {
+        dubins_options.push_back(dubins.bestOption(waypoints[i], waypoints[i + 1]));
+    }
+
+    return generatePath(dubins_options, waypoints);
+}
+
+std::vector<XYZCoord> AirdropSearch::coverageOptimal() const {
+    /*
+     * The order of paths
+     * [0] - alt, vertical
+     * [1] - alt, horizontal
+     * [2] - one_way, vertical
+     * [3] - one_way, horizontal
+     */
+
+    std::vector<std::pair<bool, bool>> configs = {
+        {false, true}, {false, false}, {true, true}, {true, false}};
+
+    std::vector<std::vector<RRTOption>> dubins_paths;
+    std::vector<int> lengths = {0, 0, 0, 0};
+
+    // generates the endpoints for the lines (including headings)
+    for (int i = 0; i < configs.size(); i++) {
+        const auto &config = configs[i];
+
+        std::vector<RRTPoint> waypoints =
+            airspace.getAirdropWaypoints(scan_radius, config.first, config.second);
+
+        // generates the path connecting the waypoints to each other
+        std::vector<RRTOption> current_dubins_path;
+
+        for (int i = 0; i < waypoints.size() - 1; i++) {
+            RRTOption dubins_path = dubins.bestOption(waypoints[i], waypoints[i + 1]);
+            lengths[i] += dubins_path.length;
+            current_dubins_path.push_back(dubins_path);
+        }
+
+        dubins_paths.push_back(current_dubins_path);
+    }
+
+    // finds the shortest path
+    int best_path_idx = 0;
+    double shortest_length = lengths[0];
+    for (int i = 1; i < lengths.size(); i++) {
+        if (lengths[i] < shortest_length) {
+            shortest_length = lengths[i];
+            best_path_idx = i;
+        }
+    }
+
+    // gets the path
+    std::vector<RRTPoint> waypoints = airspace.getAirdropWaypoints(
+        scan_radius, configs[best_path_idx].first, configs[best_path_idx].second);
+
+    waypoints.emplace(waypoints.begin(), start);
+
+    return generatePath(dubins_paths[best_path_idx], waypoints);
+}
+
+std::vector<XYZCoord> AirdropSearch::generatePath(const std::vector<RRTOption> &dubins_options,
+                                                  const std::vector<RRTPoint> &waypoints) const {
+    std::vector<XYZCoord> path;
+
+    double height = waypoints[0].coord.z;
+    double height_difference = config.coverage_altitude_m - waypoints[0].coord.z;
+
+    std::vector<XYZCoord> path_coordinates = dubins.generatePoints(
+        waypoints[0], waypoints[1], dubins_options[0].dubins_path, dubins_options[0].has_straight);
+
+    double height_increment = height_difference / path_coordinates.size();
+
+    for (XYZCoord &coord : path_coordinates) {
+        coord.z = height;
+        height += height_increment;
+    }
+
+    path.insert(path.end(), path_coordinates.begin() + 1, path_coordinates.end());
+
+    for (int i = 1; i < dubins_options.size(); i++) {
+        path_coordinates =
+            dubins.generatePoints(waypoints[i], waypoints[i + 1], dubins_options[i].dubins_path,
+                                  dubins_options[i].has_straight);
+
+        for (XYZCoord &coord : path_coordinates) {
+            coord.z = config.coverage_altitude_m;
+        }
+
+        path.insert(path.end(), path_coordinates.begin() + 1, path_coordinates.end());
+    }
+
+    return path;
+}
+
 std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
     // first waypoint is start
-    RRTPoint start(state->config.getWaypoints().front(), 0);
 
     // the other waypoitns is the goals
-    if (state->config.getWaypoints().size() < 2) {
+    if (state->mission_params.getWaypoints().size() < 2) {
         loguru::set_thread_name("Static Pathing");
         LOG_F(ERROR, "Not enough waypoints to generate a path, required 2+, existing waypoints: %s",
-              std::to_string(state->config.getWaypoints().size()).c_str());
+              std::to_string(state->mission_params.getWaypoints().size()).c_str());
         return {};
     }
 
@@ -254,12 +394,18 @@ std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
 
     // Copy elements (reference) from the second element to the last element of source into
     // destination all other methods of copying over crash???
-    for (int i = 1; i < state->config.getWaypoints().size(); i++) {
-        goals.emplace_back(state->config.getWaypoints()[i]);
+    for (int i = 1; i < state->mission_params.getWaypoints().size(); i++) {
+        goals.emplace_back(state->mission_params.getWaypoints()[i]);
     }
 
-    RRT rrt(start, goals, ITERATIONS_PER_WAYPOINT, SEARCH_RADIUS, REWIRE_RADIUS,
-            state->config.getFlightBoundary(), {}, RRTConfig{true, POINT_FETCH_METHODS::NONE});
+    double init_angle =
+        std::atan2(goals.front().y - state->mission_params.getWaypoints().front().y,
+                   goals.front().x - state->mission_params.getWaypoints().front().x);
+    RRTPoint start(state->mission_params.getWaypoints().front(), init_angle);
+    start.coord.z = state->takeoff_alt_m;
+
+    RRT rrt(start, goals, SEARCH_RADIUS, state->mission_params.getFlightBoundary(), {},
+            state->rrt_config);
 
     rrt.run();
 
@@ -272,27 +418,4 @@ std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
     }
 
     return output_coords;
-}
-
-AirdropSearch::AirdropSearch(const RRTPoint &start, double scan_radius, Polygon bounds,
-                             Polygon airdrop_zone, std::vector<Polygon> obstacles)
-    : start(start),
-      scan_radius(scan_radius),
-      airspace(Environment(bounds, airdrop_zone, {}, obstacles)),
-      dubins(Dubins(TURNING_RADIUS, POINT_SEPARATION)) {}
-
-std::vector<XYZCoord> AirdropSearch::run() const {
-    // generates the endpoints for the lines (including headings)
-    std::vector<RRTPoint> waypoints = airspace.getAirdropEndpoints(scan_radius);
-
-    // generates the path connecting the q
-    std::vector<XYZCoord> path;
-    RRTPoint current = start;
-    for (auto &waypoint : waypoints) {
-        std::vector<XYZCoord> dubins_path = dubins.dubinsPath(current, waypoint);
-        path.insert(path.end(), dubins_path.begin() + 1, dubins_path.end());
-        current = waypoint;
-    }
-
-    return path;
 }

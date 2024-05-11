@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
 
+# Make sure that we are using the C++11 ABI, if not then there are some weird
+# inconsistencies with our precompiled headers
+add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=1)
+
 # Disable in-source builds to prevent source tree corruption.
 if(" ${CMAKE_SOURCE_DIR}" STREQUAL " ${CMAKE_BINARY_DIR}")
   message(FATAL_ERROR "
@@ -99,6 +103,12 @@ add_definitions( -DMAGICKCORE_HDRI_ENABLE=0 )
 
 find_package(ImageMagick COMPONENTS Magick++ REQUIRED)
 # =============================
+# Build speed up 
+
+# function to enable unity build for a target
+function(set_unity_for_target target_name)
+  set_target_properties(${target_name} PROPERTIES UNITY_BUILD ON UNITY_BUILD_MODE BATCH UNITY_BUILD_BATCH_SIZE 16 UNITY_BUILD_UNIQUE_ID "MY_UNITY_ID")
+endfunction()
 
 # =============================
 # obcpp library & executable
@@ -166,7 +176,14 @@ add_custom_target(pull_matching_test_images
     mkdir -p ${CMAKE_BINARY_DIR}/../tests/integration/images/matching_cropped &&
     unzip ${CMAKE_BINARY_DIR}/../tests/integration/images/test.zip -d ${CMAKE_BINARY_DIR}/../tests/integration/images/matching_cropped
 )
- 
+
+# pull cropped images from saliency images testing folder
+add_custom_target(pull_saliency_test_images
+  COMMAND gdown 1HJLdrm0X3VxnlQ3Z58EE9-Y5VX1NlhAz -O ${CMAKE_BINARY_DIR}/../tests/integration/images/saliency.zip && 
+    mkdir -p ${CMAKE_BINARY_DIR}/../tests/integration/images/saliency &&
+    unzip ${CMAKE_BINARY_DIR}/../tests/integration/images/saliency.zip -d ${CMAKE_BINARY_DIR}/../tests/integration/images/saliency
+)
+
 # =============================
 
 # =============================
