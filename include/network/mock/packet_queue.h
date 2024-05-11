@@ -1,10 +1,10 @@
 #ifndef INCLUDE_NETWORK_MOCK_PACKET_QUEUE_H_
 #define INCLUDE_NETWORK_MOCK_PACKET_QUEUE_H_
 
-#include "udp_squared/protocol.h"
-
 #include <stdlib.h>
 #include <semaphore.h>
+
+#include "udp_squared/protocol.h"
 
 /* 
  * Implementation of a thread-safe queue for the mock airdrop sockets code. 

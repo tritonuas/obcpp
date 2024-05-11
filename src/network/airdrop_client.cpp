@@ -74,7 +74,7 @@ void AirdropClient::_establishConnection() {
     LOG_F(INFO, "Payload connection established in %s mode",
         (this->mode == GUIDED) ? "Guided" : "Unguided");
 
-    send_ad_packet(this->socket, 
+    send_ad_packet(this->socket,
         makeModePacket(ACK_MODE, UDP2_ALL, OBC_NULL, *this->mode));
 
     this->worker_future = std::async(std::launch::async, &AirdropClient::_receiveWorker, this);
@@ -186,7 +186,7 @@ void AirdropClient::_receiveWorker() {
         if (packet.header == SET_MODE) {
             uint8_t bottle, state;
             parseID(packet.id, &bottle, &state);
-            send_ad_packet(this->socket, makeModePacket(ACK_MODE, 
+            send_ad_packet(this->socket, makeModePacket(ACK_MODE,
                 static_cast<bottle_t>(bottle), OBC_NULL, *this->mode));
             LOG_F(INFO, "Received extra SET_MODE, reacking");
             continue;
