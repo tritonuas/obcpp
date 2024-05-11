@@ -258,7 +258,6 @@ DEF_GCS_HANDLE(Post, takeoff, manual) {
         return;
     }
     lock_ptr->ptr->setStatus(WaitForTakeoffTick::Status::Manual);
-
     LOG_RESPONSE(INFO, "Set status of WaitForTakeoff Tick to manaul", OK);
 }
 
@@ -271,6 +270,5 @@ DEF_GCS_HANDLE(Post, takeoff, autonomous) {
         return;
     }
     lock_ptr->ptr->setStatus(WaitForTakeoffTick::Status::Autonomous);
-    
     LOG_RESPONSE(INFO, "Set status of WaitForTakeoff Tick to autonomous", OK);
 }

@@ -18,9 +18,7 @@ Tick* WaitForTakeoffTick::tick() {
     if (status == Status::Manual) {
         LOG_F(INFO, "Transitioning to manual takeoff tick.");
         return new TakeoffTick(this->state);
-    }
-
-    else if (status == Status::Autonomous) {
+    } else if (status == Status::Autonomous) {
         LOG_F(INFO, "Transitioning to autonomous takeoff tick.");
         return new ActiveTakeoffTick(this->state);
     }
