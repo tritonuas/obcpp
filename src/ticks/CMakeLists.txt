@@ -15,6 +15,7 @@ set(FILES
     path_validate.cpp
     takeoff.cpp
     active_takeoff.cpp
+    wait_for_takeoff.cpp
 )
 
 set(LIB_DEPS

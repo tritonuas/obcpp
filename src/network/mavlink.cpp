@@ -464,12 +464,7 @@ bool MavlinkClient::startMission() {
         return false;
     }
 
-    LOG_F(INFO, "About to transition to forward flight");
-    auto fw_result = this->action->transition_to_fixedwing();
-    if (fw_result != mavsdk::Action::Result::Success) {
-        LOG_S(ERROR) << "FAIL: Transition to fix wing " << fw_result;
-        return false;
-    }
+    // will by default transition to forward flight
 
     LOG_F(INFO, "Mission Started!");
     return true;
