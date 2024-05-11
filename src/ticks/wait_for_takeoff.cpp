@@ -1,10 +1,10 @@
 #include "ticks/wait_for_takeoff.hpp"
 
-#include "ticks/takeoff.hpp"
-#include "ticks/active_takeoff.hpp"
-
 #include <memory>
 #include <future>
+
+#include "ticks/takeoff.hpp"
+#include "ticks/active_takeoff.hpp"
 
 WaitForTakeoffTick::WaitForTakeoffTick(std::shared_ptr<MissionState> state)
     :Tick(state, TickID::WaitForTakeoff), status(WaitForTakeoffTick::Status::None) {
@@ -22,7 +22,6 @@ Tick* WaitForTakeoffTick::tick() {
         LOG_F(INFO, "Transitioning to autonomous takeoff tick.");
         return new ActiveTakeoffTick(this->state);
     }
-    
     static int counter = 0;
     counter++;
     if (counter % 50 == 0) {
