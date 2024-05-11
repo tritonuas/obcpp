@@ -274,12 +274,13 @@ int main() {
     std::vector<Polygon> obstacles = {obs1, obs2};
 
     RRTPoint start = RRTPoint(state->mission_params.getWaypoints()[0], 0);
+    start.coord.z = 30.0; // 30 meters takeoff
 
     // RRT settings (manually put in)
     int num_iterations = 512;
     double search_radius = 9999;
     double rewire_radius = 256;
-    RRTConfig config = RRTConfig { num_iterations, rewire_radius, true, POINT_FETCH_METHODS::NONE, true };
+    RRTConfig config = RRTConfig { num_iterations, rewire_radius, true, POINT_FETCH_METHODS::NEAREST, true };
 
     RRT rrt = RRT(start, goals, search_radius, 
                   state->mission_params.getFlightBoundary(), obstacles, config);
@@ -302,7 +303,7 @@ int main() {
     std::cout << "Path size: " << path.size() << std::endl;
     std::cout << "Path length: " << (path.size() * POINT_SEPARATION) << std::endl;
     for (const XYZCoord& point : path) {
-        file << point.x << ", " << point.y << std::endl;
+        file << point.z << std::endl;
     }
 
     // plot the path

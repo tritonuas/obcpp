@@ -1,5 +1,5 @@
-#ifndef INCLUDE_TICKS_ACTIVETAKEOFF_HPP_
-#define INCLUDE_TICKS_ACTIVETAKEOFF_HPP_
+#ifndef INCLUDE_TICKS_ACTIVE_TAKEOFF_HPP_
+#define INCLUDE_TICKS_ACTIVE_TAKEOFF_HPP_
 
 #include <memory>
 #include <string>
@@ -29,4 +29,4 @@ class ActiveTakeoffTick: public Tick {
     void armAndHover();
 };
 
-#endif  // INCLUDE_TICKS_ACTIVETAKEOFF_HPP_
+#endif  // INCLUDE_TICKS_ACTIVE_TAKEOFF_HPP_

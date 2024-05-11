@@ -121,6 +121,16 @@ MavlinkClient::MavlinkClient(std::string link):
             Lock lock(this->data_mut);
             this->data.armed = armed;
         });
+    // this->telemetry->subscribe_attitude_euler(
+    //     [this](mavsdk::Telemetry::EulerAngle attitude) {
+    //         VLOG_F(DEBUG, "Yaw: %f, Pitch: %f, Roll: %f)",
+    //             attitude.yaw_deg, attitude.pitch_deg, attitude.roll_deg);
+
+    //         Lock lock(this->data_mut);
+    //         this->data.yaw_deg = attitude.yaw_deg;
+    //         this->data.pitch_deg = attitude.pitch_deg;
+    //         this->data.roll_deg = attitude.roll_deg;
+    //     });
 }
 
 bool MavlinkClient::uploadMissionUntilSuccess(std::shared_ptr<MissionState> state,
@@ -277,6 +287,22 @@ double MavlinkClient::heading_deg() {
     return this->data.heading_deg;
 }
 
+double MavlinkClient::yaw_deg() {
+    Lock lock(this->data_mut);
+    return this->data.yaw_deg;
+}
+
+double MavlinkClient::pitch_deg() {
+    Lock lock(this->data_mut);
+    return this->data.pitch_deg;
+}
+
+double MavlinkClient::roll_deg() {
+    Lock lock(this->data_mut);
+    return this->data.roll_deg;
+}
+
+
 bool MavlinkClient::isArmed() {
     Lock lock(this->data_mut);
     return this->data.armed;
@@ -297,10 +323,10 @@ double MavlinkClient::angle2D(double x1, double y1, double x2, double y2) {
     theta2 = atan2(y2, x2);
     dtheta = theta2 - theta1;
 
-    while(dtheta > M_PI){
+    while (dtheta > M_PI) {
         dtheta -= 2*M_PI;
     }
-    while(dtheta < -M_PI){
+    while (dtheta < -M_PI) {
         dtheta += 2*M_PI;
     }
 
@@ -311,11 +337,12 @@ double MavlinkClient::angle2D(double x1, double y1, double x2, double y2) {
  * This function checks if a coordiante is inside a polygon region.
  * Source: https://stackoverflow.com/questions/4287780/detecting-whether-a-gps-coordinate-falls-within-a-polygon-on-a-map
 */
-bool MavlinkClient::isPointInPolygon(std::pair<double, double> latlng, std::vector<XYZCoord> region){
+bool MavlinkClient::isPointInPolygon(std::pair<double, double> latlng,
+    std::vector<XYZCoord> region) {
     int n = region.size();
     double angle = 0;
 
-    for(int i = 0; i < n; i++){
+    for (int i = 0; i < n; i++) {
         double point_1_lat = region[i].x - latlng.first;
         double point_1_lng = region[i].y - latlng.second;
         double point_2_lat = region[(i+1)%n].x - latlng.first;
@@ -323,15 +350,15 @@ bool MavlinkClient::isPointInPolygon(std::pair<double, double> latlng, std::vect
         angle += MavlinkClient::angle2D(point_1_lat, point_1_lng, point_2_lat, point_2_lng);
     }
 
-    if(std::abs(angle) < M_PI){
+    if (std::abs(angle) < M_PI) {
         return false;
     }
-    
+
     return true;
 }
 
-bool MavlinkClient::isMissionFinished(){
-    //Boolean representing if mission is finished
+bool MavlinkClient::isMissionFinished() {
+    // Boolean representing if mission is finished
     return this->mission->mission_progress().current == this->mission->mission_progress().total;
 }
 
@@ -342,26 +369,26 @@ mavsdk::Telemetry::RcStatus MavlinkClient::get_conn_status() {
 /**
  * Goes through the sequence of checking vehicle health -> arm vehicle -> takeoff -> hover at set altitude.
 */
-bool MavlinkClient::armAndHover(){
+bool MavlinkClient::armAndHover(std::shared_ptr<MissionState> state) {
     LOG_F(INFO, "Attempting to arm and hover");
     LOG_F(INFO, "Checking vehicle health...");
-    //Vehicle can only be armed if status is healthy
-    if(this->telemetry->health_all_ok() != true){
+    // Vehicle can only be armed if status is healthy
+    if (this->telemetry->health_all_ok() != true) {
         LOG_F(ERROR, "Vehicle not ready to arm");
         return false;
     }
 
     LOG_F(INFO, "Attempting to arm...");
-    //Attemp to arm the vehicle
+    // Attempt to arm the vehicle
     const mavsdk::Action::Result arm_result = this->action->arm();
-    if(arm_result != mavsdk::Action::Result::Success){
+    if (arm_result != mavsdk::Action::Result::Success) {
         LOG_F(ERROR, "Arming failed");
         return false;
     }
 
 
     // TODO: config option for this
-    const float TAKEOFF_ALT = 30.0f;
+    const float TAKEOFF_ALT = state->takeoff_alt_m;
     auto r1 = this->action->set_takeoff_altitude(TAKEOFF_ALT);
     if (r1 != mavsdk::Action::Result::Success) {
         LOG_S(ERROR) << "FAIL: could not set takeoff alt " << r1;
@@ -424,8 +451,9 @@ bool MavlinkClient::startMission() {
     float current_position = this->telemetry->position().relative_altitude_m;
 
     LOG_F(INFO, "Checking target altitude");
-    if(current_position < target_alt){
-        LOG_F(ERROR, "FAIL: Vehicle has not reached desired altitude (%f < %f)", current_position, target_alt);
+    if (current_position < target_alt) {
+        LOG_F(ERROR, "FAIL: Vehicle has not reached desired altitude (%f < %f)",
+            current_position, target_alt);
         return false;
     }
 
@@ -436,12 +464,7 @@ bool MavlinkClient::startMission() {
         return false;
     }
 
-    LOG_F(INFO, "About to transition to forward flight");
-    auto fw_result = this->action->transition_to_fixedwing();
-    if (fw_result != mavsdk::Action::Result::Success) {
-        LOG_S(ERROR) << "FAIL: Transition to fix wing " << fw_result;
-        return false;
-    }
+    // will by default transition to forward flight
 
     LOG_F(INFO, "Mission Started!");
     return true;

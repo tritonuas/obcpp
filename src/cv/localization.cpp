@@ -95,14 +95,14 @@ GPSCoord ECEFLocalization::localize(const ImageTelemetry& telemetry, const Bbox&
 
 
     CameraVector gimbalState;
-    gimbalState.roll = telemetry.roll*PI/180;
-    gimbalState.pitch = telemetry.pitch*PI/180;
-    gimbalState.heading = telemetry.yaw*PI/180;
+    gimbalState.roll = telemetry.roll_deg*PI/180;
+    gimbalState.pitch = telemetry.pitch_deg*PI/180;
+    gimbalState.heading = telemetry.yaw_deg*PI/180;
 
     GPSCoord aircraft;
-    aircraft.set_latitude(telemetry.latitude*PI/180);
-    aircraft.set_longitude(telemetry.longitude*PI/180);
-    aircraft.set_altitude(telemetry.altitude*1000);
+    aircraft.set_latitude(telemetry.latitude_deg*PI/180);
+    aircraft.set_longitude(telemetry.longitude_deg*PI/180);
+    aircraft.set_altitude(telemetry.altitude_agl_m*1000);
 
     CameraVector targetVector = PixelsToAngle(camera, gimbalState, targetX, targetY);
     ENUCoordinates offset = AngleToENU(targetVector, aircraft, terrainHeight);
@@ -125,7 +125,7 @@ GPSCoord GSDLocalization::localize(const ImageTelemetry& telemetry, const Bbox& 
     GPSCoord gps;
 
     // Ground Sample Distance (mm/pixel), 1.0~2.5cm per px is ideal aka 10mm~25mm ppx
-    double GSD = (SENSOR_WIDTH * (telemetry.altitude)) / (FOCAL_LENGTH_MM * IMG_WIDTH_PX);
+    double GSD = (SENSOR_WIDTH * (telemetry.altitude_agl_m)) / (FOCAL_LENGTH_MM * IMG_WIDTH_PX);
 
     // Midpoints of the image
     double img_mid_x = IMG_WIDTH_PX / 2;
@@ -144,7 +144,7 @@ GPSCoord GSDLocalization::localize(const ImageTelemetry& telemetry, const Bbox& 
     double target_camera_cord_y = (IMG_HEIGHT_PX / 2) - target_y;
 
     // Angle of Bearing (Angle from north to target)
-    double thetaB = telemetry.heading + atan(target_camera_cord_x / target_camera_cord_y);
+    double thetaB = telemetry.heading_deg + atan(target_camera_cord_x / target_camera_cord_y);
 
     // Translate bearing to the 3 quadrant if applicable
     if (target_camera_cord_x < 0 && target_camera_cord_y < 0) {
@@ -157,7 +157,7 @@ GPSCoord GSDLocalization::localize(const ImageTelemetry& telemetry, const Bbox& 
 
     // Calculates the cordinates using the offset
     GPSCoord calc_coord = CalcOffset((calc_cam_offset_x), (calc_cam_offset_y),
-                                    (telemetry.latitude), (telemetry.longitude));
+                                    (telemetry.latitude_deg), (telemetry.longitude_deg));
 
     return calc_coord;
 }
