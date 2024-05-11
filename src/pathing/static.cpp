@@ -318,7 +318,7 @@ std::vector<XYZCoord> AirdropSearch::coverageOptimal() const {
         std::vector<RRTOption> current_dubins_path;
 
         for (int i = 0; i < waypoints.size() - 1; i++) {
-            RRTOption dubins_path = dubins.bestOption(waypoints[i], wayopints[i + 1]);
+            RRTOption dubins_path = dubins.bestOption(waypoints[i], waypoints[i + 1]);
             lengths[i] += dubins_path.length;
             current_dubins_path.push_back(dubins_path);
         }
