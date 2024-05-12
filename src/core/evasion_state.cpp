@@ -52,7 +52,7 @@ void ObstacleEvasionState::evade(void) {
     uint8_t target_compid = 0;
 
     // Mavlink command number
-    uint16_t command = MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT;
+    uint16_t command = (uint16_t) MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT;
 
     // Climb or Descend (0 = Neutral, command completes when within 5m of this command's altitude,
     // 1 = Climbing, command completes when at or above this command's altitude, 2 = Descending,
@@ -69,7 +69,7 @@ void ObstacleEvasionState::evade(void) {
 
     // TODO:(Samir) KMS, we need to compile mavlink to use plugins
     // TODO: type should be mavsdk::MavlinkPassthrough::Result
-    mavsdk::Mission::Result result = ObstacleEvasionState::mav->sendCustomMavlinkCommand(target_sysid, target_compid, command, param1, param2,
+    mavsdk::MissionRaw::Result result = ObstacleEvasionState::mav->sendCustomMavlinkCommand(target_sysid, target_compid, command, param1, param2,
                                           param3, param4, param5, param6, param7);
 }
 

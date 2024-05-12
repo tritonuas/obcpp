@@ -74,7 +74,7 @@ const std::chrono::milliseconds WAIT_FOR_TAKEOFF_TICK_WAIT = std::chrono::millis
 const double EARTH_RADIUS_METERS = 6378137.0;
 
 // Mavlink commands
-const int MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT = 30;
+// const int MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT = 30;
 
 
 #endif  // INCLUDE_UTILITIES_CONSTANTS_HPP_

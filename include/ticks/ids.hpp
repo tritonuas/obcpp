@@ -9,7 +9,7 @@ enum class TickID {
     PathValidate,
     MissionUpload,
     MissionStart,
-    EvasionState
+    EvasionState,
     MavUpload,
     Takeoff,
     FlyWaypoints,
@@ -40,6 +40,7 @@ constexpr const char* TICK_ID_TO_STR(TickID id) {
         _SET_TICK_ID_MAPPING(FlyWaypoints);
         _SET_TICK_ID_MAPPING(FlySearch);
         _SET_TICK_ID_MAPPING(CVLoiter);
+        _SET_TICK_ID_MAPPING(AirdropPrep);
         _SET_TICK_ID_MAPPING(AirdropApproach);
         _SET_TICK_ID_MAPPING(ManualLanding);
         _SET_TICK_ID_MAPPING(AutoLanding);
