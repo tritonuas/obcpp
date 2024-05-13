@@ -221,17 +221,17 @@ DEF_GCS_HANDLE(Post, dodropnow) {
     BottleSwap bottle_proto;
     google::protobuf::util::JsonStringToMessage(request.body, &bottle_proto);
 
-    ad_bottle bottle;
+    bottle_t bottle;
     if (bottle_proto.index() == BottleDropIndex::A) {
-        bottle = ad_bottle::BOTTLE_A;
+        bottle = UDP2_A;
     } else if (bottle_proto.index() == BottleDropIndex::B) {
-        bottle = ad_bottle::BOTTLE_B;
+        bottle = UDP2_B;
     } else if (bottle_proto.index() == BottleDropIndex::C) {
-        bottle = ad_bottle::BOTTLE_C;
+        bottle = UDP2_C;
     } else if (bottle_proto.index() == BottleDropIndex::D) {
-        bottle = ad_bottle::BOTTLE_D;
+        bottle = UDP2_D;
     } else if (bottle_proto.index() == BottleDropIndex::E) {
-        bottle = ad_bottle::BOTTLE_E;
+        bottle = UDP2_E;
     } else {
         LOG_RESPONSE(ERROR, "Invalid bottle index", BAD_REQUEST);
         return;
@@ -244,7 +244,7 @@ DEF_GCS_HANDLE(Post, dodropnow) {
         return;
     }
 
-    state->getAirdrop()->send(ad_packet_t { .hdr = DROP_NOW, .data = bottle });
+    state->getAirdrop()->send(makeDropNowPacket(bottle));
 
     LOG_RESPONSE(INFO, "Dropped bottle", OK);
 }

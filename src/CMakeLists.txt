@@ -2,6 +2,10 @@ add_library(obcpp_protos STATIC
     ${PROJECT_SOURCE_DIR}/build/gen_protos/protos/obc.pb.cc 
 )
 
+add_library(obcpp_udp2 STATIC
+    ${PROJECT_SOURCE_DIR}/include/udp_squared/internal/helper.c
+)
+
 add_subdirectory(camera)
 add_subdirectory(core)
 add_subdirectory(cv)
@@ -20,6 +24,7 @@ target_link_libraries(obcpp_lib INTERFACE
     obcpp_pathing
     obcpp_ticks
     obcpp_utilities
+    obcpp_udp2
 )
 
 # for use in unit tests
@@ -33,6 +38,7 @@ target_link_libraries(obcpp_lib_mock INTERFACE
     obcpp_pathing
     obcpp_ticks
     obcpp_utilities
+    obcpp_udp2
 )
 
 add_executable(${PROJECT_NAME} main.cpp)
