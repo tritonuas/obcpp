@@ -19,21 +19,29 @@
 #include "utilities/rng.hpp"
 
 RRT::RRT(RRTPoint start, std::vector<XYZCoord> goals, double search_radius, Polygon bounds,
-         std::vector<Polygon> obstacles, RRTConfig config)
+         std::vector<Polygon> obstacles, std::vector<double> angles, RRTConfig config)
     : iterations_per_waypoint(config.iterations_per_waypoint),
       search_radius(search_radius),
       rewire_radius(config.rewire_radius),
       tree(start, Environment(bounds, {}, goals, obstacles),
            Dubins(TURNING_RADIUS, POINT_SEPARATION)),
-      config(config) {}
+      config(config) {
+    if (angles.size() != 0) {
+        this->angles = angles;
+    }
+}
 
 RRT::RRT(RRTPoint start, std::vector<XYZCoord> goals, double search_radius, Environment airspace,
-         RRTConfig config)
+         std::vector<double> angles, RRTConfig config)
     : iterations_per_waypoint(config.iterations_per_waypoint),
       search_radius(search_radius),
       rewire_radius(config.rewire_radius),
       tree(start, airspace, Dubins(TURNING_RADIUS, POINT_SEPARATION)),
-      config(config) {}
+      config(config) {
+    if (angles.size() != 0) {
+        this->angles = angles;
+    }
+}
 
 void RRT::run() {
     /*
@@ -413,7 +421,7 @@ std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
     start.coord.z = state->takeoff_alt_m;
 
     RRT rrt(start, goals, SEARCH_RADIUS, state->mission_params.getFlightBoundary(), {},
-            state->rrt_config);
+            {}, state->rrt_config);
 
     rrt.run();
 

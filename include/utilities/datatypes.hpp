@@ -8,7 +8,7 @@
 
 #include "protos/obc.pb.h"
 #include "utilities/constants.hpp"
-#include "airdrop/packet.h"
+#include "udp_squared/internal/enum.h"
 
 struct XYZCoord {
     XYZCoord(double x, double y, double z) : x(x), y(y), z(z) {}
@@ -115,7 +115,7 @@ struct AirdropSearchConfig {
 };
 
 struct AirdropApproachConfig {
-    ad_mode drop_mode;
+    drop_mode drop_method;
     std::unordered_set<int> bottle_ids;
     double drop_altitude;
     double guided_drop_distance;

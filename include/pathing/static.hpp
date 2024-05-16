@@ -15,6 +15,7 @@
 #include "pathing/environment.hpp"
 #include "pathing/plotting.hpp"
 #include "pathing/tree.hpp"
+#include "udp_squared/internal/enum.h"
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
 #include "utilities/rng.hpp"
@@ -22,13 +23,14 @@
 class RRT {
  public:
     RRT(RRTPoint start, std::vector<XYZCoord> goals, double search_radius, Polygon bounds,
-        std::vector<Polygon> obstacles = {},
+        std::vector<Polygon> obstacles = {}, std::vector<double> angles = {},
         RRTConfig config = {.iterations_per_waypoint = ITERATIONS_PER_WAYPOINT,
                             .rewire_radius = REWIRE_RADIUS,
                             .optimize = false,
                             .point_fetch_method = POINT_FETCH_METHODS::NEAREST,
                             .allowed_to_skip_waypoints = false});
     RRT(RRTPoint start, std::vector<XYZCoord> goals, double search_radius, Environment airspace,
+        std::vector<double> angles = {},
         RRTConfig config = {.iterations_per_waypoint = ITERATIONS_PER_WAYPOINT,
                             .rewire_radius = REWIRE_RADIUS,
                             .optimize = false,
@@ -69,7 +71,7 @@ class RRT {
 
     // the different of final approaches to the goal
     // yes, this is the default unit circle diagram used in High-School
-    const std::vector<double> angles = {
+    std::vector<double> angles = {
         0,
         M_PI / 6,
         M_PI / 4,
@@ -240,7 +242,7 @@ class AirdropSearch {
 class AirdropApproach {
     AirdropApproach(const RRTPoint &start, const XYZCoord &goal, RRTPoint wind, Polygon bounds,
                     std::vector<Polygon> obstacles = {},
-                    AirdropApproachConfig config = {.drop_mode = DIRECT_DROP,
+                    AirdropApproachConfig config = {.drop_method = UNGUIDED,
                                                     .bottle_ids = {1, 2, 3, 4, 5},
                                                     .drop_altitude = 26.0,
                                                     .guided_drop_distance = 50.0,
@@ -254,21 +256,28 @@ class AirdropApproach {
 
     std::vector<XYZCoord> run() const {
         // should use a specific angle
-        RRT rrt(start, {getDropLocation()}, SEARCH_RADIUS, airspace);
+        RRTPoint drop_vector = getDropLocation();
+        RRT rrt(start, {drop_vector.coord}, SEARCH_RADIUS, airspace, {drop_vector.psi});
         rrt.run();
 
         return rrt.getPointsToGoal();
     }
 
-    XYZCoord getDropLocation() const { return directDropLocation(); }
+    RRTPoint getDropLocation() const {
+        XYZCoord drop_location = directDropLocation();
+
+        // gets the angle between the drop_location and the goal
+        double angle = std::atan2(drop_location.y - goal.y, drop_location.x - goal.x);
+        return RRTPoint(drop_location, angle);
+    }
 
     XYZCoord directDropLocation() const {
-        double drop_offset = config.drop_mode == DIRECT_DROP ? config.unguided_drop_distance
-                                                             : config.guided_drop_distance;
+        // [TODO] - change
+        double drop_offset = config.drop_method == GUIDED ? config.unguided_drop_distance : config.guided_drop_distance;
 
         double wind_strength_coef = wind.coord.norm() * WIND_CONST_PER_ALTITUDE;
-        XYZCoord wind_offset(wind_strength_coef * std::cos(wind.psi), wind_strength_coef * 
-                             std::sin(wind.psi), 0);
+        XYZCoord wind_offset(wind_strength_coef * std::cos(wind.psi),
+                             wind_strength_coef * std::sin(wind.psi), 0);
 
         return XYZCoord(goal.x - drop_offset + wind_offset.x, goal.y + wind_offset.y,
                         config.drop_altitude);
