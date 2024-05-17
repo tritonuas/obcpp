@@ -8,8 +8,7 @@
 FlySearchTick::FlySearchTick(std::shared_ptr<MissionState> state)
     :Tick(state, TickID::FlySearch) {
         const std::chrono::milliseconds interval {2000};
-        //this.state.camera.startTakingPictures(&interval) = 0;
-
+        this->state->getCamera()->startTakingPictures(interval, this->state->getMav());
     }
 
 std::chrono::milliseconds FlySearchTick::getWait() const {
@@ -25,8 +24,8 @@ Tick* FlySearchTick::tick() {
     // Deconstructor
     // TODO: Detect when path is completed
     if (false) {
-        //this.state.camera.stopTakingPictures();
-        //images = this.state.camera.getAllImages();
+        this->state->getCamera()->stopTakingPictures();
+        // images = this->state->getCamera()->getAllImages();
         return new CVLoiterTick(this->state);
     }
     //return nullptr;
