@@ -240,17 +240,18 @@ class AirdropSearch {
 };
 
 class AirdropApproach {
+ public:
     AirdropApproach(const RRTPoint &start, const XYZCoord &goal, RRTPoint wind, Polygon bounds,
-                    std::vector<Polygon> obstacles = {},
-                    AirdropApproachConfig config = {.drop_method = UNGUIDED,
-                                                    .bottle_ids = {1, 2, 3, 4, 5},
-                                                    .drop_altitude = 26.0,
-                                                    .guided_drop_distance = 50.0,
-                                                    .unguided_drop_distance = 50.0})
+                      std::vector<Polygon> obstacles = {},
+                      AirdropApproachConfig config = {.drop_method = UNGUIDED,
+                                                      .bottle_ids = {1, 2, 3, 4, 5},
+                                                      .drop_altitude = 26.0,
+                                                      .guided_drop_distance = 50.0,
+                                                      .unguided_drop_distance = 50.0})
         : start(start),
           goal(goal),
           wind(wind),
-          airspace(Environment(bounds, {}, {}, obstacles)),
+          airspace(Environment(bounds, {}, {goal}, obstacles)),
           dubins(Dubins(TURNING_RADIUS, POINT_SEPARATION)),
           config(config) {}
 
@@ -267,13 +268,14 @@ class AirdropApproach {
         XYZCoord drop_location = directDropLocation();
 
         // gets the angle between the drop_location and the goal
-        double angle = std::atan2(drop_location.y - goal.y, drop_location.x - goal.x);
+        double angle = std::atan2(goal.y - drop_location.y, goal.x - drop_location.x);
         return RRTPoint(drop_location, angle);
     }
 
     XYZCoord directDropLocation() const {
         // [TODO] - change
-        double drop_offset = config.drop_method == GUIDED ? config.unguided_drop_distance : config.guided_drop_distance;
+        double drop_offset = config.drop_method == GUIDED ? config.unguided_drop_distance
+                                                          : config.guided_drop_distance;
 
         double wind_strength_coef = wind.coord.norm() * WIND_CONST_PER_ALTITUDE;
         XYZCoord wind_offset(wind_strength_coef * std::cos(wind.psi),
@@ -285,7 +287,7 @@ class AirdropApproach {
 
     const XYZCoord goal;
     const RRTPoint start;
-    const Environment airspace;
+    Environment airspace;
     const Dubins dubins;
     const AirdropApproachConfig config;
 
