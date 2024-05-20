@@ -117,9 +117,10 @@ struct AirdropSearchConfig {
 struct AirdropApproachConfig {
     drop_mode drop_method;
     std::unordered_set<int> bottle_ids;
-    double drop_altitude;
-    double guided_drop_distance;
-    double unguided_drop_distance;
+    double drop_angle_rad;
+    double drop_altitude_m;
+    double guided_drop_distance_m;
+    double unguided_drop_distance_m;
 };
 
 struct CameraConfig {

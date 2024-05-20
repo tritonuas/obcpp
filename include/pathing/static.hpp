@@ -242,49 +242,21 @@ class AirdropSearch {
 class AirdropApproach {
  public:
     AirdropApproach(const RRTPoint &start, const XYZCoord &goal, RRTPoint wind, Polygon bounds,
-                      std::vector<Polygon> obstacles = {},
-                      AirdropApproachConfig config = {.drop_method = UNGUIDED,
-                                                      .bottle_ids = {1, 2, 3, 4, 5},
-                                                      .drop_altitude = 26.0,
-                                                      .guided_drop_distance = 50.0,
-                                                      .unguided_drop_distance = 50.0})
-        : start(start),
-          goal(goal),
-          wind(wind),
-          airspace(Environment(bounds, {}, {goal}, obstacles)),
-          dubins(Dubins(TURNING_RADIUS, POINT_SEPARATION)),
-          config(config) {}
+                    std::vector<Polygon> obstacles = {},
+                    AirdropApproachConfig config = {.drop_method = UNGUIDED,
+                                                    .bottle_ids = {1, 2, 3, 4, 5},
+                                                    .drop_angle_rad = DROP_ANGLE_RAD,
+                                                    // .drop_angle_rad = M_PI * 3 / 4,
+                                                    .drop_altitude_m = DROP_ALTITUDE_M,
+                                                    .guided_drop_distance_m = GUIDED_DROP_DISTANCE_M,
+                                                    .unguided_drop_distance_m = UNGUIDED_DROP_DISTANCE_M});
+    std::vector<XYZCoord> run() const;
 
-    std::vector<XYZCoord> run() const {
-        // should use a specific angle
-        RRTPoint drop_vector = getDropLocation();
-        RRT rrt(start, {drop_vector.coord}, SEARCH_RADIUS, airspace, {drop_vector.psi});
-        rrt.run();
+    RRTPoint getDropLocation() const;
 
-        return rrt.getPointsToGoal();
-    }
+    XYZCoord directDropLocation() const; 
 
-    RRTPoint getDropLocation() const {
-        XYZCoord drop_location = directDropLocation();
-
-        // gets the angle between the drop_location and the goal
-        double angle = std::atan2(goal.y - drop_location.y, goal.x - drop_location.x);
-        return RRTPoint(drop_location, angle);
-    }
-
-    XYZCoord directDropLocation() const {
-        // [TODO] - change
-        double drop_offset = config.drop_method == GUIDED ? config.unguided_drop_distance
-                                                          : config.guided_drop_distance;
-
-        double wind_strength_coef = wind.coord.norm() * WIND_CONST_PER_ALTITUDE;
-        XYZCoord wind_offset(wind_strength_coef * std::cos(wind.psi),
-                             wind_strength_coef * std::sin(wind.psi), 0);
-
-        return XYZCoord(goal.x - drop_offset + wind_offset.x, goal.y + wind_offset.y,
-                        config.drop_altitude);
-    }
-
+ private:
     const XYZCoord goal;
     const RRTPoint start;
     Environment airspace;

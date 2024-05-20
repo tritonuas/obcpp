@@ -250,9 +250,8 @@ int main() {
 
     RRTPoint start = RRTPoint(state->mission_params.getWaypoints()[0], 0);
 
-    AirdropApproach approach(RRTPoint(XYZCoord(0, 0, 0), 0),
-                             XYZCoord(313.131212, -187.781235, 0),
-                             RRTPoint(XYZCoord(0, 0, 0), 0),
+    AirdropApproach approach(RRTPoint(XYZCoord(-500, 100, 0), 0),
+                             XYZCoord(313.131212, -187.781235, 0), RRTPoint(XYZCoord(0, 0, 0), 0),
                              state->mission_params.getFlightBoundary());
 
     Environment env(state->mission_params.getFlightBoundary(),

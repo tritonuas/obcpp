@@ -27,6 +27,13 @@
             "optimize": true,
             "vertical": false,
             "one_way": false
+        },
+        "approach": {
+            "drop_method": 1,
+            "drop_angle_rad": 2.52134317,
+            "drop_altitude_m": 26.0,
+            "guided_drop_distance_m": 50.0,
+            "unguided_drop_distance_m": 50.0
         }
     },
     "camera": {
