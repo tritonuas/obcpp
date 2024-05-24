@@ -10,6 +10,8 @@
 
 #include "cv/pipeline.hpp"
 #include "cv/aggregator.hpp"
+#include "protos/obc.pb.h"
+
 
 /*
  * Stop taking photos, loiter away from the search zone
@@ -26,6 +28,7 @@ class CVLoiterTick : public Tick {
     Tick* tick() override;
  private:
     std::deque<ImageData> flightImages;
+    std::unordered_map<(BottleDropIndex index), (std::shared_ptr<DetectedTarget> target_ptr)> bestMatches;
     LockPtr<CVResults> results;
 };
 

@@ -20,8 +20,7 @@ class FlySearchTick : public Tick {
 
     Tick* tick() override;
 
-    //std::vector<ImageData> images;
-
+    std::vector<ImageData> images;
 };
 
 #endif  // INCLUDE_TICKS_FLY_SEARCH_HPP_

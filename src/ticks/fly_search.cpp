@@ -7,7 +7,7 @@
 
 FlySearchTick::FlySearchTick(std::shared_ptr<MissionState> state)
     :Tick(state, TickID::FlySearch) {
-        const std::chrono::milliseconds interval {2000};
+        const std::chrono::milliseconds interval {2000}; // Might need tune
         this->state->getCamera()->startTakingPictures(interval, this->state->getMav());
     }
 

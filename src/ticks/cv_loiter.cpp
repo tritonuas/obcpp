@@ -18,6 +18,51 @@ CVLoiterTick::CVLoiterTick(std::shared_ptr<MissionState> state)
 
         // Gets the results from the aggregator
         results = state->getCV()->getResults();
+
+        for (DetectedTarget detectedTarget : results->detected_targets) {
+                if (detectedTarget.likely_bottle == BottleDropIndex::Undefined) {
+                    // Handle Error how
+                    LOG_F(ERROR, "Unknown target type detected");
+                } else {
+                    if (detectedTarget.match_distance > bestMatches[detectedTarget.likely_bottle]->match_distance) {
+                        bestMatches[detectedTarget.likely_bottle] = std::make_shared<DetectedTarget>(detectedTarget);
+                    }
+                }
+
+        //     switch (detectedTarget.likely_bottle) {
+        //         case BottleDropIndex::Undefined:
+        //             // Handle Error how
+        //             break;
+        //         case BottleDropIndex::A:
+        //             if (detectedTarget.match_distance > bestMatches[BottleDropIndex::A]->match_distance) {
+        //                 bestMatches[BottleDropIndex::A] = std::make_shared<DetectedTarget>(detectedTarget);
+        //             }
+        //             break;
+        //         case BottleDropIndex::B:
+        //             if (detectedTarget.match_distance > bestMatches[BottleDropIndex::B]->match_distance) {
+        //                 bestMatches[BottleDropIndex::B] = std::make_shared<DetectedTarget>(detectedTarget);
+        //             }
+        //             break;
+        //         case BottleDropIndex::C:
+        //             if (detectedTarget.match_distance > bestMatches[BottleDropIndex::C]->match_distance) {
+        //                 bestMatches[BottleDropIndex::C] = std::make_shared<DetectedTarget>(detectedTarget);
+        //             }
+        //             break;
+        //         case BottleDropIndex::D:
+        //             if (detectedTarget.match_distance > bestMatches[BottleDropIndex::D]->match_distance) {
+        //                 bestMatches[BottleDropIndex::D] = std::make_shared<DetectedTarget>(detectedTarget);
+        //             }
+        //             break;
+        //         case BottleDropIndex::E:
+        //             if (detectedTarget.match_distance > bestMatches[BottleDropIndex::E]->match_distance) {
+        //                 bestMatches[BottleDropIndex::E] = std::make_shared<DetectedTarget>(detectedTarget);
+        //             }
+        //             break;
+        //         default:
+        //             LOG_F(ERROR, "Unknown target type detected");
+        //             break;
+        //     }
+        }
     }
 
 std::chrono::milliseconds CVLoiterTick::getWait() const {
@@ -26,10 +71,6 @@ std::chrono::milliseconds CVLoiterTick::getWait() const {
 
 Tick* CVLoiterTick::tick() {
     //Tick is called if Search Zone coverage path is finished
-
-// TODO: add config option?
-// If the config is set to "manual annotation" for CV, then only transition to AirdropApproach once a signal has been received from the GCS.
-// If the config is set to "full automatic" for CV, then transition to AirdropApproach
 
     //Check if all expected targets are found 
     if (false) {
