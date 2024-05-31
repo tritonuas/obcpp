@@ -468,7 +468,7 @@ std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
     std::vector<XYZCoord> path = rrt.getPointsToGoal();
     std::vector<GPSCoord> output_coords;
 
-    for (const XYZCoord& wpt : path) {
+    for (const XYZCoord &wpt : path) {
         output_coords.push_back(state->getCartesianConverter().value().toLatLng(wpt));
     }
 
@@ -487,14 +487,14 @@ std::vector<GPSCoord> generateAirdropApproach(std::shared_ptr<MissionState> stat
 
     XYZCoord xyz_goal = state->getCartesianConverter().value().toXYZ(goal);
 
-    
     // DO WIND
-    AirdropApproachPathing airdrop_planner(start, xyz_goal, RRTPoint(XYZCoord(0,0,0), 0), state->mission_params.getFlightBoundary());
+    AirdropApproachPathing airdrop_planner(start, xyz_goal, RRTPoint(XYZCoord(0, 0, 0), 0),
+                                           state->mission_params.getFlightBoundary());
 
     std::vector<XYZCoord> path = airdrop_planner.run();
     std::vector<GPSCoord> output_coords;
 
-    for (const XYZCoord& wpt : path) {
+    for (const XYZCoord &wpt : path) {
         output_coords.push_back(state->getCartesianConverter().value().toLatLng(wpt));
     }
 

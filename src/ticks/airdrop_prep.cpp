@@ -5,9 +5,9 @@
 
 #include "core/mission_state.hpp"
 #include "pathing/static.hpp"
+#include "ticks/airdrop_approach.hpp"
 #include "ticks/ids.hpp"
 #include "ticks/path_gen.hpp"
-#include "ticks/airdrop_approach.hpp"
 #include "utilities/logging.hpp"
 
 AirdropPrepTick::AirdropPrepTick(std::shared_ptr<MissionState> state)
@@ -21,7 +21,7 @@ Tick* AirdropPrepTick::tick() {
     BottleDropIndex next_bottle = BottleDropIndex::A;
 
     for (int i = BottleDropIndex::A; i <= BottleDropIndex::E; i++) {
-        if (state->dropped_bottles.contains((BottleDropIndex)i)) {
+        if (state->dropped_bottles.contains(static_cast<BottleDropIndex>(i))) {
             continue;
         }
 
@@ -30,7 +30,7 @@ Tick* AirdropPrepTick::tick() {
     }
 
     DetectedTarget target = results.ptr->detected_targets.at(results.ptr->matches.at(next_bottle));
-    
+
     state->current_path = generateAirdropApproach(state, target.coord);
 
     return new AirdropApproachTick(state);

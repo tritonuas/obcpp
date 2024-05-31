@@ -8,6 +8,7 @@
 #include <mutex>
 #include <optional>
 #include <queue>
+#include <unordered_set>
 #include <vector>
 
 #include "camera/interface.hpp"
