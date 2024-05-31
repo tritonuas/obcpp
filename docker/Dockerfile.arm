@@ -49,7 +49,8 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
                            libmagick++-dev \
                            # needed for pytorch 
                            libopenblas-dev \
-                           ninja-build
+                           ninja-build \
+                           libnuma-dev
 
 RUN apt-add-repository universe
 RUN apt-get install -y cpplint
@@ -60,7 +61,7 @@ ENV PATH="${PATH}:${PYENV_ROOT}/bin"
 RUN eval "$(pyenv init -)"
 RUN pyenv install 3.11
 RUN pyenv global 3.11
-RUN pip3 install typing-extensions PyYAML cpplint
+RUN pip3 install typing-extensions PyYAML cpplint numpy
 
 RUN echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME
