@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "ticks/ids.hpp"
+#include "ticks/mav_upload.hpp"
 #include "utilities/constants.hpp"
 
 FlyWaypointsTick::FlyWaypointsTick(std::shared_ptr<MissionState> state)

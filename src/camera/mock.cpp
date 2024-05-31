@@ -83,7 +83,7 @@ void MockCamera::captureEvery(const std::chrono::milliseconds& interval,
         }
 
         WriteLock lock(this->imageQueueLock);
-        this->imageQueue.push_back(imageData.value();
+        this->imageQueue.push_back(imageData.value());
         lock.unlock();
 
         std::this_thread::sleep_for(interval);
