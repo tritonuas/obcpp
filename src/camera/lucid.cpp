@@ -315,6 +315,17 @@ std::optional<ImageData> LucidCamera::takePicture(const std::chrono::millisecond
     return {};
 }
 
+void LucidCamera::startStreaming() {
+    if (!this->isConnected()) {
+        LOG_F(ERROR, "LUCID Camera not connected. Cannot start streaming");
+        return;
+    }
+
+    WriteLock lock(this->arenaDeviceLock);
+    CATCH_ARENA_EXCEPTION("starting stream",
+        this->device->StartStream(););
+}
+
 std::optional<cv::Mat> LucidCamera::imgConvert(Arena::IImage* pImage) {
     CATCH_ARENA_EXCEPTION("converting Arena Image to OpenCV",
         // convert original image to BGR8 which is what opencv expects.

@@ -68,14 +68,17 @@ class LucidCamera : public CameraInterface {
     */
     std::deque<ImageData> getAllImages() override;
 
- private:
     /**
     * Blocking call that takes an image. If it takes longer than the timeout 
     * to capture the image, no image is returned.
     */
     std::optional<ImageData> takePicture(const std::chrono::milliseconds& timeout,
-        std::shared_ptr<MavlinkClient> mavlinkClient);
+        std::shared_ptr<MavlinkClient> mavlinkClient) override;
 
+    void startStreaming() override;
+    
+ private:
+    
     /**
     * Takes an image and sleeps for the specified interval before
     * taking another image

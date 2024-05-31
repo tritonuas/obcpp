@@ -13,24 +13,12 @@ std::chrono::milliseconds FlyWaypointsTick::getWait() const {
 }
 
 Tick* FlyWaypointsTick::tick() {
-    std::vector<XYZCoord> airdropBoundary = std::get<1>(this->state->mission_params.getConfig());
-    std::pair<double, double> latlng = state->getMav()->latlng_deg();
-
-    std::future<bool> takePicture = std::async(
-        std::launch::async, [this, latlng, airdropBoundary]() {
-            return this->state->getMav()->isPointInPolygon(latlng, airdropBoundary);
-        });
 
     bool isMissionFinished = state->getMav()->isMissionFinished();
 
     if (isMissionFinished) {
-        return new FlySearchTick(this->state);
-    }
-
-    if (takePicture.get()) {
-            /*TODO
-             *let the Camera take pictures.
-             */
+        return new MavUploadTick(this->state, new FlySearchTick(this->state),
+                state->getSearchPath(), false);
     }
 
     return nullptr;

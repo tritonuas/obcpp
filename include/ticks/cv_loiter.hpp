@@ -21,15 +21,26 @@
  */
 class CVLoiterTick : public Tick {
  public:
+
+    enum class Status {
+        None = 0,
+        Validated = 1,
+        Rejected = 2,
+    };
+
+
     explicit CVLoiterTick(std::shared_ptr<MissionState> state);
 
     std::chrono::milliseconds getWait() const override;
 
+    void setStatus(Status status);
+
     Tick* tick() override;
  private:
     std::deque<ImageData> flightImages;
-    std::unordered_map<(BottleDropIndex index), (std::shared_ptr<DetectedTarget> target_ptr)> bestMatches;
-    LockPtr<CVResults> results;
+    Status status;
+    //std::unordered_map<BottleDropIndex, std::shared_ptr<DetectedTarget>> bestMatches;
+    
 };
 
 #endif  // INCLUDE_TICKS_CV_LOITER_HPP_

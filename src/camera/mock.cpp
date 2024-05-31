@@ -73,24 +73,38 @@ void MockCamera::captureEvery(const std::chrono::milliseconds& interval,
     while (this->isTakingPictures) {
         LOG_F(INFO, "Taking picture with mock camera. Using images from %s",
             this->config.mock.images_dir.c_str());
-        cv::Mat newImage = this->takePicture();
-        std::optional<ImageTelemetry> telemetry = queryMavlinkImageTelemetry(mavlinkClient);
+        
+        auto imageData = this->takePicture(interval, mavlinkClient);
 
-        ImageData imageData {
-            .DATA = newImage,
-            .TELEMETRY = telemetry,
-        };
+
+        if (!imageData.has_value()){
+            LOG_F(WARNING, "Failed to take picture with mock camera");
+            continue;
+        }
 
         WriteLock lock(this->imageQueueLock);
-        this->imageQueue.push_back(imageData);
+        this->imageQueue.push_back(imageData.value();
         lock.unlock();
 
         std::this_thread::sleep_for(interval);
     }
 }
 
-cv::Mat MockCamera::takePicture() {
+std::optional<ImageData> MockCamera::takePicture(const std::chrono::milliseconds& timeout,
+        std::shared_ptr<MavlinkClient> mavlinkClient) {
     int random_idx = randomInt(0, this->mock_images.size()-1);
-    return this->mock_images.at(random_idx);
+
+    
+    std::optional<ImageTelemetry> telemetry = queryMavlinkImageTelemetry(mavlinkClient);
+    cv:Mat newImage = this->mock_images.at(random_idx);
+
+    ImageData imageData {
+        .DATA = newImage,
+        .TELEMETRY = telemetry,
+    };
+
+    return imageData;
 }
+
+void MockCamera::startStreaming(){}
 

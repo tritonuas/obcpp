@@ -71,6 +71,15 @@ class CameraInterface {
     virtual std::optional<ImageData> getLatestImage() = 0;
     // Get all the recently buffered images
     virtual std::deque<ImageData> getAllImages() = 0;
+
+    virtual void startStreaming() = 0;
+
+    /**
+    * Blocking call that takes an image. If it takes longer than the timeout 
+    * to capture the image, no image is returned.
+    */
+    virtual std::optional<ImageData> takePicture(const std::chrono::milliseconds& timeout,
+        std::shared_ptr<MavlinkClient> mavlinkClient) = 0;
 };
 
 #endif  // INCLUDE_CAMERA_INTERFACE_HPP_

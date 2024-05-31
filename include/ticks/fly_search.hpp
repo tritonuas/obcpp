@@ -6,6 +6,7 @@
 
 #include "ticks/tick.hpp"
 
+
 /*
  * Take photos and run CV pipeline while flying over
  * search region
@@ -13,6 +14,7 @@
  * See https://tritonuas.github.io/wiki/software/obc/tick_architecture/ticks/flysearch/
  */
 class FlySearchTick : public Tick {
+    // TODO: Call stop Stream for the camera in the destrcutor
  public:
     explicit FlySearchTick(std::shared_ptr<MissionState> state);
 
@@ -20,7 +22,8 @@ class FlySearchTick : public Tick {
 
     Tick* tick() override;
 
-    std::vector<ImageData> images;
+    std::vector<XYZCoord> airdropBoundary;
+    std::chrono::milliseconds lastPhotoTime; 
 };
 
 #endif  // INCLUDE_TICKS_FLY_SEARCH_HPP_

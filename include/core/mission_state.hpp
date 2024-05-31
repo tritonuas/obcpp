@@ -44,6 +44,9 @@ class MissionState {
     void setInitPath(std::vector<GPSCoord> init_path);
     const std::vector<GPSCoord>& getInitPath();
 
+    void setSearchPath(std::vector<GPSCoord> search_path);
+    const std::vector<GPSCoord>& getSearchPath();
+
     /*
      * Gets a locking reference to the underlying tick for the given tick subclass T.
      *
@@ -106,7 +109,9 @@ class MissionState {
     std::shared_ptr<Tick> tick;
 
     std::mutex init_path_mut;  // for reading/writing the initial path
+    std::mutex search_path_mut;  // for reading/writing the search path
     std::vector<GPSCoord> init_path;
+    std::vector<GPSCoord> search_path;
 
     std::shared_ptr<MavlinkClient> mav;
     std::shared_ptr<AirdropClient> airdrop;
