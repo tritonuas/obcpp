@@ -14,11 +14,11 @@ std::chrono::milliseconds FlyWaypointsTick::getWait() const {
 }
 
 Tick* FlyWaypointsTick::tick() {
-
-    bool isMissionFinished = state->getMav()->isMissionFinished();
+    // TODO: Eventually implement dynamic avoidance so we dont crash brrr   
+    bool isMissionFinished = state->getMav()->isMissionFinished();              \
 
     if (isMissionFinished) {
-        return new MavUploadTick(this->state, new FlySearchTick(this->state),
+        return new MavUploadTick(this->state, new FlySearchTick(this->state),   
                 state->getSearchPath(), false);
     }
 

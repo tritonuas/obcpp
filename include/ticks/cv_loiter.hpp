@@ -14,33 +14,33 @@
 
 
 /*
- * Stop taking photos, loiter away from the search zone
- * and wait until CV processing is done. 
+ * loiter away from the search zone and wait until CV processing is done. 
+ * If CV Results are validated, proceed to Airdrop Prep.
  * 
  * See https://tritonuas.github.io/wiki/software/obc/tick_architecture/ticks/cvloiter/
  */
+
 class CVLoiterTick : public Tick {
  public:
 
+    /* 
+     * Status of the CV processing
+     * (Will be) Modified through GCS Manual Control
+    */
     enum class Status {
         None = 0,
         Validated = 1,
         Rejected = 2,
     };
 
-
     explicit CVLoiterTick(std::shared_ptr<MissionState> state);
-
     std::chrono::milliseconds getWait() const override;
 
     void setStatus(Status status);
-
     Tick* tick() override;
+
  private:
-    std::deque<ImageData> flightImages;
     Status status;
-    //std::unordered_map<BottleDropIndex, std::shared_ptr<DetectedTarget>> bestMatches;
-    
 };
 
 #endif  // INCLUDE_TICKS_CV_LOITER_HPP_
