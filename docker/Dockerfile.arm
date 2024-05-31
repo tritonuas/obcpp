@@ -96,6 +96,7 @@ ARG LIBTORCH_INSTALL_DIR=/libtorch-tmp
 WORKDIR ${LIBTORCH_INSTALL_DIR}
 RUN git clone -b main --recurse-submodule https://github.com/pytorch/pytorch.git
 RUN mkdir pytorch-build
+RUN cd pytorch-build
 RUN USE_CUDA=0 \
     USE_CUDNN=0 \
     USE_NCCL=0 \
