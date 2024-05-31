@@ -235,16 +235,27 @@ bool MavlinkClient::uploadWaypointsUntilSuccess(std::shared_ptr<MissionState> st
     while (true) {
         LOG_F(INFO, "Sending waypoint information...");
 
+	std::mutex resultMut; 
         std::optional<mavsdk::MissionRaw::Result> result {};
 
         this->mission->upload_mission_async(mission_items,
-            [&result](const mavsdk::MissionRaw::Result& res) {
+            [&result, &resultMut](const mavsdk::MissionRaw::Result& res) {
+	    	resultMut.lock();
                 result = res;
+		resultMut.unlock();
             });
 
-        while (!result.has_value()) {}
+        while (true) {
+		// uh well you see  
+	    	resultMut.lock();
+		if (result.has_value()) {
+			resultMut.unlock();
+			break;
+		}
+	    	resultMut.unlock();
+	}
 
-        if (result == mavsdk::MissionRaw::Result::Success) {
+        if (result.value() == mavsdk::MissionRaw::Result::Success) {
             LOG_F(INFO, "Successfully uploaded mission");
             break;
         } else {
