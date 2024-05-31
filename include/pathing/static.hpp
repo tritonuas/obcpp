@@ -15,6 +15,7 @@
 #include "pathing/environment.hpp"
 #include "pathing/plotting.hpp"
 #include "pathing/tree.hpp"
+#include "udp_squared/internal/enum.h"
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
 #include "utilities/rng.hpp"
@@ -22,11 +23,18 @@
 class RRT {
  public:
     RRT(RRTPoint start, std::vector<XYZCoord> goals, double search_radius, Polygon bounds,
-        std::vector<Polygon> obstacles = {},
+        std::vector<Polygon> obstacles = {}, std::vector<double> angles = {},
         RRTConfig config = {.iterations_per_waypoint = ITERATIONS_PER_WAYPOINT,
                             .rewire_radius = REWIRE_RADIUS,
                             .optimize = false,
                             .point_fetch_method = POINT_FETCH_METHODS::NEAREST,
+                            .allowed_to_skip_waypoints = false});
+    RRT(RRTPoint start, std::vector<XYZCoord> goals, double search_radius, Environment airspace,
+        std::vector<double> angles = {},
+        RRTConfig config = {.iterations_per_waypoint = ITERATIONS_PER_WAYPOINT,
+                            .rewire_radius = REWIRE_RADIUS,
+                            .optimize = false,
+                            .point_fetch_method = POINT_FETCH_METHODS::NONE,
                             .allowed_to_skip_waypoints = false});
 
     /**
@@ -63,7 +71,7 @@ class RRT {
 
     // the different of final approaches to the goal
     // yes, this is the default unit circle diagram used in High-School
-    const std::vector<double> angles = {
+    std::vector<double> angles = {
         0,
         M_PI / 6,
         M_PI / 4,
@@ -183,15 +191,14 @@ class RRT {
  * - Cannot path through non-convex shapes
  * - Does not check if path is inbounds or not
  */
-class AirdropSearch {
+class CoveragePathing {
  public:
-    AirdropSearch(const RRTPoint &start, double scan_radius, Polygon bounds, Polygon airdrop_zone,
-                  std::vector<Polygon> obstacles = {},
-                  AirdropSearchConfig config = {
-                      .coverage_altitude_m = 30.0,
-                      .optimize = false,
-                      .vertical = false,
-                      .one_way = false});
+    CoveragePathing(const RRTPoint &start, double scan_radius, Polygon bounds, Polygon airdrop_zone,
+                    std::vector<Polygon> obstacles = {},
+                    AirdropSearchConfig config = {.coverage_altitude_m = 30.0,
+                                                  .optimize = false,
+                                                  .vertical = false,
+                                                  .one_way = false});
 
     /**
      * Generates a path of parallel lines to cover a given area
@@ -230,6 +237,40 @@ class AirdropSearch {
     const Environment airspace;  // information aobut the airspace
     const Dubins dubins;         // dubins object to generate paths
     const AirdropSearchConfig config;
+};
+
+class AirdropApproachPathing {
+ public:
+    AirdropApproachPathing(const RRTPoint &start, const XYZCoord &goal, RRTPoint wind,
+                           Polygon bounds, std::vector<Polygon> obstacles = {},
+                           AirdropApproachConfig config = {
+                               .drop_method = UNGUIDED,
+                               .bottle_ids = {1, 2, 3, 4, 5},
+                               .drop_angle_rad = DROP_ANGLE_RAD,
+                               // .drop_angle_rad = M_PI * 3 / 4,
+                               .drop_altitude_m = DROP_ALTITUDE_M,
+                               .guided_drop_distance_m = GUIDED_DROP_DISTANCE_M,
+                               .unguided_drop_distance_m = UNGUIDED_DROP_DISTANCE_M});
+    /**
+     * Generates a path to the drop location
+     *
+     * @return  ==> list of 2-vectors describing the path to the drop location
+     */
+    std::vector<XYZCoord> run() const;
+
+    /**
+     * Generates the vector to the drop location
+     */
+    RRTPoint getDropLocation() const;
+
+ private:
+    const XYZCoord goal;
+    const RRTPoint start;
+    const Environment airspace;
+    const Dubins dubins;
+    const AirdropApproachConfig config;
+
+    RRTPoint wind;
 };
 
 std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state);

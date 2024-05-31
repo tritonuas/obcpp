@@ -5,6 +5,9 @@
 #include <string>
 
 #include "nlohmann/json.hpp"
+#include "udp_squared/internal/enum.h"
+#include "utilities/constants.hpp"
+#include "utilities/datatypes.hpp"
 
 using json = nlohmann::json;
 
@@ -14,7 +17,8 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
         // Load in json file
         std::ifstream configStream(argv[1]);
         if (!configStream.is_open()) {
-            throw std::invalid_argument(std::string("Invalid path to config file: ") + std::string(argv[1]));
+            throw std::invalid_argument(std::string("Invalid path to config file: ") +
+                                        std::string(argv[1]));
         }
         json configs = json::parse(configStream);
 
@@ -35,8 +39,17 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
             configs["pathing"]["coverage"]["coverage_altitude_m"];
         this->coverage_pathing_config.optimize = configs["pathing"]["coverage"]["optimize"];
         this->coverage_pathing_config.vertical = configs["pathing"]["coverage"]["vertical"];
-        std::cout << configs["pathing"]["coverage"]["one_way"] << std::endl;
         this->coverage_pathing_config.one_way = configs["pathing"]["coverage"]["one_way"];
+
+        this->airdrop_pathing_config.drop_method = configs["pathing"]["airdrop"]["drop_method"];
+        this->airdrop_pathing_config.drop_angle_rad =
+            configs["pathing"]["airdrop"]["drop_angle_rad"];
+        this->airdrop_pathing_config.drop_altitude_m =
+            configs["pathing"]["airdrop"]["drop_altitude_m"];
+        this->airdrop_pathing_config.guided_drop_distance_m =
+            configs["pathing"]["airdrop"]["guided_drop_distance_m"];
+        this->airdrop_pathing_config.unguided_drop_distance_m =
+            configs["pathing"]["airdrop"]["unguided_drop_distance_m"];
 
         this->camera_config.type = configs["camera"]["type"];
 
@@ -49,10 +62,8 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
             configs["camera"]["lucid"]["acquisition_frame_rate_enable"];
         this->camera_config.lucid.target_brightness =
             configs["camera"]["lucid"]["target_brightness"];
-        this->camera_config.lucid.exposure_auto =
-            configs["camera"]["lucid"]["exposure_auto"];
-        this->camera_config.lucid.exposure_time =
-            configs["camera"]["lucid"]["exposure_time"];
+        this->camera_config.lucid.exposure_auto = configs["camera"]["lucid"]["exposure_auto"];
+        this->camera_config.lucid.exposure_time = configs["camera"]["lucid"]["exposure_time"];
         this->camera_config.lucid.exposure_auto_damping =
             configs["camera"]["lucid"]["exposure_auto_damping"];
         this->camera_config.lucid.exposure_auto_algorithm =
@@ -102,6 +113,12 @@ void OBCConfig::makeDefault() {
     this->coverage_pathing_config.optimize = true;
     this->coverage_pathing_config.vertical = false;
     this->coverage_pathing_config.one_way = false;
+
+    this->airdrop_pathing_config.drop_method = UNGUIDED;  // unguided
+    this->airdrop_pathing_config.drop_angle_rad = DROP_ANGLE_RAD;
+    this->airdrop_pathing_config.drop_altitude_m = DROP_ALTITUDE_M;
+    this->airdrop_pathing_config.guided_drop_distance_m = GUIDED_DROP_DISTANCE_M;
+    this->airdrop_pathing_config.unguided_drop_distance_m = UNGUIDED_DROP_DISTANCE_M;
 
     this->camera_config.type = "mock";
 
