@@ -251,7 +251,7 @@ int main() {
     RRTPoint start = RRTPoint(state->mission_params.getWaypoints()[0], 0);
     start.coord.z = 100;
 
-    AirdropSearch search(
+    CoveragePathing search(
         start, 9, state->mission_params.getFlightBoundary(),
         state->mission_params.getAirdropBoundary(), {},
         AirdropSearchConfig{.coverage_altitude_m = 30.0, .optimize = false, .vertical = false, .one_way = false});

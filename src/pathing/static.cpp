@@ -280,7 +280,7 @@ RRTNode *RRT::parseOptions(const std::vector<std::pair<RRTNode *, RRTOption>> &o
 
 void RRT::optimizeTree(RRTNode *sample) { tree.RRTStar(sample, rewire_radius); }
 
-AirdropSearch::AirdropSearch(const RRTPoint &start, double scan_radius, Polygon bounds,
+CoveragePathing::CoveragePathing(const RRTPoint &start, double scan_radius, Polygon bounds,
                              Polygon airdrop_zone, std::vector<Polygon> obstacles,
                              AirdropSearchConfig config)
     : start(start),
@@ -289,11 +289,11 @@ AirdropSearch::AirdropSearch(const RRTPoint &start, double scan_radius, Polygon 
       dubins(Dubins(TURNING_RADIUS, POINT_SEPARATION)),
       config(config) {}
 
-std::vector<XYZCoord> AirdropSearch::run() const {
+std::vector<XYZCoord> CoveragePathing::run() const {
     return config.optimize ? coverageOptimal() : coverageDefault();
 }
 
-std::vector<XYZCoord> AirdropSearch::coverageDefault() const {
+std::vector<XYZCoord> CoveragePathing::coverageDefault() const {
     // generates the endpoints for the lines (including headings)
     std::vector<RRTPoint> waypoints =
         airspace.getAirdropWaypoints(scan_radius, config.one_way, config.vertical);
@@ -308,7 +308,7 @@ std::vector<XYZCoord> AirdropSearch::coverageDefault() const {
     return generatePath(dubins_options, waypoints);
 }
 
-std::vector<XYZCoord> AirdropSearch::coverageOptimal() const {
+std::vector<XYZCoord> CoveragePathing::coverageOptimal() const {
     /*
      * The order of paths
      * [0] - alt, vertical
@@ -361,10 +361,11 @@ std::vector<XYZCoord> AirdropSearch::coverageOptimal() const {
     return generatePath(dubins_paths[best_path_idx], waypoints);
 }
 
-std::vector<XYZCoord> AirdropSearch::generatePath(const std::vector<RRTOption> &dubins_options,
+std::vector<XYZCoord> CoveragePathing::generatePath(const std::vector<RRTOption> &dubins_options,
                                                   const std::vector<RRTPoint> &waypoints) const {
     std::vector<XYZCoord> path;
 
+    // height adjustement
     double height = waypoints[0].coord.z;
     double height_difference = config.coverage_altitude_m - waypoints[0].coord.z;
 
@@ -380,6 +381,7 @@ std::vector<XYZCoord> AirdropSearch::generatePath(const std::vector<RRTOption> &
 
     path.insert(path.end(), path_coordinates.begin() + 1, path_coordinates.end());
 
+    // main loop
     for (int i = 1; i < dubins_options.size(); i++) {
         path_coordinates =
             dubins.generatePoints(waypoints[i], waypoints[i + 1], dubins_options[i].dubins_path,
@@ -393,6 +395,43 @@ std::vector<XYZCoord> AirdropSearch::generatePath(const std::vector<RRTOption> &
     }
 
     return path;
+}
+
+AirdropApproachPathing::AirdropApproachPathing(const RRTPoint &start, const XYZCoord &goal, RRTPoint wind,
+                                 Polygon bounds, std::vector<Polygon> obstacles,
+                                 AirdropApproachConfig config)
+    : start(start),
+      goal(goal),
+      wind(wind),
+      airspace(Environment(bounds, {}, {goal}, obstacles)),
+      dubins(Dubins(TURNING_RADIUS, POINT_SEPARATION)),
+      config(config) {}
+
+std::vector<XYZCoord> AirdropApproachPathing::run() const {
+    RRTPoint drop_vector = getDropLocation();
+    RRT rrt(start, {drop_vector.coord}, SEARCH_RADIUS, airspace, {drop_vector.psi});
+    rrt.run();
+
+    return rrt.getPointsToGoal();
+}
+
+RRTPoint AirdropApproachPathing::getDropLocation() const {
+    double drop_angle = config.drop_angle_rad;
+    double drop_distance = config.drop_method == GUIDED ? config.unguided_drop_distance_m
+                                                        : config.guided_drop_distance_m;
+
+    XYZCoord drop_offset(drop_distance * std::cos(drop_angle), drop_distance * std::sin(drop_angle),
+                         0);
+
+    double wind_strength_coef = wind.coord.norm() * WIND_CONST_PER_ALTITUDE;
+    XYZCoord wind_offset(wind_strength_coef * std::cos(wind.psi),
+                         wind_strength_coef * std::sin(wind.psi), 0);
+    XYZCoord drop_location (goal.x + drop_offset.x + wind_offset.x, goal.y + drop_offset.y + wind_offset.y,
+                    config.drop_altitude_m);
+
+    // gets the angle between the drop_location and the goal
+    double angle = std::atan2(goal.y - drop_location.y, goal.x - drop_location.x);
+    return RRTPoint(drop_location, angle);
 }
 
 std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
@@ -434,46 +473,4 @@ std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
     }
 
     return output_coords;
-}
-
-AirdropApproach::AirdropApproach(const RRTPoint &start, const XYZCoord &goal, RRTPoint wind,
-                                 Polygon bounds, std::vector<Polygon> obstacles,
-                                 AirdropApproachConfig config)
-    : start(start),
-      goal(goal),
-      wind(wind),
-      airspace(Environment(bounds, {}, {goal}, obstacles)),
-      dubins(Dubins(TURNING_RADIUS, POINT_SEPARATION)),
-      config(config) {}
-
-std::vector<XYZCoord> AirdropApproach::run() const {
-    RRTPoint drop_vector = getDropLocation();
-    RRT rrt(start, {drop_vector.coord}, SEARCH_RADIUS, airspace, {drop_vector.psi});
-    rrt.run();
-
-    return rrt.getPointsToGoal();
-}
-
-RRTPoint AirdropApproach::getDropLocation() const {
-    XYZCoord drop_location = directDropLocation();
-
-    // gets the angle between the drop_location and the goal
-    double angle = std::atan2(goal.y - drop_location.y, goal.x - drop_location.x);
-    return RRTPoint(drop_location, angle);
-}
-
-XYZCoord AirdropApproach::directDropLocation() const {
-    double drop_angle = config.drop_angle_rad;
-    double drop_distance =
-        config.drop_method == GUIDED ? config.unguided_drop_distance_m : config.guided_drop_distance_m;
-
-    XYZCoord drop_offset(drop_distance * std::cos(drop_angle), drop_distance * std::sin(drop_angle),
-                         0);
-
-    double wind_strength_coef = wind.coord.norm() * WIND_CONST_PER_ALTITUDE;
-    XYZCoord wind_offset(wind_strength_coef * std::cos(wind.psi),
-                         wind_strength_coef * std::sin(wind.psi), 0);
-
-    return XYZCoord(goal.x + drop_offset.x + wind_offset.x, goal.y + drop_offset.y + wind_offset.y,
-                    config.drop_altitude_m);
 }

@@ -15,6 +15,7 @@
     },
     "pathing": {
         "_comment": "Point Fetch Method 2: NEAREST",
+        "_comment2": "Drop Method 1: UNGUIDED",
         "rrt": {
             "iterations_per_waypoint": 200,
             "rewire_radius": 200.0,
