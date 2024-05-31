@@ -194,11 +194,11 @@ class RRT {
 class CoveragePathing {
  public:
     CoveragePathing(const RRTPoint &start, double scan_radius, Polygon bounds, Polygon airdrop_zone,
-                  std::vector<Polygon> obstacles = {},
-                  AirdropSearchConfig config = {.coverage_altitude_m = 30.0,
-                                                .optimize = false,
-                                                .vertical = false,
-                                                .one_way = false});
+                    std::vector<Polygon> obstacles = {},
+                    AirdropSearchConfig config = {.coverage_altitude_m = 30.0,
+                                                  .optimize = false,
+                                                  .vertical = false,
+                                                  .one_way = false});
 
     /**
      * Generates a path of parallel lines to cover a given area
@@ -241,26 +241,26 @@ class CoveragePathing {
 
 class AirdropApproachPathing {
  public:
-    AirdropApproachPathing(const RRTPoint &start, const XYZCoord &goal, RRTPoint wind, Polygon bounds,
-                    std::vector<Polygon> obstacles = {},
-                    AirdropApproachConfig config = {
-                        .drop_method = UNGUIDED,
-                        .bottle_ids = {1, 2, 3, 4, 5},
-                        .drop_angle_rad = DROP_ANGLE_RAD,
-                        // .drop_angle_rad = M_PI * 3 / 4,
-                        .drop_altitude_m = DROP_ALTITUDE_M,
-                        .guided_drop_distance_m = GUIDED_DROP_DISTANCE_M,
-                        .unguided_drop_distance_m = UNGUIDED_DROP_DISTANCE_M});
+    AirdropApproachPathing(const RRTPoint &start, const XYZCoord &goal, RRTPoint wind,
+                           Polygon bounds, std::vector<Polygon> obstacles = {},
+                           AirdropApproachConfig config = {
+                               .drop_method = UNGUIDED,
+                               .bottle_ids = {1, 2, 3, 4, 5},
+                               .drop_angle_rad = DROP_ANGLE_RAD,
+                               // .drop_angle_rad = M_PI * 3 / 4,
+                               .drop_altitude_m = DROP_ALTITUDE_M,
+                               .guided_drop_distance_m = GUIDED_DROP_DISTANCE_M,
+                               .unguided_drop_distance_m = UNGUIDED_DROP_DISTANCE_M});
     /**
      * Generates a path to the drop location
-     * 
+     *
      * @return  ==> list of 2-vectors describing the path to the drop location
-    */
+     */
     std::vector<XYZCoord> run() const;
 
     /**
      * Generates the vector to the drop location
-    */
+     */
     RRTPoint getDropLocation() const;
 
  private:

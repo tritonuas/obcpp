@@ -281,8 +281,8 @@ RRTNode *RRT::parseOptions(const std::vector<std::pair<RRTNode *, RRTOption>> &o
 void RRT::optimizeTree(RRTNode *sample) { tree.RRTStar(sample, rewire_radius); }
 
 CoveragePathing::CoveragePathing(const RRTPoint &start, double scan_radius, Polygon bounds,
-                             Polygon airdrop_zone, std::vector<Polygon> obstacles,
-                             AirdropSearchConfig config)
+                                 Polygon airdrop_zone, std::vector<Polygon> obstacles,
+                                 AirdropSearchConfig config)
     : start(start),
       scan_radius(scan_radius),
       airspace(Environment(bounds, airdrop_zone, {}, obstacles)),
@@ -362,7 +362,7 @@ std::vector<XYZCoord> CoveragePathing::coverageOptimal() const {
 }
 
 std::vector<XYZCoord> CoveragePathing::generatePath(const std::vector<RRTOption> &dubins_options,
-                                                  const std::vector<RRTPoint> &waypoints) const {
+                                                    const std::vector<RRTPoint> &waypoints) const {
     std::vector<XYZCoord> path;
 
     // height adjustement
@@ -397,9 +397,10 @@ std::vector<XYZCoord> CoveragePathing::generatePath(const std::vector<RRTOption>
     return path;
 }
 
-AirdropApproachPathing::AirdropApproachPathing(const RRTPoint &start, const XYZCoord &goal, RRTPoint wind,
-                                 Polygon bounds, std::vector<Polygon> obstacles,
-                                 AirdropApproachConfig config)
+AirdropApproachPathing::AirdropApproachPathing(const RRTPoint &start, const XYZCoord &goal,
+                                               RRTPoint wind, Polygon bounds,
+                                               std::vector<Polygon> obstacles,
+                                               AirdropApproachConfig config)
     : start(start),
       goal(goal),
       wind(wind),
@@ -426,8 +427,8 @@ RRTPoint AirdropApproachPathing::getDropLocation() const {
     double wind_strength_coef = wind.coord.norm() * WIND_CONST_PER_ALTITUDE;
     XYZCoord wind_offset(wind_strength_coef * std::cos(wind.psi),
                          wind_strength_coef * std::sin(wind.psi), 0);
-    XYZCoord drop_location (goal.x + drop_offset.x + wind_offset.x, goal.y + drop_offset.y + wind_offset.y,
-                    config.drop_altitude_m);
+    XYZCoord drop_location(goal.x + drop_offset.x + wind_offset.x,
+                           goal.y + drop_offset.y + wind_offset.y, config.drop_altitude_m);
 
     // gets the angle between the drop_location and the goal
     double angle = std::atan2(goal.y - drop_location.y, goal.x - drop_location.x);

@@ -17,7 +17,8 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
         // Load in json file
         std::ifstream configStream(argv[1]);
         if (!configStream.is_open()) {
-            throw std::invalid_argument(std::string("Invalid path to config file: ") + std::string(argv[1]));
+            throw std::invalid_argument(std::string("Invalid path to config file: ") +
+                                        std::string(argv[1]));
         }
         json configs = json::parse(configStream);
 
