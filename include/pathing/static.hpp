@@ -275,4 +275,7 @@ class AirdropApproachPathing {
 
 std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state);
 
+std::vector<GPSCoord> generateAirdropApproach(std::shared_ptr<MissionState> state,
+                                              const GPSCoord &goal);
+
 #endif  // INCLUDE_PATHING_STATIC_HPP_

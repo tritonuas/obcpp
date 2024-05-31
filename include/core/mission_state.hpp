@@ -44,6 +44,8 @@ class MissionState {
     void setInitPath(std::vector<GPSCoord> init_path);
     const std::vector<GPSCoord>& getInitPath();
 
+    std::vector<GPSCoord> current_path;
+
     /*
      * Gets a locking reference to the underlying tick for the given tick subclass T.
      *
@@ -97,6 +99,7 @@ class MissionState {
     AirdropSearchConfig coverage_pathing_config;
     CameraConfig camera_config;
     float takeoff_alt_m;
+    std::unordered_set<BottleDropIndex> dropped_bottles;
 
  private:
     std::mutex converter_mut;

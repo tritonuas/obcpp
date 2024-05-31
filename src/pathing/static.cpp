@@ -467,9 +467,34 @@ std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
 
     std::vector<XYZCoord> path = rrt.getPointsToGoal();
     std::vector<GPSCoord> output_coords;
-    int count = 0;
 
-    for (XYZCoord wpt : path) {
+    for (const XYZCoord& wpt : path) {
+        output_coords.push_back(state->getCartesianConverter().value().toLatLng(wpt));
+    }
+
+    return output_coords;
+}
+
+std::vector<GPSCoord> generateAirdropApproach(std::shared_ptr<MissionState> state,
+                                              const GPSCoord &goal) {
+    std::shared_ptr<MavlinkClient> mav = state->getMav();
+    std::pair<double, double> lat_long_start = mav->latlng_deg();
+    GPSCoord gps_start =
+        makeGPSCoord(lat_long_start.first, lat_long_start.second, mav->altitude_agl_m());
+    double start_angle = 90 - mav->heading_deg();
+    XYZCoord xyz_start = state->getCartesianConverter().value().toXYZ(gps_start);
+    RRTPoint start(xyz_start, start_angle);
+
+    XYZCoord xyz_goal = state->getCartesianConverter().value().toXYZ(goal);
+
+    
+    // DO WIND
+    AirdropApproachPathing airdrop_planner(start, xyz_goal, RRTPoint(XYZCoord(0,0,0), 0), state->mission_params.getFlightBoundary());
+
+    std::vector<XYZCoord> path = airdrop_planner.run();
+    std::vector<GPSCoord> output_coords;
+
+    for (const XYZCoord& wpt : path) {
         output_coords.push_back(state->getCartesianConverter().value().toLatLng(wpt));
     }
 
