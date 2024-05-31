@@ -15,6 +15,7 @@
 #include "ticks/tick.hpp"
 #include "ticks/path_gen.hpp"
 #include "ticks/path_validate.hpp"
+#include "ticks/wait_for_takeoff.hpp"
 
 using namespace std::chrono_literals; // NOLINT
 
@@ -220,17 +221,17 @@ DEF_GCS_HANDLE(Post, dodropnow) {
     BottleSwap bottle_proto;
     google::protobuf::util::JsonStringToMessage(request.body, &bottle_proto);
 
-    ad_bottle bottle;
+    bottle_t bottle;
     if (bottle_proto.index() == BottleDropIndex::A) {
-        bottle = ad_bottle::BOTTLE_A;
+        bottle = UDP2_A;
     } else if (bottle_proto.index() == BottleDropIndex::B) {
-        bottle = ad_bottle::BOTTLE_B;
+        bottle = UDP2_B;
     } else if (bottle_proto.index() == BottleDropIndex::C) {
-        bottle = ad_bottle::BOTTLE_C;
+        bottle = UDP2_C;
     } else if (bottle_proto.index() == BottleDropIndex::D) {
-        bottle = ad_bottle::BOTTLE_D;
+        bottle = UDP2_D;
     } else if (bottle_proto.index() == BottleDropIndex::E) {
-        bottle = ad_bottle::BOTTLE_E;
+        bottle = UDP2_E;
     } else {
         LOG_RESPONSE(ERROR, "Invalid bottle index", BAD_REQUEST);
         return;
@@ -243,7 +244,31 @@ DEF_GCS_HANDLE(Post, dodropnow) {
         return;
     }
 
-    state->getAirdrop()->send(ad_packet_t { .hdr = DROP_NOW, .data = bottle });
+    state->getAirdrop()->send(makeDropNowPacket(bottle));
 
     LOG_RESPONSE(INFO, "Dropped bottle", OK);
+}
+
+DEF_GCS_HANDLE(Post, takeoff, manual) {
+    LOG_REQUEST("POST", "takeoff/manual");
+
+    auto lock_ptr = state->getTickLockPtr<WaitForTakeoffTick>();
+    if (!lock_ptr.has_value()) {
+        LOG_RESPONSE(WARNING, "Not currently in WaitForTakeoff Tick", BAD_REQUEST);
+        return;
+    }
+    lock_ptr->ptr->setStatus(WaitForTakeoffTick::Status::Manual);
+    LOG_RESPONSE(INFO, "Set status of WaitForTakeoff Tick to manaul", OK);
+}
+
+DEF_GCS_HANDLE(Post, takeoff, autonomous) {
+    LOG_REQUEST("POST", "takeoff/autonomous");
+
+    auto lock_ptr = state->getTickLockPtr<WaitForTakeoffTick>();
+    if (!lock_ptr.has_value()) {
+        LOG_RESPONSE(WARNING, "Not currently in WaitForTakeoff Tick", BAD_REQUEST);
+        return;
+    }
+    lock_ptr->ptr->setStatus(WaitForTakeoffTick::Status::Autonomous);
+    LOG_RESPONSE(INFO, "Set status of WaitForTakeoff Tick to autonomous", OK);
 }

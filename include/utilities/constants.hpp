@@ -42,6 +42,7 @@ const int NUM_AIRDROP_BOTTLES = 5;
 
 const char MISSION_CONFIG_PATH[] = "./mission-config.json";
 const double TAKEOFF_ALTITUDE_M = 30.0;
+const double COVERAGE_ALTITUDE_M = 30.0;
 
 const matplot::color FLIGHT_BOUND_COLOR = matplot::color::red;
 const matplot::color AIRDROP_BOUND_COLOR = matplot::color::magenta;
@@ -63,6 +64,7 @@ const std::chrono::milliseconds MANUAL_LANDING_TICK_WAIT = std::chrono::millisec
 const std::chrono::milliseconds AUTO_LANDING_TICK_WAIT = std::chrono::milliseconds(100);
 const std::chrono::milliseconds MISSION_DONE_TICK_WAIT = std::chrono::milliseconds(100);
 const std::chrono::milliseconds ACTIVE_TAKEOFF_TICK_WAIT = std::chrono::milliseconds(100);
+const std::chrono::milliseconds WAIT_FOR_TAKEOFF_TICK_WAIT = std::chrono::milliseconds(100);
 
 const double EARTH_RADIUS_METERS = 6378137.0;
 

@@ -12,9 +12,9 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
     // If config-json name is passed in
     if (argc > 1) {
         // Load in json file
-        std::ifstream configStream(configsPath + std::string(argv[1]));
+        std::ifstream configStream(argv[1]);
         if (!configStream.is_open()) {
-            throw std::invalid_argument("Invalid config-json name");
+            throw std::invalid_argument(std::string("Invalid path to config file: ") + std::string(argv[1]));
         }
         json configs = json::parse(configStream);
 
@@ -31,6 +31,8 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
         this->rrt_config.allowed_to_skip_waypoints =
             configs["pathing"]["rrt"]["allowed_to_skip_waypoints"];
 
+        this->coverage_pathing_config.coverage_altitude_m =
+            configs["pathing"]["coverage"]["coverage_altitude_m"];
         this->coverage_pathing_config.optimize = configs["pathing"]["coverage"]["optimize"];
         this->coverage_pathing_config.vertical = configs["pathing"]["coverage"]["vertical"];
         std::cout << configs["pathing"]["coverage"]["one_way"] << std::endl;
@@ -96,6 +98,7 @@ void OBCConfig::makeDefault() {
     this->rrt_config.point_fetch_method = NEAREST;
     this->rrt_config.allowed_to_skip_waypoints = false;
 
+    this->coverage_pathing_config.coverage_altitude_m = COVERAGE_ALTITUDE_M;
     this->coverage_pathing_config.optimize = true;
     this->coverage_pathing_config.vertical = false;
     this->coverage_pathing_config.one_way = false;

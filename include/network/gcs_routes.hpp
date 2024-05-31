@@ -194,4 +194,16 @@ DEF_GCS_HANDLE(Post, camera, config);
  */
 DEF_GCS_HANDLE(Post, dodropnow);
 
+/**
+ * POST /takeoff/manual
+ * ---
+ */
+DEF_GCS_HANDLE(Post, takeoff, manual);
+
+/**
+ * POST /takeoff/autonomous
+ * ---
+ */
+DEF_GCS_HANDLE(Post, takeoff, autonomous);
+
 #endif  // INCLUDE_NETWORK_GCS_ROUTES_HPP_

@@ -235,16 +235,27 @@ bool MavlinkClient::uploadWaypointsUntilSuccess(std::shared_ptr<MissionState> st
     while (true) {
         LOG_F(INFO, "Sending waypoint information...");
 
+	std::mutex resultMut; 
         std::optional<mavsdk::MissionRaw::Result> result {};
 
         this->mission->upload_mission_async(mission_items,
-            [&result](const mavsdk::MissionRaw::Result& res) {
+            [&result, &resultMut](const mavsdk::MissionRaw::Result& res) {
+	    	resultMut.lock();
                 result = res;
+		resultMut.unlock();
             });
 
-        while (!result.has_value()) {}
+        while (true) {
+		// uh well you see  
+	    	resultMut.lock();
+		if (result.has_value()) {
+			resultMut.unlock();
+			break;
+		}
+	    	resultMut.unlock();
+	}
 
-        if (result == mavsdk::MissionRaw::Result::Success) {
+        if (result.value() == mavsdk::MissionRaw::Result::Success) {
             LOG_F(INFO, "Successfully uploaded mission");
             break;
         } else {
@@ -464,12 +475,7 @@ bool MavlinkClient::startMission() {
         return false;
     }
 
-    LOG_F(INFO, "About to transition to forward flight");
-    auto fw_result = this->action->transition_to_fixedwing();
-    if (fw_result != mavsdk::Action::Result::Success) {
-        LOG_S(ERROR) << "FAIL: Transition to fix wing " << fw_result;
-        return false;
-    }
+    // will by default transition to forward flight
 
     LOG_F(INFO, "Mission Started!");
     return true;

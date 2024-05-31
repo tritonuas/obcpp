@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 
-#include "airdrop/packet.h"
+#include "udp_squared/protocol.h"
 
 struct ad_socket {
     uint16_t send_port;
@@ -44,7 +44,6 @@ typedef struct ad_int_result ad_int_result_t;
     }; \
     return result
 
-ad_packet_t make_ad_packet(uint8_t hdr, uint8_t data);
 
 // TODO: write documentation
 ad_socket_result_t make_ad_socket(uint16_t recv_port, uint16_t send_port);
@@ -66,8 +65,7 @@ ad_int_result_t set_socket_nonblocking(int sock_fd);
 // Send packet on the network through sock_fd
 // Either returns an error string or the number of bytes sent.
 // IMPORTANT: must have previously called set_send_thread from curr thread.
-ad_int_result_t send_ad_packet(ad_socket_t socket, ad_packet_t packet);
-ad_int_result_t send_ad_latlng_packet(ad_socket_t socket, ad_latlng_packet_t packet);
+ad_int_result_t send_ad_packet(ad_socket_t socket, packet_t packet);
 
 // Receive packet and place into buf, which is of length buf_len.
 // Either returns an error string or the number of bytes read.
