@@ -166,50 +166,8 @@ DEF_GCS_HANDLE(Post, path, initial, validate) {
     LOG_RESPONSE(INFO, "Initial path validated", OK);
 }
 
-DEF_GCS_HANDLE(Get, camera, status) {
-    LOG_REQUEST("GET", "/camera/status");
-
-    LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
-}
-
-DEF_GCS_HANDLE(Post, camera, start) {
-    LOG_REQUEST("POST", "/camera/start");
-
-    LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
-}
-
-DEF_GCS_HANDLE(Post, camera, stop) {
-    LOG_REQUEST("POST", "/camera/stop");
-
-    LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
-}
-
-DEF_GCS_HANDLE(Post, camera, mock, start) {
-    LOG_REQUEST("POST", "/camera/mock/start");
-
-    LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
-}
-
-DEF_GCS_HANDLE(Post, camera, mock, stop) {
-    LOG_REQUEST("POST", "/camera/mock/stop");
-
-    LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
-}
-
 DEF_GCS_HANDLE(Get, camera, capture) {
     LOG_REQUEST("GET", "/camera/capture");
-
-    LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
-}
-
-DEF_GCS_HANDLE(Get, camera, config) {
-    LOG_REQUEST("GET", "/camera/config");
-
-    LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
-}
-
-DEF_GCS_HANDLE(Post, camera, config) {
-    LOG_REQUEST("POST", "/camera/config");
 
     LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
 }
