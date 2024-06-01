@@ -36,6 +36,14 @@ const int TOTAL_OPTIONS_FOR_GOAL_CONNECTION =
 const int TRIES_FOR_RANDOM_POINT = 64;       // for generating random points
 const int MAX_DUBINS_OPTIONS_TO_PARSE = 16;  // how many routes to check when connecting two nodes
 
+// AIRDROP PATHING
+const double WIND_CONST_PER_ALTITUDE = 0.3;  // if I recall correctly, this is 75ft drop stationary
+                                             // --> 75ft off with a good amount of wind
+const double DROP_ANGLE_RAD = 2.52134317;
+const double DROP_ALTITUDE_M = 26.0;
+const double GUIDED_DROP_DISTANCE_M = 50.0;
+const double UNGUIDED_DROP_DISTANCE_M = 50.0;
+
 const int DEFAULT_GCS_PORT = 5010;
 
 const int NUM_AIRDROP_BOTTLES = 5;

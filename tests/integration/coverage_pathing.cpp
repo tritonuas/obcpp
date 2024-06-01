@@ -257,7 +257,7 @@ int main() {
 
     RRTPoint start = RRTPoint(state->mission_params.getWaypoints()[0], 0);
 
-    AirdropSearch search(start, 20, state->mission_params.getFlightBoundary(),
+    CoveragePathing search(start, 20, state->mission_params.getFlightBoundary(),
                          state->mission_params.getAirdropBoundary(), {}, {true, true, true});
 
     std::vector<XYZCoord> path = search.run();

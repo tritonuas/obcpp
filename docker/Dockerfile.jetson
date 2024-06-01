@@ -108,4 +108,4 @@ RUN ninja obcpp
 # login as non-root user
 # USER $USERNAME
 
-CMD [ "/obcpp/build/bin/obcpp" ]
+CMD [ "/obcpp/build/bin/obcpp", "/obcpp/configs/config.json"] 
