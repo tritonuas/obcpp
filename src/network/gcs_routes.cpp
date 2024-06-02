@@ -177,13 +177,32 @@ DEF_GCS_HANDLE(Get, camera, capture) {
 
     cam->startStreaming();
 
-    std::optional<ImageData> image = cam->takePicture();
+    std::optional<ImageData> image = cam->takePicture(1000ms, state->getMav());
 
     if (!image.has_value()) {
-        LOG_RESPONSE(INFO, "Failed to capture image", INTERNAL_SERVER_ERROR);
+        LOG_RESPONSE(ERROR, "Failed to capture image", INTERNAL_SERVER_ERROR);
+        return;
     }
 
-    LOG_RESPONSE(INFO, "Successfully captured image", OK, "", mime::json);
+    ManualImage manual_image;
+    manual_image.set_img_b64(cvMatToBase64(image->DATA));
+    manual_image.set_timestamp(image->TIMESTAMP);
+    std::optional<ImageTelemetry> telemetry = image->TELEMETRY;
+    if (telemetry.has_value()) {
+        manual_image.set_lat_deg(telemetry->latitude_deg);
+        manual_image.set_lng_deg(telemetry->longitude_deg);
+        manual_image.set_alt_agl_m(telemetry->altitude_agl_m);
+        manual_image.set_airspeed_m_s(telemetry->airspeed_m_s);
+        manual_image.set_heading_deg(telemetry->heading_deg);
+        manual_image.set_yaw_deg(telemetry->yaw_deg);
+        manual_image.set_pitch_deg(telemetry->pitch_deg);
+        manual_image.set_roll_deg(telemetry->roll_deg);
+    }
+
+    std::string output;
+    google::protobuf::util::MessageToJsonString(manual_image, &output);
+
+    LOG_RESPONSE(INFO, "Successfully captured image", OK, output.c_str(), mime::json);
 }
 
 DEF_GCS_HANDLE(Post, dodropnow) {

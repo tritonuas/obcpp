@@ -11,6 +11,7 @@
 #include "network/mavlink.hpp"
 #include "utilities/locks.hpp"
 #include "utilities/rng.hpp"
+#include "utilities/common.hpp"
 
 
 MockCamera::MockCamera(CameraConfig config) : CameraInterface(config) {
@@ -97,9 +98,11 @@ std::optional<ImageData> MockCamera::takePicture(const std::chrono::milliseconds
     
     std::optional<ImageTelemetry> telemetry = queryMavlinkImageTelemetry(mavlinkClient);
     cv:Mat newImage = this->mock_images.at(random_idx);
+    uint64_t timestamp = getUnixTime_s().count();
 
     ImageData imageData {
         .DATA = newImage,
+        .TIMESTAMP = timestamp,
         .TELEMETRY = telemetry,
     };
 
