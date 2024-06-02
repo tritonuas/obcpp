@@ -120,42 +120,6 @@ DEF_GCS_HANDLE(Get, path, initial, new);
  * 400 BAD REQUEST: There was no cached path to accept
  */
 DEF_GCS_HANDLE(Post, path, initial, validate);
-/*
- * GET /camera/status
- * ---
- * Response is a json object describing the status of the camera
- * 
- * {
- *      "connected": true/false,
- *      "streaming": true/false
- * } // TODO: verify that this JSON is not changing
- * 
- * 200 OK: camera status was successfuly captured
- * 500 INTERNAL SERVER ERROR: something went wrong with the camera. In this case,
- *         response will be in plain text format explaining what went wrong.
- */
-DEF_GCS_HANDLE(Get, camera, status);
-
-/*
- * POST /camera/start
- *        or
- * POST /camera/mock/start
- *        or
- * POST /camera/stop
- *        or
- * POST /camera/mock/stop
- * ---
- * Signifies that the camera/mock camera should start/stop taking images every X seconds. 
- * TODO: determine X, or allow it to be specified in the POST request.
- * 
- * Response is plain text describing the status of the camera.
- * 200 OK: Camera is now taking pictures/no longer taking pictures.
- * 500 INTERNAL SERVER ERROR: An error occurred.
- */
-DEF_GCS_HANDLE(Post, camera, start);
-DEF_GCS_HANDLE(Post, camera, stop);
-DEF_GCS_HANDLE(Post, camera, mock, start);
-DEF_GCS_HANDLE(Post, camera, mock, stop);
 
 /*
  * GET /camera/capture
@@ -164,27 +128,6 @@ DEF_GCS_HANDLE(Post, camera, mock, stop);
  * as a JPEG with the mimetype set correctly.
  */
 DEF_GCS_HANDLE(Get, camera, capture);
-
-/*
- * GET /camera/config
- * ---
- * Requests the current configuration options for the camera.
- * 
- * {
- *      TODO: expected JSON output
- * }
- */
-DEF_GCS_HANDLE(Get, camera, config);
-
-/*
- * POST /camera/config
- * {
- *      TODO: expected JSON input
- * }
- * ---
- * Uploads the new configuration settings to use for the camera.
- */
-DEF_GCS_HANDLE(Post, camera, config);
 
 /**
  * POST /dodropnow

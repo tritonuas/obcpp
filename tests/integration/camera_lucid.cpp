@@ -1,4 +1,5 @@
 #include <deque>
+#include <filesystem>
 
 #include <opencv2/opencv.hpp>
 #include <loguru.hpp>
@@ -37,17 +38,11 @@ int main (int argc, char *argv[]) {
 
     std::deque<ImageData> images = camera.getAllImages();
     for (const ImageData& image : images) {
-        std::filesystem::path output_file =  
-            output_dir / 
-            (std::string("lucid_") + std::to_string(getUnixTime_ms().count()) + std::string(".jpg"));
-        LOG_F(INFO, "Saving LUCID image to %s", output_file.string().c_str());
-        LOG_F(INFO, "lat: %f, lon: %f, alt: %f, hdg: %f, ptc: %f, rol: %f", 
-			image.TELEMETRY.value().latitude_deg, 
-			image.TELEMETRY.value().longitude_deg, 
-			image.TELEMETRY.value().altitude_agl_m, 
-			image.TELEMETRY.value().heading_deg, 
-			image.TELEMETRY.value().pitch_deg, 
-			image.TELEMETRY.value().roll_deg);
-        cv::imwrite(output_file, image.DATA);
+        std::filesystem::path filepath = config.camera_config.save_dir / std::to_string(image.TIMESTAMP);
+        saveImageToFile(image.DATA, filepath);
+        if (image.TELEMETRY.has_value()) {
+            saveImageTelemetryToFile(image.TELEMETRY.value(), filepath);
+        }
+        LOG_F(INFO, "Saving LUCID image to %s", filepath.string().c_str());
     }
 }

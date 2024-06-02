@@ -40,6 +40,14 @@ class MockCamera : public CameraInterface {
     */
     std::deque<ImageData> getAllImages() override;
 
+    /**
+    * Blocking call that takes an image. If it takes longer than the timeout 
+    * to capture the image, no image is returned.
+    */
+    std::optional<ImageData> takePicture(const std::chrono::milliseconds& timeout,
+        std::shared_ptr<MavlinkClient> mavlinkClient) override;
+
+    void startStreaming() override;
  private:
     std::vector<cv::Mat> mock_images;
 
@@ -52,8 +60,6 @@ class MockCamera : public CameraInterface {
     std::shared_mutex imageQueueLock;
 
     std::thread captureThread;
-
-    cv::Mat takePicture();
 };
 
 #endif  // INCLUDE_CAMERA_MOCK_HPP_

@@ -18,6 +18,7 @@
 #include "network/mavlink.hpp"
 #include "utilities/locks.hpp"
 #include "utilities/datatypes.hpp"
+#include "utilities/common.hpp"
 
 using json = nlohmann::json;
 
@@ -68,6 +69,18 @@ LucidCamera::~LucidCamera() {
         this->system->DestroyDevice(this->device);
         Arena::CloseSystem(this->system););
 }
+
+void LucidCamera::startStreaming() {
+    if (!this->isConnected()) {
+        LOG_F(ERROR, "LUCID Camera not connected. Cannot start streaming");
+        return;
+    }
+
+    WriteLock lock(this->arenaDeviceLock);
+    CATCH_ARENA_EXCEPTION("starting stream",
+        this->device->StartStream(););
+}
+
 
 void LucidCamera::startTakingPictures(const std::chrono::milliseconds& interval,
     std::shared_ptr<MavlinkClient> mavlinkClient) {
@@ -283,6 +296,7 @@ std::optional<ImageData> LucidCamera::takePicture(const std::chrono::millisecond
     CATCH_ARENA_EXCEPTION("getting image", SINGLE_ARG(
         Arena::IImage* pImage = this->device->GetImage(timeout.count());
         std::optional<ImageTelemetry> telemetry = queryMavlinkImageTelemetry(mavlinkClient);
+        uint64_t timestamp = getUnixTime_s().count();
 
         static int imageCounter = 0;
         LOG_F(INFO, "Taking image: %d", imageCounter++);
@@ -307,6 +321,7 @@ std::optional<ImageData> LucidCamera::takePicture(const std::chrono::millisecond
         // TODO: replace with mavlink telemtry
         return ImageData{
             .DATA = mat.value(),
+            .TIMESTAMP = timestamp,
             .TELEMETRY = telemetry
         };));
 

@@ -1,7 +1,10 @@
 #include <memory>
 #include <optional>
+#include <filesystem>
+#include <string>
 
 #include <opencv2/opencv.hpp>
+#include <loguru.hpp>
 
 #include "core/mission_state.hpp"
 #include "camera/interface.hpp"
@@ -33,10 +36,13 @@ int main (int argc, char *argv[]) {
 
     std::deque<ImageData> images = camera.getAllImages();
     for (const ImageData& image : images) {
-        std::filesystem::path output_file =  
-            output_dir / 
-            (std::string("mock_") + std::to_string(getUnixTime_ms().count()) + std::string(".jpg"));
-        LOG_F(INFO, "Saving mock image to %s", output_file.string().c_str());
-        cv::imwrite(output_file, image.DATA);
+        std::filesystem::path save_dir = config.camera_config.save_dir;
+        std::filesystem::path img_filepath = save_dir / (std::to_string(image.TIMESTAMP) + std::string(".jpg"));
+        std::filesystem::path json_filepath = save_dir / (std::to_string(image.TIMESTAMP) + std::string(".json"));
+        saveImageToFile(image.DATA, img_filepath);
+        if (image.TELEMETRY.has_value()) {
+            saveImageTelemetryToFile(image.TELEMETRY.value(), json_filepath);
+        } 
+        LOG_F(INFO, "Saving mock image to %s", img_filepath.string().c_str());
     }
 }
