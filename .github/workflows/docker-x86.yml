@@ -24,10 +24,12 @@ jobs:
         filters: |
           dockerfile:
             - ${{ env.DOCKERFILE_PATH }}
+          workflow-file:
+            - .github/workflows/docker-x86.yml 
 
   build-and-push-image:
     needs: changes
-    if: ${{ needs.changes.outputs.dockerfile == 'true' }}
+    if: ${{ needs.changes.outputs.dockerfile == 'true' }} || ${{ needs.changes.outputs.workflow-file == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
