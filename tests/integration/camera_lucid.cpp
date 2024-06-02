@@ -7,6 +7,7 @@
 #include "camera/interface.hpp"
 #include "camera/lucid.hpp"
 #include "core/mission_state.hpp"
+#include "network/mavlink.hpp"
 #include "utilities/common.hpp"
 
 using namespace std::chrono_literals;
@@ -22,16 +23,17 @@ int main (int argc, char *argv[]) {
     }
     OBCConfig config(argc, argv);
 
+    auto mav = std::make_shared<MavlinkClient>("serial:///dev/ttyACM0");
+
     LucidCamera camera(config.camera_config);
 
     camera.connect();
     LOG_F(INFO, "Connected to LUCID camera!");
 
-    camera.startTakingPictures(1s, nullptr);
+    camera.startTakingPictures(1s, mav);
 
     // need to sleep to let camera background thread to run
     std::this_thread::sleep_for(10s);
-
     camera.stopTakingPictures();
 
     std::deque<ImageData> images = camera.getAllImages();

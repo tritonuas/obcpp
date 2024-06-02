@@ -64,7 +64,7 @@ LucidCamera::~LucidCamera() {
     // aquire locks to Arena System and Device
     WriteLock systemLock(this->arenaSystemLock);
     WriteLock deviceLock(this->arenaDeviceLock);
-
+   
     CATCH_ARENA_EXCEPTION("closing Arena System",
         this->system->DestroyDevice(this->device);
         Arena::CloseSystem(this->system););
@@ -275,10 +275,11 @@ void LucidCamera::captureEvery(const std::chrono::milliseconds& interval,
         std::this_thread::sleep_for(interval);
     }
 
-    this->arenaDeviceLock.lock();
-    CATCH_ARENA_EXCEPTION("stopping stream",
-        this->device->StopStream(););
-    this->arenaDeviceLock.unlock();
+    // TODO figure out nondeterministic seg fault /shrug
+    // this->arenaDeviceLock.lock();
+    // CATCH_ARENA_EXCEPTION("stopping stream",
+    //     this->device->StopStream(););
+    // this->arenaDeviceLock.unlock();
 }
 
 std::optional<ImageData> LucidCamera::takePicture(const std::chrono::milliseconds& timeout,
