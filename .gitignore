@@ -18,6 +18,9 @@ imgs/
 models/*
 !models/.gitkeep
 
+images/*
+!images/.gitkeep
+
 tests/integration/images/*
 !tests/integration/images/.gitkeep
 !tests/integration/images/saliency/

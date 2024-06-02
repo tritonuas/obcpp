@@ -127,6 +127,8 @@ struct AirdropApproachConfig {
 struct CameraConfig {
     // either "mock" or "lucid"
     std::string type;
+    // directory to save images to
+    std::string save_dir;
     struct {
         // directory to randomly pick images from
         // for the mock camera

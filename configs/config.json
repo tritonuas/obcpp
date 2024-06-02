@@ -40,8 +40,9 @@
     "camera": {
         "_comment": "See CameraConfig struct in datatypes.hpp for detailed explanations",
         "type": "lucid",
+        "save_dir": "/obcpp/images/",
         "mock": {
-            "images_dir": "/workspaces/obcpp/tests/integration/images/saliency/"
+            "images_dir": "/obcpp/tests/integration/images/saliency/"
         },
         "lucid": {
             "sensor_shuttle_mode": "Rolling",

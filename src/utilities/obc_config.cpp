@@ -52,6 +52,7 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
             configs["pathing"]["approach"]["unguided_drop_distance_m"];
 
         this->camera_config.type = configs["camera"]["type"];
+        this->camera_config.save_dir = configs["camera"]["save_dir"];
 
         this->camera_config.mock.images_dir = configs["camera"]["mock"]["images_dir"];
 
@@ -121,6 +122,7 @@ void OBCConfig::makeDefault() {
     this->airdrop_pathing_config.unguided_drop_distance_m = UNGUIDED_DROP_DISTANCE_M;
 
     this->camera_config.type = "mock";
+    this->camera_config.save_dir = "save_dir";
 
     this->camera_config.mock.images_dir = "/workspaces/obcpp/tests/integration/images/saliency/";
 
