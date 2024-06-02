@@ -41,15 +41,15 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
         this->coverage_pathing_config.vertical = configs["pathing"]["coverage"]["vertical"];
         this->coverage_pathing_config.one_way = configs["pathing"]["coverage"]["one_way"];
 
-        this->airdrop_pathing_config.drop_method = configs["pathing"]["airdrop"]["drop_method"];
+        this->airdrop_pathing_config.drop_method = configs["pathing"]["approach"]["drop_method"];
         this->airdrop_pathing_config.drop_angle_rad =
-            configs["pathing"]["airdrop"]["drop_angle_rad"];
+            configs["pathing"]["approach"]["drop_angle_rad"];
         this->airdrop_pathing_config.drop_altitude_m =
-            configs["pathing"]["airdrop"]["drop_altitude_m"];
+            configs["pathing"]["approach"]["drop_altitude_m"];
         this->airdrop_pathing_config.guided_drop_distance_m =
-            configs["pathing"]["airdrop"]["guided_drop_distance_m"];
+            configs["pathing"]["approach"]["guided_drop_distance_m"];
         this->airdrop_pathing_config.unguided_drop_distance_m =
-            configs["pathing"]["airdrop"]["unguided_drop_distance_m"];
+            configs["pathing"]["approach"]["unguided_drop_distance_m"];
 
         this->camera_config.type = configs["camera"]["type"];
 

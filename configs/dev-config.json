@@ -39,7 +39,7 @@
     },
     "camera": {
         "_comment": "See CameraConfig struct in datatypes.hpp for detailed explanations",
-        "type": "lucid",
+        "type": "mock",
         "mock": {
             "images_dir": "/workspaces/obcpp/tests/integration/images/saliency/"
         },

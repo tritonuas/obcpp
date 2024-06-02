@@ -95,8 +95,8 @@ std::optional<ImageData> MockCamera::takePicture(const std::chrono::milliseconds
         std::shared_ptr<MavlinkClient> mavlinkClient) {
     int random_idx = randomInt(0, this->mock_images.size()-1);
 
-    
     std::optional<ImageTelemetry> telemetry = queryMavlinkImageTelemetry(mavlinkClient);
+
     cv:Mat newImage = this->mock_images.at(random_idx);
     uint64_t timestamp = getUnixTime_s().count();
 
