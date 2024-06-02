@@ -169,7 +169,21 @@ DEF_GCS_HANDLE(Post, path, initial, validate) {
 DEF_GCS_HANDLE(Get, camera, capture) {
     LOG_REQUEST("GET", "/camera/capture");
 
-    LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
+    std::shared_ptr<CameraInterface> cam = state->getCamera();
+
+    if (!cam->isConnected()) {
+        cam->connect();
+    }
+
+    cam->startStreaming();
+
+    std::optional<ImageData> image = cam->takePicture();
+
+    if (!image.has_value()) {
+        LOG_RESPONSE(INFO, "Failed to capture image", INTERNAL_SERVER_ERROR);
+    }
+
+    LOG_RESPONSE(INFO, "Successfully captured image", OK, "", mime::json);
 }
 
 DEF_GCS_HANDLE(Post, dodropnow) {

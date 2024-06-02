@@ -41,6 +41,7 @@ std::optional<ImageTelemetry> queryMavlinkImageTelemetry(
 
 struct ImageData {
     cv::Mat DATA;
+    uint64_t timestamp;
     std::optional<ImageTelemetry> TELEMETRY;
 };
 
