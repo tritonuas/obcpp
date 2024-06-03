@@ -6,6 +6,9 @@
 #include <iostream>
 
 #include "nlohmann/json.hpp"
+#include "udp_squared/internal/enum.h"
+#include "utilities/constants.hpp"
+#include "utilities/datatypes.hpp"
 
 using json = nlohmann::json;
 
@@ -15,7 +18,8 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
         // Load in json file
         std::ifstream configStream(argv[1]);
         if (!configStream.is_open()) {
-            throw std::invalid_argument(std::string("Invalid path to config file: ") + std::string(argv[1]));
+            throw std::invalid_argument(std::string("Invalid path to config file: ") +
+                                        std::string(argv[1]));
         }
         json configs = json::parse(configStream);
 
@@ -41,8 +45,19 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
         this->cv.matching_model_dir = configs["cv"]["matching_model_dir"];
         this->cv.segmentation_model_dir = configs["cv"]["segmentation_model_dir"];
         this->cv.saliency_model_dir = configs["cv"]["saliency_model_dir"];
+        this->airdrop_pathing_config.drop_method = configs["pathing"]["approach"]["drop_method"];
+
+        this->airdrop_pathing_config.drop_angle_rad =
+            configs["pathing"]["approach"]["drop_angle_rad"];
+        this->airdrop_pathing_config.drop_altitude_m =
+            configs["pathing"]["approach"]["drop_altitude_m"];
+        this->airdrop_pathing_config.guided_drop_distance_m =
+            configs["pathing"]["approach"]["guided_drop_distance_m"];
+        this->airdrop_pathing_config.unguided_drop_distance_m =
+            configs["pathing"]["approach"]["unguided_drop_distance_m"];
 
         this->camera_config.type = configs["camera"]["type"];
+        this->camera_config.save_dir = configs["camera"]["save_dir"];
 
         this->camera_config.mock.images_dir = configs["camera"]["mock"]["images_dir"];
 
@@ -53,10 +68,8 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
             configs["camera"]["lucid"]["acquisition_frame_rate_enable"];
         this->camera_config.lucid.target_brightness =
             configs["camera"]["lucid"]["target_brightness"];
-        this->camera_config.lucid.exposure_auto =
-            configs["camera"]["lucid"]["exposure_auto"];
-        this->camera_config.lucid.exposure_time =
-            configs["camera"]["lucid"]["exposure_time"];
+        this->camera_config.lucid.exposure_auto = configs["camera"]["lucid"]["exposure_auto"];
+        this->camera_config.lucid.exposure_time = configs["camera"]["lucid"]["exposure_time"];
         this->camera_config.lucid.exposure_auto_damping =
             configs["camera"]["lucid"]["exposure_auto_damping"];
         this->camera_config.lucid.exposure_auto_algorithm =

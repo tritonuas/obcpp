@@ -18,6 +18,7 @@
 #include "network/mavlink.hpp"
 #include "utilities/locks.hpp"
 #include "utilities/datatypes.hpp"
+#include "utilities/common.hpp"
 
 using json = nlohmann::json;
 
@@ -63,13 +64,11 @@ LucidCamera::~LucidCamera() {
     // aquire locks to Arena System and Device
     WriteLock systemLock(this->arenaSystemLock);
     WriteLock deviceLock(this->arenaDeviceLock);
-
+   
     CATCH_ARENA_EXCEPTION("closing Arena System",
         this->system->DestroyDevice(this->device);
         Arena::CloseSystem(this->system););
 }
-
-
 
 void LucidCamera::startTakingPictures(const std::chrono::milliseconds& interval,
     std::shared_ptr<MavlinkClient> mavlinkClient) {
@@ -264,10 +263,11 @@ void LucidCamera::captureEvery(const std::chrono::milliseconds& interval,
         std::this_thread::sleep_for(interval);
     }
 
-    this->arenaDeviceLock.lock();
-    CATCH_ARENA_EXCEPTION("stopping stream",
-        this->device->StopStream(););
-    this->arenaDeviceLock.unlock();
+    // TODO figure out nondeterministic seg fault /shrug
+    // this->arenaDeviceLock.lock();
+    // CATCH_ARENA_EXCEPTION("stopping stream",
+    //     this->device->StopStream(););
+    // this->arenaDeviceLock.unlock();
 }
 
 std::optional<ImageData> LucidCamera::takePicture(const std::chrono::milliseconds& timeout,
@@ -284,6 +284,7 @@ std::optional<ImageData> LucidCamera::takePicture(const std::chrono::millisecond
     CATCH_ARENA_EXCEPTION("getting image", SINGLE_ARG(
         Arena::IImage* pImage = this->device->GetImage(timeout.count());
         std::optional<ImageTelemetry> telemetry = queryMavlinkImageTelemetry(mavlinkClient);
+        uint64_t timestamp = getUnixTime_s().count();
 
         static int imageCounter = 0;
         LOG_F(INFO, "Taking image: %d", imageCounter++);
@@ -308,6 +309,7 @@ std::optional<ImageData> LucidCamera::takePicture(const std::chrono::millisecond
         // TODO: replace with mavlink telemtry
         return ImageData{
             .DATA = mat.value(),
+            .TIMESTAMP = timestamp,
             .TELEMETRY = telemetry
         };));
 

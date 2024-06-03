@@ -283,7 +283,7 @@ int main() {
     RRTConfig config = RRTConfig { num_iterations, rewire_radius, true, POINT_FETCH_METHODS::NEAREST, true };
 
     RRT rrt = RRT(start, goals, search_radius, 
-                  state->mission_params.getFlightBoundary(), obstacles, config);
+                  state->mission_params.getFlightBoundary(), obstacles, {}, config);
 
     // print out stats
     std::cout << "num_iterations: " << num_iterations << std::endl;

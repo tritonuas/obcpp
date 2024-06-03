@@ -6,6 +6,7 @@ SET(FILES
     logging.cpp
     obc_config.cpp
     rng.cpp
+    base64.cpp
 )
 
 SET(LIB_DEPS

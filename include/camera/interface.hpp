@@ -7,6 +7,7 @@
 #include <optional>
 #include <unordered_map>
 #include <deque>
+#include <filesystem>
 
 #include <nlohmann/json.hpp>
 #include <opencv2/opencv.hpp>
@@ -41,8 +42,15 @@ std::optional<ImageTelemetry> queryMavlinkImageTelemetry(
 
 struct ImageData {
     cv::Mat DATA;
+    uint64_t TIMESTAMP;
     std::optional<ImageTelemetry> TELEMETRY;
 };
+
+std::string cvMatToBase64(cv::Mat image);
+
+void saveImageToFile(cv::Mat image, const std::filesystem::path& filepath);
+
+void saveImageTelemetryToFile(const ImageTelemetry& telemetry, const std::filesystem::path& filepath);
 
 class CameraInterface {
  protected:

@@ -227,14 +227,14 @@ const static char* mission_json_2024 = R"(
  * FILE OUTPUT LOCATIONS
  *  |-- build
  *      |-- pathing_output
- *          |-- test_coverage_pathing.jpg
- *          |-- test_coverage_pathing.gif (if enabled)
- *      |-- coverage_coords_2.txt
+ *          |-- test_airdrop_approach.jpg
+ *          |-- test_airdrop_approach.gif (if enabled)
+ *      |-- approach_coords.txt
  *
  *  This rough integration test is to test the airdrop search pathing algorithm
  */
 int main() {
-    std::cout << "Messing with Airdrop Zone Search Pathing Part 2" << std::endl;
+    std::cout << "Messing with Airdrop Approach Pathing" << std::endl;
 
     // First upload a mission so that we generate a path
     // this is roughly the mission from 2020
@@ -246,22 +246,19 @@ int main() {
 
     // files to put path_coordinates to
     std::ofstream file;
-    file.open("coverage_coords_2.txt");
+    file.open("approach_coords.txt");
 
     RRTPoint start = RRTPoint(state->mission_params.getWaypoints()[0], 0);
-    start.coord.z = 100;
 
-    CoveragePathing search(
-        start, 9, state->mission_params.getFlightBoundary(),
-        state->mission_params.getAirdropBoundary(), {},
-        AirdropSearchConfig{.coverage_altitude_m = 30.0, .optimize = false, .vertical = false, .one_way = false});
+    AirdropApproachPathing approach(RRTPoint(XYZCoord(-500, 100, 0), 0),
+                             XYZCoord(313.131212, -187.781235, 0), RRTPoint(XYZCoord(0, 0, 0), 0),
+                             state->mission_params.getFlightBoundary());
 
     Environment env(state->mission_params.getFlightBoundary(),
                     state->mission_params.getAirdropBoundary(), {}, {});
 
-    Polygon scaled = env.scale(0.75, state->mission_params.getFlightBoundary());
-
-    std::vector<XYZCoord> path = search.run();
+    std::vector<XYZCoord> path = approach.run();
+    std::cout << "Path Length: " << path.size() << std::endl;
 
     for (const XYZCoord& coord : path) {
         file << coord.z << std::endl;
@@ -269,10 +266,11 @@ int main() {
 
     // plot the path
     std::cout << "Start Plotting" << std::endl;
-    PathingPlot plotter("pathing_output", state->mission_params.getFlightBoundary(), scaled, {});
+    PathingPlot plotter("pathing_output", state->mission_params.getFlightBoundary(),
+                        state->mission_params.getAirdropBoundary(), {});
 
     plotter.addFinalPolyline(path);
-    plotter.output("test_coverage_pathing_2", PathOutputType::STATIC);
+    plotter.output("test_airdrop_approach", PathOutputType::STATIC);
     file.close();
     return 0;
 }
