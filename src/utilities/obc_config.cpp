@@ -3,6 +3,7 @@
 #include <fstream>
 #include <stdexcept>
 #include <string>
+#include <iostream>
 
 #include "nlohmann/json.hpp"
 
@@ -35,8 +36,11 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
             configs["pathing"]["coverage"]["coverage_altitude_m"];
         this->coverage_pathing_config.optimize = configs["pathing"]["coverage"]["optimize"];
         this->coverage_pathing_config.vertical = configs["pathing"]["coverage"]["vertical"];
-        std::cout << configs["pathing"]["coverage"]["one_way"] << std::endl;
         this->coverage_pathing_config.one_way = configs["pathing"]["coverage"]["one_way"];
+
+        this->cv.matching_model_dir = configs["cv"]["matching_model_dir"];
+        this->cv.segmentation_model_dir = configs["cv"]["segmentation_model_dir"];
+        this->cv.saliency_model_dir = configs["cv"]["saliency_model_dir"];
 
         this->camera_config.type = configs["camera"]["type"];
 
@@ -82,53 +86,6 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
 
         this->takeoff.altitude_m = configs["takeoff"]["altitude_m"];
     } else {
-        makeDefault();
+        std::cerr << "FATAL: You must specify a config file.\ne.g. bin/obcpp ../configs/dev-config.json\n";
     }
-}
-
-void OBCConfig::makeDefault() {
-    // Set configs
-    this->logging.dir = "/workspaces/obcpp/logs";
-    this->network.mavlink.connect = "tcp://172.17.0.1:5760";
-    this->network.gcs.port = 5010;
-
-    this->rrt_config.iterations_per_waypoint = ITERATIONS_PER_WAYPOINT;
-    this->rrt_config.rewire_radius = REWIRE_RADIUS;
-    this->rrt_config.optimize = true;
-    this->rrt_config.point_fetch_method = NEAREST;
-    this->rrt_config.allowed_to_skip_waypoints = false;
-
-    this->coverage_pathing_config.coverage_altitude_m = COVERAGE_ALTITUDE_M;
-    this->coverage_pathing_config.optimize = true;
-    this->coverage_pathing_config.vertical = false;
-    this->coverage_pathing_config.one_way = false;
-
-    this->camera_config.type = "mock";
-
-    this->camera_config.mock.images_dir = "/workspaces/obcpp/tests/integration/images/saliency/";
-
-    this->camera_config.lucid.sensor_shutter_mode = "Rolling";
-
-    this->camera_config.lucid.acquisition_frame_rate_enable = true;
-    this->camera_config.lucid.target_brightness = 70;
-    this->camera_config.lucid.exposure_auto = "Continuous";
-    this->camera_config.lucid.exposure_time = 3000;
-    this->camera_config.lucid.exposure_auto_damping = 1;
-    this->camera_config.lucid.exposure_auto_algorithm = "Median";
-    this->camera_config.lucid.exposure_auto_upper_limit = 500;
-    this->camera_config.lucid.exposure_auto_lower_limit = 360;
-
-    this->camera_config.lucid.stream_auto_negotiate_packet_size = true;
-    this->camera_config.lucid.stream_packet_resend_enable = true;
-
-    this->camera_config.lucid.device_link_throughput_limit_mode = "On";
-    this->camera_config.lucid.device_link_throughput_limit = 125000000;
-
-    this->camera_config.lucid.gamma_enable = true;
-    this->camera_config.lucid.gamma = 0.5;
-    this->camera_config.lucid.gain_auto = "Continuous";
-    this->camera_config.lucid.gain_auto_upper_limit = 10;
-    this->camera_config.lucid.gain_auto_lower_limit = 1;
-
-    this->takeoff.altitude_m = TAKEOFF_ALTITUDE_M;
 }

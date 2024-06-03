@@ -21,16 +21,6 @@ class MissionPrepTick : public Tick {
  public:
     explicit MissionPrepTick(std::shared_ptr<MissionState> state);
 
-    std::vector<Bottle> bottlesToDropV;
-    std::array<Bottle, NUMBOTTLES> bottlesToDrop;
-    std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages;
-
-    std::string matchingModelPath;
-    std::string segmentationModelPath;
-    std::string saliencyModelPath;
-    
-    std::unique_ptr<Pipeline> pipeline;
-
     std::chrono::milliseconds getWait() const override;
 
     Tick* tick() override;

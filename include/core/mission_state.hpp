@@ -30,7 +30,7 @@ class Tick;
 
 class MissionState {
  public:
-    MissionState();
+    MissionState(OBCConfig config);
     ~MissionState();
 
     const std::optional<CartesianConverter<GPSProtoVec>>& getCartesianConverter();
@@ -96,10 +96,8 @@ class MissionState {
     void setCamera(std::shared_ptr<CameraInterface> camera);
 
     MissionParameters mission_params;  // has its own mutex
-    RRTConfig rrt_config;
-    AirdropSearchConfig coverage_pathing_config;
-    CameraConfig camera_config;
-    float takeoff_alt_m;
+
+    OBCConfig config;
 
  private:
     std::mutex converter_mut;

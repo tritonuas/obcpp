@@ -1,6 +1,6 @@
 {
     "logging": {
-        "dir": "/workspaces/obcpp/logs"
+        "dir": "/obcpp/logs"
     },
     "network": {
         "mavlink": {
@@ -29,11 +29,16 @@
             "one_way": false
         }
     },
+    "cv": {
+        "matching_model_dir": "/obcpp/models/target_siamese_1.pt",
+        "segmentation_model_dir": "/obcpp/models/fcn.pth",
+        "saliency_model_dir": "/obcpp/models/torchscript_19.pth"
+    },
     "camera": {
         "_comment": "See CameraConfig struct in datatypes.hpp for detailed explanations",
         "type": "lucid",
         "mock": {
-            "images_dir": "/workspaces/obcpp/tests/integration/images/saliency/"
+            "images_dir": "/obcpp/tests/integration/images/saliency/"
         },
         "lucid": {
             "sensor_shuttle_mode": "Rolling",

@@ -28,6 +28,11 @@
             "one_way": true
         }
     },
+    "cv": {
+        "matching_model_dir": "/workspaces/obcpp/models/target_siamese_1.pt",
+        "segmentation_model_dir": "/workspaces/obcpp/models/fcn.pth",
+        "saliency_model_dir": "/workspaces/obcpp/models/torchscript_19.pth"
+    },
     "camera": {
         "_comment": "See CameraConfig struct in datatypes.hpp for detailed explanations",
         "type": "lucid",

@@ -16,9 +16,7 @@
 #include "utilities/logging.hpp"
 #include "utilities/obc_config.hpp"
 
-// in future might add to this
-MissionState::MissionState() {
-}
+MissionState::MissionState(OBCConfig config): config(config) {}
 
 // Need to explicitly define now that Tick is no longer an incomplete class
 // See:

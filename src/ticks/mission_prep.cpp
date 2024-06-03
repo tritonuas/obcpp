@@ -17,28 +17,35 @@ std::chrono::milliseconds MissionPrepTick::getWait() const {
 
 Tick* MissionPrepTick::tick() {
     if (this->state->mission_params.getCachedMission().has_value()) {
-            
+        LOG_F(INFO, "Valid mission configuration detected");
+
+        std::array<Bottle, NUM_AIRDROP_BOTTLES> bottles_to_drop; 
+
         // Get the airdrop bottles from the mission parameters
-        bottlesToDropV = state->mission_params.getAirdropBottles();
+        // and copy into an std::array of the same size. Annoying conversion because
+        // mission parameters and cv aggregator expect them in different data
+        // structures. Could fix by making them both take a vector / both take an
+        // array of size NUM_AIRDROP_BOTTLES
+        std::copy_n(state->mission_params.getAirdropBottles().begin(),
+            NUM_AIRDROP_BOTTLES, bottles_to_drop.begin()); 
 
-        // Fill Bottles array because Aggregator wants that idrk why
-        std::copy_n(bottlesToDropV.begin(), NUMBOTTLES, bottlesToDrop.begin()); 
+        std::string matching_model_dir = this->state->config.cv.matching_model_dir;
+        std::string segmentation_model_dir = this->state->config.cv.segmentation_model_dir;
+        std::string saliency_model_dir = this->state->config.cv.saliency_model_dir;
 
-        // TODO: Add path config to the models
-        // matching model can be downloaded from here: https://drive.google.com/drive/folders/1ciDfycNyJiLvRhJhwQZoeKH7vgV6dGHJ?usp=drive_link
-        matchingModelPath = "../models/target_siamese_1.pt";
-        // segmentation model can be downloaded from here: https://drive.google.com/file/d/1U2EbfJFzcjVnjTuD6ud-bIf8YOiEassf/view?usp=drive_link
-        segmentationModelPath = "../models/fcn.pth";
-
-        saliencyModelPath = "../models/torchscript_19.pth";
-
-        // Initalizes pipeline 
-        pipeline = std::make_unique<Pipeline>(PipelineParams(bottlesToDrop, referenceImages, matchingModelPath, segmentationModelPath, saliencyModelPath));
+        LOG_F(INFO, "Instantiating CV Aggregator with the following models:");
+        LOG_F(INFO, "Matching Model: %s", matching_model_dir.c_str());
+        LOG_F(INFO, "Segmentation Model: %s", segmentation_model_dir.c_str());
+        LOG_F(INFO, "Saliency Model: %s", saliency_model_dir.c_str());
 
         // Make a CVAggregator instance and set it in the state
-        this->state->setCV(std::make_shared<CVAggregator>(pipeline));
+        this->state->setCV(std::make_shared<CVAggregator>(Pipeline(
+            PipelineParams(bottles_to_drop,
+                {}, // TODO: pass in reference images
+                matching_model_dir,
+                segmentation_model_dir,
+                saliency_model_dir))));
 
-        LOG_F(INFO, "Valid mission configuration detected");
         return new PathGenTick(this->state);
     } else {
         return nullptr;

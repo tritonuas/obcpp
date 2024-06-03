@@ -20,6 +20,10 @@ class FlySearchTick : public Tick {
     std::chrono::milliseconds getWait() const override;
 
     Tick* tick() override;
+
+ private:
+    Polygon airdrop_boundary;
+    std::chrono::milliseconds last_photo_time;    
 };
 
 #endif  // INCLUDE_TICKS_FLY_SEARCH_HPP_

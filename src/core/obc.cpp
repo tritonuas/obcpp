@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <future>
 
+#include "camera/mock.hpp"
 #include "camera/lucid.hpp"
 #include "core/obc.hpp"
 #include "core/mission_state.hpp"
@@ -22,12 +23,9 @@ extern "C" {
 OBC::OBC(OBCConfig config) {
     int gcs_port = config.network.gcs.port;
 
-    this->state = std::make_shared<MissionState>();
+    this->state = std::make_shared<MissionState>(config);
     this->state->setTick(new MissionPrepTick(this->state));
-    this->state->rrt_config = config.rrt_config;
-    this->state->camera_config = config.camera_config;
-    this->state->takeoff_alt_m = config.takeoff.altitude_m;
-    this->state->coverage_pathing_config = config.coverage_pathing_config;
+    this->state->config= config;
     this->gcs_server = std::make_unique<GCSServer>(gcs_port, this->state);
 
     // Don't need to look at these futures at all because the connect functions
@@ -37,13 +35,17 @@ OBC::OBC(OBCConfig config) {
         {this->connectMavlink(config.network.mavlink.connect);});
     this->connectAirdropThread = std::thread([this]{this->connectAirdrop();});
 
-    if (this->state->camera_config.type == "mock") {
-        this->state->setCamera(std::make_shared<MockCamera>(this->state->camera_config));
-    } else if (this->state->camera_config.type == "lucid") {
-        this->state->setCamera(std::make_shared<LucidCamera>(this->state->camera_config));
+    if (this->state->config.camera_config.type == "mock") {
+        this->state->setCamera(std::make_shared<MockCamera>(this->state->config.camera_config));
+    } else if (this->state->config.camera_config.type == "lucid") {
+        #ifdef ARENA_SDK_INSTALLED
+            this->state->setCamera(std::make_shared<LucidCamera>(this->state->config.camera_config));
+        #else
+            LOG_F(FATAL, "Attempting to create Lucid Camera without having ArenaSDK installed.");
+        #endif
     } else {
         // default to mock if it's neither "mock" or "lucid"
-        this->state->setCamera(std::make_shared<MockCamera>(this->state->camera_config));
+        this->state->setCamera(std::make_shared<MockCamera>(this->state->config.camera_config));
     }
 }
 
