@@ -241,7 +241,7 @@ class CoveragePathing {
 
 class AirdropApproachPathing {
  public:
-    AirdropApproachPathing(const RRTPoint &start, const XYZCoord &goal, RRTPoint wind,
+    AirdropApproachPathing(const RRTPoint &start, const XYZCoord &goal, XYZCoord wind,
                            Polygon bounds, std::vector<Polygon> obstacles = {},
                            AirdropApproachConfig config = {
                                .drop_method = UNGUIDED,
@@ -270,7 +270,7 @@ class AirdropApproachPathing {
     const Dubins dubins;
     const AirdropApproachConfig config;
 
-    RRTPoint wind;
+    XYZCoord wind;
 };
 
 std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state);

@@ -398,7 +398,7 @@ std::vector<XYZCoord> CoveragePathing::generatePath(const std::vector<RRTOption>
 }
 
 AirdropApproachPathing::AirdropApproachPathing(const RRTPoint &start, const XYZCoord &goal,
-                                               RRTPoint wind, Polygon bounds,
+                                               XYZCoord wind, Polygon bounds,
                                                std::vector<Polygon> obstacles,
                                                AirdropApproachConfig config)
     : start(start),
@@ -424,9 +424,10 @@ RRTPoint AirdropApproachPathing::getDropLocation() const {
     XYZCoord drop_offset(drop_distance * std::cos(drop_angle), drop_distance * std::sin(drop_angle),
                          0);
 
-    double wind_strength_coef = wind.coord.norm() * WIND_CONST_PER_ALTITUDE;
-    XYZCoord wind_offset(wind_strength_coef * std::cos(wind.psi),
-                         wind_strength_coef * std::sin(wind.psi), 0);
+    double wind_strength_coef = wind.norm() * WIND_CONST_PER_ALTITUDE;
+    double wind_angle = std::atan2(wind.y, wind.x);
+    XYZCoord wind_offset(wind_strength_coef * std::cos(wind_angle),
+                         wind_strength_coef * std::sin(wind_angle), 0);
     XYZCoord drop_location(goal.x + drop_offset.x + wind_offset.x,
                            goal.y + drop_offset.y + wind_offset.y, config.drop_altitude_m);
 
@@ -487,8 +488,7 @@ std::vector<GPSCoord> generateAirdropApproach(std::shared_ptr<MissionState> stat
 
     XYZCoord xyz_goal = state->getCartesianConverter().value().toXYZ(goal);
 
-    // DO WIND
-    AirdropApproachPathing airdrop_planner(start, xyz_goal, RRTPoint(XYZCoord(0, 0, 0), 0),
+    AirdropApproachPathing airdrop_planner(start, xyz_goal, mav->wind(),
                                            state->mission_params.getFlightBoundary());
 
     std::vector<XYZCoord> path = airdrop_planner.run();
