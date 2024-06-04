@@ -8,6 +8,7 @@
 #include "ticks/airdrop_approach.hpp"
 #include "ticks/ids.hpp"
 #include "ticks/path_gen.hpp"
+#include "ticks/mav_upload.hpp"
 #include "utilities/logging.hpp"
 
 AirdropPrepTick::AirdropPrepTick(std::shared_ptr<MissionState> state)
@@ -25,13 +26,20 @@ Tick* AirdropPrepTick::tick() {
             continue;
         }
 
-        next_bottle = (BottleDropIndex)i;
+        next_bottle = static_cast<BottleDropIndex>(i);
         break;
     }
 
     DetectedTarget target = results.ptr->detected_targets.at(results.ptr->matches.at(next_bottle));
 
-    state->current_path = generateAirdropApproach(state, target.coord);
+    state->airdrop_path = generateAirdropApproach(state, target.coord);
 
-    return new AirdropApproachTick(state);
+    bool isMissionFinished = state->getMav()->isMissionFinished();
+
+    if (isMissionFinished) {
+        return new MavUploadTick(this->state, new AirdropApproachTick(this->state),   
+                state->airdrop_path, false);
+    }
+
+    return nullptr;
 }

@@ -478,25 +478,31 @@ std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
 
 std::vector<GPSCoord> generateAirdropApproach(std::shared_ptr<MissionState> state,
                                               const GPSCoord &goal) {
+    // finds starting location
     std::shared_ptr<MavlinkClient> mav = state->getMav();
-    std::pair<double, double> lat_long_start = mav->latlng_deg();
-    GPSCoord gps_start =
-        makeGPSCoord(lat_long_start.first, lat_long_start.second, mav->altitude_agl_m());
+    std::pair<double, double> start_lat_long = mav->latlng_deg();
+    GPSCoord start_gps =
+        makeGPSCoord(start_lat_long.first, start_lat_long.second, mav->altitude_agl_m());
     double start_angle = 90 - mav->heading_deg();
-    XYZCoord xyz_start = state->getCartesianConverter().value().toXYZ(gps_start);
-    RRTPoint start(xyz_start, start_angle);
+    XYZCoord start_xyz = state->getCartesianConverter().value().toXYZ(start_gps);
+    RRTPoint start_rrt(start_xyz, start_angle);
 
-    XYZCoord xyz_goal = state->getCartesianConverter().value().toXYZ(goal);
-
-    AirdropApproachPathing airdrop_planner(start, xyz_goal, mav->wind(),
+    // pathing
+    XYZCoord goal_xyz = state->getCartesianConverter().value().toXYZ(goal);
+    AirdropApproachPathing airdrop_planner(start_rrt, goal_xyz, mav->wind(),
                                            state->mission_params.getFlightBoundary());
+    std::vector<XYZCoord> xyz_path = airdrop_planner.run();
 
-    std::vector<XYZCoord> path = airdrop_planner.run();
-    std::vector<GPSCoord> output_coords;
+    // try to fly to the third waypoint in the path
+    // prevents the drone from passing the initial waypoint
+    // [TODO]-done out of laziness, forgot if the path includes starting location
+    xyz_path.erase(xyz_path.begin());
+    xyz_path.erase(xyz_path.begin());
 
-    for (const XYZCoord &wpt : path) {
-        output_coords.push_back(state->getCartesianConverter().value().toLatLng(wpt));
+    std::vector<GPSCoord> gps_path;
+    for (const XYZCoord &wpt : xyz_path) {
+        gps_path.push_back(state->getCartesianConverter().value().toLatLng(wpt));
     }
 
-    return output_coords;
+    return gps_path;
 }

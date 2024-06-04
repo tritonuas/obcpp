@@ -8,8 +8,6 @@
 
 #include "utilities/datatypes.hpp"
 
-typedef XYZCoord Vector;
-
 struct DubinsPath {
     DubinsPath(double beta_0, double beta_2, double straight_dist)
         : beta_0(beta_0), beta_2(beta_2), straight_dist(straight_dist) {}
@@ -74,7 +72,7 @@ bool compareRRTOptionLength(const RRTOption &first, const RRTOption &second);
  * counter-clockwise)
  *  @see    https://mathworld.wolfram.com/PerpendicularVector.html
  */
-Vector findOrthogonalVector2D(const Vector &vector);
+XYZCoord findOrthogonalVector2D(const XYZCoord &vector);
 
 /**
  *  returns half of the displacement vector from v2 to v1
@@ -85,7 +83,7 @@ Vector findOrthogonalVector2D(const Vector &vector);
  *                      @param vector1 that terminates half way
  *                      (i.e. half the magnitude)
  */
-Vector halfDisplacement(const Vector &vector1, const Vector &vector2);
+XYZCoord halfDisplacement(const XYZCoord &vector1, const XYZCoord &vector2);
 
 class Dubins {
  public:
@@ -99,7 +97,7 @@ class Dubins {
      *   @param  side    ==> whether the plane is planning to turn left (L) or right (R)
      *   @return         ==> center of a turning circle
      */
-    Vector findCenter(const RRTPoint &point, char side) const;
+    XYZCoord findCenter(const RRTPoint &point, char side) const;
 
     /**
      *   Finds a point (vector) along a curved path given a distance
@@ -112,7 +110,7 @@ class Dubins {
      *   @param path_length      ==> the arc-length along the circle
      *   @returns                ==> point along circle path
      */
-    Vector circleArc(const RRTPoint &starting_point, double beta, const Vector &center,
+    XYZCoord circleArc(const RRTPoint &starting_point, double beta, const XYZCoord &center,
                      double path_length) const;
     /**
      *  Generates points for the paths that contain a straight section
@@ -123,7 +121,7 @@ class Dubins {
      *  @param path     ==> Some given dubins's path parameters
      *  @return         ==> a list of vectors along the entire path
      */
-    std::vector<Vector> generatePointsStraight(const RRTPoint &start, const RRTPoint &end,
+    std::vector<XYZCoord> generatePointsStraight(const RRTPoint &start, const RRTPoint &end,
                                                const DubinsPath &path) const;
 
     /**
@@ -135,7 +133,7 @@ class Dubins {
      *  @param path     ==> Some given dubins's path parameters
      *  @return         ==> a list of vectors along the entire path
      */
-    std::vector<Vector> generatePointsCurve(const RRTPoint &start, const RRTPoint &end,
+    std::vector<XYZCoord> generatePointsCurve(const RRTPoint &start, const RRTPoint &end,
                                             const DubinsPath &path) const;
 
     /**
@@ -148,7 +146,7 @@ class Dubins {
      *  @return             ==> a list of points that represent the shortest
      *                          dubin's path from start to end
      */
-    std::vector<Vector> generatePoints(const RRTPoint &start, const RRTPoint &end,
+    std::vector<XYZCoord> generatePoints(const RRTPoint &start, const RRTPoint &end,
                                        const DubinsPath &path, bool has_straight) const;
 
     /**
@@ -169,8 +167,8 @@ class Dubins {
      *                          - straight_distance
      *                      - if the path has a straight section
      */
-    RRTOption lsl(const RRTPoint &start, const RRTPoint &end, const Vector &center_0,
-                  const Vector &center_2) const;
+    RRTOption lsl(const RRTPoint &start, const RRTPoint &end, const XYZCoord &center_0,
+                  const XYZCoord &center_2) const;
 
     /**
      *  First, the straight distance (it turns out) is equal to the
@@ -189,8 +187,8 @@ class Dubins {
      *                          - straight_distance
      *                      - if the path has a straight section
      */
-    RRTOption rsr(const RRTPoint &start, const RRTPoint &end, const Vector &center_0,
-                  const Vector &center_2) const;
+    RRTOption rsr(const RRTPoint &start, const RRTPoint &end, const XYZCoord &center_0,
+                  const XYZCoord &center_2) const;
 
     /**
      *  Because of the change in turn direction, it is a little more complex to
@@ -212,8 +210,8 @@ class Dubins {
      *                          - straight_distance
      *                      - if the path has a straight section
      */
-    RRTOption lsr(const RRTPoint &start, const RRTPoint &end, const Vector &center_0,
-                  const Vector &center_2) const;
+    RRTOption lsr(const RRTPoint &start, const RRTPoint &end, const XYZCoord &center_0,
+                  const XYZCoord &center_2) const;
 
     /**
      *  Because of the change in turn direction, it is a little more complex to
@@ -235,8 +233,8 @@ class Dubins {
      *                          - straight_distance
      *                      - if the path has a straight section
      */
-    RRTOption rsl(const RRTPoint &start, const RRTPoint &end, const Vector &center_0,
-                  const Vector &center_2) const;
+    RRTOption rsl(const RRTPoint &start, const RRTPoint &end, const XYZCoord &center_0,
+                  const XYZCoord &center_2) const;
 
     /**
      *  Using the isoceles triangle made by the centers of the three circles,
@@ -254,8 +252,8 @@ class Dubins {
      *                          - straight_distance
      *                      - if the path has a straight section
      */
-    RRTOption lrl(const RRTPoint &start, const RRTPoint &end, const Vector &center_0,
-                  const Vector &center_2) const;
+    RRTOption lrl(const RRTPoint &start, const RRTPoint &end, const XYZCoord &center_0,
+                  const XYZCoord &center_2) const;
 
     /**
      *  Using the isoceles triangle made by the centers of the three circles,
@@ -273,8 +271,8 @@ class Dubins {
      *                          - straight_distance
      *                      - if the path has a straight section
      */
-    RRTOption rlr(const RRTPoint &start, const RRTPoint &end, const Vector &center_0,
-                  const Vector &center_2) const;
+    RRTOption rlr(const RRTPoint &start, const RRTPoint &end, const XYZCoord &center_0,
+                  const XYZCoord &center_2) const;
 
     /**
      * Compute all the possible Dubin's path and returns a list
@@ -298,7 +296,7 @@ class Dubins {
      *  @param end      ==> vector at end position
      *  @return         ==> the points for the most optimal path from @param start to @param end
      */
-    std::vector<Vector> dubinsPath(const RRTPoint &start, const RRTPoint &end) const;
+    std::vector<XYZCoord> dubinsPath(const RRTPoint &start, const RRTPoint &end) const;
 
     /**
      * Returns the optimal RRTOption from the list of options
