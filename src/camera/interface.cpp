@@ -24,7 +24,8 @@ void saveImageToFile(cv::Mat image, const std::filesystem::path& filepath) {
   cv::imwrite(filepath, image);
 }
 
-void saveImageTelemetryToFile(const ImageTelemetry& telemetry, const std::filesystem::path& filepath) {
+void saveImageTelemetryToFile(const ImageTelemetry& telemetry, 
+                              const std::filesystem::path& filepath) {
   json telemetry_json = {
     {"latitude_deg", telemetry.latitude_deg },
     {"longitude_deg", telemetry.longitude_deg },
@@ -35,6 +36,7 @@ void saveImageTelemetryToFile(const ImageTelemetry& telemetry, const std::filesy
     {"pitch_deg", telemetry.pitch_deg },
     {"roll_deg", telemetry.roll_deg }
   };
+  
   std::ofstream telemetry_file (filepath);
   if (!telemetry_file.is_open()) {
     LOG_F(ERROR, "Failed to save telemetry json to %s", filepath.string().c_str());

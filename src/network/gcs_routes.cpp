@@ -189,8 +189,8 @@ DEF_GCS_HANDLE(Get, camera, capture) {
 
     try {
         std::filesystem::path save_dir = state->camera_config.save_dir;
-        std::filesystem::path img_filepath = save_dir / (std::to_string(image->TIMESTAMP) + std::string(".jpg"));
-        std::filesystem::path json_filepath = save_dir / (std::to_string(image->TIMESTAMP) + std::string(".json"));
+        std::filesystem::path img_filepath = save_dir / (std::to_string(image->TIMESTAMP) + std::string(".jpg")); //NOLINT
+        std::filesystem::path json_filepath = save_dir / (std::to_string(image->TIMESTAMP) + std::string(".json")); //NOLINT
         saveImageToFile(image->DATA, img_filepath);
         if (image->TELEMETRY.has_value()) {
             saveImageTelemetryToFile(image->TELEMETRY.value(), json_filepath);
