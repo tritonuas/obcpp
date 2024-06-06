@@ -194,7 +194,7 @@ DEF_GCS_HANDLE(Get, camera, capture) {
         saveImageToFile(image->DATA, img_filepath);
         if (image->TELEMETRY.has_value()) {
             saveImageTelemetryToFile(image->TELEMETRY.value(), json_filepath);
-        } 
+        }
     } catch (std::exception& e) {
         LOG_F(ERROR, "Failed to save image and telemetry to file");
     }

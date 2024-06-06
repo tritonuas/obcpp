@@ -50,7 +50,7 @@ std::string cvMatToBase64(cv::Mat image);
 
 void saveImageToFile(cv::Mat image, const std::filesystem::path& filepath);
 
-void saveImageTelemetryToFile(const ImageTelemetry& telemetry,  
+void saveImageTelemetryToFile(const ImageTelemetry& telemetry,
                               const std::filesystem::path& filepath);
 
 class CameraInterface {
