@@ -23,7 +23,7 @@ class FlySearchTick : public Tick {
 
  private:
     Polygon airdrop_boundary;
-    std::chrono::milliseconds last_photo_time;    
+    std::chrono::milliseconds last_photo_time;
 };
 
 #endif  // INCLUDE_TICKS_FLY_SEARCH_HPP_

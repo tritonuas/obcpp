@@ -22,7 +22,6 @@
 
 class CVLoiterTick : public Tick {
  public:
-
     /* 
      * Status of the CV processing
      * (Will be) Modified through GCS Manual Control

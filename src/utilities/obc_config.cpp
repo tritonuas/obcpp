@@ -99,6 +99,6 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
 
         this->takeoff.altitude_m = configs["takeoff"]["altitude_m"];
     } else {
-        std::cerr << "FATAL: You must specify a config file.\ne.g. bin/obcpp ../configs/dev-config.json\n";
+        std::cerr << "FATAL: You must specify a config file.\ne.g. bin/obcpp ../configs/dev-config.json\n"; //NOLINT
     }
 }

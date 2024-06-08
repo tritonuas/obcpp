@@ -190,12 +190,12 @@ DEF_GCS_HANDLE(Get, camera, capture) {
 
     try {
         std::filesystem::path save_dir = state->config.camera_config.save_dir;
-        std::filesystem::path img_filepath = save_dir / (std::to_string(image->TIMESTAMP) + std::string(".jpg"));
-        std::filesystem::path json_filepath = save_dir / (std::to_string(image->TIMESTAMP) + std::string(".json"));
+        std::filesystem::path img_filepath = save_dir / (std::to_string(image->TIMESTAMP) + std::string(".jpg"));   //NOLINT
+        std::filesystem::path json_filepath = save_dir / (std::to_string(image->TIMESTAMP) + std::string(".json")); //NOLINT
         saveImageToFile(image->DATA, img_filepath);
         if (image->TELEMETRY.has_value()) {
             saveImageTelemetryToFile(image->TELEMETRY.value(), json_filepath);
-        } 
+        }
     } catch (std::exception& e) {
         LOG_F(ERROR, "Failed to save image and telemetry to file");
     }
@@ -278,7 +278,7 @@ DEF_GCS_HANDLE(Post, takeoff, autonomous) {
     LOG_RESPONSE(INFO, "Set status of WaitForTakeoff Tick to autonomous", OK);
 }
 
-DEF_GCS_HANDLE(Post, targets, validate){
+DEF_GCS_HANDLE(Post, targets, validate) {
     LOG_REQUEST("POST", "targets/validate");
     auto lock_ptr = state->getTickLockPtr<CVLoiterTick>();
 
@@ -291,7 +291,7 @@ DEF_GCS_HANDLE(Post, targets, validate){
     LOG_RESPONSE(INFO, "Set status of CVLoiter Tick to validated", OK);
 }
 
-DEF_GCS_HANDLE(Post, targets, reject){
+DEF_GCS_HANDLE(Post, targets, reject) {
     LOG_REQUEST("POST", "targets/reject");
     auto lock_ptr = state->getTickLockPtr<CVLoiterTick>();
 

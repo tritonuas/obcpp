@@ -25,7 +25,7 @@ OBC::OBC(OBCConfig config) {
 
     this->state = std::make_shared<MissionState>(config);
     this->state->setTick(new MissionPrepTick(this->state));
-    this->state->config= config;
+    this->state->config = config;
     this->gcs_server = std::make_unique<GCSServer>(gcs_port, this->state);
 
     // Don't need to look at these futures at all because the connect functions
@@ -39,7 +39,7 @@ OBC::OBC(OBCConfig config) {
         this->state->setCamera(std::make_shared<MockCamera>(this->state->config.camera_config));
     } else if (this->state->config.camera_config.type == "lucid") {
         #ifdef ARENA_SDK_INSTALLED
-            this->state->setCamera(std::make_shared<LucidCamera>(this->state->config.camera_config));
+            this->state->setCamera(std::make_shared<LucidCamera>(this->state->config.camera_config));           //NOLINT
         #else
             LOG_F(FATAL, "Attempting to create Lucid Camera without having ArenaSDK installed.");
         #endif

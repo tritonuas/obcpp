@@ -74,7 +74,7 @@ class LucidCamera : public CameraInterface {
     */
     std::optional<ImageData> takePicture(const std::chrono::milliseconds& timeout,
         std::shared_ptr<MavlinkClient> mavlinkClient) override;
-    
+
     void startStreaming() override;
 
  private:

@@ -19,7 +19,7 @@ Tick* MissionPrepTick::tick() {
     if (this->state->mission_params.getCachedMission().has_value()) {
         LOG_F(INFO, "Valid mission configuration detected");
 
-        std::array<Bottle, NUM_AIRDROP_BOTTLES> bottles_to_drop; 
+        std::array<Bottle, NUM_AIRDROP_BOTTLES> bottles_to_drop;
 
         // Get the airdrop bottles from the mission parameters
         // and copy into an std::array of the same size. Annoying conversion because
@@ -27,7 +27,7 @@ Tick* MissionPrepTick::tick() {
         // structures. Could fix by making them both take a vector / both take an
         // array of size NUM_AIRDROP_BOTTLES
         std::copy_n(state->mission_params.getAirdropBottles().begin(),
-            NUM_AIRDROP_BOTTLES, bottles_to_drop.begin()); 
+            NUM_AIRDROP_BOTTLES, bottles_to_drop.begin());
 
         std::string matching_model_dir = this->state->config.cv.matching_model_dir;
         std::string segmentation_model_dir = this->state->config.cv.segmentation_model_dir;
@@ -41,7 +41,7 @@ Tick* MissionPrepTick::tick() {
         // Make a CVAggregator instance and set it in the state
         this->state->setCV(std::make_shared<CVAggregator>(Pipeline(
             PipelineParams(bottles_to_drop,
-                {}, // TODO: pass in reference images
+                {},   // TODO: pass in reference images
                 matching_model_dir,
                 segmentation_model_dir,
                 saliency_model_dir))));

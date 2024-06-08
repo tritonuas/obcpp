@@ -64,7 +64,7 @@ LucidCamera::~LucidCamera() {
     // aquire locks to Arena System and Device
     WriteLock systemLock(this->arenaSystemLock);
     WriteLock deviceLock(this->arenaDeviceLock);
-   
+
     CATCH_ARENA_EXCEPTION("closing Arena System",
         this->system->DestroyDevice(this->device);
         Arena::CloseSystem(this->system););

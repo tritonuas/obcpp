@@ -74,11 +74,11 @@ void MockCamera::captureEvery(const std::chrono::milliseconds& interval,
     while (this->isTakingPictures) {
         LOG_F(INFO, "Taking picture with mock camera. Using images from %s",
             this->config.mock.images_dir.c_str());
-        
+
         auto imageData = this->takePicture(interval, mavlinkClient);
 
 
-        if (!imageData.has_value()){
+        if (!imageData.has_value()) {
             LOG_F(WARNING, "Failed to take picture with mock camera");
             continue;
         }
@@ -109,4 +109,4 @@ std::optional<ImageData> MockCamera::takePicture(const std::chrono::milliseconds
     return imageData;
 }
 
-void MockCamera::startStreaming(){}
+void MockCamera::startStreaming() {}

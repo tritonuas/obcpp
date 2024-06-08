@@ -22,12 +22,12 @@ void CVLoiterTick::setStatus(Status status) {
 }
 
 Tick* CVLoiterTick::tick() {
-    //Tick is called if Search Zone coverage path is finished
+    // Tick is called if Search Zone coverage path is finished
 
     // Check status of the CV Results
     if (status == Status::Validated) {
         return new AirdropPrepTick(this->state);
-    } 
+    }
 
     // If not all targets are validated invoke Flysearch again to attept to locate the target
     else if (status == Status::Rejected) {
