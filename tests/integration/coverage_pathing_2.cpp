@@ -227,14 +227,15 @@ const static char* mission_json_2024 = R"(
  * FILE OUTPUT LOCATIONS
  *  |-- build
  *      |-- pathing_output
- *          |-- test_airdrop_pathing.jpg
- *          |-- test_airdrop_pathing.gif (if enabled)
- *      |-- airdop_search_coords.txt
+ *          |-- test_coverage_pathing.jpg
+ *          |-- test_coverage_pathing.gif (if enabled)
+ *      |-- coverage_coords_2.txt
  *
  *  This rough integration test is to test the airdrop search pathing algorithm
  */
 int main() {
     std::cout << "Messing with Airdrop Zone Search Pathing Part 2" << std::endl;
+
     // First upload a mission so that we generate a path
     // this is roughly the mission from 2020
     DECLARE_HANDLER_PARAMS(state, req, resp);
@@ -245,25 +246,33 @@ int main() {
 
     // files to put path_coordinates to
     std::ofstream file;
-    file.open("airdop_search_coords_2.txt");
+    file.open("coverage_coords_2.txt");
 
     RRTPoint start = RRTPoint(state->mission_params.getWaypoints()[0], 0);
+    start.coord.z = 100;
 
-    AirdropSearch search(start, 9, state->mission_params.getFlightBoundary(),
-                         state->mission_params.getAirdropBoundary());
+    CoveragePathing search(
+        start, 9, state->mission_params.getFlightBoundary(),
+        state->mission_params.getAirdropBoundary(), {},
+        AirdropSearchConfig{.coverage_altitude_m = 30.0, .optimize = false, .vertical = false, .one_way = false});
 
-    Environment env(state->mission_params.getFlightBoundary(), state->mission_params.getAirdropBoundary(), {}, {});
+    Environment env(state->mission_params.getFlightBoundary(),
+                    state->mission_params.getAirdropBoundary(), {}, {});
 
     Polygon scaled = env.scale(0.75, state->mission_params.getFlightBoundary());
 
     std::vector<XYZCoord> path = search.run();
+
+    for (const XYZCoord& coord : path) {
+        file << coord.z << std::endl;
+    }
 
     // plot the path
     std::cout << "Start Plotting" << std::endl;
     PathingPlot plotter("pathing_output", state->mission_params.getFlightBoundary(), scaled, {});
 
     plotter.addFinalPolyline(path);
-    plotter.output("test_airdrop_pathing_2", PathOutputType::STATIC);
+    plotter.output("test_coverage_pathing_2", PathOutputType::STATIC);
     file.close();
     return 0;
 }

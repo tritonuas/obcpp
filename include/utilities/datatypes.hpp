@@ -3,10 +3,12 @@
 
 #include <matplot/matplot.h>
 
-#include <vector>
 #include <string>
+#include <unordered_set>
+#include <vector>
 
 #include "protos/obc.pb.h"
+#include "udp_squared/internal/enum.h"
 #include "utilities/constants.hpp"
 
 struct XYZCoord {
@@ -107,14 +109,26 @@ struct RRTConfig {
 };
 
 struct AirdropSearchConfig {
+    double coverage_altitude_m;
     bool optimize;  // whether to ignore the config below and run all ways.
     bool vertical;  // if true, will search in vertical lines
     bool one_way;   // if true, path returned will only be in 1 direction
 };
 
+struct AirdropApproachConfig {
+    drop_mode drop_method;
+    std::unordered_set<int> bottle_ids;
+    double drop_angle_rad;
+    double drop_altitude_m;
+    double guided_drop_distance_m;
+    double unguided_drop_distance_m;
+};
+
 struct CameraConfig {
     // either "mock" or "lucid"
     std::string type;
+    // directory to save images to
+    std::string save_dir;
     struct {
         // directory to randomly pick images from
         // for the mock camera

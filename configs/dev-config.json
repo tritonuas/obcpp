@@ -14,22 +14,33 @@
         "altitude_m": 30.0
     },
     "pathing": {
+        "_comment": "Point Fetch Method 2: NEAREST",
+        "_comment2": "Drop Method 1: UNGUIDED",
         "rrt": {
             "iterations_per_waypoint": 200,
             "rewire_radius": 200.0,
             "optimize": true,
-            "point_fetch_methods": 2,
+            "point_fetch_methods": 2, 
             "allowed_to_skip_waypoints": false
         },
         "coverage": {
-            "optimize": false,
+            "coverage_altitude_m": 30.0,
+            "optimize": true,
             "vertical": false,
-            "one_way": true
+            "one_way": false
+        },
+        "approach": {
+            "drop_method": 1,
+            "drop_angle_rad": 2.52134317,
+            "drop_altitude_m": 26.0,
+            "guided_drop_distance_m": 50.0,
+            "unguided_drop_distance_m": 50.0
         }
     },
     "camera": {
         "_comment": "See CameraConfig struct in datatypes.hpp for detailed explanations",
-        "type": "lucid",
+        "type": "mock",
+        "save_dir": "/workspaces/obcpp/images/",
         "mock": {
             "images_dir": "/workspaces/obcpp/tests/integration/images/saliency/"
         },

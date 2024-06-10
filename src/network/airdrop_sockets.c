@@ -14,20 +14,12 @@
 #include <fcntl.h>
 #include <stdio.h>
 
-#include "airdrop/packet.h"
+#include "udp_squared/protocol.h"
 
 // For use in retrieving error messages
 // Initialized in correspdoning set_xxxx_thread function
 static locale_t _send_locale = (locale_t) 0;
 static locale_t _recv_locale = (locale_t) 0;
-
-ad_packet_t make_ad_packet(uint8_t hdr, uint8_t data) {
-    ad_packet_t packet = {
-        .hdr = hdr,
-        .data = data,
-    };
-    return packet;
-}
 
 void set_send_thread() {
     // Tie error messages in this thread to the send locale
@@ -98,7 +90,7 @@ ad_int_result_t set_socket_nonblocking(int sock_fd) {
     AD_RETURN_SUCC_RESULT(int, ret);
 }
 
-ad_int_result_t send_ad_packet(ad_socket_t socket, ad_packet_t packet) {
+ad_int_result_t send_ad_packet(ad_socket_t socket,  packet_t packet) {
     struct sockaddr_in SEND_ADDR = {
         .sin_family = AF_INET,
         .sin_port = htons(socket.send_port),
@@ -107,27 +99,7 @@ ad_int_result_t send_ad_packet(ad_socket_t socket, ad_packet_t packet) {
     };
 
     static char err[AD_ERR_LEN];
-    int bytes_sent = sendto(socket.fd, (void*) &packet, sizeof(ad_packet_t), 0,
-                            (struct sockaddr*) &SEND_ADDR, sizeof(SEND_ADDR));
-
-    if (bytes_sent < 0) {
-        snprintf(&err[0], AD_ERR_LEN, "send failed: %s", strerror_l(errno, _send_locale));
-        AD_RETURN_ERR_RESULT(int, err);
-    }
-
-    AD_RETURN_SUCC_RESULT(int, bytes_sent);
-}
-
-ad_int_result_t send_ad_latlng_packet(ad_socket_t socket, ad_latlng_packet_t packet) {
-    struct sockaddr_in SEND_ADDR = {
-        .sin_family = AF_INET,
-        .sin_port = htons(socket.send_port),
-        .sin_addr = INADDR_BROADCAST,
-        .sin_zero = {0},
-    };
-
-    static char err[AD_ERR_LEN];
-    int bytes_sent = sendto(socket.fd, (void*) &packet, sizeof(ad_latlng_packet_t), 0,
+    int bytes_sent = sendto(socket.fd, (void*) &packet, sizeof(packet_t), 0,
                             (struct sockaddr*) &SEND_ADDR, sizeof(SEND_ADDR));
 
     if (bytes_sent < 0) {

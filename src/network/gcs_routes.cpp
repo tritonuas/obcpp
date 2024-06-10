@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <optional>
+#include <filesystem>
 
 #include "core/mission_state.hpp"
 #include "protos/obc.pb.h"
@@ -61,8 +62,7 @@ DEF_GCS_HANDLE(Get, connections) {
         mav_conn = state->getMav()->get_conn_status();
     }
 
-    // TODO: query the camera status
-    bool camera_good = false;
+    bool camera_good = state->getCamera()->isConnected();
 
     OBCConnInfo info;
     for (auto const& [bottle_index, ms_since_last_heartbeat] : lost_airdrop_conns) {
@@ -144,7 +144,7 @@ DEF_GCS_HANDLE(Get, path, initial, new) {
         LOG_RESPONSE(WARNING, "Not currently in PathValidate Tick", BAD_REQUEST);
         return;
     }
-    lock_ptr->ptr->setStatus(PathValidateTick::Status::Rejected);
+    lock_ptr->data->setStatus(PathValidateTick::Status::Rejected);
 
     LOG_RESPONSE(INFO, "Started generating new initial path", OK);
 }
@@ -162,57 +162,61 @@ DEF_GCS_HANDLE(Post, path, initial, validate) {
         LOG_RESPONSE(WARNING, "Not currently in PathValidate Tick", BAD_REQUEST);
         return;
     }
-    lock_ptr->ptr->setStatus(PathValidateTick::Status::Validated);
+    lock_ptr->data->setStatus(PathValidateTick::Status::Validated);
 
     LOG_RESPONSE(INFO, "Initial path validated", OK);
-}
-
-DEF_GCS_HANDLE(Get, camera, status) {
-    LOG_REQUEST("GET", "/camera/status");
-
-    LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
-}
-
-DEF_GCS_HANDLE(Post, camera, start) {
-    LOG_REQUEST("POST", "/camera/start");
-
-    LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
-}
-
-DEF_GCS_HANDLE(Post, camera, stop) {
-    LOG_REQUEST("POST", "/camera/stop");
-
-    LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
-}
-
-DEF_GCS_HANDLE(Post, camera, mock, start) {
-    LOG_REQUEST("POST", "/camera/mock/start");
-
-    LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
-}
-
-DEF_GCS_HANDLE(Post, camera, mock, stop) {
-    LOG_REQUEST("POST", "/camera/mock/stop");
-
-    LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
 }
 
 DEF_GCS_HANDLE(Get, camera, capture) {
     LOG_REQUEST("GET", "/camera/capture");
 
-    LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
-}
+    std::shared_ptr<CameraInterface> cam = state->getCamera();
 
-DEF_GCS_HANDLE(Get, camera, config) {
-    LOG_REQUEST("GET", "/camera/config");
+    if (!cam->isConnected()) {
+        cam->connect();
+    }
 
-    LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
-}
+    cam->startStreaming();
 
-DEF_GCS_HANDLE(Post, camera, config) {
-    LOG_REQUEST("POST", "/camera/config");
+    std::optional<ImageData> image = cam->takePicture(1000ms, state->getMav());
 
-    LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
+    if (!image.has_value()) {
+        LOG_RESPONSE(ERROR, "Failed to capture image", INTERNAL_SERVER_ERROR);
+        return;
+    }
+
+    std::optional<ImageTelemetry> telemetry = image->TELEMETRY;
+
+    try {
+        std::filesystem::path save_dir = state->camera_config.save_dir;
+        std::filesystem::path img_filepath = save_dir / (std::to_string(image->TIMESTAMP) + std::string(".jpg")); //NOLINT
+        std::filesystem::path json_filepath = save_dir / (std::to_string(image->TIMESTAMP) + std::string(".json")); //NOLINT
+        saveImageToFile(image->DATA, img_filepath);
+        if (image->TELEMETRY.has_value()) {
+            saveImageTelemetryToFile(image->TELEMETRY.value(), json_filepath);
+        }
+    } catch (std::exception& e) {
+        LOG_F(ERROR, "Failed to save image and telemetry to file");
+    }
+
+    ManualImage manual_image;
+    manual_image.set_img_b64(cvMatToBase64(image->DATA));
+    manual_image.set_timestamp(image->TIMESTAMP);
+    if (telemetry.has_value()) {
+        manual_image.set_lat_deg(telemetry->latitude_deg);
+        manual_image.set_lng_deg(telemetry->longitude_deg);
+        manual_image.set_alt_agl_m(telemetry->altitude_agl_m);
+        manual_image.set_airspeed_m_s(telemetry->airspeed_m_s);
+        manual_image.set_heading_deg(telemetry->heading_deg);
+        manual_image.set_yaw_deg(telemetry->yaw_deg);
+        manual_image.set_pitch_deg(telemetry->pitch_deg);
+        manual_image.set_roll_deg(telemetry->roll_deg);
+    }
+
+    std::string output;
+    google::protobuf::util::MessageToJsonString(manual_image, &output);
+
+    LOG_RESPONSE(INFO, "Successfully captured image", OK, output.c_str(), mime::json);
 }
 
 DEF_GCS_HANDLE(Post, dodropnow) {
@@ -221,17 +225,17 @@ DEF_GCS_HANDLE(Post, dodropnow) {
     BottleSwap bottle_proto;
     google::protobuf::util::JsonStringToMessage(request.body, &bottle_proto);
 
-    ad_bottle bottle;
+    bottle_t bottle;
     if (bottle_proto.index() == BottleDropIndex::A) {
-        bottle = ad_bottle::BOTTLE_A;
+        bottle = UDP2_A;
     } else if (bottle_proto.index() == BottleDropIndex::B) {
-        bottle = ad_bottle::BOTTLE_B;
+        bottle = UDP2_B;
     } else if (bottle_proto.index() == BottleDropIndex::C) {
-        bottle = ad_bottle::BOTTLE_C;
+        bottle = UDP2_C;
     } else if (bottle_proto.index() == BottleDropIndex::D) {
-        bottle = ad_bottle::BOTTLE_D;
+        bottle = UDP2_D;
     } else if (bottle_proto.index() == BottleDropIndex::E) {
-        bottle = ad_bottle::BOTTLE_E;
+        bottle = UDP2_E;
     } else {
         LOG_RESPONSE(ERROR, "Invalid bottle index", BAD_REQUEST);
         return;
@@ -244,33 +248,31 @@ DEF_GCS_HANDLE(Post, dodropnow) {
         return;
     }
 
-    state->getAirdrop()->send(ad_packet_t { .hdr = DROP_NOW, .data = bottle });
+    state->getAirdrop()->send(makeDropNowPacket(bottle));
 
     LOG_RESPONSE(INFO, "Dropped bottle", OK);
 }
 
-DEF_GCS_HANDLE(Post, takeoff, manual){
+DEF_GCS_HANDLE(Post, takeoff, manual) {
     LOG_REQUEST("POST", "takeoff/manual");
 
     auto lock_ptr = state->getTickLockPtr<WaitForTakeoffTick>();
-    if(!lock_ptr.has_value()){
+    if (!lock_ptr.has_value()) {
         LOG_RESPONSE(WARNING, "Not currently in WaitForTakeoff Tick", BAD_REQUEST);
         return;
     }
-    lock_ptr->ptr->setStatus(WaitForTakeoffTick::Status::Manual);
-
+    lock_ptr->data->setStatus(WaitForTakeoffTick::Status::Manual);
     LOG_RESPONSE(INFO, "Set status of WaitForTakeoff Tick to manaul", OK);
 }
 
-DEF_GCS_HANDLE(Post, takeoff, autonomous){
+DEF_GCS_HANDLE(Post, takeoff, autonomous) {
     LOG_REQUEST("POST", "takeoff/autonomous");
 
     auto lock_ptr = state->getTickLockPtr<WaitForTakeoffTick>();
-    if(!lock_ptr.has_value()){
+    if (!lock_ptr.has_value()) {
         LOG_RESPONSE(WARNING, "Not currently in WaitForTakeoff Tick", BAD_REQUEST);
         return;
     }
-    lock_ptr->ptr->setStatus(WaitForTakeoffTick::Status::Autonomous);
-    
+    lock_ptr->data->setStatus(WaitForTakeoffTick::Status::Autonomous);
     LOG_RESPONSE(INFO, "Set status of WaitForTakeoff Tick to autonomous", OK);
 }

@@ -11,7 +11,7 @@
 #include <future>
 
 extern "C" {
-    #include "airdrop/packet.h"
+    #include "udp_squared/protocol.h"
     #include "network/airdrop_sockets.h"
 }
 #include "protos/obc.pb.h"
@@ -23,12 +23,11 @@ class AirdropClient {
     explicit AirdropClient(ad_socket_t socket);
     ~AirdropClient();
 
-    bool send(ad_packet_t packet);
-    bool send(ad_latlng_packet_t packet);
+    bool send(packet_t packet);
     // Receives oldest packet since last receive() call, ignoring any
     // HEARTBEAT packets as those are parsed by the client itself
     // and exposed through the TODO function.
-    std::optional<ad_packet_t> receive();
+    std::optional<packet_t> receive();
 
     // Returns list of all the payloads we have not heard from for more than
     // `threshold` seconds, and includes how many seconds it has been since
@@ -36,13 +35,13 @@ class AirdropClient {
     std::list<std::pair<BottleDropIndex, std::chrono::milliseconds>>
         getLostConnections(std::chrono::milliseconds threshold);
 
-    std::optional<ad_mode> getMode();
+    std::optional<drop_mode_t> getMode();
 
  private:
-    std::optional<ad_mode> mode {};
+    std::optional<drop_mode_t> mode {};
     ad_socket_t socket {};
 
-    std::queue<ad_packet_t> recv_queue;
+    std::queue<packet_t> recv_queue;
     std::mutex recv_mut;
 
     std::atomic_bool stop_worker;
@@ -58,7 +57,7 @@ class AirdropClient {
     void _receiveWorker();
 
     // Blocking implementation of receive for internal use
-    ad_packet_t _receiveBlocking();
+    packet_t _receiveBlocking();
 
     // Parses packets for heartbeat information and stores it in the
     // lastHeartbeat array.
@@ -66,7 +65,7 @@ class AirdropClient {
     // it should NOT be placed in the recv_queue. Otherwise, returns
     // false, meaning that it was NOT a heartbeat and should be exposed
     // to the user of the client through the nonblocking receive function.
-    bool _parseHeartbeats(ad_packet_t packet);
+    bool _parseHeartbeats(packet_t packet);
 };
 
 #endif  // INCLUDE_NETWORK_AIRDROP_CLIENT_HPP_

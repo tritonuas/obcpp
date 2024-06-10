@@ -1,3 +1,6 @@
 [submodule "protos"]
 	path = protos
 	url = https://github.com/tritonuas/protos.git
+[submodule "include/udp_squared"]
+	path = include/udp_squared
+	url = https://github.com/tritonuas/udp_squared.git

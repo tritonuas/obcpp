@@ -235,9 +235,9 @@ const static char* mission_json_2020 = R"(
  * FILE OUTPUT LOCATIONS
  *  |- build
  *    |- pathing_output
- *      |- test_airdrop_pathing.jpg
- *      |- test_airdrop_pathing.gif (if enabled)
- *    |- airdop_search_coords.txt
+ *      |- test_coverage_pathing.jpg
+ *      |- test_coverage_pathing.gif (if enabled)
+ *    |- coverage_coords.txt
  *
  *  This rough integration test is to test the airdrop search pathing algorithm
  */
@@ -253,11 +253,11 @@ int main() {
 
     // files to put path_coordinates to
     std::ofstream file;
-    file.open("airdop_search_coords.txt");
+    file.open("coverage_coords.txt");
 
     RRTPoint start = RRTPoint(state->mission_params.getWaypoints()[0], 0);
 
-    AirdropSearch search(start, 20, state->mission_params.getFlightBoundary(),
+    CoveragePathing search(start, 20, state->mission_params.getFlightBoundary(),
                          state->mission_params.getAirdropBoundary(), {}, {true, true, true});
 
     std::vector<XYZCoord> path = search.run();
@@ -268,7 +268,7 @@ int main() {
                         state->mission_params.getAirdropBoundary(), {});
 
     plotter.addFinalPolyline(path);
-    plotter.output("test_airdrop_pathing", PathOutputType::STATIC);
+    plotter.output("test_coverage_pathing", PathOutputType::STATIC);
     file.close();
     return 0;
 }
