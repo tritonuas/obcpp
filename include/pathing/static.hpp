@@ -254,15 +254,18 @@ class ForwardCoveragePathing {
  * 
  * This outputs a series of XYZ Coordinates which represent a points at which the plane
  * should hover and take a picture.
+ * 
+ * Assumptions:
+ * - The drop zone has 4 points which form a rectangle larger than the vision of the camera
  */
 class HoverCoveragePathing {
  public:
-    HoverCoveragePathing(Polygon flight_bounds, Polygon drop_zone);
+    HoverCoveragePathing(Polygon drop_zone, AirdropCoverageConfig config);
 
     std::vector<XYZCoord> run();
 
  private:
-    Polygon flight_bounds;
+    AirdropCoverageConfig config;
     Polygon drop_zone;
 };
 

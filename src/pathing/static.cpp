@@ -398,12 +398,72 @@ std::vector<XYZCoord> ForwardCoveragePathing::generatePath(
     return path;
 }
 
-HoverCoveragePathing::HoverCoveragePathing(Polygon flight_bounds, Polygon drop_zone):
-    flight_bounds{flight_bounds}, drop_zone{drop_zone}
+HoverCoveragePathing::HoverCoveragePathing(Polygon drop_zone, AirdropCoverageConfig config):
+    config{config}, drop_zone{drop_zone}
 {}
 
 std::vector<XYZCoord> HoverCoveragePathing::run() {
-    return {};
+    if (this->drop_zone.size() != 4) {
+        // right now just hardcoded to rectangles. think its ok to panic here because
+        // we would want to stop early if we messed this up and this will happen
+        // before takeoff
+        LOG_F(FATAL, "Hover airdrop pathing currently only supports 4 coordinates, not %lu", this->drop_zone.size());
+    }
+
+    XYZCoord top_left(std::numeric_limits<double>::max(), std::numeric_limits<double>::min(), 0);
+    XYZCoord top_right(std::numeric_limits<double>::min(), std::numeric_limits<double>::min(), 0);
+    XYZCoord bottom_left(std::numeric_limits<double>::max(), std::numeric_limits<double>::max(), 0);
+    XYZCoord bottom_right(std::numeric_limits<double>::min(), std::numeric_limits<double>::max(), 0);
+
+    // thx chat gpt
+    for (const auto& coord : this->drop_zone) {
+        // Update top-left
+        if (coord.y > top_left.y || (coord.y == top_left.y && coord.x < top_left.x)) {
+            top_left = coord;
+        }
+
+        // Update bottom-left
+        if (coord.y < bottom_left.y || (coord.y == bottom_left.y && coord.x < bottom_left.x)) {
+            bottom_left = coord;
+        }
+
+        // Update top-right
+        if (coord.y > top_right.y || (coord.y == top_right.y && coord.x > top_right.x)) {
+            top_right = coord;
+        }
+
+        // Update bottom-right
+        if (coord.y < bottom_right.y || (coord.y == bottom_right.y && coord.x > bottom_right.x)) {
+            bottom_right = coord;
+        }
+    }
+
+    // assuming a rectangle!!
+
+    std::vector<XYZCoord> hover_points;
+
+    double vision = this->config.camera_vision_m;
+    double altitude = this->config.altitude_m;
+
+    double start_y = top_left.y - (vision / 2.0);
+    double stop_y = bottom_left.y - (vision / 2.0);
+    double start_x = top_left.x + (vision / 2.0);
+    double stop_x = top_right.x + (vision / 2.0);
+
+    bool right = true; // start going from right to left
+    for (double y = start_y; y < stop_y; y += vision) {
+        std::vector<XYZCoord> row; // row of points either from left to right or right to left
+        for (double x = start_x; x < stop_x; x += vision) {
+            row.push_back(XYZCoord(x, y, altitude));
+        }
+        if (!right) {
+            std::reverse(row.begin(), row.end());  
+        }
+        right = !right;
+        hover_points.insert(std::end(hover_points), std::begin(row), std::end(row));
+    }
+
+    return hover_points;
 }
 
 AirdropApproachPathing::AirdropApproachPathing(const RRTPoint &start, const XYZCoord &goal,
@@ -495,7 +555,7 @@ std::vector<GPSCoord> generateSearchPath(std::shared_ptr<MissionState> state) {
         return {};
     } else {  // hover
         const auto& [flight_bounds, airdrop_bounds, _, __] = state->mission_params.getConfig();
-        HoverCoveragePathing pathing(flight_bounds, airdrop_bounds);
+        HoverCoveragePathing pathing(airdrop_bounds, state->config.pathing.coverage);
         std::vector<GPSCoord> coords;
         for (const XYZCoord& coord : pathing.run()) {
             coords.push_back(state->getCartesianConverter()->toLatLng(coord));

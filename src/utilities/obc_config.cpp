@@ -28,7 +28,6 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
     // changing the macros
     nlohmann::json configs = nlohmann::json::parse(configStream);
 
-
     // Read this in first before anything else so that all of the read in values get logged
     // to the config file. Otherwise they will be output to the terminal but not saved to
     // the file.
