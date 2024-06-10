@@ -48,6 +48,7 @@ class MockCamera : public CameraInterface {
         std::shared_ptr<MavlinkClient> mavlinkClient) override;
 
     void startStreaming() override;
+
  private:
     std::vector<cv::Mat> mock_images;
 

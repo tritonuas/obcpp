@@ -144,7 +144,7 @@ DEF_GCS_HANDLE(Get, path, initial, new) {
         LOG_RESPONSE(WARNING, "Not currently in PathValidate Tick", BAD_REQUEST);
         return;
     }
-    lock_ptr->ptr->setStatus(PathValidateTick::Status::Rejected);
+    lock_ptr->data->setStatus(PathValidateTick::Status::Rejected);
 
     LOG_RESPONSE(INFO, "Started generating new initial path", OK);
 }
@@ -162,7 +162,7 @@ DEF_GCS_HANDLE(Post, path, initial, validate) {
         LOG_RESPONSE(WARNING, "Not currently in PathValidate Tick", BAD_REQUEST);
         return;
     }
-    lock_ptr->ptr->setStatus(PathValidateTick::Status::Validated);
+    lock_ptr->data->setStatus(PathValidateTick::Status::Validated);
 
     LOG_RESPONSE(INFO, "Initial path validated", OK);
 }
@@ -189,12 +189,12 @@ DEF_GCS_HANDLE(Get, camera, capture) {
 
     try {
         std::filesystem::path save_dir = state->camera_config.save_dir;
-        std::filesystem::path img_filepath = save_dir / (std::to_string(image->TIMESTAMP) + std::string(".jpg"));
-        std::filesystem::path json_filepath = save_dir / (std::to_string(image->TIMESTAMP) + std::string(".json"));
+        std::filesystem::path img_filepath = save_dir / (std::to_string(image->TIMESTAMP) + std::string(".jpg")); //NOLINT
+        std::filesystem::path json_filepath = save_dir / (std::to_string(image->TIMESTAMP) + std::string(".json")); //NOLINT
         saveImageToFile(image->DATA, img_filepath);
         if (image->TELEMETRY.has_value()) {
             saveImageTelemetryToFile(image->TELEMETRY.value(), json_filepath);
-        } 
+        }
     } catch (std::exception& e) {
         LOG_F(ERROR, "Failed to save image and telemetry to file");
     }
@@ -261,7 +261,7 @@ DEF_GCS_HANDLE(Post, takeoff, manual) {
         LOG_RESPONSE(WARNING, "Not currently in WaitForTakeoff Tick", BAD_REQUEST);
         return;
     }
-    lock_ptr->ptr->setStatus(WaitForTakeoffTick::Status::Manual);
+    lock_ptr->data->setStatus(WaitForTakeoffTick::Status::Manual);
     LOG_RESPONSE(INFO, "Set status of WaitForTakeoff Tick to manaul", OK);
 }
 
@@ -273,6 +273,6 @@ DEF_GCS_HANDLE(Post, takeoff, autonomous) {
         LOG_RESPONSE(WARNING, "Not currently in WaitForTakeoff Tick", BAD_REQUEST);
         return;
     }
-    lock_ptr->ptr->setStatus(WaitForTakeoffTick::Status::Autonomous);
+    lock_ptr->data->setStatus(WaitForTakeoffTick::Status::Autonomous);
     LOG_RESPONSE(INFO, "Set status of WaitForTakeoff Tick to autonomous", OK);
 }
