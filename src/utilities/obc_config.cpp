@@ -9,6 +9,7 @@
 #include "udp_squared/internal/enum.h"
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
+#include "utilities/logging.hpp"
 
 using json = nlohmann::json;
 
@@ -99,6 +100,6 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
 
         this->takeoff.altitude_m = configs["takeoff"]["altitude_m"];
     } else {
-        std::cerr << "FATAL: You must specify a config file.\ne.g. bin/obcpp ../configs/dev-config.json\n"; //NOLINT
+        LOG_F(FATAL, "You must specify a config file. e.g. bin/obcpp ../configs/dev-config.json");
     }
 }

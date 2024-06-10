@@ -55,10 +55,10 @@ class MissionState {
      */
     template <typename T>
     std::optional<LockPtr<T>> getTickLockPtr() {
-        try {
-            return LockPtr(std::dynamic_pointer_cast<T>(this->tick), &this->tick_mut);
-        } catch (std::bad_cast ex) {
-            LOG_F(ERROR, "Error creating TickLockRef: %s", ex.what());
+        auto ptr = std::dynamic_pointer_cast<T>(this->tick);
+        if (ptr != nullptr) {
+            return LockPtr(ptr, &this->tick_mut);
+        } else {
             return {};
         }
     }

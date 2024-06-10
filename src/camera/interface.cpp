@@ -24,7 +24,8 @@ void saveImageToFile(cv::Mat image, const std::filesystem::path& filepath) {
   cv::imwrite(filepath, image);
 }
 
-void saveImageTelemetryToFile(const ImageTelemetry& telemetry, const std::filesystem::path& filepath) {  // NOLINT
+void saveImageTelemetryToFile(const ImageTelemetry& telemetry,
+                              const std::filesystem::path& filepath) {
   json telemetry_json = {
     {"latitude_deg", telemetry.latitude_deg },
     {"longitude_deg", telemetry.longitude_deg },
