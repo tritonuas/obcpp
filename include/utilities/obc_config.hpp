@@ -3,12 +3,15 @@
 
 #include <variant>
 #include <string>
+#include <utility>
+#include <unordered_set>
 #include <initializer_list>
 #include "udp_squared/internal/enum.h"
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
 
-#define CONFIG_VARIANT_MAPPING_T(enum_type) const std::initializer_list<std::pair<std::string, enum_type>>
+#define CONFIG_VARIANT_MAPPING_T(enum_type) \
+    const std::initializer_list<std::pair<std::string, enum_type>>
 
 struct LoggingConfig {
     std::string dir;
@@ -43,7 +46,7 @@ namespace PointFetchMethod {
     CONFIG_VARIANT_MAPPING_T(Enum) MAPPINGS = {
         {"none", Enum::NONE}, {"random", Enum::RANDOM}, {"nearest", Enum::NEAREST}
     };
-};
+};  // namespace PointFetchMethod
 
 struct RRTConfig {
     int iterations_per_waypoint;  // number of iterations run between two waypoints
@@ -62,14 +65,15 @@ namespace AirdropCoverageMethod {
     CONFIG_VARIANT_MAPPING_T(Enum) MAPPINGS = {
         {"hover", Enum::HOVER}, {"forward", Enum::FORWARD}
     };
-};
+};  // namespace AirdropCoverageMethod
 
 struct AirdropCoverageConfig {
     double altitude_m;
+    double camera_vision_m;
     AirdropCoverageMethod::Enum method;
     struct {
         std::size_t pictures_per_stop;
-        std::time_t hover_time_s; 
+        std::time_t hover_time_s;
     } hover;
     struct {
         bool optimize;  // whether to ignore the config below and run all ways.

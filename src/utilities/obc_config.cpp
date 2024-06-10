@@ -44,6 +44,7 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
     SET_CONFIG_OPT_VARIANT(AirdropCoverageMethod, pathing, coverage, method);
 
     SET_CONFIG_OPT(pathing, coverage, altitude_m);
+    SET_CONFIG_OPT(pathing, coverage, camera_vision_m);
     SET_CONFIG_OPT(pathing, coverage, hover, hover_time_s);
     SET_CONFIG_OPT(pathing, coverage, hover, pictures_per_stop);
     SET_CONFIG_OPT(pathing, coverage, forward, optimize);
@@ -81,7 +82,7 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
     SET_CONFIG_OPT(camera, lucid, device_link_throughput_limit);
 
     SET_CONFIG_OPT(camera, lucid, gamma_enable);
-    SET_CONFIG_OPT(camera, lucid, gamma); // bruh
+    SET_CONFIG_OPT(camera, lucid, gamma);  // bruh
     SET_CONFIG_OPT(camera, lucid, gain_auto);
     SET_CONFIG_OPT(camera, lucid, gain_auto_upper_limit);
     SET_CONFIG_OPT(camera, lucid, gain_auto_lower_limit);

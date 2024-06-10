@@ -1,6 +1,8 @@
 #ifndef INCLUDE_UTILITIES_OBC_CONFIG_MACROS_HPP_
 #define INCLUDE_UTILITIES_OBC_CONFIG_MACROS_HPP_
 
+#include <string>
+
 /*
    (  )   /\   _                 (     
     \ |  (  \ ( \.(               )                      _____
@@ -27,7 +29,8 @@
 // just use these macros to do the parsing for the config
 // it saves like 5 characters, and forces you to use .at instead of [] to index into the json
 // because .at gives more descriptive error messages
-// ALSO: does some shenanegans with tracking the line number of the last call to PARSE and handling errors
+// ALSO: does some shenanegans with tracking the line number of the
+// last call to PARSE and handling errors
 
 // return statement in this macro in catch case is there to supress compiler warning b/c
 // it doesn't know that FATAL log will kill it
@@ -39,8 +42,8 @@
         return nlohmann::json(); \
     }
 
-// basically setting up an overloaded macro where you can pass in a variable number of args with the same
-// macro name. Same setup as in the gcs macros
+// basically setting up an overloaded macro where you can pass in a variable number of args
+// with the same macro name. Same setup as in the gcs macros
 #define GET_MACRO_5(_1, _2, _3, _4, _5, NAME, ...) NAME
 #define PARSE_CONFIG_2(p1, p2) configs.at(#p1).at(#p2)
 #define PARSE_CONFIG_3(p1, p2, p3) configs.at(#p1).at(#p2).at(#p3)
@@ -54,9 +57,8 @@
 #define PARSE(...) \
     [configs]() { \
         HANDLE_JSON_EXCEPTION( \
-            GET_MACRO_5(__VA_ARGS__, PARSE_CONFIG_5, PARSE_CONFIG_4, PARSE_CONFIG_3, PARSE_CONFIG_2) \
-                (__VA_ARGS__) \
-        ) \
+            GET_MACRO_5(__VA_ARGS__, PARSE_CONFIG_5, PARSE_CONFIG_4, \
+                PARSE_CONFIG_3, PARSE_CONFIG_2) (__VA_ARGS__)) \
     }()
 
 // look in the code below for an example on how to use this function
@@ -70,7 +72,7 @@ constexpr T PARSE_VARIANT(CONFIG_VARIANT_MAPPING_T(T) mapping, std::string input
         }
     }
     LOG_F(FATAL, "Unknown config option %s", input.c_str());
-    std::exit(1); // not needed except so the compiler knows this cannot reach end of function
+    std::exit(1);  // not needed except so the compiler knows this cannot reach end of function
 }
 
 // and then at the very end we prevent having to duplicate typing

@@ -197,14 +197,17 @@ class RRT {
  */
 class ForwardCoveragePathing {
  public:
-    ForwardCoveragePathing(const RRTPoint &start, double scan_radius, Polygon bounds, Polygon airdrop_zone,
-                    std::vector<Polygon> obstacles = {},
-                    AirdropCoverageConfig config = {.altitude_m = 30.0,
-                                                  .method = AirdropCoverageMethod::Enum::FORWARD,
-                                                  .hover = {},
-                                                  .forward = {.optimize = false, 
-                                                              .vertical = false,
-                                                              .one_way  = false}});
+    ForwardCoveragePathing(const RRTPoint &start,
+        double scan_radius,
+        Polygon bounds,
+        Polygon airdrop_zone,
+        std::vector<Polygon> obstacles = {},
+        AirdropCoverageConfig config = {.altitude_m = 30.0,
+                                        .method = AirdropCoverageMethod::Enum::FORWARD,
+                                        .hover = {},
+                                        .forward = {.optimize = false,
+                                                    .vertical = false,
+                                                    .one_way  = false}});
 
     /**
      * Generates a path of parallel lines to cover a given area

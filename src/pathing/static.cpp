@@ -281,14 +281,13 @@ RRTNode *RRT::parseOptions(const std::vector<std::pair<RRTNode *, RRTOption>> &o
 
 void RRT::optimizeTree(RRTNode *sample) { tree.RRTStar(sample, rewire_radius); }
 
-ForwardCoveragePathing::ForwardCoveragePathing(const RRTPoint &start, double scan_radius, Polygon bounds,
-                                 Polygon airdrop_zone, std::vector<Polygon> obstacles,
-                                 AirdropCoverageConfig config)
-    : start(start),
-      scan_radius(scan_radius),
-      airspace(Environment(bounds, airdrop_zone, {}, obstacles)),
-      dubins(Dubins(TURNING_RADIUS, POINT_SEPARATION)),
-      config(config) {}
+ForwardCoveragePathing::ForwardCoveragePathing(
+    const RRTPoint &start, double scan_radius, Polygon bounds,
+    Polygon airdrop_zone, std::vector<Polygon> obstacles,
+    AirdropCoverageConfig config):
+    start(start), scan_radius(scan_radius),
+    airspace(Environment(bounds, airdrop_zone, {}, obstacles)),
+    dubins(Dubins(TURNING_RADIUS, POINT_SEPARATION)), config(config) {}
 
 std::vector<XYZCoord> ForwardCoveragePathing::run() const {
     return config.forward.optimize ? coverageOptimal() : coverageDefault();
@@ -362,8 +361,9 @@ std::vector<XYZCoord> ForwardCoveragePathing::coverageOptimal() const {
     return generatePath(dubins_paths[best_path_idx], waypoints);
 }
 
-std::vector<XYZCoord> ForwardCoveragePathing::generatePath(const std::vector<RRTOption> &dubins_options,
-                                                    const std::vector<RRTPoint> &waypoints) const {
+std::vector<XYZCoord> ForwardCoveragePathing::generatePath(
+    const std::vector<RRTOption> &dubins_options,
+    const std::vector<RRTPoint> &waypoints) const {
     std::vector<XYZCoord> path;
 
     // height adjustement
@@ -396,6 +396,14 @@ std::vector<XYZCoord> ForwardCoveragePathing::generatePath(const std::vector<RRT
     }
 
     return path;
+}
+
+HoverCoveragePathing::HoverCoveragePathing(Polygon flight_bounds, Polygon drop_zone):
+    flight_bounds{flight_bounds}, drop_zone{drop_zone}
+{}
+
+std::vector<XYZCoord> HoverCoveragePathing::run() {
+    return {};
 }
 
 AirdropApproachPathing::AirdropApproachPathing(const RRTPoint &start, const XYZCoord &goal,
@@ -475,12 +483,23 @@ std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
     int count = 0;
 
     for (XYZCoord wpt : path) {
-        output_coords.push_back(state->getCartesianConverter().value().toLatLng(wpt));
+        output_coords.push_back(state->getCartesianConverter()->toLatLng(wpt));
     }
 
     return output_coords;
 }
 
 std::vector<GPSCoord> generateSearchPath(std::shared_ptr<MissionState> state) {
-    return {};
+    if (state->config.pathing.coverage.method == AirdropCoverageMethod::Enum::FORWARD) {
+        LOG_F(FATAL, "Forward search path not fully integrated yet.");
+        return {};
+    } else {  // hover
+        const auto& [flight_bounds, airdrop_bounds, _, __] = state->mission_params.getConfig();
+        HoverCoveragePathing pathing(flight_bounds, airdrop_bounds);
+        std::vector<GPSCoord> coords;
+        for (const XYZCoord& coord : pathing.run()) {
+            coords.push_back(state->getCartesianConverter()->toLatLng(coord));
+        }
+        return coords;
+    }
 }
