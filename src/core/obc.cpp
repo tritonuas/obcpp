@@ -35,17 +35,17 @@ OBC::OBC(OBCConfig config) {
         {this->connectMavlink(config.network.mavlink.connect);});
     this->connectAirdropThread = std::thread([this]{this->connectAirdrop();});
 
-    if (this->state->config.camera_config.type == "mock") {
-        this->state->setCamera(std::make_shared<MockCamera>(this->state->config.camera_config));
-    } else if (this->state->config.camera_config.type == "lucid") {
+    if (this->state->config.camera.type == "mock") {
+        this->state->setCamera(std::make_shared<MockCamera>(this->state->config.camera));
+    } else if (this->state->config.camera.type == "lucid") {
         #ifdef ARENA_SDK_INSTALLED
-            this->state->setCamera(std::make_shared<LucidCamera>(this->state->config.camera_config));           //NOLINT
+            this->state->setCamera(std::make_shared<LucidCamera>(this->state->config.camera));           //NOLINT
         #else
             LOG_F(FATAL, "Attempting to create Lucid Camera without having ArenaSDK installed.");
         #endif
     } else {
         // default to mock if it's neither "mock" or "lucid"
-        this->state->setCamera(std::make_shared<MockCamera>(this->state->config.camera_config));
+        this->state->setCamera(std::make_shared<MockCamera>(this->state->config.camera));
     }
 }
 

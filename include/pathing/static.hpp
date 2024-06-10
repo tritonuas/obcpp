@@ -190,6 +190,10 @@ class RRT {
  * Limitations
  * - Cannot path through non-convex shapes
  * - Does not check if path is inbounds or not
+ * 
+ * Notes:
+ * - this implementation is for fixed wing planes, which is not currently being used. However,
+ *   it is kept here because it is very possible we will eventually switch back to it.
  */
 class CoveragePathing {
  public:
@@ -237,6 +241,18 @@ class CoveragePathing {
     const Environment airspace;  // information aobut the airspace
     const Dubins dubins;         // dubins object to generate paths
     const AirdropSearchConfig config;
+};
+
+/**
+ * Class that performs coverage pathing over a given search area, given that the plane has
+ * hovering capabilities and that we want to be taking pictures while hovering over the zone.
+ */
+class HoverCoveragePathing {
+ public:
+    HoverCoveragePathing(const RRTPoint& start, const XYZCoord& goal, Polygon flight_bounds,
+                         Polygon drop_zone);
+ private:
+
 };
 
 class AirdropApproachPathing {

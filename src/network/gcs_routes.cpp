@@ -189,7 +189,7 @@ DEF_GCS_HANDLE(Get, camera, capture) {
     std::optional<ImageTelemetry> telemetry = image->TELEMETRY;
 
     try {
-        std::filesystem::path save_dir = state->config.camera_config.save_dir;
+        std::filesystem::path save_dir = state->config.camera.save_dir;
         std::filesystem::path img_filepath =
             save_dir / (std::to_string(image->TIMESTAMP) + std::string(".jpg"));
         std::filesystem::path json_filepath =

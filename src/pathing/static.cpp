@@ -461,7 +461,7 @@ std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
     start.coord.z = state->config.takeoff.altitude_m;
 
     RRT rrt(start, goals, SEARCH_RADIUS, state->mission_params.getFlightBoundary(), {}, {},
-            state->config.rrt_config);
+            state->config.pathing.rrt);
 
     rrt.run();
 

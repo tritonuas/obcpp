@@ -25,7 +25,7 @@ int main (int argc, char *argv[]) {
 
     auto mav = std::make_shared<MavlinkClient>("serial:///dev/ttyACM0");
 
-    LucidCamera camera(config.camera_config);
+    LucidCamera camera(config.camera);
 
     camera.connect();
     LOG_F(INFO, "Connected to LUCID camera!");
@@ -38,7 +38,7 @@ int main (int argc, char *argv[]) {
 
     std::deque<ImageData> images = camera.getAllImages();
     for (const ImageData& image : images) {
-        std::filesystem::path filepath = config.camera_config.save_dir / std::to_string(image.TIMESTAMP);
+        std::filesystem::path filepath = config.camera.save_dir / std::to_string(image.TIMESTAMP);
         saveImageToFile(image.DATA, filepath);
         if (image.TELEMETRY.has_value()) {
             saveImageTelemetryToFile(image.TELEMETRY.value(), filepath);

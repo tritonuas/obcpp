@@ -249,7 +249,7 @@ int main() {
     DECLARE_HANDLER_PARAMS(state, req, resp);
     req.body = mission_json_2020;
     state->setTick(new MissionPrepTick(state));
-    std::cout << state->config.rrt_config.iterations_per_waypoint << std::endl;
+    std::cout << state->config.rrt.iterations_per_waypoint << std::endl;
 
     GCS_HANDLE(Post, mission)(state, req, resp);
 

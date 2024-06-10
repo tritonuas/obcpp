@@ -24,7 +24,7 @@ int main (int argc, char *argv[]) {
     }
     OBCConfig config(argc, argv);
 
-    MockCamera camera(config.camera_config);
+    MockCamera camera(config.camera);
 
     camera.connect();
 
@@ -36,7 +36,7 @@ int main (int argc, char *argv[]) {
 
     std::deque<ImageData> images = camera.getAllImages();
     for (const ImageData& image : images) {
-        std::filesystem::path save_dir = config.camera_config.save_dir;
+        std::filesystem::path save_dir = config.camera.save_dir;
         std::filesystem::path img_filepath = save_dir / (std::to_string(image.TIMESTAMP) + std::string(".jpg"));
         std::filesystem::path json_filepath = save_dir / (std::to_string(image.TIMESTAMP) + std::string(".json"));
         saveImageToFile(image.DATA, img_filepath);

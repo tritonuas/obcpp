@@ -29,73 +29,71 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
         this->network.mavlink.connect = configs["network"]["mavlink"]["connect"];
         this->network.gcs.port = configs["network"]["gcs"]["port"];
 
-        this->rrt_config.iterations_per_waypoint =
+        this->pathing.rrt.iterations_per_waypoint =
             configs["pathing"]["rrt"]["iterations_per_waypoint"];
-        this->rrt_config.rewire_radius = configs["pathing"]["rrt"]["rewire_radius"];
-        this->rrt_config.optimize = configs["pathing"]["rrt"]["optimize"];
-        this->rrt_config.point_fetch_method = configs["pathing"]["rrt"]["point_fetch_methods"];
-        this->rrt_config.allowed_to_skip_waypoints =
+        this->pathing.rrt.rewire_radius = configs["pathing"]["rrt"]["rewire_radius"];
+        this->pathing.rrt.optimize = configs["pathing"]["rrt"]["optimize"];
+        this->pathing.rrt.point_fetch_method = configs["pathing"]["rrt"]["point_fetch_methods"];
+        this->pathing.rrt.allowed_to_skip_waypoints =
             configs["pathing"]["rrt"]["allowed_to_skip_waypoints"];
 
-        this->coverage_pathing_config.coverage_altitude_m =
+        this->pathing.coverage.coverage_altitude_m =
             configs["pathing"]["coverage"]["coverage_altitude_m"];
-        this->coverage_pathing_config.optimize = configs["pathing"]["coverage"]["optimize"];
-        this->coverage_pathing_config.vertical = configs["pathing"]["coverage"]["vertical"];
-        this->coverage_pathing_config.one_way = configs["pathing"]["coverage"]["one_way"];
+        this->pathing.coverage.optimize = configs["pathing"]["coverage"]["optimize"];
+        this->pathing.coverage.vertical = configs["pathing"]["coverage"]["vertical"];
+        this->pathing.coverage.one_way = configs["pathing"]["coverage"]["one_way"];
 
         this->cv.matching_model_dir = configs["cv"]["matching_model_dir"];
         this->cv.segmentation_model_dir = configs["cv"]["segmentation_model_dir"];
         this->cv.saliency_model_dir = configs["cv"]["saliency_model_dir"];
-        this->airdrop_pathing_config.drop_method = configs["pathing"]["approach"]["drop_method"];
 
-        this->airdrop_pathing_config.drop_angle_rad =
+        this->pathing.approach.drop_method = configs["pathing"]["approach"]["drop_method"];
+        this->pathing.approach.drop_angle_rad =
             configs["pathing"]["approach"]["drop_angle_rad"];
-        this->airdrop_pathing_config.drop_altitude_m =
+        this->pathing.approach.drop_altitude_m =
             configs["pathing"]["approach"]["drop_altitude_m"];
-        this->airdrop_pathing_config.guided_drop_distance_m =
+        this->pathing.approach.guided_drop_distance_m =
             configs["pathing"]["approach"]["guided_drop_distance_m"];
-        this->airdrop_pathing_config.unguided_drop_distance_m =
+        this->pathing.approach.unguided_drop_distance_m =
             configs["pathing"]["approach"]["unguided_drop_distance_m"];
 
-        this->camera_config.type = configs["camera"]["type"];
-        this->camera_config.save_dir = configs["camera"]["save_dir"];
+        this->camera.type = configs["camera"]["type"];
+        this->camera.save_dir = configs["camera"]["save_dir"];
+        this->camera.mock.images_dir = configs["camera"]["mock"]["images_dir"];
 
-        this->camera_config.mock.images_dir = configs["camera"]["mock"]["images_dir"];
-
-        this->camera_config.lucid.sensor_shutter_mode =
+        this->camera.lucid.sensor_shutter_mode =
             configs["camera"]["lucid"]["sensor_shuttle_mode"];
-
-        this->camera_config.lucid.acquisition_frame_rate_enable =
+        this->camera.lucid.acquisition_frame_rate_enable =
             configs["camera"]["lucid"]["acquisition_frame_rate_enable"];
-        this->camera_config.lucid.target_brightness =
+        this->camera.lucid.target_brightness =
             configs["camera"]["lucid"]["target_brightness"];
-        this->camera_config.lucid.exposure_auto = configs["camera"]["lucid"]["exposure_auto"];
-        this->camera_config.lucid.exposure_time = configs["camera"]["lucid"]["exposure_time"];
-        this->camera_config.lucid.exposure_auto_damping =
+        this->camera.lucid.exposure_auto = configs["camera"]["lucid"]["exposure_auto"];
+        this->camera.lucid.exposure_time = configs["camera"]["lucid"]["exposure_time"];
+        this->camera.lucid.exposure_auto_damping =
             configs["camera"]["lucid"]["exposure_auto_damping"];
-        this->camera_config.lucid.exposure_auto_algorithm =
+        this->camera.lucid.exposure_auto_algorithm =
             configs["camera"]["lucid"]["exposure_auto_algorithm"];
-        this->camera_config.lucid.exposure_auto_upper_limit =
+        this->camera.lucid.exposure_auto_upper_limit =
             configs["camera"]["lucid"]["exposure_auto_upper_limit"];
-        this->camera_config.lucid.exposure_auto_lower_limit =
+        this->camera.lucid.exposure_auto_lower_limit =
             configs["camera"]["lucid"]["exposure_auto_lower_limit"];
 
-        this->camera_config.lucid.stream_auto_negotiate_packet_size =
+        this->camera.lucid.stream_auto_negotiate_packet_size =
             configs["camera"]["lucid"]["stream_auto_negotiate_packet_size"];
-        this->camera_config.lucid.stream_packet_resend_enable =
+        this->camera.lucid.stream_packet_resend_enable =
             configs["camera"]["lucid"]["stream_packet_resend_enable"];
 
-        this->camera_config.lucid.device_link_throughput_limit_mode =
+        this->camera.lucid.device_link_throughput_limit_mode =
             configs["camera"]["lucid"]["device_link_throughput_limit_mode"];
-        this->camera_config.lucid.device_link_throughput_limit =
+        this->camera.lucid.device_link_throughput_limit =
             configs["camera"]["lucid"]["device_link_throughput_limit"];
 
-        this->camera_config.lucid.gamma_enable = configs["camera"]["lucid"]["gamma_enable"];
-        this->camera_config.lucid.gamma = configs["camera"]["lucid"]["gamma"];
-        this->camera_config.lucid.gain_auto = configs["camera"]["lucid"]["gain_auto"];
-        this->camera_config.lucid.gain_auto_upper_limit =
+        this->camera.lucid.gamma_enable = configs["camera"]["lucid"]["gamma_enable"];
+        this->camera.lucid.gamma = configs["camera"]["lucid"]["gamma"];
+        this->camera.lucid.gain_auto = configs["camera"]["lucid"]["gain_auto"];
+        this->camera.lucid.gain_auto_upper_limit =
             configs["camera"]["lucid"]["gain_auto_upper_limit"];
-        this->camera_config.lucid.gain_auto_lower_limit =
+        this->camera.lucid.gain_auto_lower_limit =
             configs["camera"]["lucid"]["gain_auto_lower_limit"];
 
         this->takeoff.altitude_m = configs["takeoff"]["altitude_m"];
