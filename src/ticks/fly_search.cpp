@@ -7,7 +7,7 @@
 #include "utilities/common.hpp"
 #include "ticks/cv_loiter.hpp"
 
-using namespace std::chrono_literals;
+using namespace std::chrono_literals; // NOLINT
 
 FlySearchTick::FlySearchTick(std::shared_ptr<MissionState> state)
     :Tick(state, TickID::FlySearch) {

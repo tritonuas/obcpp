@@ -30,7 +30,7 @@ class Tick;
 
 class MissionState {
  public:
-    MissionState(OBCConfig config);
+    explicit MissionState(OBCConfig config);
     ~MissionState();
 
     const std::optional<CartesianConverter<GPSProtoVec>>& getCartesianConverter();
