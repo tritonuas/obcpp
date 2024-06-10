@@ -78,14 +78,26 @@ constexpr T PARSE_VARIANT(CONFIG_VARIANT_MAPPING_T(T) mapping, std::string input
 // and then at the very end we prevent having to duplicate typing
 // the struct config option and the json accessing syntax...
 
-#define SET_CONFIG_OPT_5(p1, p2, p3, p4, p5) \
-    this->p1.p2.p3.p4.p5 = PARSE(p1, p2, p3, p4, p5)
-#define SET_CONFIG_OPT_4(p1, p2, p3, p4) \
-    this->p1.p2.p3.p4 = PARSE(p1, p2, p3, p4)
-#define SET_CONFIG_OPT_3(p1, p2, p3) \
-    this->p1.p2.p3 = PARSE(p1, p2, p3)
-#define SET_CONFIG_OPT_2(p1, p2) \
-    this->p1.p2 = PARSE(p1, p2)
+#define SET_CONFIG_OPT_5(p1, p2, p3, p4, p5) { \
+    auto val = PARSE(p1, p2, p3, p4, p5); \
+    LOG_F(INFO, "%s.%s.%s.%s.%s = %s", #p1, #p2, #p3, #p4, #p5, val.dump().c_str()); \
+    this->p1.p2.p3.p4.p5 = val; \
+}
+#define SET_CONFIG_OPT_4(p1, p2, p3, p4) { \
+    auto val = PARSE(p1, p2, p3, p4); \
+    LOG_F(INFO, "%s.%s.%s.%s = %s", #p1, #p2, #p3, #p4, val.dump().c_str()); \
+    this->p1.p2.p3.p4 = val; \
+}
+#define SET_CONFIG_OPT_3(p1, p2, p3) { \
+    auto val = PARSE(p1, p2, p3); \
+    LOG_F(INFO, "%s.%s.%s = %s", #p1, #p2, #p3, val.dump().c_str()); \
+    this->p1.p2.p3 = val; \
+}
+#define SET_CONFIG_OPT_2(p1, p2) { \
+    auto val = PARSE(p1, p2); \
+    LOG_F(INFO, "%s.%s = %s", #p1, #p2, val.dump().c_str()); \
+    this->p1.p2 = val; \
+}
 #define SET_CONFIG_OPT(...) \
     GET_MACRO_5(__VA_ARGS__, SET_CONFIG_OPT_5, SET_CONFIG_OPT_4, \
         SET_CONFIG_OPT_3, SET_CONFIG_OPT_2) (__VA_ARGS__)

@@ -28,8 +28,13 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
     // changing the macros
     nlohmann::json configs = nlohmann::json::parse(configStream);
 
-    // Set configs
+
+    // Read this in first before anything else so that all of the read in values get logged
+    // to the config file. Otherwise they will be output to the terminal but not saved to
+    // the file.
     SET_CONFIG_OPT(logging, dir);
+    initLogging(this->logging.dir, true, argc, argv);
+
     SET_CONFIG_OPT(network, mavlink, connect);
     SET_CONFIG_OPT(network, gcs, port);
 
