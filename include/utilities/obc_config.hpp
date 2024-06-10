@@ -1,10 +1,14 @@
 #ifndef INCLUDE_UTILITIES_OBC_CONFIG_HPP_
 #define INCLUDE_UTILITIES_OBC_CONFIG_HPP_
 
+#include <variant>
 #include <string>
+#include <initializer_list>
 #include "udp_squared/internal/enum.h"
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
+
+#define CONFIG_VARIANT_MAPPING_T(enum_type) const std::initializer_list<std::pair<std::string, enum_type>>
 
 struct LoggingConfig {
     std::string dir;
@@ -29,24 +33,63 @@ struct CVConfig {
     std::string saliency_model_dir;
 };
 
+namespace PointFetchMethod {
+    enum class Enum {
+        NONE,    // check RRT against every node (path optimal, but incredibly slow)
+        RANDOM,  // check ~k randomly sampled nodes from the tree.
+        NEAREST  // check ~$p$ nodes closest to the sampled node (best performance/time ratio from
+                // rudimentary testing)
+    };
+    CONFIG_VARIANT_MAPPING_T(Enum) MAPPINGS = {
+        {"none", Enum::NONE}, {"random", Enum::RANDOM}, {"nearest", Enum::NEAREST}
+    };
+};
+
 struct RRTConfig {
     int iterations_per_waypoint;  // number of iterations run between two waypoints
     double rewire_radius;         // maximum distance from sampled point to optimize during RRT*
     bool optimize;                // run RRT* if true
-    POINT_FETCH_METHODS point_fetch_method;
+    PointFetchMethod::Enum point_fetch_method;
     bool allowed_to_skip_waypoints;  // if true, will skip waypoints if it can not connect after 1
                                      // RRT iteration
 };
 
-struct AirdropSearchConfig {
-    double coverage_altitude_m;
-    bool optimize;  // whether to ignore the config below and run all ways.
-    bool vertical;  // if true, will search in vertical lines
-    bool one_way;   // if true, path returned will only be in 1 direction
+namespace AirdropCoverageMethod {
+    enum class Enum {
+        HOVER,
+        FORWARD
+    };
+    CONFIG_VARIANT_MAPPING_T(Enum) MAPPINGS = {
+        {"hover", Enum::HOVER}, {"forward", Enum::FORWARD}
+    };
+};
+
+struct AirdropCoverageConfig {
+    double altitude_m;
+    AirdropCoverageMethod::Enum method;
+    struct {
+        std::size_t pictures_per_stop;
+        std::time_t hover_time_s; 
+    } hover;
+    struct {
+        bool optimize;  // whether to ignore the config below and run all ways.
+        bool vertical;  // if true, will search in vertical lines
+        bool one_way;   // if true, path returned will only be in 1 direction
+    } forward;
+};
+
+namespace AirdropDropMethod {
+    enum class Enum {
+        GUIDED,
+        UNGUIDED
+    };
+    CONFIG_VARIANT_MAPPING_T(Enum) MAPPINGS = {
+        {"guided", Enum::GUIDED}, {"unguided", Enum::UNGUIDED}
+    };
 };
 
 struct AirdropApproachConfig {
-    drop_mode drop_method;
+    AirdropDropMethod::Enum drop_method;
     std::unordered_set<int> bottle_ids;
     double drop_angle_rad;
     double drop_altitude_m;
@@ -56,7 +99,7 @@ struct AirdropApproachConfig {
 
 struct PathingConfig {
     RRTConfig rrt;
-    AirdropSearchConfig coverage;
+    AirdropCoverageConfig coverage;
     AirdropApproachConfig approach;
 };
 

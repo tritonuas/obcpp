@@ -280,7 +280,7 @@ int main() {
     int num_iterations = 512;
     double search_radius = 9999;
     double rewire_radius = 256;
-    RRTConfig config = RRTConfig { num_iterations, rewire_radius, true, POINT_FETCH_METHODS::NEAREST, true };
+    RRTConfig config = RRTConfig { num_iterations, rewire_radius, true, PointFetchMethod::Enum::NEAREST, true };
 
     RRT rrt = RRT(start, goals, search_radius, 
                   state->mission_params.getFlightBoundary(), obstacles, {}, config);

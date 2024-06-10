@@ -27,14 +27,14 @@ class RRT {
         RRTConfig config = {.iterations_per_waypoint = ITERATIONS_PER_WAYPOINT,
                             .rewire_radius = REWIRE_RADIUS,
                             .optimize = false,
-                            .point_fetch_method = POINT_FETCH_METHODS::NEAREST,
+                            .point_fetch_method = PointFetchMethod::Enum::NEAREST,
                             .allowed_to_skip_waypoints = false});
     RRT(RRTPoint start, std::vector<XYZCoord> goals, double search_radius, Environment airspace,
         std::vector<double> angles = {},
         RRTConfig config = {.iterations_per_waypoint = ITERATIONS_PER_WAYPOINT,
                             .rewire_radius = REWIRE_RADIUS,
                             .optimize = false,
-                            .point_fetch_method = POINT_FETCH_METHODS::NONE,
+                            .point_fetch_method = PointFetchMethod::Enum::NONE,
                             .allowed_to_skip_waypoints = false});
 
     /**
@@ -195,14 +195,16 @@ class RRT {
  * - this implementation is for fixed wing planes, which is not currently being used. However,
  *   it is kept here because it is very possible we will eventually switch back to it.
  */
-class CoveragePathing {
+class ForwardCoveragePathing {
  public:
-    CoveragePathing(const RRTPoint &start, double scan_radius, Polygon bounds, Polygon airdrop_zone,
+    ForwardCoveragePathing(const RRTPoint &start, double scan_radius, Polygon bounds, Polygon airdrop_zone,
                     std::vector<Polygon> obstacles = {},
-                    AirdropSearchConfig config = {.coverage_altitude_m = 30.0,
-                                                  .optimize = false,
-                                                  .vertical = false,
-                                                  .one_way = false});
+                    AirdropCoverageConfig config = {.altitude_m = 30.0,
+                                                  .method = AirdropCoverageMethod::Enum::FORWARD,
+                                                  .hover = {},
+                                                  .forward = {.optimize = false, 
+                                                              .vertical = false,
+                                                              .one_way  = false}});
 
     /**
      * Generates a path of parallel lines to cover a given area
@@ -240,19 +242,25 @@ class CoveragePathing {
     const RRTPoint start;        // start location (doesn't have to be near polygon)
     const Environment airspace;  // information aobut the airspace
     const Dubins dubins;         // dubins object to generate paths
-    const AirdropSearchConfig config;
+    const AirdropCoverageConfig config;
 };
 
 /**
  * Class that performs coverage pathing over a given search area, given that the plane has
  * hovering capabilities and that we want to be taking pictures while hovering over the zone.
+ * 
+ * This outputs a series of XYZ Coordinates which represent a points at which the plane
+ * should hover and take a picture.
  */
 class HoverCoveragePathing {
  public:
-    HoverCoveragePathing(const RRTPoint& start, const XYZCoord& goal, Polygon flight_bounds,
-                         Polygon drop_zone);
- private:
+    HoverCoveragePathing(Polygon flight_bounds, Polygon drop_zone);
 
+    std::vector<XYZCoord> run();
+
+ private:
+    Polygon flight_bounds;
+    Polygon drop_zone;
 };
 
 class AirdropApproachPathing {
@@ -260,7 +268,7 @@ class AirdropApproachPathing {
     AirdropApproachPathing(const RRTPoint &start, const XYZCoord &goal, RRTPoint wind,
                            Polygon bounds, std::vector<Polygon> obstacles = {},
                            AirdropApproachConfig config = {
-                               .drop_method = UNGUIDED,
+                               .drop_method = AirdropDropMethod::Enum::UNGUIDED,
                                .bottle_ids = {1, 2, 3, 4, 5},
                                .drop_angle_rad = DROP_ANGLE_RAD,
                                // .drop_angle_rad = M_PI * 3 / 4,
@@ -290,5 +298,7 @@ class AirdropApproachPathing {
 };
 
 std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state);
+
+std::vector<GPSCoord> generateSearchPath(std::shared_ptr<MissionState> state);
 
 #endif  // INCLUDE_PATHING_STATIC_HPP_

@@ -15,6 +15,7 @@
 #include "pathing/plotting.hpp"
 #include "pathing/tree.hpp"
 #include "utilities/constants.hpp"
+#include "utilities/obc_config.hpp"
 #include "utilities/datatypes.hpp"
 #include "utilities/rng.hpp"
 
@@ -177,7 +178,7 @@ std::vector<std::pair<RRTPoint, std::pair<RRTNode *, RRTOption>>> RRT::getOption
     for (const RRTPoint &goal : goal_points) {
         const std::vector<std::pair<RRTNode *, RRTOption>> &options =
             // For now, we use optimal pathing
-            tree.pathingOptions(goal, POINT_FETCH_METHODS::NONE, NUMBER_OPTIONS_EACH);
+            tree.pathingOptions(goal, PointFetchMethod::Enum::NONE, NUMBER_OPTIONS_EACH);
 
         for (const auto &[node, option] : options) {
             all_options.push_back({goal, {node, option}});
@@ -280,23 +281,23 @@ RRTNode *RRT::parseOptions(const std::vector<std::pair<RRTNode *, RRTOption>> &o
 
 void RRT::optimizeTree(RRTNode *sample) { tree.RRTStar(sample, rewire_radius); }
 
-CoveragePathing::CoveragePathing(const RRTPoint &start, double scan_radius, Polygon bounds,
+ForwardCoveragePathing::ForwardCoveragePathing(const RRTPoint &start, double scan_radius, Polygon bounds,
                                  Polygon airdrop_zone, std::vector<Polygon> obstacles,
-                                 AirdropSearchConfig config)
+                                 AirdropCoverageConfig config)
     : start(start),
       scan_radius(scan_radius),
       airspace(Environment(bounds, airdrop_zone, {}, obstacles)),
       dubins(Dubins(TURNING_RADIUS, POINT_SEPARATION)),
       config(config) {}
 
-std::vector<XYZCoord> CoveragePathing::run() const {
-    return config.optimize ? coverageOptimal() : coverageDefault();
+std::vector<XYZCoord> ForwardCoveragePathing::run() const {
+    return config.forward.optimize ? coverageOptimal() : coverageDefault();
 }
 
-std::vector<XYZCoord> CoveragePathing::coverageDefault() const {
+std::vector<XYZCoord> ForwardCoveragePathing::coverageDefault() const {
     // generates the endpoints for the lines (including headings)
     std::vector<RRTPoint> waypoints =
-        airspace.getAirdropWaypoints(scan_radius, config.one_way, config.vertical);
+        airspace.getAirdropWaypoints(scan_radius, config.forward.one_way, config.forward.vertical);
     waypoints.emplace(waypoints.begin(), start);
 
     // generates the path connecting the q
@@ -308,7 +309,7 @@ std::vector<XYZCoord> CoveragePathing::coverageDefault() const {
     return generatePath(dubins_options, waypoints);
 }
 
-std::vector<XYZCoord> CoveragePathing::coverageOptimal() const {
+std::vector<XYZCoord> ForwardCoveragePathing::coverageOptimal() const {
     /*
      * The order of paths
      * [0] - alt, vertical
@@ -361,13 +362,13 @@ std::vector<XYZCoord> CoveragePathing::coverageOptimal() const {
     return generatePath(dubins_paths[best_path_idx], waypoints);
 }
 
-std::vector<XYZCoord> CoveragePathing::generatePath(const std::vector<RRTOption> &dubins_options,
+std::vector<XYZCoord> ForwardCoveragePathing::generatePath(const std::vector<RRTOption> &dubins_options,
                                                     const std::vector<RRTPoint> &waypoints) const {
     std::vector<XYZCoord> path;
 
     // height adjustement
     double height = waypoints[0].coord.z;
-    double height_difference = config.coverage_altitude_m - waypoints[0].coord.z;
+    double height_difference = config.altitude_m - waypoints[0].coord.z;
 
     std::vector<XYZCoord> path_coordinates = dubins.generatePoints(
         waypoints[0], waypoints[1], dubins_options[0].dubins_path, dubins_options[0].has_straight);
@@ -388,7 +389,7 @@ std::vector<XYZCoord> CoveragePathing::generatePath(const std::vector<RRTOption>
                                   dubins_options[i].has_straight);
 
         for (XYZCoord &coord : path_coordinates) {
-            coord.z = config.coverage_altitude_m;
+            coord.z = config.altitude_m;
         }
 
         path.insert(path.end(), path_coordinates.begin() + 1, path_coordinates.end());
@@ -418,11 +419,15 @@ std::vector<XYZCoord> AirdropApproachPathing::run() const {
 
 RRTPoint AirdropApproachPathing::getDropLocation() const {
     double drop_angle = config.drop_angle_rad;
-    double drop_distance = config.drop_method == GUIDED ? config.unguided_drop_distance_m
-                                                        : config.guided_drop_distance_m;
+    double drop_distance = 0.0f;
+    if (config.drop_method == AirdropDropMethod::Enum::GUIDED) {
+        drop_distance = config.guided_drop_distance_m;
+    } else {
+        drop_distance = config.unguided_drop_distance_m;
+    }
 
-    XYZCoord drop_offset(drop_distance * std::cos(drop_angle), drop_distance * std::sin(drop_angle),
-                         0);
+    XYZCoord drop_offset(
+        drop_distance * std::cos(drop_angle), drop_distance * std::sin(drop_angle), 0);
 
     double wind_strength_coef = wind.coord.norm() * WIND_CONST_PER_ALTITUDE;
     XYZCoord wind_offset(wind_strength_coef * std::cos(wind.psi),
@@ -474,4 +479,8 @@ std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
     }
 
     return output_coords;
+}
+
+std::vector<GPSCoord> generateSearchPath(std::shared_ptr<MissionState> state) {
+    return {};
 }
