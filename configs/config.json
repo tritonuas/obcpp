@@ -1,6 +1,6 @@
 {
     "logging": {
-        "dir": "/workspaces/obcpp/logs"
+        "dir": "/obcpp/logs"
     },
     "network": {
         "mavlink": {
@@ -36,6 +36,11 @@
             "guided_drop_distance_m": 50.0,
             "unguided_drop_distance_m": 50.0
         }
+    },
+    "cv": {
+        "matching_model_dir": "/obcpp/models/target_siamese_1.pt",
+        "segmentation_model_dir": "/obcpp/models/fcn.pth",
+        "saliency_model_dir": "/obcpp/models/torchscript_19.pth"
     },
     "camera": {
         "_comment": "See CameraConfig struct in datatypes.hpp for detailed explanations",

@@ -149,4 +149,16 @@ DEF_GCS_HANDLE(Post, takeoff, manual);
  */
 DEF_GCS_HANDLE(Post, takeoff, autonomous);
 
+/**
+ * POST /targets/validate
+ * ---
+ */
+DEF_GCS_HANDLE(Post, targets, validate);
+
+/**
+ * POST /targets/reject
+ * ---
+ */
+DEF_GCS_HANDLE(Post, targets, reject);
+
 #endif  // INCLUDE_NETWORK_GCS_ROUTES_HPP_

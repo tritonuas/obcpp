@@ -458,10 +458,10 @@ std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
         std::atan2(goals.front().y - state->mission_params.getWaypoints().front().y,
                    goals.front().x - state->mission_params.getWaypoints().front().x);
     RRTPoint start(state->mission_params.getWaypoints().front(), init_angle);
-    start.coord.z = state->takeoff_alt_m;
+    start.coord.z = state->config.takeoff.altitude_m;
 
     RRT rrt(start, goals, SEARCH_RADIUS, state->mission_params.getFlightBoundary(), {}, {},
-            state->rrt_config);
+            state->config.rrt_config);
 
     rrt.run();
 

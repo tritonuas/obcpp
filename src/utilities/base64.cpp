@@ -28,7 +28,7 @@
 #include "utilities/base64.hpp"
 #include <iostream>
 
-static const std::string base64_chars = //NOLINT
+static const std::string base64_chars =
              "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
              "abcdefghijklmnopqrstuvwxyz"
              "0123456789+/";

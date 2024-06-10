@@ -20,9 +20,12 @@ struct CVResults {
     std::unordered_map<BottleDropIndex, size_t> matches;
 };
 
+
+
 class CVAggregator {
  public:
-    explicit CVAggregator(Pipeline p);
+    explicit CVAggregator(Pipeline&& p);
+
     ~CVAggregator();
 
     void runPipeline(const ImageData& image);

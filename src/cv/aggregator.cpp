@@ -4,7 +4,7 @@
 #include "utilities/logging.hpp"
 #include "utilities/lockptr.hpp"
 
-CVAggregator::CVAggregator(Pipeline p): pipeline{p} {
+CVAggregator::CVAggregator(Pipeline&& p): pipeline{p} {
     this->num_worker_threads = 0;
     this->results = std::make_shared<CVResults>();
     this->results->matches[BottleDropIndex::A] = -1;

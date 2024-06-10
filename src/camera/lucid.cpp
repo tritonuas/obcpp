@@ -61,25 +61,14 @@ void LucidCamera::connect() {
 }
 
 LucidCamera::~LucidCamera() {
-  // aquire locks to Arena System and Device
-  WriteLock systemLock(this->arenaSystemLock);
-  WriteLock deviceLock(this->arenaDeviceLock);
-  CATCH_ARENA_EXCEPTION("closing Arena System",
-                        this->system->DestroyDevice(this->device);
-                        Arena::CloseSystem(this->system););
+    // aquire locks to Arena System and Device
+    WriteLock systemLock(this->arenaSystemLock);
+    WriteLock deviceLock(this->arenaDeviceLock);
+
+    CATCH_ARENA_EXCEPTION("closing Arena System",
+        this->system->DestroyDevice(this->device);
+        Arena::CloseSystem(this->system););
 }
-
-void LucidCamera::startStreaming() {
-    if (!this->isConnected()) {
-        LOG_F(ERROR, "LUCID Camera not connected. Cannot start streaming");
-        return;
-    }
-
-    WriteLock lock(this->arenaDeviceLock);
-    CATCH_ARENA_EXCEPTION("starting stream",
-        this->device->StartStream(););
-}
-
 
 void LucidCamera::startTakingPictures(const std::chrono::milliseconds& interval,
     std::shared_ptr<MavlinkClient> mavlinkClient) {
@@ -326,6 +315,17 @@ std::optional<ImageData> LucidCamera::takePicture(const std::chrono::millisecond
 
     // return nullopt if an exception is thrown while getting image
     return {};
+}
+
+void LucidCamera::startStreaming() {
+    if (!this->isConnected()) {
+        LOG_F(ERROR, "LUCID Camera not connected. Cannot start streaming");
+        return;
+    }
+
+    WriteLock lock(this->arenaDeviceLock);
+    CATCH_ARENA_EXCEPTION("starting stream",
+        this->device->StartStream(););
 }
 
 std::optional<cv::Mat> LucidCamera::imgConvert(Arena::IImage* pImage) {

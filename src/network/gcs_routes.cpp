@@ -17,6 +17,7 @@
 #include "ticks/path_gen.hpp"
 #include "ticks/path_validate.hpp"
 #include "ticks/wait_for_takeoff.hpp"
+#include "ticks/cv_loiter.hpp"
 
 using namespace std::chrono_literals; // NOLINT
 
@@ -188,9 +189,11 @@ DEF_GCS_HANDLE(Get, camera, capture) {
     std::optional<ImageTelemetry> telemetry = image->TELEMETRY;
 
     try {
-        std::filesystem::path save_dir = state->camera_config.save_dir;
-        std::filesystem::path img_filepath = save_dir / (std::to_string(image->TIMESTAMP) + std::string(".jpg")); //NOLINT
-        std::filesystem::path json_filepath = save_dir / (std::to_string(image->TIMESTAMP) + std::string(".json")); //NOLINT
+        std::filesystem::path save_dir = state->config.camera_config.save_dir;
+        std::filesystem::path img_filepath =
+            save_dir / (std::to_string(image->TIMESTAMP) + std::string(".jpg"));
+        std::filesystem::path json_filepath =
+            save_dir / (std::to_string(image->TIMESTAMP) + std::string(".json"));
         saveImageToFile(image->DATA, img_filepath);
         if (image->TELEMETRY.has_value()) {
             saveImageTelemetryToFile(image->TELEMETRY.value(), json_filepath);
@@ -275,4 +278,30 @@ DEF_GCS_HANDLE(Post, takeoff, autonomous) {
     }
     lock_ptr->data->setStatus(WaitForTakeoffTick::Status::Autonomous);
     LOG_RESPONSE(INFO, "Set status of WaitForTakeoff Tick to autonomous", OK);
+}
+
+DEF_GCS_HANDLE(Post, targets, validate) {
+    LOG_REQUEST("POST", "targets/validate");
+    auto lock_ptr = state->getTickLockPtr<CVLoiterTick>();
+
+    if (!lock_ptr.has_value()) {
+        LOG_RESPONSE(WARNING, "Not currently in CVLoiter Tick", BAD_REQUEST);
+        return;
+    }
+
+    lock_ptr->data->setStatus(CVLoiterTick::Status::Validated);
+    LOG_RESPONSE(INFO, "Set status of CVLoiter Tick to validated", OK);
+}
+
+DEF_GCS_HANDLE(Post, targets, reject) {
+    LOG_REQUEST("POST", "targets/reject");
+    auto lock_ptr = state->getTickLockPtr<CVLoiterTick>();
+
+    if (!lock_ptr.has_value()) {
+        LOG_RESPONSE(WARNING, "Not currently in CVLoiter Tick", BAD_REQUEST);
+        return;
+    }
+
+    lock_ptr->data->setStatus(CVLoiterTick::Status::Rejected);
+    LOG_RESPONSE(INFO, "Set status of CVLoiter Tick to rejected", OK);
 }

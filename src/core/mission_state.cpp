@@ -16,9 +16,7 @@
 #include "utilities/logging.hpp"
 #include "utilities/obc_config.hpp"
 
-// in future might add to this
-MissionState::MissionState() {
-}
+MissionState::MissionState(OBCConfig config): config(config) {}
 
 // Need to explicitly define now that Tick is no longer an incomplete class
 // See:
@@ -76,6 +74,16 @@ void MissionState::setInitPath(std::vector<GPSCoord> init_path) {
 const std::vector<GPSCoord>& MissionState::getInitPath() {
     Lock lock(this->init_path_mut);
     return this->init_path;
+}
+
+void MissionState::setSearchPath(std::vector<GPSCoord> search_path) {
+    Lock lock(this->search_path_mut);
+    this->search_path = search_path;
+}
+
+const std::vector<GPSCoord>& MissionState::getSearchPath() {
+    Lock lock(this->search_path_mut);
+    return this->search_path;
 }
 
 std::shared_ptr<MavlinkClient> MissionState::getMav() { return this->mav; }
