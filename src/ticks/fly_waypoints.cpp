@@ -19,7 +19,7 @@ Tick* FlyWaypointsTick::tick() {
 
     if (isMissionFinished) {
         return new MavUploadTick(this->state, new FlySearchTick(this->state),
-                state->getSearchPath(), false);
+                state->getCoveragePath(), false);
     }
 
     return nullptr;

@@ -410,33 +410,10 @@ std::vector<XYZCoord> HoverCoveragePathing::run() {
         LOG_F(FATAL, "Hover airdrop pathing currently only supports 4 coordinates, not %lu", this->drop_zone.size());
     }
 
-    XYZCoord top_left(std::numeric_limits<double>::max(), std::numeric_limits<double>::min(), 0);
-    XYZCoord top_right(std::numeric_limits<double>::min(), std::numeric_limits<double>::min(), 0);
-    XYZCoord bottom_left(std::numeric_limits<double>::max(), std::numeric_limits<double>::max(), 0);
-    XYZCoord bottom_right(std::numeric_limits<double>::min(), std::numeric_limits<double>::max(), 0);
-
-    // thx chat gpt
-    for (const auto& coord : this->drop_zone) {
-        // Update top-left
-        if (coord.y > top_left.y || (coord.y == top_left.y && coord.x < top_left.x)) {
-            top_left = coord;
-        }
-
-        // Update bottom-left
-        if (coord.y < bottom_left.y || (coord.y == bottom_left.y && coord.x < bottom_left.x)) {
-            bottom_left = coord;
-        }
-
-        // Update top-right
-        if (coord.y > top_right.y || (coord.y == top_right.y && coord.x > top_right.x)) {
-            top_right = coord;
-        }
-
-        // Update bottom-right
-        if (coord.y < bottom_right.y || (coord.y == bottom_right.y && coord.x > bottom_right.x)) {
-            bottom_right = coord;
-        }
-    }
+    XYZCoord top_left = this->drop_zone.at(3);
+    XYZCoord top_right = this->drop_zone.at(2);
+    XYZCoord bottom_left = this->drop_zone.at(0);
+    XYZCoord bottom_right = this->drop_zone.at(1);
 
     // assuming a rectangle!!
 
@@ -451,7 +428,7 @@ std::vector<XYZCoord> HoverCoveragePathing::run() {
     double stop_x = top_right.x + (vision / 2.0);
 
     bool right = true; // start going from right to left
-    for (double y = start_y; y < stop_y; y += vision) {
+    for (double y = start_y; y > stop_y; y -= vision) {
         std::vector<XYZCoord> row; // row of points either from left to right or right to left
         for (double x = start_x; x < stop_x; x += vision) {
             row.push_back(XYZCoord(x, y, altitude));
@@ -560,6 +537,7 @@ std::vector<GPSCoord> generateSearchPath(std::shared_ptr<MissionState> state) {
         for (const XYZCoord& coord : pathing.run()) {
             coords.push_back(state->getCartesianConverter()->toLatLng(coord));
         }
+        LOG_F(INFO, "Coverage path has %lu coordinates", coords.size());
         return coords;
     }
 }

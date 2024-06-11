@@ -76,14 +76,14 @@ const std::vector<GPSCoord>& MissionState::getInitPath() {
     return this->init_path;
 }
 
-void MissionState::setSearchPath(std::vector<GPSCoord> search_path) {
+void MissionState::setCoveragePath(std::vector<GPSCoord> coverage_path) {
     Lock lock(this->search_path_mut);
-    this->search_path = search_path;
+    this->coverage_path = coverage_path;
 }
 
-const std::vector<GPSCoord>& MissionState::getSearchPath() {
+const std::vector<GPSCoord>& MissionState::getCoveragePath() {
     Lock lock(this->search_path_mut);
-    return this->search_path;
+    return this->coverage_path;
 }
 
 std::shared_ptr<MavlinkClient> MissionState::getMav() { return this->mav; }

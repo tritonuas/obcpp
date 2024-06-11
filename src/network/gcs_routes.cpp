@@ -127,12 +127,23 @@ DEF_GCS_HANDLE(Post, airdrop) {
 DEF_GCS_HANDLE(Get, path, initial) {
     LOG_REQUEST("GET", "/path/initial");
 
-    auto init_path = state->getInitPath();
-    if (init_path.empty()) {
+    auto path = state->getInitPath();
+    if (path.empty()) {
         LOG_RESPONSE(WARNING, "No initial path generated", BAD_REQUEST);
     } else {
-        auto init_path = state->getInitPath();
-        std::string json = messagesToJson(init_path.begin(), init_path.end());
+        std::string json = messagesToJson(path.begin(), path.end());
+        LOG_RESPONSE(INFO, "Got initial path", OK, json.c_str(), mime::json);
+    }
+}
+
+DEF_GCS_HANDLE(Get, path, coverage) {
+    LOG_REQUEST("GET", "/path/coverage");
+
+    auto path = state->getCoveragePath();
+    if (path.empty()) {
+        LOG_RESPONSE(WARNING, "No coverage path generated", BAD_REQUEST);
+    } else {
+        std::string json = messagesToJson(path.begin(), path.end());
         LOG_RESPONSE(INFO, "Got initial path", OK, json.c_str(), mime::json);
     }
 }
