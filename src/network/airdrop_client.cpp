@@ -46,6 +46,7 @@ void AirdropClient::_establishConnection() {
     std::atomic_bool stop = false;
     std::thread send_thread(
         [this, &stop]() {
+            loguru::set_thread_name("airdrop reset spam");
             while (true) {
                 LOG_F(INFO, "Sending reset packets to all bottles...");
                 send_ad_packet(this->socket, makeResetPacket(UDP2_ALL));

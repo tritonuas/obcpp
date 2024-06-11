@@ -375,8 +375,8 @@ bool MavlinkClient::armAndHover(std::shared_ptr<MissionState> state) {
         return false;
     }
 
-    // TODO: config option for this
     const float TAKEOFF_ALT = state->config.takeoff.altitude_m;
+    LOG_F(INFO, "Setting takeoff altitude to %f", TAKEOFF_ALT);
     auto r1 = this->action->set_takeoff_altitude(TAKEOFF_ALT);
     if (r1 != mavsdk::Action::Result::Success) {
         LOG_S(ERROR) << "FAIL: could not set takeoff alt " << r1;
@@ -386,30 +386,11 @@ bool MavlinkClient::armAndHover(std::shared_ptr<MissionState> state) {
     LOG_S(INFO) << "Queried takeoff alt to be " << alt_checked << " with status " << r2;
 
     LOG_F(INFO, "Attempting to take off to %fm...", TAKEOFF_ALT);
-    const mavsdk::Action::Result takeoff_result = this->action->takeoff();
+    auto takeoff_result = this->action->takeoff();
     if (takeoff_result != mavsdk::Action::Result::Success) {
         LOG_F(ERROR, "Take off failed");
         return false;
     }
-
-    // need to figure out correct values to send for a VTOL takeoff command
-    // auto result = this->passthrough->send_command_int(mavsdk::MavlinkPassthrough::CommandInt {
-    //     .target_sysid = this->passthrough->get_our_sysid(),
-    //     .target_compid = this->passthrough->get_our_compid(),
-    //     .command = MAV_CMD_NAV_VTOL_TAKEOFF,
-    //     .frame = MAV_FRAME_GLOBAL_RELATIVE_ALT,
-    //     .param1 = 0,
-    //     .param2 = VTOL_TRANSITION_HEADING_NEXT_WAYPOINT, // unsure if arduplane will respect this
-    //     .param3 = 0,
-    //     .param4 = NAN,
-    //     .x = 0,
-    //     .y = 0,
-    //     .z = TAKEOFF_ALT // currently hard coded to 30m (~100ft)
-    // });
-    // if (result != mavsdk::MavlinkPassthrough::Result::Success) {
-    //     LOG_S(ERROR) << "FAIL: takeoff cmd not accepted because " << result;
-    //     // return false;
-    // }
 
     LOG_F(INFO, "Waiting to reach target altitude of %f", TAKEOFF_ALT);
     float current_position = 0;
@@ -424,35 +405,15 @@ bool MavlinkClient::armAndHover(std::shared_ptr<MissionState> state) {
 }
 
 /**
- * Starts the mavlink mission and transitions vehicle from VTOL to fix wing.
+ * Starts the currently uploaded mavlink mission
  */
 bool MavlinkClient::startMission() {
-    LOG_F(INFO, "Attempting to start mission...");
-    LOG_F(INFO, "Querying target takeoff altitude");
-    const auto& [takeoff_result, target_alt] = this->action->get_takeoff_altitude();
-    if (takeoff_result != mavsdk::Action::Result::Success) {
-        LOG_S(ERROR) << "FAIL: could not query takeoff altitude: " << target_alt;
-        return false;
-    }
-    LOG_F(INFO, "Target takeoff altitude is %f", target_alt);
-
-    float current_position = this->telemetry->position().relative_altitude_m;
-
-    LOG_F(INFO, "Checking target altitude");
-    if (current_position < target_alt) {
-        LOG_F(ERROR, "FAIL: Vehicle has not reached desired altitude (%f < %f)", current_position,
-              target_alt);
-        return false;
-    }
-
-    LOG_F(INFO, "About to send start command");
+    LOG_F(INFO, "Sending start mission command");
     auto start_result = this->mission->start_mission();
     if (start_result != mavsdk::MissionRaw::Result::Success) {
         LOG_S(ERROR) << "FAIL: Mission could not start " << start_result;
         return false;
     }
-
-    // will by default transition to forward flight
 
     LOG_F(INFO, "Mission Started!");
     return true;

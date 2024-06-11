@@ -26,6 +26,7 @@ class MavUploadTick: public Tick {
 
     std::chrono::milliseconds getWait() const override;
 
+    void init() override;
     Tick* tick() override;
 
  private:

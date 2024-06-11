@@ -68,7 +68,7 @@ void MissionPath::generateHoverCommands() {
         item.param1 = static_cast<float>(this->hover_wait_s);
         item.param2 = 0.0f;  // 0 => dont need to point heading at next waypoint
         item.param3 = 0.0f;  // loiter radius, which shouldn't matter for hover quadplane
-        item.param4 = NAN;  // xtrack, something for forward flight planes which we arent here
+        item.param4 = 0.0f;  // xtrack, something for forward flight planes which we arent here
         item.x = int32_t(std::round(coord.latitude() * 1e7));
         item.y = int32_t(std::round(coord.longitude() * 1e7));
         item.z = coord.altitude();

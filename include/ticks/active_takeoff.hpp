@@ -19,11 +19,10 @@ class ActiveTakeoffTick: public Tick {
 
     std::chrono::milliseconds getWait() const override;
 
+    void init() override;
     Tick* tick() override;
 
  private:
-    bool started;
-
     std::future<bool> takeoffResult;
 
     void armAndHover();

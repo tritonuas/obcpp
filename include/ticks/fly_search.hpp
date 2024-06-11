@@ -19,9 +19,11 @@ class FlySearchTick : public Tick {
     explicit FlySearchTick(std::shared_ptr<MissionState> state);
     std::chrono::milliseconds getWait() const override;
 
+    void init() override;
     Tick* tick() override;
 
  private:
+    bool mission_started;
     Polygon airdrop_boundary;
     std::chrono::milliseconds last_photo_time;
 };

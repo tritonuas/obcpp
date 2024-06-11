@@ -58,7 +58,10 @@ void MissionState::_setTick(Tick* newTick) {
 
     LOG_F(INFO, "%s -> %s", old_tick_name.c_str(), new_tick_name.c_str());
 
-    tick.reset(newTick);
+    this->tick.reset(newTick);
+    if (newTick != nullptr) {
+        this->tick->init();
+    }
 }
 
 TickID MissionState::getTickID() {
@@ -86,18 +89,34 @@ MissionPath MissionState::getCoveragePath() {
     return this->coverage_path;
 }
 
-std::shared_ptr<MavlinkClient> MissionState::getMav() { return this->mav; }
+std::shared_ptr<MavlinkClient> MissionState::getMav() {
+    return this->mav;
+}
 
-void MissionState::setMav(std::shared_ptr<MavlinkClient> mav) { this->mav = mav; }
+void MissionState::setMav(std::shared_ptr<MavlinkClient> mav) {
+    this->mav = mav;
+}
 
-std::shared_ptr<AirdropClient> MissionState::getAirdrop() { return this->airdrop; }
+std::shared_ptr<AirdropClient> MissionState::getAirdrop() {
+    return this->airdrop;
+}
 
-void MissionState::setAirdrop(std::shared_ptr<AirdropClient> airdrop) { this->airdrop = airdrop; }
+void MissionState::setAirdrop(std::shared_ptr<AirdropClient> airdrop) {
+    this->airdrop = airdrop;
+}
 
-std::shared_ptr<CVAggregator> MissionState::getCV() { return this->cv; }
+std::shared_ptr<CVAggregator> MissionState::getCV() {
+    return this->cv;
+}
 
-void MissionState::setCV(std::shared_ptr<CVAggregator> cv) { this->cv = cv; }
+void MissionState::setCV(std::shared_ptr<CVAggregator> cv) {
+    this->cv = cv;
+}
 
-std::shared_ptr<CameraInterface> MissionState::getCamera() { return this->camera; }
+std::shared_ptr<CameraInterface> MissionState::getCamera() {
+    return this->camera;
+}
 
-void MissionState::setCamera(std::shared_ptr<CameraInterface> camera) { this->camera = camera; }
+void MissionState::setCamera(std::shared_ptr<CameraInterface> camera) {
+    this->camera = camera;
+}

@@ -8,10 +8,11 @@
 #include "ticks/fly_search.hpp"
 
 
-CVLoiterTick::CVLoiterTick(std::shared_ptr<MissionState> state)
-    :Tick(state, TickID::CVLoiter) {
-        status = CVLoiterTick::Status::None;
-    }
+CVLoiterTick::CVLoiterTick(std::shared_ptr<MissionState> state):
+    Tick(state, TickID::CVLoiter)
+{
+    this->status = CVLoiterTick::Status::None;
+}
 
 std::chrono::milliseconds CVLoiterTick::getWait() const {
     return CV_LOITER_TICK_WAIT;

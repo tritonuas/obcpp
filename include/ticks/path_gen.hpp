@@ -24,6 +24,7 @@ class PathGenTick : public Tick {
 
     std::chrono::milliseconds getWait() const override;
 
+    void init() override;
     Tick* tick() override;
  private:
     std::future<MissionPath> init_path;
