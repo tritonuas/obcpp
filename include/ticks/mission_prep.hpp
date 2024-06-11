@@ -6,6 +6,10 @@
 #include <string>
 
 #include "ticks/tick.hpp"
+#include "cv/pipeline.hpp"
+#include "cv/aggregator.hpp"
+
+#define NUMBOTTLES 5
 
 /*
  * Checks every second whether or not a valid mission has been uploaded.

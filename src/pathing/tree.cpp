@@ -9,6 +9,7 @@
 #include "utilities/datatypes.hpp"
 #include "utilities/logging.hpp"
 #include "utilities/rng.hpp"
+#include "utilities/obc_config.hpp"
 
 RRTNode::RRTNode(const RRTPoint& point, double cost, double path_length,
                  const std::vector<XYZCoord> path)
@@ -94,8 +95,8 @@ RRTTree::RRTTree(RRTPoint root_point, Environment airspace, Dubins dubins)
 RRTTree::~RRTTree() { delete root; }
 
 bool RRTTree::validatePath(const std::vector<XYZCoord>& path, const RRTOption& option) const {
-    // return airspace.isPathInBounds(path);
-    return airspace.isPathInBoundsAdv(path, option);
+    return airspace.isPathInBounds(path);
+    // return airspace.isPathInBoundsAdv(path, option);
 }
 
 RRTNode* RRTTree::generateNode(RRTNode* anchor_node, const RRTPoint& new_point,
@@ -286,20 +287,20 @@ RRTPoint RRTTree::getRandomPoint(double search_radius) const {
     TODO - investigate whether a max heap is better or worse
 */
 std::vector<std::pair<RRTNode*, RRTOption>> RRTTree::pathingOptions(
-    const RRTPoint& end, POINT_FETCH_METHODS point_fetch_method, int quantity_options) const {
+    const RRTPoint& end, PointFetchMethod::Enum point_fetch_method, int quantity_options) const {
     // fills the options list with valid values
     std::vector<std::pair<RRTNode*, RRTOption>> options;
 
     switch (point_fetch_method) {
-        case POINT_FETCH_METHODS::RANDOM: {
+        case PointFetchMethod::Enum::RANDOM: {
             const std::vector<RRTNode*>& nodes = getKRandomNodes(K_RANDOM_NODES);
             fillOptionsNodes(options, nodes, end);
         } break;
-        case POINT_FETCH_METHODS::NEAREST: {
+        case PointFetchMethod::Enum::NEAREST: {
             const std::vector<RRTNode*>& nodes = getKClosestNodes(end, K_CLOESEST_NODES);
             fillOptionsNodes(options, nodes, end);
         } break;
-        case POINT_FETCH_METHODS::NONE:
+        case PointFetchMethod::Enum::NONE:
             fillOptions(options, current_head, end);
             break;
         default:
