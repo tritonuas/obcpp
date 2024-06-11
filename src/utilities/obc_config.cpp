@@ -61,6 +61,9 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
     SET_CONFIG_OPT(pathing, approach, guided_drop_distance_m);
     SET_CONFIG_OPT(pathing, approach, unguided_drop_distance_m);
 
+    SET_CONFIG_OPT(pathing, dubins, turning_radius);
+    SET_CONFIG_OPT(pathing, dubins, point_separation);
+
     SET_CONFIG_OPT(camera, type);
     SET_CONFIG_OPT(camera, save_dir);
     SET_CONFIG_OPT(camera, mock, images_dir);
