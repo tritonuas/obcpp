@@ -95,8 +95,8 @@ RRTTree::RRTTree(RRTPoint root_point, Environment airspace, Dubins dubins)
 RRTTree::~RRTTree() { delete root; }
 
 bool RRTTree::validatePath(const std::vector<XYZCoord>& path, const RRTOption& option) const {
-    // return airspace.isPathInBounds(path);
-    return airspace.isPathInBoundsAdv(path, option);
+    return airspace.isPathInBounds(path);
+    // return airspace.isPathInBoundsAdv(path, option);
 }
 
 RRTNode* RRTTree::generateNode(RRTNode* anchor_node, const RRTPoint& new_point,

@@ -20,10 +20,15 @@
 #include "utilities/datatypes.hpp"
 #include "utilities/http.hpp"
 
-#define DECLARE_HANDLER_PARAMS(STATE, REQ, RESP)                            \
-    std::shared_ptr<MissionState> STATE = std::make_shared<MissionState>(); \
-    httplib::Request REQ;                                                   \
-    httplib::Response RESP
+#define DECLARE_HANDLER_PARAMS(STATE, REQ, RESP) \
+    int argc = 2; \
+    char path1[] = "bin/obcpp"; \
+    char path2[] = "../configs/dev-config.json"; \
+    char *paths[] = {path1, path2}; \
+    char **paths_ptr = paths; \
+    std::shared_ptr<MissionState> STATE = std::make_shared<MissionState>(OBCConfig(argc, paths_ptr)); \
+    httplib::Request REQ; \
+    httplib::Response RESP 
 
 const static char* mission_json_2024 = R"(
 {
@@ -252,7 +257,7 @@ int main() {
 
     AirdropApproachPathing approach(RRTPoint(XYZCoord(-500, 100, 0), 0),
                              XYZCoord(313.131212, -187.781235, 0), RRTPoint(XYZCoord(0, 0, 0), 0),
-                             state->mission_params.getFlightBoundary());
+                             state->mission_params.getFlightBoundary(), state->config);
 
     Environment env(state->mission_params.getFlightBoundary(),
                     state->mission_params.getAirdropBoundary(), {}, {});

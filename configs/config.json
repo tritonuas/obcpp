@@ -14,9 +14,13 @@
         "altitude_m": 30.0
     },
     "pathing": {
+        "dubins": {
+            "turning_radius": 30.0,
+            "point_separation": 20.0
+        },
         "rrt": {
-            "iterations_per_waypoint": 200,
-            "rewire_radius": 200.0,
+            "iterations_per_waypoint": 512,
+            "rewire_radius": 256.0,
             "optimize": true,
             "point_fetch_method": "nearest", 
             "allowed_to_skip_waypoints": false

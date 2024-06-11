@@ -48,6 +48,11 @@ namespace PointFetchMethod {
     };
 };  // namespace PointFetchMethod
 
+struct DubinsConfig {
+    double turning_radius;
+    double point_separation;
+};
+
 struct RRTConfig {
     int iterations_per_waypoint;  // number of iterations run between two waypoints
     double rewire_radius;         // maximum distance from sampled point to optimize during RRT*
@@ -102,6 +107,7 @@ struct AirdropApproachConfig {
 };
 
 struct PathingConfig {
+    DubinsConfig dubins;
     RRTConfig rrt;
     AirdropCoverageConfig coverage;
     AirdropApproachConfig approach;

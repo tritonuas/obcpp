@@ -10,6 +10,7 @@
 #include "pathing/dubins.hpp"
 #include "pathing/environment.hpp"
 #include "utilities/datatypes.hpp"
+#include "utilities/obc_config.hpp"
 #include "utilities/rng.hpp"
 #include "utilities/obc_config.hpp"
 

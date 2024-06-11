@@ -20,9 +20,15 @@
 #include "utilities/datatypes.hpp"
 #include "utilities/http.hpp"
 
-#define DECLARE_HANDLER_PARAMS(STATE, REQ, RESP)                            \
-    std::shared_ptr<MissionState> STATE = std::make_shared<MissionState>(); \
-    httplib::Request REQ;                                                   \
+#define DECLARE_HANDLER_PARAMS(STATE, REQ, RESP)                    \
+    int argc = 2;                                                   \
+    char path1[] = "bin/obcpp";                                     \
+    char path2[] = "../configs/dev-config.json";                    \
+    char* paths[] = {path1, path2};                                 \
+    char** paths_ptr = paths;                                       \
+    std::shared_ptr<MissionState> STATE =                           \
+        std::make_shared<MissionState>(OBCConfig(argc, paths_ptr)); \
+    httplib::Request REQ;                                           \
     httplib::Response RESP
 
 const static char* mission_json_2024 = R"(
@@ -251,10 +257,8 @@ int main() {
     RRTPoint start = RRTPoint(state->mission_params.getWaypoints()[0], 0);
     start.coord.z = 100;
 
-    CoveragePathing search(
-        start, 9, state->mission_params.getFlightBoundary(),
-        state->mission_params.getAirdropBoundary(), {},
-        AirdropSearchConfig{.coverage_altitude_m = 30.0, .optimize = false, .vertical = false, .one_way = false});
+    ForwardCoveragePathing search(start, 9, state->mission_params.getFlightBoundary(),
+                                  state->mission_params.getAirdropBoundary(), state->config, {});
 
     Environment env(state->mission_params.getFlightBoundary(),
                     state->mission_params.getAirdropBoundary(), {}, {});
@@ -264,7 +268,7 @@ int main() {
     std::vector<XYZCoord> path = search.run();
 
     for (const XYZCoord& coord : path) {
-        file << coord.z << std::endl;
+        file << coord.x << " " << coord.y << " " << coord.z << std::endl;
     }
 
     // plot the path
