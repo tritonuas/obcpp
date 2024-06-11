@@ -6,6 +6,7 @@ set(FILES
     plotting.cpp
     static.cpp
     tree.cpp
+    mission_path.cpp
 )
 
 set (LIB_DEPS

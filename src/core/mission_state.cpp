@@ -66,23 +66,23 @@ TickID MissionState::getTickID() {
     return this->tick->getID();
 }
 
-void MissionState::setInitPath(std::vector<GPSCoord> init_path) {
+void MissionState::setInitPath(const MissionPath& init_path) {
     Lock lock(this->init_path_mut);
     this->init_path = init_path;
 }
 
-const std::vector<GPSCoord>& MissionState::getInitPath() {
+MissionPath MissionState::getInitPath() {
     Lock lock(this->init_path_mut);
     return this->init_path;
 }
 
-void MissionState::setCoveragePath(std::vector<GPSCoord> coverage_path) {
-    Lock lock(this->search_path_mut);
+void MissionState::setCoveragePath(const MissionPath& coverage_path) {
+    Lock lock(this->coverage_path_mut);
     this->coverage_path = coverage_path;
 }
 
-const std::vector<GPSCoord>& MissionState::getCoveragePath() {
-    Lock lock(this->search_path_mut);
+MissionPath MissionState::getCoveragePath() {
+    Lock lock(this->coverage_path_mut);
     return this->coverage_path;
 }
 

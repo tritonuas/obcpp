@@ -15,6 +15,7 @@
 #include "pathing/environment.hpp"
 #include "pathing/plotting.hpp"
 #include "pathing/tree.hpp"
+#include "pathing/mission_path.hpp"
 #include "udp_squared/internal/enum.h"
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
@@ -279,8 +280,8 @@ class AirdropApproachPathing {
     RRTPoint wind;
 };
 
-std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state);
+MissionPath generateInitialPath(std::shared_ptr<MissionState> state);
 
-std::vector<GPSCoord> generateSearchPath(std::shared_ptr<MissionState> state);
+MissionPath generateSearchPath(std::shared_ptr<MissionState> state);
 
 #endif  // INCLUDE_PATHING_STATIC_HPP_

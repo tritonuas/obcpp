@@ -12,6 +12,7 @@
 #include "utilities/serialize.hpp"
 #include "utilities/logging.hpp"
 #include "utilities/http.hpp"
+#include "pathing/mission_path.hpp"
 #include "network/gcs_macros.hpp"
 #include "ticks/tick.hpp"
 #include "ticks/path_gen.hpp"
@@ -128,10 +129,10 @@ DEF_GCS_HANDLE(Get, path, initial) {
     LOG_REQUEST("GET", "/path/initial");
 
     auto path = state->getInitPath();
-    if (path.empty()) {
+    if (path.get().empty()) {
         LOG_RESPONSE(WARNING, "No initial path generated", BAD_REQUEST);
     } else {
-        std::string json = messagesToJson(path.begin(), path.end());
+        std::string json = messagesToJson(path.get().begin(), path.get().end());
         LOG_RESPONSE(INFO, "Got initial path", OK, json.c_str(), mime::json);
     }
 }
@@ -140,10 +141,10 @@ DEF_GCS_HANDLE(Get, path, coverage) {
     LOG_REQUEST("GET", "/path/coverage");
 
     auto path = state->getCoveragePath();
-    if (path.empty()) {
+    if (path.get().empty()) {
         LOG_RESPONSE(WARNING, "No coverage path generated", BAD_REQUEST);
     } else {
-        std::string json = messagesToJson(path.begin(), path.end());
+        std::string json = messagesToJson(path.get().begin(), path.get().end());
         LOG_RESPONSE(INFO, "Got initial path", OK, json.c_str(), mime::json);
     }
 }
@@ -164,7 +165,7 @@ DEF_GCS_HANDLE(Get, path, initial, new) {
 DEF_GCS_HANDLE(Post, path, initial, validate) {
     LOG_REQUEST("POST", "/path/initial/validate");
 
-    if (state->getInitPath().empty()) {
+    if (state->getInitPath().get().empty()) {
         LOG_RESPONSE(WARNING, "No initial path generated", BAD_REQUEST);
         return;
     }

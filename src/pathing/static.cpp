@@ -425,10 +425,10 @@ std::vector<XYZCoord> HoverCoveragePathing::run() {
     double vision = this->config.camera_vision_m;
     double altitude = this->config.altitude_m;
 
-    double start_y = top_left.y - (vision / 2.0);
-    double stop_y = bottom_left.y - (vision / 2.0);
-    double start_x = top_left.x + (vision / 2.0);
-    double stop_x = top_right.x + (vision / 2.0);
+    double start_y = std::max(top_left.y, top_right.y) - (vision / 2.0);
+    double stop_y = std::min(bottom_left.y, bottom_right.y) - (vision / 2.0);
+    double start_x = std::min(top_left.x, bottom_left.x) + (vision / 2.0);
+    double stop_x = std::max(top_right.x, bottom_right.x) + (vision / 2.0);
 
     bool right = true; // start going from right to left
     for (double y = start_y; y > stop_y; y -= vision) {
@@ -489,7 +489,7 @@ RRTPoint AirdropApproachPathing::getDropLocation() const {
     return RRTPoint(drop_location, angle);
 }
 
-std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
+MissionPath generateInitialPath(std::shared_ptr<MissionState> state) {
     // first waypoint is start
 
     // the other waypoitns is the goals
@@ -527,19 +527,20 @@ std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
         output_coords.push_back(state->getCartesianConverter()->toLatLng(wpt));
     }
 
-    return output_coords;
+    return MissionPath(MissionPath::Type::FORWARD, output_coords);
 }
 
-std::vector<GPSCoord> generateSearchPath(std::shared_ptr<MissionState> state) {
+MissionPath generateSearchPath(std::shared_ptr<MissionState> state) {
     if (state->config.pathing.coverage.method == AirdropCoverageMethod::Enum::FORWARD) {
         LOG_F(FATAL, "Forward search path not fully integrated yet.");
-        return {};
+        return MissionPath(MissionPath::Type::FORWARD, {});
     } else {  // hover
         HoverCoveragePathing pathing(state->mission_params.getAirdropBoundary(), state->config);
         std::vector<GPSCoord> coords;
         for (const XYZCoord &coord : pathing.run()) {
             coords.push_back(state->getCartesianConverter()->toLatLng(coord));
         }
-        return coords;
+        return MissionPath(MissionPath::Type::HOVER, coords, 
+            state->config.pathing.coverage.hover.hover_time_s);
     }
 }

@@ -49,7 +49,7 @@ void AirdropClient::_establishConnection() {
             while (true) {
                 LOG_F(INFO, "Sending reset packets to all bottles...");
                 send_ad_packet(this->socket, makeResetPacket(UDP2_ALL));
-                std::this_thread::sleep_for(2s);
+                std::this_thread::sleep_for(10s);
                 if (stop) {
                     return;
                 }

@@ -19,8 +19,8 @@
 #include <utility>
 
 #include "protos/obc.pb.h"
-
 #include "utilities/datatypes.hpp"
+#include "pathing/mission_path.hpp"
 
 class MissionState;
 
@@ -54,11 +54,11 @@ class MavlinkClient {
      * should never happen due to how the state machine is set up, but it is there just in case.
      */
     bool uploadMissionUntilSuccess(std::shared_ptr<MissionState> state,
-        bool upload_geofence, std::vector<GPSCoord> waypoints) const;
+        bool upload_geofence, const MissionPath& waypoints) const;
 
     bool uploadGeofenceUntilSuccess(std::shared_ptr<MissionState> state) const;
     bool uploadWaypointsUntilSuccess(std::shared_ptr<MissionState> state,
-        std::vector<GPSCoord> waypoints) const;
+        const MissionPath& waypoints) const;
 
     std::pair<double, double> latlng_deg();
     double altitude_agl_m();

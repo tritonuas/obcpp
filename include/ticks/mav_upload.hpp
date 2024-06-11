@@ -11,6 +11,7 @@
 #include "ticks/tick.hpp"
 #include "ticks/ids.hpp"
 #include "protos/obc.pb.h"
+#include "pathing/mission_path.hpp"
 
 /*
  * Handles uploading waypoint mission to the Pixhawk flight
@@ -21,7 +22,7 @@
 class MavUploadTick: public Tick {
  public:
     MavUploadTick(std::shared_ptr<MissionState> state,
-        Tick* next_tick, std::vector<GPSCoord> waypoints, bool upload_geofence);
+        Tick* next_tick, const MissionPath& waypoints, bool upload_geofence);
 
     std::chrono::milliseconds getWait() const override;
 
@@ -31,7 +32,7 @@ class MavUploadTick: public Tick {
     std::future<bool> mav_uploaded;
 
     Tick* next_tick;
-    std::vector<GPSCoord> waypoints;
+    MissionPath waypoints;
     bool upload_geofence;
 };
 
