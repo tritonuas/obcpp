@@ -15,6 +15,7 @@
 
 #include "network/mavlink.hpp"
 #include "utilities/datatypes.hpp"
+#include "utilities/obc_config.hpp"
 
 using json = nlohmann::json;
 using Mat = cv::Mat;

@@ -74,43 +74,43 @@ bool Environment::isPathInBounds(const std::vector<XYZCoord>& path) const {
     return true;
 }
 
-bool Environment::isPathInBoundsAdv(const std::vector<XYZCoord>& path,
-                                    const RRTOption& option) const {
-    if (!option.has_straight) {
-        return isPathInBounds(path);
-    }
+// bool Environment::isPathInBoundsAdv(const std::vector<XYZCoord>& path,
+//                                     const RRTOption& option) const {
+//     if (!option.has_straight) {
+//         return isPathInBounds(path);
+//     }
 
-    // finds the last point on the first curve, and the first point on the second curve
-    // does this using the option, using arclength and the point separation
-    const int first_curve_end =
-        std::abs(option.dubins_path.beta_0) * TURNING_RADIUS / POINT_SEPARATION + 1;
-    const int second_curve_start =
-        path.size() - std::abs(option.dubins_path.beta_2) * TURNING_RADIUS / POINT_SEPARATION;
+//     // finds the last point on the first curve, and the first point on the second curve
+//     // does this using the option, using arclength and the point separation
+//     const int first_curve_end =
+//         std::abs(option.dubins_path.beta_0) * TURNING_RADIUS / POINT_SEPARATION + 1;
+//     const int second_curve_start =
+//         path.size() - std::abs(option.dubins_path.beta_2) * TURNING_RADIUS / POINT_SEPARATION;
 
-    // sanity check
-    if (first_curve_end >= second_curve_start) {
-        return isPathInBounds(path);
-    }
+//     // sanity check
+//     if (first_curve_end >= second_curve_start) {
+//         return isPathInBounds(path);
+//     }
 
-    if (!isLineInBounds(path[first_curve_end], path[second_curve_start])) {
-        return false;
-    }
+//     if (!isLineInBounds(path[first_curve_end], path[second_curve_start])) {
+//         return false;
+//     }
 
-    // checks the points manually in the curve
-    for (int i = 0; i <= first_curve_end; i++) {
-        if (!isPointInBounds(path[i])) {
-            return false;
-        }
-    }
+//     // checks the points manually in the curve
+//     for (int i = 0; i <= first_curve_end; i++) {
+//         if (!isPointInBounds(path[i])) {
+//             return false;
+//         }
+//     }
 
-    for (int i = second_curve_start; i < path.size(); i++) {
-        if (!isPointInBounds(path[i])) {
-            return false;
-        }
-    }
+//     for (int i = second_curve_start; i < path.size(); i++) {
+//         if (!isPointInBounds(path[i])) {
+//             return false;
+//         }
+//     }
 
-    return true;
-}
+//     return true;
+// }
 
 const XYZCoord& Environment::getGoal() const { return goals[goals_found]; }
 

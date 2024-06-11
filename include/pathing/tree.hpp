@@ -10,6 +10,7 @@
 #include "pathing/dubins.hpp"
 #include "pathing/environment.hpp"
 #include "utilities/datatypes.hpp"
+#include "utilities/obc_config.hpp"
 #include "utilities/rng.hpp"
 
 class RRTNode;
@@ -196,7 +197,7 @@ class RRTTree {
      * @return                  ==> mininum sorted list of pairs of <node, path>
      */
     std::vector<std::pair<RRTNode*, RRTOption>> pathingOptions(
-        const RRTPoint& end, POINT_FETCH_METHODS path_option = POINT_FETCH_METHODS::NONE,
+        const RRTPoint& end, PointFetchMethod::Enum path_option = PointFetchMethod::Enum::NONE,
         int quantity_options = MAX_DUBINS_OPTIONS_TO_PARSE) const;
 
     /** DOES RRT* for the program

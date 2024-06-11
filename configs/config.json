@@ -14,23 +14,33 @@
         "altitude_m": 30.0
     },
     "pathing": {
-        "_comment": "Point Fetch Method 2: NEAREST",
-        "_comment2": "Drop Method 1: UNGUIDED",
+        "dubins": {
+            "turning_radius": 30.0,
+            "point_separation": 20.0
+        },
         "rrt": {
-            "iterations_per_waypoint": 200,
-            "rewire_radius": 200.0,
+            "iterations_per_waypoint": 512,
+            "rewire_radius": 256.0,
             "optimize": true,
-            "point_fetch_methods": 2, 
+            "point_fetch_method": "nearest", 
             "allowed_to_skip_waypoints": false
         },
         "coverage": {
-            "coverage_altitude_m": 30.0,
-            "optimize": true,
-            "vertical": false,
-            "one_way": false
+            "altitude_m": 30.0,
+            "camera_vision_m": 20,
+            "method": "hover",
+            "hover": {
+                "pictures_per_stop": 1,
+                "hover_time_s": 5
+            },
+            "forward": {
+                "optimize": true,
+                "vertical": false,
+                "one_way": false
+            }
         },
         "approach": {
-            "drop_method": 1,
+            "drop_method": "unguided",
             "drop_angle_rad": 2.52134317,
             "drop_altitude_m": 26.0,
             "guided_drop_distance_m": 50.0,
@@ -50,10 +60,10 @@
             "images_dir": "/obcpp/tests/integration/images/saliency/"
         },
         "lucid": {
-            "sensor_shuttle_mode": "Rolling",
+            "sensor_shutter_mode": "Rolling",
 
             "acquisition_frame_rate_enable": true,
-            "target_brightness": 70,
+            "target_brightness": 20,
             "exposure_auto": "Continuous",
             "exposure_time": 3000,
             "exposure_auto_damping": 1,
