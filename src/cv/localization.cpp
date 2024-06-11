@@ -125,7 +125,8 @@ GPSCoord GSDLocalization::localize(const ImageTelemetry& telemetry, const Bbox& 
     GPSCoord gps;
 
     // Ground Sample Distance (mm/pixel), 1.0~2.5cm per px is ideal aka 10mm~25mm ppx
-    double GSD = (SENSOR_WIDTH * (telemetry.altitude_agl_m)) / (FOCAL_LENGTH_MM * IMG_WIDTH_PX);
+    double GSD = (SENSOR_WIDTH * (telemetry.altitude_agl_m * 1000))
+                 / (FOCAL_LENGTH_MM * IMG_WIDTH_PX);
 
     // Midpoints of the image
     double img_mid_x = IMG_WIDTH_PX / 2;
@@ -152,11 +153,11 @@ GPSCoord GSDLocalization::localize(const ImageTelemetry& telemetry, const Bbox& 
     }
 
     // Finds the offset of the bbox
-    double calc_cam_offset_x = target_camera_cord_x * GSD * 0.001;  // mm to M
-    double calc_cam_offset_y = target_camera_cord_y * GSD * 0.001;  // mm to M
+    double calc_cam_offset_x_m = target_camera_cord_x * GSD * 0.001;  // mm to M
+    double calc_cam_offset_y_m = target_camera_cord_y * GSD * 0.001;  // mm to M
 
     // Calculates the cordinates using the offset
-    GPSCoord calc_coord = CalcOffset((calc_cam_offset_x), (calc_cam_offset_y),
+    GPSCoord calc_coord = CalcOffset((calc_cam_offset_x_m), (calc_cam_offset_y_m),
                                     (telemetry.latitude_deg), (telemetry.longitude_deg));
 
     return calc_coord;

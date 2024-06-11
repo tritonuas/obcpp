@@ -5,7 +5,8 @@
 void assertLocalizationAccuracy(
     const GPSCoord& expectedCoord,
     const GPSCoord& predictedCoord,
-    // TODO: maybe we could specify the threshold in feet (or have a function to convert feet to relative lat/lon)
+    // TODO: should specify the threshold in feet (or have a function to convert feet to relative lat/lon)
+    // lat/long is a different amount of distance at different parts on Earth
     double latitudeDegThreshold = 0.00005,
     double longitudeDegThreshold = 0.00005) { 
 
@@ -31,64 +32,29 @@ TEST(CVLocalization, LocalizationAccuracy) {
             Bbox(1951, 1483, 1951, 1483),
             makeGPSCoord(0, 0, 0),
         }, 
-
         {
-            "Blender Case 1",
-            ImageTelemetry(0, 0, 100, 50, 0, 0, 0, 0),
-            Bbox(4539, 3372, 4539, 3372),
-            makeGPSCoord(-0.00002457511350215088, 0.00002863133914919689, 0),
-        },
-
-        {
-            "Blender Case 2",
-            ImageTelemetry(0, 0, 100, 50, 0, 0, 0, 0),
-            Bbox(2590, 1702, 2590, 1702),
-            makeGPSCoord(0.00000192247925447489, -0.00000231662742315047, 0),      
-        },
-
-        {
-            "Blender Case 3",
-            ImageTelemetry(0, 0, 100, 50, 0, 0, 0, 0),
-            Bbox(692, 814, 692, 814),
-            makeGPSCoord(0.00001601503082197966, -0.00003243918011301731, 0),
-        },
-
-        {
-            "Blender Case 4",
-            ImageTelemetry(0, 0, 100, 50, 0, 0, 0, 0),
-            Bbox(956, 2980, 956, 2980),
-            makeGPSCoord(-0.00001836226633958357, -0.00002825011114503169, 0),
-        },
-
-        {
-            "Blender Case 5",
-            ImageTelemetry(0, 0, 100, 50, 0, 0, 0, 0),
-            Bbox(3318, 1776, 3318, 1776),
-            makeGPSCoord(0.00000075046054290061, 0.00000924642417102570, 0),
-        },
-
-        {
-            "Blender Case 6",
-            ImageTelemetry(0, 0, 100, 50, 0, 0, 0, 0),
-            Bbox(3499, 2008, 3499, 2008),
-            makeGPSCoord(-0.00000292339877027894, 0.00001211822682158354, 0),
+            "real image distance test 1717352989.jpg top target",
+            ImageTelemetry(32.9908692, -117.1282454, 31.619001388549805,
+                            7.618272304534912, 0.0, 0.0, 0.0, 0.0),
+            Bbox(2080, 50, 2280, 240),
+            makeGPSCoord(32.9908692, -117.1282454, 0),
         }
     }};
 
     for (const auto &testCase : testCases) {
         ECEFLocalization ecefLocalizer;
         GSDLocalization gsdLocalization;
-        std::cout << testCase.name << std::endl;
+        std::cout << "Test case: " << testCase.name << std::endl;
 
         // GPSCoord ecefTargetCoord = ecefLocalizer.localize(testCase.inputImageTelemetry, testCase.inputTargetBbox);
         // assertLocalizationAccuracy(testCase.expectedTargetCoord, ecefTargetCoord);
 
         GPSCoord gsdTargetCoord = gsdLocalization.localize(testCase.inputImageTelemetry, testCase.inputTargetBbox);
-        std::cout << "Error: " << gsdLocalization.distanceInMetersBetweenCords(
-            (testCase.expectedTargetCoord.latitude()), 
-            (testCase.expectedTargetCoord.longitude()), 
-            (gsdTargetCoord.longitude()), 
-            (gsdTargetCoord.latitude())) * METER_TO_FT
+        std::cout << "Calculation error: " << gsdLocalization.distanceInMetersBetweenCords(
+            (testCase.expectedTargetCoord.latitude()),
+            (testCase.expectedTargetCoord.longitude()),
+            (gsdTargetCoord.latitude()),
+            (gsdTargetCoord.longitude())) * METER_TO_FT
             << " feet" << std::endl;
         
         assertLocalizationAccuracy(testCase.expectedTargetCoord, gsdTargetCoord);
