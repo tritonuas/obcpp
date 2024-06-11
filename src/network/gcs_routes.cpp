@@ -119,8 +119,37 @@ DEF_GCS_HANDLE(Post, mission) {
 DEF_GCS_HANDLE(Post, airdrop) {
     LOG_REQUEST("POST", "/airdrop");
 
+    std::vector<AirdropTarget> airdrop_targets;
+    google::protobuf::util::JsonStringToMessage(request.body, &airdrop_targets);
 
-    LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
+    if (state->getAirdrop() == nullptr) {
+        LOG_RESPONSE(ERROR, "Airdrop not connected", BAD_REQUEST);
+        return;
+    }
+
+    for (const auto& target : airdrop_targets) {
+        bottle_t bottle;
+        if (target.index() == BottleDropIndex::A) {
+            bottle = UDP2_A;
+        } else if (target.index() == BottleDropIndex::B) {
+            bottle = UDP2_B;
+        } else if (target.index() == BottleDropIndex::C) {
+            bottle = UDP2_C;
+        } else if (target.index() == BottleDropIndex::D) {
+            bottle = UDP2_D;
+        } else if (target.index() == BottleDropIndex::E) {
+            bottle = UDP2_E;
+        } else {
+            LOG_RESPONSE(ERROR, "Invalid bottle index", BAD_REQUEST);
+            return;
+        }
+        float drop_lat = target.coordinate().latitude();
+        float drop_lng = target.coordinate().longitude();
+        unsigned int curr_alt_m = 0;
+        state->getAirdrop()->send(makeLatLngPacket(SEND_LATLNG, bottle, TARGET_ACQUIRED, drop_lat, drop_lng, curr_alt_m));
+    }
+
+    LOG_RESPONSE(INFO, "Uploaded airdrop targets coordinates", OK);
 }
 
 DEF_GCS_HANDLE(Get, path, initial) {
