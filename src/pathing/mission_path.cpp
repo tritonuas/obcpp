@@ -56,6 +56,27 @@ void MissionPath::generateForwardCommands() {
 void MissionPath::generateHoverCommands() {
     this->path_mav.clear();
 
+
+
+    // first thing first we have to actually transition the plane back into multicopter mode
+    // because it will by default attempt to be in forward flight during the mission
+    // https://ardupilot.org/plane/docs/common-mavlink-mission-command-messages-mav_cmd.html#mav-cmd-do-vtol-transition NOLINT
+    // mavsdk::MissionRaw::MissionItem transition;
+    // transition.seq = 0;
+    // transition.frame = MAV_FRAME_GLOBAL_RELATIVE_ALT;
+    // transition.command = MAV_CMD_DO_VTOL_TRANSITION;
+    // transition.current = 1; // starting item, so current is 1
+    // transition.autocontinue = 1;
+    // transition.param1 = MAV_VTOL_STATE_MC; // multicopter/VTOL mode
+    // transition.param2 = 0.0f;
+    // transition.param3 = 0.0f;
+    // transition.param4 = 0.0f;
+    // transition.x = 0.0f; // not used in this command
+    // transition.y = 0.0f;
+    // transition.z = 0.0f;
+    // transition.mission_type = MAV_MISSION_TYPE_MISSION;
+    // this->path_mav.push_back(transition);
+
     // https://mavlink.io/en/messages/common.html#MAV_CMD_NAV_LOITER_TIME
     int i = 0;
     for (const auto& coord : this->path) {
@@ -63,7 +84,7 @@ void MissionPath::generateHoverCommands() {
         item.seq = i;
         item.frame = MAV_FRAME_GLOBAL_RELATIVE_ALT;
         item.command = MAV_CMD_NAV_LOITER_TIME;
-        item.current = (i == 0) ? 1 : 0;
+        item.current = (i == 0) ? 1 : 0; // first waypoint should be true, others false
         item.autocontinue = 1;
         item.param1 = static_cast<float>(this->hover_wait_s);
         item.param2 = 0.0f;  // 0 => dont need to point heading at next waypoint

@@ -2,6 +2,7 @@
 
 #include <mavsdk/mavsdk.h>
 #include <mavsdk/plugins/action/action.h>
+#include <mavsdk/plugins/param/param.h>
 #include <mavsdk/plugins/geofence/geofence.h>
 #include <mavsdk/plugins/mavlink_passthrough/mavlink_passthrough.h>
 #include <mavsdk/plugins/mission_raw/mission_raw.h>
@@ -37,13 +38,16 @@ MavlinkClient::MavlinkClient(std::string link)
 
         LOG_S(WARNING) << "Mavlink connection failed: " << conn_result
                        << ". Trying again in 5 seconds...";
-        std::this_thread::sleep_for(std::chrono::seconds(5));
+        std::this_thread::sleep_for(5s);
     }
 
+    // it wont have gotten a heartbeat immediately so just give it a moment so we don't
+    // have to wait the 3s every time
+    std::this_thread::sleep_for(100ms);
     // Wait for the system to connect via heartbeat
     while (mavsdk.systems().size() == 0) {
         LOG_F(WARNING, "No heartbeat. Trying again in 3 seconds...");
-        std::this_thread::sleep_for(std::chrono::seconds(3));
+        std::this_thread::sleep_for(3s);
     }
 
     LOG_F(INFO, "Mavlink heartbeat received");
@@ -57,6 +61,26 @@ MavlinkClient::MavlinkClient(std::string link)
     this->geofence = std::make_unique<mavsdk::Geofence>(system);
     this->action = std::make_unique<mavsdk::Action>(system);
     this->passthrough = std::make_unique<mavsdk::MavlinkPassthrough>(system);
+    this->param = std::make_unique<mavsdk::Param>(system);
+
+    // need to make sure this parameter is enabled so that during the search phase
+    // it stops to loiter at the loiter points and doesn't just stay in fixed wing mode
+    // the whole time
+    LOG_F(INFO, "Setting Q_GUIDED_MODE to 1...");
+    while (true) {
+        auto result = this->param->set_param_int("Q_GUIDED_MODE", 1);
+        if (result != mavsdk::Param::Result::Success) {
+            LOG_S(ERROR) << "Failed to set Q_GUIDED_MODE: " << result;
+            std::this_thread::sleep_for(1s);
+            continue;
+        }
+        LOG_F(INFO, "Set Q_GUIDED_MODE to %d", 1);
+        break;
+    }
+
+    LOG_F(INFO, "Logging out all mavlink params at TRACE level...");
+    auto all_params = this->param->get_all_params();
+    VLOG_S(TRACE) << all_params;
 
     // Set position update rate (1 Hz)
     // TODO: set the 1.0 update rate value in the obc config
@@ -73,7 +97,7 @@ MavlinkClient::MavlinkClient(std::string link)
 
         LOG_S(WARNING) << "Setting mavlink polling rate to 1.0 failed: " << set_rate_result
                        << ". Trying again...";
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(1s);
     }
 
     LOG_F(INFO, "Setting mavlink telemetry subscriptions");
@@ -300,49 +324,8 @@ mavsdk::Telemetry::FlightMode MavlinkClient::flight_mode() {
     return this->data.flight_mode;
 }
 
-/**
- * Helper function that goes along with isPointInPolygon().
- */
-double MavlinkClient::angle2D(double x1, double y1, double x2, double y2) {
-    double dtheta, theta1, theta2;
-
-    theta1 = atan2(y1, x1);
-    theta2 = atan2(y2, x2);
-    dtheta = theta2 - theta1;
-
-    while (dtheta > M_PI) {
-        dtheta -= 2 * M_PI;
-    }
-    while (dtheta < -M_PI) {
-        dtheta += 2 * M_PI;
-    }
-
-    return (dtheta);
-}
-
-/**
- * This function checks if a coordiante is inside a polygon region.
- * Source:
- * https://stackoverflow.com/questions/4287780/detecting-whether-a-gps-coordinate-falls-within-a-polygon-on-a-map
- */
-bool MavlinkClient::isPointInPolygon(std::pair<double, double> latlng,
-                                     std::vector<XYZCoord> region) {
-    int n = region.size();
-    double angle = 0;
-
-    for (int i = 0; i < n; i++) {
-        double point_1_lat = region[i].x - latlng.first;
-        double point_1_lng = region[i].y - latlng.second;
-        double point_2_lat = region[(i + 1) % n].x - latlng.first;
-        double point_2_lng = region[(i + 1) % n].y - latlng.second;
-        angle += MavlinkClient::angle2D(point_1_lat, point_1_lng, point_2_lat, point_2_lng);
-    }
-
-    if (std::abs(angle) < M_PI) {
-        return false;
-    }
-
-    return true;
+int32_t MavlinkClient::curr_waypoint() const {
+    return this->mission->mission_progress().current;
 }
 
 bool MavlinkClient::isMissionFinished() {
@@ -376,8 +359,13 @@ bool MavlinkClient::armAndHover(std::shared_ptr<MissionState> state) {
     }
 
     const float TAKEOFF_ALT = state->config.takeoff.altitude_m;
-    LOG_F(INFO, "Setting takeoff altitude to %f", TAKEOFF_ALT);
-    auto r1 = this->action->set_takeoff_altitude(TAKEOFF_ALT);
+    // for some reason on the sitl sometimes it gets to right below the takeoff
+    // alt but then never reaches the exact value, so this is a hack to tell it
+    // to takeoff to 1m above where we actually want to takeoff so we reach
+    // the non adjusted altitude
+    const float TAKEOFF_ALT_ADJ = TAKEOFF_ALT + 1;
+    LOG_F(INFO, "Setting takeoff altitude to %f", TAKEOFF_ALT_ADJ);
+    auto r1 = this->action->set_takeoff_altitude(TAKEOFF_ALT_ADJ);
     if (r1 != mavsdk::Action::Result::Success) {
         LOG_S(ERROR) << "FAIL: could not set takeoff alt " << r1;
         return false;

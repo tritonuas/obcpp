@@ -23,6 +23,7 @@ class FlySearchTick : public Tick {
     Tick* tick() override;
 
  private:
+    std::size_t curr_mission_item;
     bool mission_started;
     Polygon airdrop_boundary;
     std::chrono::milliseconds last_photo_time;

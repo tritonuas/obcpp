@@ -244,11 +244,12 @@ class ForwardCoveragePathing {
  */
 class HoverCoveragePathing {
  public:
-    HoverCoveragePathing(Polygon drop_zone, const OBCConfig& config);
+    explicit HoverCoveragePathing(std::shared_ptr<MissionState> state);
 
     std::vector<XYZCoord> run();
 
  private:
+    std::shared_ptr<MissionState> state;
     AirdropCoverageConfig config;
     Polygon drop_zone;
 };

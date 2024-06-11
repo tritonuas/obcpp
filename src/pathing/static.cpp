@@ -19,6 +19,7 @@
 #include "utilities/datatypes.hpp"
 #include "utilities/obc_config.hpp"
 #include "utilities/rng.hpp"
+#include "utilities/common.hpp"
 
 RRT::RRT(RRTPoint start, std::vector<XYZCoord> goals, double search_radius, Polygon bounds,
          const OBCConfig &config, std::vector<Polygon> obstacles, std::vector<double> angles)
@@ -401,9 +402,50 @@ std::vector<XYZCoord> ForwardCoveragePathing::generatePath(
     return path;
 }
 
-HoverCoveragePathing::HoverCoveragePathing(Polygon drop_zone, const OBCConfig& config):
-    config{config.pathing.coverage}, drop_zone{drop_zone}
-{}
+HoverCoveragePathing::HoverCoveragePathing(std::shared_ptr<MissionState> state):
+    config{state->config.pathing.coverage},
+    drop_zone{state->mission_params.getAirdropBoundary()},
+    state{state}
+{
+
+}
+
+// Function to calculate the center of the polygon
+XYZCoord calculateCenter(const std::vector<XYZCoord>& polygon) {
+    XYZCoord center(0.0, 0.0, 0.0);
+    for (const auto& point : polygon) {
+        center.x += point.x;
+        center.y += point.y;
+    }
+    center.x /= polygon.size();
+    center.y /= polygon.size();
+    return center;
+}
+
+// Function to scale the polygon
+void scalePolygon(std::vector<XYZCoord>& polygon, double scaleFactor) {
+    // Step 1: Calculate the center of the polygon
+    XYZCoord center = calculateCenter(polygon);
+
+    // Step 2: Translate the polygon to the origin
+    for (auto& point : polygon) {
+        point.x -= center.x;
+        point.y -= center.y;
+    }
+
+    // Step 3: Scale the polygon
+    for (auto& point : polygon) {
+        point.x *= scaleFactor;
+        point.y *= scaleFactor;
+    }
+
+    // Step 4: Translate the polygon back to its original center
+    for (auto& point : polygon) {
+        point.x += center.x;
+        point.y += center.y;
+    }
+}
+
 
 std::vector<XYZCoord> HoverCoveragePathing::run() {
     if (this->drop_zone.size() != 4) {
@@ -418,8 +460,6 @@ std::vector<XYZCoord> HoverCoveragePathing::run() {
     XYZCoord bottom_left = this->drop_zone.at(0);
     XYZCoord bottom_right = this->drop_zone.at(1);
 
-    // assuming a rectangle!!
-
     std::vector<XYZCoord> hover_points;
 
     double vision = this->config.camera_vision_m;
@@ -430,11 +470,17 @@ std::vector<XYZCoord> HoverCoveragePathing::run() {
     double start_x = std::min(top_left.x, bottom_left.x) + (vision / 2.0);
     double stop_x = std::max(top_right.x, bottom_right.x) + (vision / 2.0);
 
+    Polygon scaled_drop_zone = this->drop_zone;
+    scalePolygon(scaled_drop_zone, 1.20);
+
     bool right = true; // start going from right to left
     for (double y = start_y; y > stop_y; y -= vision) {
         std::vector<XYZCoord> row; // row of points either from left to right or right to left
         for (double x = start_x; x < stop_x; x += vision) {
-            row.push_back(XYZCoord(x, y, altitude));
+            XYZCoord pt(x, y, altitude);
+            if (Environment::isPointInPolygon(scaled_drop_zone, pt)) {
+                row.push_back(pt);
+            }
         }
         if (!right) {
             std::reverse(row.begin(), row.end());  
@@ -449,13 +495,13 @@ std::vector<XYZCoord> HoverCoveragePathing::run() {
 AirdropApproachPathing::AirdropApproachPathing(const RRTPoint &start, const XYZCoord &goal,
                                                RRTPoint wind, Polygon bounds,
                                                const OBCConfig &config,
-                                               std::vector<Polygon> obstacles)
-    : start(start),
-      goal(goal),
-      wind(wind),
-      airspace(Environment(bounds, {}, {goal}, obstacles)),
-      dubins(Dubins(config.pathing.dubins.turning_radius, config.pathing.dubins.point_separation)),
-      config(config) {}
+                                               std::vector<Polygon> obstacles):
+    start(start),
+    goal(goal),
+    wind(wind),
+    airspace(Environment(bounds, {}, {goal}, obstacles)),
+    dubins(Dubins(config.pathing.dubins.turning_radius, config.pathing.dubins.point_separation)),
+    config(config) {}
 
 std::vector<XYZCoord> AirdropApproachPathing::run() const {
     RRTPoint drop_vector = getDropLocation();
@@ -535,12 +581,14 @@ MissionPath generateSearchPath(std::shared_ptr<MissionState> state) {
         LOG_F(FATAL, "Forward search path not fully integrated yet.");
         return MissionPath(MissionPath::Type::FORWARD, {});
     } else {  // hover
-        HoverCoveragePathing pathing(state->mission_params.getAirdropBoundary(), state->config);
-        std::vector<GPSCoord> coords;
-        for (const XYZCoord &coord : pathing.run()) {
-            coords.push_back(state->getCartesianConverter()->toLatLng(coord));
+        HoverCoveragePathing pathing(state);
+
+        std::vector<GPSCoord> gps_coords;
+        for (const auto& coord : pathing.run()) {
+            gps_coords.push_back(state->getCartesianConverter()->toLatLng(coord));
         }
-        return MissionPath(MissionPath::Type::HOVER, coords, 
+
+        return MissionPath(MissionPath::Type::HOVER, gps_coords, 
             state->config.pathing.coverage.hover.hover_time_s);
     }
 }

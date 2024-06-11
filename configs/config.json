@@ -27,11 +27,11 @@
         },
         "coverage": {
             "altitude_m": 30.0,
-            "camera_vision_m": 20,
+            "camera_vision_m": 6.0,
             "method": "hover",
             "hover": {
                 "pictures_per_stop": 1,
-                "hover_time_s": 5
+                "hover_time_s": 1
             },
             "forward": {
                 "optimize": true,

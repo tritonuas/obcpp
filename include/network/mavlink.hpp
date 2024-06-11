@@ -7,6 +7,7 @@
 #include <mavsdk/plugins/geofence/geofence.h>
 #include <mavsdk/plugins/action/action.h>
 #include <mavsdk/plugins/mavlink_passthrough/mavlink_passthrough.h>
+#include <mavsdk/plugins/param/param.h>
 #include <memory>
 #include <vector>
 #include <mutex>
@@ -71,8 +72,7 @@ class MavlinkClient {
     double roll_deg();
     bool isArmed();
     mavsdk::Telemetry::FlightMode flight_mode();
-    double angle2D(double x1, double y1, double x2, double y2);
-    bool isPointInPolygon(std::pair<double, double> latlng, std::vector<XYZCoord> region);
+    int32_t curr_waypoint() const;
     bool isMissionFinished();
     mavsdk::Telemetry::RcStatus get_conn_status();
     bool armAndHover(std::shared_ptr<MissionState> state);
@@ -86,6 +86,7 @@ class MavlinkClient {
     std::unique_ptr<mavsdk::Geofence> geofence;
     std::unique_ptr<mavsdk::Action> action;
     std::unique_ptr<mavsdk::MavlinkPassthrough> passthrough;
+    std::unique_ptr<mavsdk::Param> param;
 
     struct Data {
         double lat_deg {};

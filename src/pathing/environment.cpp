@@ -136,7 +136,7 @@ XYZCoord Environment::getRandomPoint() const {
 
 int Environment::getNumGoals() const { return goals.size(); }
 
-bool Environment::isPointInPolygon(const Polygon& polygon, const XYZCoord& point) const {
+bool Environment::isPointInPolygon(const Polygon& polygon, const XYZCoord& point) {
     bool is_inside = false;
 
     // point in polygon
