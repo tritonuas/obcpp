@@ -37,7 +37,8 @@ RRT::RRT(RRTPoint start, std::vector<XYZCoord> goals, double search_radius, Envi
     : iterations_per_waypoint(config.pathing.rrt.iterations_per_waypoint),
       search_radius(search_radius),
       rewire_radius(config.pathing.rrt.rewire_radius),
-      tree(start, airspace, Dubins(TURNING_RADIUS, POINT_SEPARATION)),
+      tree(start, airspace,
+           Dubins(config.pathing.dubins.turning_radius, config.pathing.dubins.point_separation)),
       config(config.pathing.rrt) {
     if (angles.size() != 0) {
         this->angles = angles;
