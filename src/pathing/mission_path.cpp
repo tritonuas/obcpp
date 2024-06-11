@@ -6,14 +6,14 @@
 #include "utilities/logging.hpp"
 
 MissionPath::MissionPath(MissionPath::Type type, std::vector<GPSCoord> path, int hover_wait_s):
-    type(type), path(path), hover_wait_s(hover_wait_s)
-{
+    type(type), path(path), hover_wait_s(hover_wait_s) {
     switch (type) {
         case Type::HOVER:
             generateHoverCommands();
             break;
         default:
-            LOG_F(WARNING, "Unknown MissionPath type %d, defaulting to forward", static_cast<int>(type));
+            LOG_F(WARNING, "Unknown MissionPath type %d, defaulting to forward",
+                static_cast<int>(type));
         case Type::FORWARD:
             generateForwardCommands();
             break;
@@ -84,7 +84,7 @@ void MissionPath::generateHoverCommands() {
         item.seq = i;
         item.frame = MAV_FRAME_GLOBAL_RELATIVE_ALT;
         item.command = MAV_CMD_NAV_LOITER_TIME;
-        item.current = (i == 0) ? 1 : 0; // first waypoint should be true, others false
+        item.current = (i == 0) ? 1 : 0;  // first waypoint should be true, others false
         item.autocontinue = 1;
         item.param1 = static_cast<float>(this->hover_wait_s);
         item.param2 = 0.0f;  // 0 => dont need to point heading at next waypoint

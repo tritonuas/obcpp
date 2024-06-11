@@ -9,9 +9,7 @@
 #include "ticks/mission_prep.hpp"
 
 ActiveTakeoffTick::ActiveTakeoffTick(std::shared_ptr<MissionState> state):
-    Tick(state, TickID::ActiveTakeoff)
-{
-}
+    Tick(state, TickID::ActiveTakeoff) {}
 
 std::chrono::milliseconds ActiveTakeoffTick::getWait() const {
     return ACTIVE_TAKEOFF_TICK_WAIT;

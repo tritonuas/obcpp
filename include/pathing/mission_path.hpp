@@ -1,10 +1,10 @@
 #ifndef INCLUDE_PATHING_MISSION_PATH_HPP_
 #define INCLUDE_PATHING_MISSION_PATH_HPP_
 
-#include <vector>
-
 #include <mavsdk/mavsdk.h>
 #include <mavsdk/plugins/mission_raw/mission_raw.h>
+
+#include <vector>
 
 #include "utilities/datatypes.hpp"
 #include "protos/obc.pb.h"

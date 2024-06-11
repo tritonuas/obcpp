@@ -9,8 +9,7 @@
 
 
 CVLoiterTick::CVLoiterTick(std::shared_ptr<MissionState> state):
-    Tick(state, TickID::CVLoiter)
-{
+    Tick(state, TickID::CVLoiter) {
     this->status = CVLoiterTick::Status::None;
 }
 

@@ -11,7 +11,7 @@
 #include "ticks/path_validate.hpp"
 #include "utilities/logging.hpp"
 
-using namespace std::chrono_literals;
+using namespace std::chrono_literals;  // NOLINT
 
 PathGenTick::PathGenTick(std::shared_ptr<MissionState> state) : Tick(state, TickID::PathGen) {}
 

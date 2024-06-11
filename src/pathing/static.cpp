@@ -17,7 +17,6 @@
 #include "utilities/constants.hpp"
 #include "utilities/obc_config.hpp"
 #include "utilities/datatypes.hpp"
-#include "utilities/obc_config.hpp"
 #include "utilities/rng.hpp"
 #include "utilities/common.hpp"
 
@@ -405,10 +404,7 @@ std::vector<XYZCoord> ForwardCoveragePathing::generatePath(
 HoverCoveragePathing::HoverCoveragePathing(std::shared_ptr<MissionState> state):
     config{state->config.pathing.coverage},
     drop_zone{state->mission_params.getAirdropBoundary()},
-    state{state}
-{
-
-}
+    state{state} {}
 
 // Function to calculate the center of the polygon
 XYZCoord calculateCenter(const std::vector<XYZCoord>& polygon) {
@@ -452,7 +448,8 @@ std::vector<XYZCoord> HoverCoveragePathing::run() {
         // right now just hardcoded to rectangles. think its ok to panic here because
         // we would want to stop early if we messed this up and this will happen
         // before takeoff
-        LOG_F(FATAL, "Hover airdrop pathing currently only supports 4 coordinates, not %lu", this->drop_zone.size());
+        LOG_F(FATAL, "Hover airdrop pathing currently only supports 4 coordinates, not %lu",
+            this->drop_zone.size());
     }
 
     XYZCoord top_left = this->drop_zone.at(3);
@@ -473,9 +470,9 @@ std::vector<XYZCoord> HoverCoveragePathing::run() {
     Polygon scaled_drop_zone = this->drop_zone;
     scalePolygon(scaled_drop_zone, 1.20);
 
-    bool right = true; // start going from right to left
+    bool right = true;  // start going from right to left
     for (double y = start_y; y > stop_y; y -= vision) {
-        std::vector<XYZCoord> row; // row of points either from left to right or right to left
+        std::vector<XYZCoord> row;  // row of points either from left to right or right to left
         for (double x = start_x; x < stop_x; x += vision) {
             XYZCoord pt(x, y, altitude);
             if (Environment::isPointInPolygon(scaled_drop_zone, pt)) {
@@ -483,7 +480,7 @@ std::vector<XYZCoord> HoverCoveragePathing::run() {
             }
         }
         if (!right) {
-            std::reverse(row.begin(), row.end());  
+            std::reverse(row.begin(), row.end());
         }
         right = !right;
         hover_points.insert(std::end(hover_points), std::begin(row), std::end(row));
@@ -588,7 +585,7 @@ MissionPath generateSearchPath(std::shared_ptr<MissionState> state) {
             gps_coords.push_back(state->getCartesianConverter()->toLatLng(coord));
         }
 
-        return MissionPath(MissionPath::Type::HOVER, gps_coords, 
+        return MissionPath(MissionPath::Type::HOVER, gps_coords,
             state->config.pathing.coverage.hover.hover_time_s);
     }
 }

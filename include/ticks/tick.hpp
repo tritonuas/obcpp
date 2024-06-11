@@ -34,10 +34,11 @@ class Tick {
      * because the constructor can possibly be called before actually transitioning into the tick,
      * as is the case for 
      */
-    virtual void init() {};
+    virtual void init() {}
 
     constexpr TickID getID() const { return this->id; }
     constexpr const char* getName() const { return TICK_ID_TO_STR(this->id); }
+
  protected:
     std::shared_ptr<MissionState> state;
     TickID id;

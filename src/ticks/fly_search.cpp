@@ -11,10 +11,9 @@
 using namespace std::chrono_literals; // NOLINT
 
 FlySearchTick::FlySearchTick(std::shared_ptr<MissionState> state):
-    Tick(state, TickID::FlySearch)
-{
+    Tick(state, TickID::FlySearch) {
     this->mission_started = false;
-    this->curr_mission_item = 1; // if this was 0 it would take a picture immediately after
+    this->curr_mission_item = 1;  // if this was 0 it would take a picture immediately after
     // entering the search mission, so set to 1 so it doesn't start taking pictures until
     // actually over the search zone
 }
@@ -47,7 +46,7 @@ Tick* FlySearchTick::tick() {
 
     // IMPORTANT: currently hardcoded to assume hover search pathing, so it
     // takes photos whenever it gets to a new waypoint (loiter position)
-    // if we were doing forward pathing would probably want to make it 
+    // if we were doing forward pathing would probably want to make it
     // take photos at an interval but only when over the zone
     auto curr_waypoint = this->state->getMav()->curr_waypoint();
     if (this->curr_mission_item != curr_waypoint) {
@@ -55,8 +54,10 @@ Tick* FlySearchTick::tick() {
             auto photo = this->state->getCamera()->takePicture(500ms, this->state->getMav());
 
             if (photo.has_value()) {
-                this->last_photo_time = getUnixTime_ms();            // Update the last photo time
-                this->state->getCV()->runPipeline(photo.value());    // Run the pipeline on the photo
+                // Update the last photo time
+                this->last_photo_time = getUnixTime_ms();
+                // Run the pipeline on the photo
+                this->state->getCV()->runPipeline(photo.value());
             }
         }
         this->curr_mission_item = curr_waypoint;

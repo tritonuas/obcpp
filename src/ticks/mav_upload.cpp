@@ -17,7 +17,6 @@ MavUploadTick::MavUploadTick(std::shared_ptr<MissionState> state,
         Tick(state, TickID::MavUpload), next_tick{next_tick},
         waypoints{waypoints}, upload_geofence{upload_geofence}
 {
-
 }
 
 std::chrono::milliseconds MavUploadTick::getWait() const {

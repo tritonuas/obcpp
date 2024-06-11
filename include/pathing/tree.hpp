@@ -12,7 +12,6 @@
 #include "utilities/datatypes.hpp"
 #include "utilities/obc_config.hpp"
 #include "utilities/rng.hpp"
-#include "utilities/obc_config.hpp"
 
 class RRTNode;
 typedef std::vector<RRTNode*> RRTNodeList;
