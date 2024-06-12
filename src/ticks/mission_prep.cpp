@@ -43,7 +43,7 @@ Tick* MissionPrepTick::tick() {
         // Make a CVAggregator instance and set it in the state
         this->state->setCV(std::make_shared<CVAggregator>(Pipeline(
             PipelineParams(bottles_to_drop,
-                {},   // TODO: pass in reference images
+                this->generateReferenceImages(bottles_to_drop),
                 matching_model_dir,
                 segmentation_model_dir,
                 saliency_model_dir))));
@@ -66,6 +66,7 @@ std::vector<std::pair<cv::Mat, BottleDropIndex>>
         auto res = client.Get(this->getNotStolenRoute(bottle));
         if (res->status != 200) {
             LOG_F(ERROR, "Got invalid response from not-stolen: %s", res->body.c_str());
+            continue;
         }
         std::vector<uint8_t> vectordata(res->body.begin(),res->body.end());
         cv::Mat data_mat(vectordata, true);
