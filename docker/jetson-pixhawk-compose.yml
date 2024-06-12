@@ -6,6 +6,10 @@ services:
     network_mode: "host"
     devices:
       - /dev/ttyACM0:/dev/ttyACM0
+  not-stolen-israeli-code: 
+    image: ghcr.io/tritonuas/not-stolen-israeli-code:latest
+    ports:
+      - 5069:5000
 
     # TODO: set an env variable or point to a config that defines how to connecto the plane. Right now it's a string hard-coded to the plane but eventually we should have an ENV variable here that says "serial:/dev/ttyACM0" or point to a config file that defines that
   dozzle:

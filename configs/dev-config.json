@@ -50,7 +50,9 @@
     "cv": {
         "matching_model_dir": "/workspaces/obcpp/models/target_siamese_1.pt",
         "segmentation_model_dir": "/workspaces/obcpp/models/fcn.pth",
-        "saliency_model_dir": "/workspaces/obcpp/models/torchscript_19.pth"
+        "saliency_model_dir": "/workspaces/obcpp/models/torchscript_19.pth",
+        "not_stolen_addr": "localhost",
+        "not_stolen_port": 5069
     },
     "camera": {
         "_comment": "See CameraConfig struct in datatypes.hpp for detailed explanations",

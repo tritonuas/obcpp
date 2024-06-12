@@ -35,6 +35,8 @@ struct CVConfig {
     std::string matching_model_dir;
     std::string segmentation_model_dir;
     std::string saliency_model_dir;
+    std::string not_stolen_addr;
+    uint16_t not_stolen_port;
 };
 
 namespace PointFetchMethod {

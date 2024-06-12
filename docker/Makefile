@@ -26,6 +26,12 @@ run-jetson-pixhawk-compose:
 stop-jetson-pixhawk-compose:
 	docker compose -f jetson-pixhawk-compose.yml down
 
+run-sitl-compose:
+	docker compose -f sitl-compose.yml up -d
+
+stop-sitl-compose:
+	docker compose -f sitl-compose.yml down
+
 run-jetson-cuda-check:
 	docker run -it --rm --runtime nvidia -i ghcr.io/tritonuas/obcpp:jetson /obcpp/build/bin/cuda_check
 
