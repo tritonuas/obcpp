@@ -5,6 +5,7 @@
 #include <string>
 #include <utility>
 #include <unordered_set>
+#include <unordered_map>
 #include <initializer_list>
 #include "udp_squared/internal/enum.h"
 #include "utilities/constants.hpp"
@@ -156,6 +157,10 @@ struct CameraConfig {
     } lucid;
 };
 
+struct MavlinkParametersConfig {
+    std::unordered_map<std::string, int> param_map;
+};
+
 struct OBCConfig {
     LoggingConfig logging;
     NetworkConfig network;
@@ -163,6 +168,7 @@ struct OBCConfig {
     CVConfig cv;
     PathingConfig pathing;
     CameraConfig camera;
+    MavlinkParametersConfig mavlink_parameters;
 
     // Load user specified config json, or make a new one
     OBCConfig(int argc, char* argv[]);

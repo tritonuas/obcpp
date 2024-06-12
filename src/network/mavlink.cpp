@@ -21,11 +21,14 @@
 #include "pathing/mission_path.hpp"
 #include "utilities/locks.hpp"
 #include "utilities/logging.hpp"
+#include "utilities/obc_config.hpp"
 
 using namespace std::chrono_literals;  // NOLINT
 
-MavlinkClient::MavlinkClient(std::string link)
+MavlinkClient::MavlinkClient(OBCConfig config)
     : mavsdk(mavsdk::Mavsdk::Configuration(mavsdk::Mavsdk::ComponentType::CompanionComputer)) {
+    std::string link = config.network.mavlink.connect;
+
     LOG_F(INFO, "Connecting to Mav at %s", link.c_str());
 
     while (true) {
@@ -63,19 +66,19 @@ MavlinkClient::MavlinkClient(std::string link)
     this->passthrough = std::make_unique<mavsdk::MavlinkPassthrough>(system);
     this->param = std::make_unique<mavsdk::Param>(system);
 
-    // need to make sure this parameter is enabled so that during the search phase
-    // it stops to loiter at the loiter points and doesn't just stay in fixed wing mode
-    // the whole time
-    LOG_F(INFO, "Setting Q_GUIDED_MODE to 1...");
-    while (true) {
-        auto result = this->param->set_param_int("Q_GUIDED_MODE", 1);
-        if (result != mavsdk::Param::Result::Success) {
-            LOG_S(ERROR) << "Failed to set Q_GUIDED_MODE: " << result;
-            std::this_thread::sleep_for(1s);
-            continue;
+    // iterate through all config parameters and upload to the plane
+    for (const auto& [param, val] : config.mavlink_parameters.param_map) {
+        LOG_F(INFO, "Setting %s to %d", param.c_str(), val);
+        while (true) {
+            auto result = this->param->set_param_int(param, val);
+            if (result != mavsdk::Param::Result::Success) {
+                LOG_S(ERROR) << "Failed to set param " << result;
+                std::this_thread::sleep_for(1s);
+                continue;
+            }
+            LOG_F(INFO, "Successfully set param");
+            break;
         }
-        LOG_F(INFO, "Set Q_GUIDED_MODE to %d", 1);
-        break;
     }
 
     LOG_F(INFO, "Logging out all mavlink params at TRACE level...");

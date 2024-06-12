@@ -83,5 +83,8 @@
             "gain_auto_upper_limit": 10,
             "gain_auto_lower_limit": 1
         }
+    },
+    "mavlink_parameters": {
+        "Q_GUIDED_MODE": 1
     }
 }

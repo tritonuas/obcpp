@@ -22,6 +22,7 @@
 #include "protos/obc.pb.h"
 #include "utilities/datatypes.hpp"
 #include "pathing/mission_path.hpp"
+#include "utilities/obc_config.hpp"
 
 class MissionState;
 
@@ -33,7 +34,7 @@ class MavlinkClient {
      * example:
      *   MavlinkClient("tcp://192.168.65.254:5762")
      */ 
-    explicit MavlinkClient(std::string link);
+    explicit MavlinkClient(OBCConfig config);
 
     /*
      * BLOCKING. Continues to try to upload the mission based on the passed through MissionConfig

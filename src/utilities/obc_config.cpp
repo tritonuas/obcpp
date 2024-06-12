@@ -95,4 +95,8 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
     SET_CONFIG_OPT(camera, lucid, gain_auto_lower_limit);
 
     SET_CONFIG_OPT(takeoff, altitude_m);
+
+    for (const auto& [param, val] : configs.at("mavlink_parameters").items()) {
+        this->mavlink_parameters.param_map.insert({param, val});
+    }
 }
