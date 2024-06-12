@@ -7,6 +7,7 @@
 #include <mavsdk/plugins/geofence/geofence.h>
 #include <mavsdk/plugins/action/action.h>
 #include <mavsdk/plugins/mavlink_passthrough/mavlink_passthrough.h>
+#include <mavsdk/plugins/param/param.h>
 #include <memory>
 #include <vector>
 #include <mutex>
@@ -19,8 +20,9 @@
 #include <utility>
 
 #include "protos/obc.pb.h"
-
 #include "utilities/datatypes.hpp"
+#include "pathing/mission_path.hpp"
+#include "utilities/obc_config.hpp"
 
 class MissionState;
 
@@ -32,7 +34,7 @@ class MavlinkClient {
      * example:
      *   MavlinkClient("tcp://192.168.65.254:5762")
      */ 
-    explicit MavlinkClient(std::string link);
+    explicit MavlinkClient(OBCConfig config);
 
     /*
      * BLOCKING. Continues to try to upload the mission based on the passed through MissionConfig
@@ -54,11 +56,11 @@ class MavlinkClient {
      * should never happen due to how the state machine is set up, but it is there just in case.
      */
     bool uploadMissionUntilSuccess(std::shared_ptr<MissionState> state,
-        bool upload_geofence, std::vector<GPSCoord> waypoints) const;
+        bool upload_geofence, const MissionPath& waypoints) const;
 
     bool uploadGeofenceUntilSuccess(std::shared_ptr<MissionState> state) const;
     bool uploadWaypointsUntilSuccess(std::shared_ptr<MissionState> state,
-        std::vector<GPSCoord> waypoints) const;
+        const MissionPath& waypoints) const;
 
     std::pair<double, double> latlng_deg();
     double altitude_agl_m();
@@ -71,8 +73,7 @@ class MavlinkClient {
     double roll_deg();
     bool isArmed();
     mavsdk::Telemetry::FlightMode flight_mode();
-    double angle2D(double x1, double y1, double x2, double y2);
-    bool isPointInPolygon(std::pair<double, double> latlng, std::vector<XYZCoord> region);
+    int32_t curr_waypoint() const;
     bool isMissionFinished();
     mavsdk::Telemetry::RcStatus get_conn_status();
     bool armAndHover(std::shared_ptr<MissionState> state);
@@ -86,6 +87,7 @@ class MavlinkClient {
     std::unique_ptr<mavsdk::Geofence> geofence;
     std::unique_ptr<mavsdk::Action> action;
     std::unique_ptr<mavsdk::MavlinkPassthrough> passthrough;
+    std::unique_ptr<mavsdk::Param> param;
 
     struct Data {
         double lat_deg {};

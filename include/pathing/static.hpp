@@ -15,6 +15,7 @@
 #include "pathing/environment.hpp"
 #include "pathing/plotting.hpp"
 #include "pathing/tree.hpp"
+#include "pathing/mission_path.hpp"
 #include "udp_squared/internal/enum.h"
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
@@ -234,18 +235,22 @@ class ForwardCoveragePathing {
 /**
  * Class that performs coverage pathing over a given search area, given that the plane has
  * hovering capabilities and that we want to be taking pictures while hovering over the zone.
- *
+ * 
  * This outputs a series of XYZ Coordinates which represent a points at which the plane
  * should hover and take a picture.
+ * 
+ * Assumptions:
+ * - The drop zone has 4 points which form a rectangle larger than the vision of the camera
  */
 class HoverCoveragePathing {
  public:
-    HoverCoveragePathing(Polygon flight_bounds, Polygon drop_zone);
+    explicit HoverCoveragePathing(std::shared_ptr<MissionState> state);
 
     std::vector<XYZCoord> run();
 
  private:
-    Polygon flight_bounds;
+    std::shared_ptr<MissionState> state;
+    AirdropCoverageConfig config;
     Polygon drop_zone;
 };
 
@@ -276,8 +281,8 @@ class AirdropApproachPathing {
     RRTPoint wind;
 };
 
-std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state);
+MissionPath generateInitialPath(std::shared_ptr<MissionState> state);
 
-std::vector<GPSCoord> generateSearchPath(std::shared_ptr<MissionState> state);
+MissionPath generateSearchPath(std::shared_ptr<MissionState> state);
 
 #endif  // INCLUDE_PATHING_STATIC_HPP_

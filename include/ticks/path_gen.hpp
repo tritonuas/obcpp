@@ -10,6 +10,7 @@
 #include "ticks/tick.hpp"
 #include "core/mission_state.hpp"
 #include "protos/obc.pb.h"
+#include "pathing/mission_path.hpp"
 
 /*
  * Generates a path, caches the path in the mission state,
@@ -23,9 +24,11 @@ class PathGenTick : public Tick {
 
     std::chrono::milliseconds getWait() const override;
 
+    void init() override;
     Tick* tick() override;
  private:
-    std::future<std::vector<GPSCoord>> path;
+    std::future<MissionPath> init_path;
+    std::future<MissionPath> coverage_path;
 
     void startPathGeneration();
 };

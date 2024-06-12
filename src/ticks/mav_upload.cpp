@@ -13,19 +13,23 @@
 #include "protos/obc.pb.h"
 
 MavUploadTick::MavUploadTick(std::shared_ptr<MissionState> state,
-    Tick* next_tick, std::vector<GPSCoord> waypoints, bool upload_geofence)
-    :Tick(state, TickID::MavUpload), next_tick{next_tick},
-    waypoints{waypoints}, upload_geofence{upload_geofence} {
-    this->mav_uploaded = std::async(std::launch::async,
-                                        &MavlinkClient::uploadMissionUntilSuccess,
-                                        this->state->getMav(),
-                                        this->state,
-                                        upload_geofence,
-                                        waypoints);
+    Tick* next_tick, const MissionPath& waypoints, bool upload_geofence):
+        Tick(state, TickID::MavUpload), next_tick{next_tick},
+        waypoints{waypoints}, upload_geofence{upload_geofence}
+{
 }
 
 std::chrono::milliseconds MavUploadTick::getWait() const {
     return MAV_UPLOAD_TICK_WAIT;
+}
+
+void MavUploadTick::init() {
+    this->mav_uploaded = std::async(std::launch::async,
+                                    &MavlinkClient::uploadMissionUntilSuccess,
+                                    this->state->getMav(),
+                                    this->state,
+                                    upload_geofence,
+                                    waypoints);
 }
 
 Tick* MavUploadTick::tick() {

@@ -82,19 +82,20 @@ DEF_GCS_HANDLE(Post, airdrop);
 /*
  * GET /path/initial
  * 
- * TODO: reference protobuf class that encompasses the JSON
- * ---
- * Response is the cached initial path that hits all of the competition waypoints.
- * 
- * {
- *      TODO: fill in the expected JSON output
- * }
- * 
  * 200 OK: path was previously generated and returned
  * 404 NOT FOUND: no path has been generated yet
  * TODO: determine if there are more errors we might encounter
  */
 DEF_GCS_HANDLE(Get, path, initial);
+
+/*
+ * GET /path/coverage
+ * 
+ * 200 OK: path was previously generated and returned
+ * 404 NOT FOUND: no path has been generated yet
+ * TODO: determine if there are more errors we might encounter
+ */
+DEF_GCS_HANDLE(Get, path, coverage);
 
 /*
  * GET /path/initial/new

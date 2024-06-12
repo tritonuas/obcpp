@@ -60,7 +60,7 @@ void OBC::connectMavlink(std::string mavlink_url) {
     loguru::set_thread_name("mav connect");
 
     // TODO: pull mav ip from config file
-    std::shared_ptr<MavlinkClient> mav(new MavlinkClient(mavlink_url));
+    std::shared_ptr<MavlinkClient> mav(new MavlinkClient(this->state->config));
     this->state->setMav(mav);
 }
 

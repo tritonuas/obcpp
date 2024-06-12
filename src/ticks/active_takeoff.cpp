@@ -8,13 +8,15 @@
 #include "ticks/fly_waypoints.hpp"
 #include "ticks/mission_prep.hpp"
 
-ActiveTakeoffTick::ActiveTakeoffTick(std::shared_ptr<MissionState> state)
-    :Tick(state, TickID::ActiveTakeoff) {
-    this->started = false;
-}
+ActiveTakeoffTick::ActiveTakeoffTick(std::shared_ptr<MissionState> state):
+    Tick(state, TickID::ActiveTakeoff) {}
 
 std::chrono::milliseconds ActiveTakeoffTick::getWait() const {
     return ACTIVE_TAKEOFF_TICK_WAIT;
+}
+
+void ActiveTakeoffTick::init() {
+    this->armAndHover();
 }
 
 void ActiveTakeoffTick::armAndHover() {
@@ -23,12 +25,6 @@ void ActiveTakeoffTick::armAndHover() {
 }
 
 Tick* ActiveTakeoffTick::tick() {
-    if (!started) {
-        started = true;
-        this->armAndHover();
-        return nullptr;
-    }
-
     auto takeoff = this->takeoffResult.wait_for(std::chrono::milliseconds(0));
 
     if (takeoff != std::future_status::ready) {

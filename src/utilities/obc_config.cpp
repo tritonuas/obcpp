@@ -26,10 +26,14 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
     }
     // the macros expect this to be called "configs" so don't change it without also
     // changing the macros
-    nlohmann::json configs = nlohmann::json::parse(configStream);
+    nlohmann::json configs = nlohmann::json::parse(configStream, nullptr, true, true);
 
-    // Set configs
+    // Read this in first before anything else so that all of the read in values get logged
+    // to the config file. Otherwise they will be output to the terminal but not saved to
+    // the file.
     SET_CONFIG_OPT(logging, dir);
+    initLogging(this->logging.dir, true, argc, argv);
+
     SET_CONFIG_OPT(network, mavlink, connect);
     SET_CONFIG_OPT(network, gcs, port);
 
@@ -91,4 +95,8 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
     SET_CONFIG_OPT(camera, lucid, gain_auto_lower_limit);
 
     SET_CONFIG_OPT(takeoff, altitude_m);
+
+    for (const auto& [param, val] : configs.at("mavlink_parameters").items()) {
+        this->mavlink_parameters.param_map.insert({param, val});
+    }
 }

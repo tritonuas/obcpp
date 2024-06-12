@@ -2,6 +2,7 @@
 
 #include <mavsdk/mavsdk.h>
 #include <mavsdk/plugins/action/action.h>
+#include <mavsdk/plugins/param/param.h>
 #include <mavsdk/plugins/geofence/geofence.h>
 #include <mavsdk/plugins/mavlink_passthrough/mavlink_passthrough.h>
 #include <mavsdk/plugins/mission_raw/mission_raw.h>
@@ -17,13 +18,17 @@
 #include <thread>
 
 #include "core/mission_state.hpp"
+#include "pathing/mission_path.hpp"
 #include "utilities/locks.hpp"
 #include "utilities/logging.hpp"
+#include "utilities/obc_config.hpp"
 
 using namespace std::chrono_literals;  // NOLINT
 
-MavlinkClient::MavlinkClient(std::string link)
+MavlinkClient::MavlinkClient(OBCConfig config)
     : mavsdk(mavsdk::Mavsdk::Configuration(mavsdk::Mavsdk::ComponentType::CompanionComputer)) {
+    std::string link = config.network.mavlink.connect;
+
     LOG_F(INFO, "Connecting to Mav at %s", link.c_str());
 
     while (true) {
@@ -36,13 +41,16 @@ MavlinkClient::MavlinkClient(std::string link)
 
         LOG_S(WARNING) << "Mavlink connection failed: " << conn_result
                        << ". Trying again in 5 seconds...";
-        std::this_thread::sleep_for(std::chrono::seconds(5));
+        std::this_thread::sleep_for(5s);
     }
 
+    // it wont have gotten a heartbeat immediately so just give it a moment so we don't
+    // have to wait the 3s every time
+    std::this_thread::sleep_for(100ms);
     // Wait for the system to connect via heartbeat
     while (mavsdk.systems().size() == 0) {
         LOG_F(WARNING, "No heartbeat. Trying again in 3 seconds...");
-        std::this_thread::sleep_for(std::chrono::seconds(3));
+        std::this_thread::sleep_for(3s);
     }
 
     LOG_F(INFO, "Mavlink heartbeat received");
@@ -56,6 +64,26 @@ MavlinkClient::MavlinkClient(std::string link)
     this->geofence = std::make_unique<mavsdk::Geofence>(system);
     this->action = std::make_unique<mavsdk::Action>(system);
     this->passthrough = std::make_unique<mavsdk::MavlinkPassthrough>(system);
+    this->param = std::make_unique<mavsdk::Param>(system);
+
+    // iterate through all config parameters and upload to the plane
+    for (const auto& [param, val] : config.mavlink_parameters.param_map) {
+        LOG_F(INFO, "Setting %s to %d", param.c_str(), val);
+        while (true) {
+            auto result = this->param->set_param_int(param, val);
+            if (result != mavsdk::Param::Result::Success) {
+                LOG_S(ERROR) << "Failed to set param " << result;
+                std::this_thread::sleep_for(1s);
+                continue;
+            }
+            LOG_F(INFO, "Successfully set param");
+            break;
+        }
+    }
+
+    LOG_F(INFO, "Logging out all mavlink params at TRACE level...");
+    auto all_params = this->param->get_all_params();
+    VLOG_S(TRACE) << all_params;
 
     // Set position update rate (1 Hz)
     // TODO: set the 1.0 update rate value in the obc config
@@ -72,7 +100,7 @@ MavlinkClient::MavlinkClient(std::string link)
 
         LOG_S(WARNING) << "Setting mavlink polling rate to 1.0 failed: " << set_rate_result
                        << ". Trying again...";
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(1s);
     }
 
     LOG_F(INFO, "Setting mavlink telemetry subscriptions");
@@ -131,14 +159,14 @@ MavlinkClient::MavlinkClient(std::string link)
 
 bool MavlinkClient::uploadMissionUntilSuccess(std::shared_ptr<MissionState> state,
                                               bool upload_geofence,
-                                              std::vector<GPSCoord> waypoints) const {
+                                              const MissionPath& path) const {
     if (upload_geofence) {
         if (!this->uploadGeofenceUntilSuccess(state)) {
             return false;
         }
     }
-    if (waypoints.size() > 0) {
-        if (!this->uploadWaypointsUntilSuccess(state, waypoints)) {
+    if (path.get().size() > 0) {
+        if (!this->uploadWaypointsUntilSuccess(state, path)) {
             return false;
         }
     }
@@ -154,7 +182,7 @@ bool MavlinkClient::uploadGeofenceUntilSuccess(std::shared_ptr<MissionState> sta
         LOG_F(ERROR, "Upload failed - no mission");
         return false;  // todo determine return type
     }
-    if (state->getInitPath().empty()) {
+    if (state->getInitPath().get().empty()) {
         LOG_F(ERROR, "Upload failed - no initial path");
         return false;
     }
@@ -204,30 +232,9 @@ bool MavlinkClient::uploadGeofenceUntilSuccess(std::shared_ptr<MissionState> sta
 }
 
 bool MavlinkClient::uploadWaypointsUntilSuccess(std::shared_ptr<MissionState> state,
-                                                std::vector<GPSCoord> waypoints) const {
+                                                const MissionPath& waypoints) const {
     LOG_SCOPE_F(INFO, "Uploading waypoints");
 
-    // Parse the waypoint information
-    std::vector<mavsdk::MissionRaw::MissionItem> mission_items;
-    int i = 0;
-    for (const auto& coord : waypoints) {
-        mavsdk::MissionRaw::MissionItem new_raw_item_nav{};
-        new_raw_item_nav.seq = i;
-        new_raw_item_nav.frame = 3;     // MAV_FRAME_GLOBAL_RELATIVE_ALT
-        new_raw_item_nav.command = 16;  // MAV_CMD_NAV_WAYPOINT
-        new_raw_item_nav.current = (i == 0) ? 1 : 0;
-        new_raw_item_nav.autocontinue = 1;
-        new_raw_item_nav.param1 = 0.0;  // Hold
-        new_raw_item_nav.param2 = 7.0;  // Accept Radius 7.0m close to 25ft
-        new_raw_item_nav.param3 = 0.0;  // Pass Radius
-        new_raw_item_nav.param4 = NAN;  // Yaw
-        new_raw_item_nav.x = int32_t(std::round(coord.latitude() * 1e7));
-        new_raw_item_nav.y = int32_t(std::round(coord.longitude() * 1e7));
-        new_raw_item_nav.z = coord.altitude();
-        new_raw_item_nav.mission_type = 0;  // MAV_MISSION_TYPE_MISSION
-        mission_items.push_back(new_raw_item_nav);
-        i++;
-    }
 
     while (true) {
         LOG_F(INFO, "Sending waypoint information...");
@@ -236,7 +243,7 @@ bool MavlinkClient::uploadWaypointsUntilSuccess(std::shared_ptr<MissionState> st
         std::optional<mavsdk::MissionRaw::Result> result{};
 
         this->mission->upload_mission_async(
-            mission_items, [&result, &resultMut](const mavsdk::MissionRaw::Result& res) {
+            waypoints.getCommands(), [&result, &resultMut](const mavsdk::MissionRaw::Result& res) {
                 resultMut.lock();
                 result = res;
                 resultMut.unlock();
@@ -320,49 +327,8 @@ mavsdk::Telemetry::FlightMode MavlinkClient::flight_mode() {
     return this->data.flight_mode;
 }
 
-/**
- * Helper function that goes along with isPointInPolygon().
- */
-double MavlinkClient::angle2D(double x1, double y1, double x2, double y2) {
-    double dtheta, theta1, theta2;
-
-    theta1 = atan2(y1, x1);
-    theta2 = atan2(y2, x2);
-    dtheta = theta2 - theta1;
-
-    while (dtheta > M_PI) {
-        dtheta -= 2 * M_PI;
-    }
-    while (dtheta < -M_PI) {
-        dtheta += 2 * M_PI;
-    }
-
-    return (dtheta);
-}
-
-/**
- * This function checks if a coordiante is inside a polygon region.
- * Source:
- * https://stackoverflow.com/questions/4287780/detecting-whether-a-gps-coordinate-falls-within-a-polygon-on-a-map
- */
-bool MavlinkClient::isPointInPolygon(std::pair<double, double> latlng,
-                                     std::vector<XYZCoord> region) {
-    int n = region.size();
-    double angle = 0;
-
-    for (int i = 0; i < n; i++) {
-        double point_1_lat = region[i].x - latlng.first;
-        double point_1_lng = region[i].y - latlng.second;
-        double point_2_lat = region[(i + 1) % n].x - latlng.first;
-        double point_2_lng = region[(i + 1) % n].y - latlng.second;
-        angle += MavlinkClient::angle2D(point_1_lat, point_1_lng, point_2_lat, point_2_lng);
-    }
-
-    if (std::abs(angle) < M_PI) {
-        return false;
-    }
-
-    return true;
+int32_t MavlinkClient::curr_waypoint() const {
+    return this->mission->mission_progress().current;
 }
 
 bool MavlinkClient::isMissionFinished() {
@@ -395,9 +361,14 @@ bool MavlinkClient::armAndHover(std::shared_ptr<MissionState> state) {
         return false;
     }
 
-    // TODO: config option for this
     const float TAKEOFF_ALT = state->config.takeoff.altitude_m;
-    auto r1 = this->action->set_takeoff_altitude(TAKEOFF_ALT);
+    // for some reason on the sitl sometimes it gets to right below the takeoff
+    // alt but then never reaches the exact value, so this is a hack to tell it
+    // to takeoff to 1m above where we actually want to takeoff so we reach
+    // the non adjusted altitude
+    const float TAKEOFF_ALT_ADJ = TAKEOFF_ALT + 1;
+    LOG_F(INFO, "Setting takeoff altitude to %f", TAKEOFF_ALT_ADJ);
+    auto r1 = this->action->set_takeoff_altitude(TAKEOFF_ALT_ADJ);
     if (r1 != mavsdk::Action::Result::Success) {
         LOG_S(ERROR) << "FAIL: could not set takeoff alt " << r1;
         return false;
@@ -406,30 +377,11 @@ bool MavlinkClient::armAndHover(std::shared_ptr<MissionState> state) {
     LOG_S(INFO) << "Queried takeoff alt to be " << alt_checked << " with status " << r2;
 
     LOG_F(INFO, "Attempting to take off to %fm...", TAKEOFF_ALT);
-    const mavsdk::Action::Result takeoff_result = this->action->takeoff();
+    auto takeoff_result = this->action->takeoff();
     if (takeoff_result != mavsdk::Action::Result::Success) {
         LOG_F(ERROR, "Take off failed");
         return false;
     }
-
-    // need to figure out correct values to send for a VTOL takeoff command
-    // auto result = this->passthrough->send_command_int(mavsdk::MavlinkPassthrough::CommandInt {
-    //     .target_sysid = this->passthrough->get_our_sysid(),
-    //     .target_compid = this->passthrough->get_our_compid(),
-    //     .command = MAV_CMD_NAV_VTOL_TAKEOFF,
-    //     .frame = MAV_FRAME_GLOBAL_RELATIVE_ALT,
-    //     .param1 = 0,
-    //     .param2 = VTOL_TRANSITION_HEADING_NEXT_WAYPOINT, // unsure if arduplane will respect this
-    //     .param3 = 0,
-    //     .param4 = NAN,
-    //     .x = 0,
-    //     .y = 0,
-    //     .z = TAKEOFF_ALT // currently hard coded to 30m (~100ft)
-    // });
-    // if (result != mavsdk::MavlinkPassthrough::Result::Success) {
-    //     LOG_S(ERROR) << "FAIL: takeoff cmd not accepted because " << result;
-    //     // return false;
-    // }
 
     LOG_F(INFO, "Waiting to reach target altitude of %f", TAKEOFF_ALT);
     float current_position = 0;
@@ -444,35 +396,15 @@ bool MavlinkClient::armAndHover(std::shared_ptr<MissionState> state) {
 }
 
 /**
- * Starts the mavlink mission and transitions vehicle from VTOL to fix wing.
+ * Starts the currently uploaded mavlink mission
  */
 bool MavlinkClient::startMission() {
-    LOG_F(INFO, "Attempting to start mission...");
-    LOG_F(INFO, "Querying target takeoff altitude");
-    const auto& [takeoff_result, target_alt] = this->action->get_takeoff_altitude();
-    if (takeoff_result != mavsdk::Action::Result::Success) {
-        LOG_S(ERROR) << "FAIL: could not query takeoff altitude: " << target_alt;
-        return false;
-    }
-    LOG_F(INFO, "Target takeoff altitude is %f", target_alt);
-
-    float current_position = this->telemetry->position().relative_altitude_m;
-
-    LOG_F(INFO, "Checking target altitude");
-    if (current_position < target_alt) {
-        LOG_F(ERROR, "FAIL: Vehicle has not reached desired altitude (%f < %f)", current_position,
-              target_alt);
-        return false;
-    }
-
-    LOG_F(INFO, "About to send start command");
+    LOG_F(INFO, "Sending start mission command");
     auto start_result = this->mission->start_mission();
     if (start_result != mavsdk::MissionRaw::Result::Success) {
         LOG_S(ERROR) << "FAIL: Mission could not start " << start_result;
         return false;
     }
-
-    // will by default transition to forward flight
 
     LOG_F(INFO, "Mission Started!");
     return true;
