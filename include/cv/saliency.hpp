@@ -36,6 +36,7 @@ class Saliency {
  private:
     std::string modelPath;              // path to prediction model
     torch::jit::script::Module module;  // the loaded model
+   //  c10::Device device;                 // 
 };
 
 #endif  // INCLUDE_CV_SALIENCY_HPP_

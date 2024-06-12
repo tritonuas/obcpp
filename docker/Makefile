@@ -29,6 +29,7 @@ stop-jetson-pixhawk-compose:
 run-jetson-cuda-check:
 	docker run -it --rm --runtime nvidia -i ghcr.io/tritonuas/obcpp:jetson /obcpp/build/bin/cuda_check
 
+<<<<<<< HEAD
 
 # NOTE: Use this target for development where you want to quicly edit source code and recompile.
 # This will spawn up the jetson container, launch you into a bash shell and mount the 
@@ -38,3 +39,7 @@ run-jetson-cuda-check:
 # in the Dockerfile.jetson.
 jetson-develop:
 	cd .. && docker run -it --net=host --runtime=nvidia --platform=linux/arm64 --volume=./:/obcpp --device=/dev/ttyACM0 tritonuas/obcpp:jetson /bin/bash
+=======
+jetson-develop:
+	cd .. && docker run -it --net=host --runtime=nvidia --volume=./:/obcpp -i tritonuas/obcpp:jetson /bin/bash
+>>>>>>> bdbd1f8 (pull)

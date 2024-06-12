@@ -9,12 +9,14 @@
 
 // expected arguments: <path-to-model> <path-to-image> 
 int main(int argc, const char* argv[]) {
+ 
   if (argc != 3) {
     std::cerr << "usage: example-app <path-to-model> <path-to-image>\n";
     return -1;
   }
 
   // convert image to tensor
+ 
   const char* modelPath = argv[1];
   Saliency sal(modelPath);
   const char* imgPath = argv[2];
@@ -36,6 +38,7 @@ int main(int argc, const char* argv[]) {
   // cv::namedWindow("cropped targets", cv::WINDOW_FULLSCREEN);
   // cv::imshow("cropped targets", img);
   // cv::waitKey(0);  
+ 
   cv::imwrite("croppedTargets.jpg", img);
   LOG_F(INFO, "saved croppedTargets.jpg to build/");
   // testing: save input image to file path (cv::imsave?) with bounding boxes overlayed
