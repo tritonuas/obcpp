@@ -120,8 +120,52 @@ DEF_GCS_HANDLE(Post, mission) {
 DEF_GCS_HANDLE(Post, airdrop) {
     LOG_REQUEST("POST", "/airdrop");
 
+    if (state->getAirdrop() == nullptr) {
+        LOG_RESPONSE(ERROR, "Airdrop not connected", BAD_REQUEST);
+        return;
+    }
 
-    LOG_RESPONSE(WARNING, "Not Implemented", NOT_IMPLEMENTED);
+    uint32_t curr_alt_m;
+
+    if (state->getMav() == nullptr) {
+        LOG_RESPONSE(ERROR, "Mavlink not connected", BAD_REQUEST);
+        return;
+    } else {
+        curr_alt_m = state->getMav()->altitude_msl_m();
+    }
+
+    nlohmann::json waypoints = nlohmann::json::parse(request.body);
+    AirdropTarget airdrop_target;
+
+    if (!waypoints.is_array()) {
+        LOG_RESPONSE(ERROR, "Waypoints is not a vactor", BAD_REQUEST);
+    }
+
+    for (const auto& waypoint : waypoints) {
+        google::protobuf::util::JsonStringToMessage(waypoint.dump(), &airdrop_target);
+
+        bottle_t bottle;
+        if (airdrop_target.index() == BottleDropIndex::A) {
+            bottle = UDP2_A;
+        } else if (airdrop_target.index() == BottleDropIndex::B) {
+            bottle = UDP2_B;
+        } else if (airdrop_target.index() == BottleDropIndex::C) {
+            bottle = UDP2_C;
+        } else if (airdrop_target.index() == BottleDropIndex::D) {
+            bottle = UDP2_D;
+        } else if (airdrop_target.index() == BottleDropIndex::E) {
+            bottle = UDP2_E;
+        } else {
+            LOG_RESPONSE(ERROR, "Invalid bottle index", BAD_REQUEST);
+            return;
+        }
+
+        float drop_lat = airdrop_target.coordinate().latitude();
+        float drop_lng = airdrop_target.coordinate().longitude();
+        state->getAirdrop()->send(
+            makeLatLngPacket(SEND_LATLNG, bottle, TARGET_ACQUIRED, drop_lat, drop_lng, curr_alt_m));
+    }
+    LOG_RESPONSE(INFO, "Uploaded airdrop targets coordinates", OK);
 }
 
 DEF_GCS_HANDLE(Get, path, initial) {
