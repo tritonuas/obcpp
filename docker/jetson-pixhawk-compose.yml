@@ -1,7 +1,7 @@
 version: "3"
 services:
   obcpp:
-    image: ghcr.io/tritonuas/obcpp:debug-jetson-docker-jetpack36
+    image: ghcr.io/tritonuas/obcpp:jetson
     runtime: nvidia
     network_mode: "host"
     devices:
