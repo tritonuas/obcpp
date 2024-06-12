@@ -283,11 +283,6 @@ int main() {
 
     // RRT settings (manually put in)
     double search_radius = 9999;
-<<<<<<< HEAD
-    double rewire_radius = 256;
-    RRTConfig config = RRTConfig { num_iterations, rewire_radius, true, PointFetchMethod::Enum::NEAREST, true };
-=======
->>>>>>> main
 
     RRT rrt = RRT(start, goals, search_radius,  
                   state->mission_params.getFlightBoundary(), state->config, obstacles, {});
@@ -305,7 +300,7 @@ int main() {
     // get the path, put it into the file
     std::vector<XYZCoord> path = rrt.getPointsToGoal();
     std::cout << "Path size: " << path.size() << std::endl;
-    std::cout << "Path length: " << (path.size() * POINT_SEPARATION) << std::endl;
+    std::cout << "Path length: " << (path.size() * state->config.pathing.dubins.point_separation) << std::endl;
     for (const XYZCoord& point : path) {
         file << point.z << std::endl;
     }
