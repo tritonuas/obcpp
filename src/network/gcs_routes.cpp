@@ -303,7 +303,7 @@ DEF_GCS_HANDLE(Post, takeoff, manual) {
     LOG_REQUEST("POST", "takeoff/manual");
 
     auto lock_ptr = state->getTickLockPtr<WaitForTakeoffTick>();
-    if (!lock_ptr.has_value() || state->getTickID() != TickID::WaitForTakeoff) {
+    if (!lock_ptr.has_value()) {
         LOG_RESPONSE(WARNING, "Not currently in WaitForTakeoff Tick", BAD_REQUEST);
         return;
     }
@@ -315,7 +315,7 @@ DEF_GCS_HANDLE(Post, takeoff, autonomous) {
     LOG_REQUEST("POST", "takeoff/autonomous");
 
     auto lock_ptr = state->getTickLockPtr<WaitForTakeoffTick>();
-    if (!lock_ptr.has_value() || state->getTickID() != TickID::WaitForTakeoff) {
+    if (!lock_ptr.has_value()) {
         LOG_RESPONSE(WARNING, "Not currently in WaitForTakeoff Tick", BAD_REQUEST);
         return;
     }
