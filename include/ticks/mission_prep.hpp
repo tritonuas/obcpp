@@ -24,6 +24,11 @@ class MissionPrepTick : public Tick {
     std::chrono::milliseconds getWait() const override;
 
     Tick* tick() override;
+ private:
+    std::vector<std::pair<cv::Mat, BottleDropIndex>> 
+        generateReferenceImages(std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives);
+
+    std::string getNotStolenRoute(const Bottle& target);
 };
 
 #endif  // INCLUDE_TICKS_MISSION_PREP_HPP_

@@ -1,4 +1,5 @@
 #include "ticks/mission_prep.hpp"
+#include <httplib.h>
 
 #include <memory>
 #include <string>
@@ -7,6 +8,7 @@
 #include "core/mission_state.hpp"
 #include "ticks/path_gen.hpp"
 #include "ticks/ids.hpp"
+#include "utilities/datatypes.hpp"
 
 MissionPrepTick::MissionPrepTick(std::shared_ptr<MissionState> state)
     :Tick(state, TickID::MissionPrep) {}
@@ -50,4 +52,40 @@ Tick* MissionPrepTick::tick() {
     } else {
         return nullptr;
     }
+}
+
+
+std::vector<std::pair<cv::Mat, BottleDropIndex>> 
+    MissionPrepTick::generateReferenceImages(std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives) {
+
+    std::vector<std::pair<cv::Mat, BottleDropIndex>> ref_imgs;
+
+    int curr_bottle_idx = BottleDropIndex::A;
+    for (const auto& bottle : competitionObjectives) {
+        httplib::Client client(this->state->config.cv.not_stolen_addr, this->state->config.cv.not_stolen_port);
+        auto res = client.Get(this->getNotStolenRoute(bottle));
+        if (res->status != 200) {
+            LOG_F(ERROR, "Got invalid response from not-stolen: %s", res->body.c_str());
+        }
+        std::vector<uint8_t> vectordata(res->body.begin(),res->body.end());
+        cv::Mat data_mat(vectordata, true);
+        cv::Mat ref_img(cv::imdecode(data_mat,1)); //put 0 if you want greyscale
+
+        ref_imgs.push_back({ref_img, (BottleDropIndex)curr_bottle_idx});
+        curr_bottle_idx++;
+    }
+    return ref_imgs;
+}
+
+std::string MissionPrepTick::getNotStolenRoute(const Bottle& target) {
+    std::string char_type = target.alphanumeric();
+    std::string char_color = ODLCColorToString(target.alphanumericcolor());
+
+    std::string shape_type = ODLCShapeToString(target.shape());
+    std::string shape_color = ODLCColorToString(target.shapecolor());
+
+    return std::string("/generate?shape_type=") + shape_type + 
+        std::string("&shape_color=") + shape_color +
+        std::string("&char_type=") + char_type +
+        std::string("&char_color=") + char_color;
 }

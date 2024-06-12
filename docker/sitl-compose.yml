@@ -1,6 +1,15 @@
 # TODO: setup env variables https://docs.docker.com/compose/environment-variables/
 version: "3"
 services:
+  # obcpp:
+  #   image: ghcr.io/tritonuas/obcpp:x86
+  #   network_mode: "host"
+  #   #ports:
+  #   #  - 5010:5010
+  not-stolen-israeli-code: 
+    image: ghcr.io/tritonuas/not-stolen-israeli-code:latest
+    ports:
+      - 5069:5000
   sitl:
     image: tritonuas/plane.rascal
     network_mode: "host"
