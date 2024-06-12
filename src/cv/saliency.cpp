@@ -26,7 +26,6 @@ Saliency::Saliency(std::string modelPath) {
     catch (const c10::Error& e) {
         LOG_F(ERROR, "error loading the model %s", e.msg().c_str());
     }
-
 }
 
 std::vector<CroppedTarget> Saliency::salience(cv::Mat image) {
@@ -37,7 +36,8 @@ std::vector<CroppedTarget> Saliency::salience(cv::Mat image) {
     // swap axis
     tensor = Saliency::transpose(tensor, { (2), (0), (1) });
     
-    c10::Device device = torch::cuda::is_available() ? torch::kCUDA : torch::kCPU;  // eventually add device as member of Saliency
+    // eventually add device as member of Saliency
+    c10::Device device = torch::cuda::is_available() ? torch::kCUDA : torch::kCPU;
     auto tensor_cuda = tensor.to(device);
 
     auto input_to_net = ToInput(tensor_cuda);
@@ -48,7 +48,7 @@ std::vector<CroppedTarget> Saliency::salience(cv::Mat image) {
      * that we want are : a) boxes (FloatTensor[N, 4]): the predicted boxes, and
      * b) scores (Tensor[N]): the scores of each detection.
      */
-    
+
     // output is a tuple of (losses, detections)
     auto output = module.forward(input_to_net);
     c10::ivalue::Tuple& tuple = output.toTupleRef();

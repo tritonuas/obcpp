@@ -1,12 +1,4 @@
-<<<<<<< Updated upstream
 FROM dustynv/l4t-pytorch:r36.2.0
-=======
-# FROM tritonuas/jetson-base:r36.2.0
-FROM dustynv/l4t-pytorch:r36.2.0
-
-# this base image came from dusty-nv/jetson-containers
-# ./build.sh --name=tritonuas/jetson-base pytorch:2.1 torchvision opencv 
->>>>>>> Stashed changes
 
 ARG USERNAME=tuas USER_UID=1000 USER_GID=1000 DEBIAN_FRONTEND=noninteractive
 
@@ -58,14 +50,6 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
                            libopenblas-dev \
                            ninja-build
 
-# RUN sudo dpkg --remove libopencv-dev
-# RUN sudo apt install -f
-# RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
-#     --mount=target=/var/cache/apt,type=cache,sharing=locked \
-#     rm -f /etc/apt/apt.conf.d/docker-clean \ 
-#     && apt-get update \
-#     && apt-get install -y libopencv-dev
-
 RUN pip3 install typing-extensions PyYAML cpplint
 
 RUN echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
@@ -81,7 +65,6 @@ RUN git clone --depth 1 https://github.com/mavlink/MAVSDK.git --branch v2.9.1 --
 # pull and build torchvision
 # refer to this page for version compatibilty with pytorch (libtorch) https://github.com/pytorch/pytorch/wiki/PyTorch-Versions
 ARG TORCHVISION_VERSION=0.17.0
-<<<<<<< Updated upstream
 # Space separated list of CUDA architecture versions.
 # The version nubmers depend on the NVIDIA GPU model we're using and the installed CUDA version. 
 # For the Jetson Orin Nano with the "Ampere" architecture and CUDA 12.1 we can use version 8.6 (written as 86 in CUDA_ARCH_LIST).
@@ -111,26 +94,6 @@ RUN gdown 1VtBji-cWfetM5nXZwt55JuHPWPGahQOH -O ${ARENA_TAR_PATH}
 RUN tar -xvzf ${ARENA_TAR_PATH}
 WORKDIR ${ARENA_EXTRACTED_PATH}
 RUN sh Arena_SDK_ARM64.conf
-=======
-#ARG TORCHVISION_INSTALL_DIR=/torchvision-tmp
-WORKDIR ${TORCHVISION_INSTALL_DIR} 
-RUN wget "https://github.com/pytorch/vision/archive/refs/tags/v${TORCHVISION_VERSION}.zip" \
-    && unzip "v${TORCHVISION_VERSION}.zip" \
-    && cd vision-0.17.0 \
-    && mkdir build \
-    && cd build \
-    && cmake -DWITH_CUDA=1 -DCUDA_HAS_FP16=1 -DCUDA_NO_HALF_OPERATORS=1 -DCUDA_NO_HALF_CONVERSIONS=1 -DCUDA_NO_HALF2_OPERATORS=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/usr/local/lib/python3.10/dist-packages/torch/share/cmake/Torch" .. \
-    && make -j4 \
-    && make install
-
-# # Install g++10 and replace the older version. For some reason some c++ 20 features aren't working with g++9 even though
-# # we have CMake configured to use c++ 20 https://stackoverflow.com/questions/6903.1073/why-am-i-missing-c20-headers-and-how-do-i-fix-this
-# RUN apt-get update && apt-get install -y g++-10 gcc-10
-# RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 10
-# RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 10
-# RUN update-alternatives --set gcc /usr/bin/gcc-10
-# RUN update-alternatives --set g++ /usr/bin/g++-10
->>>>>>> Stashed changes
 
 WORKDIR /obcpp
 COPY . .
@@ -138,16 +101,9 @@ COPY . .
 RUN rm -rf /obcpp/build
 WORKDIR /obcpp/build
 ENV CMAKE_PREFIX_PATH="/usr/local/lib/python3.10/dist-packages/torch/share/cmake/Torch;/usr/local/share/cmake/TorchVision"
-<<<<<<< Updated upstream
 RUN GITHUB_ACTIONS=true cmake -DCMAKE_PREFIX_PATH="/usr/local/lib/python3.10/dist-packages/torch/share/cmake/Torch;/usr/local/share/cmake/TorchVision" -DCMAKE_MODULE_PATH="/usr/local/share/cmake/TorchVision" -DCMAKE_BUILD_TYPE="Release" ..
 
 RUN ninja obcpp 
-=======
-RUN GITHUB_ACTIONS=true cmake -DCMAKE_PREFIX_PATH="/usr/local/lib/python3.10/dist-packages/torch/share/cmake/Torch;/usr/local/share/cmake/TorchVision" -DCMAKE_MODULE_PATH="/usr/local/share/cmake/TorchVision" -DCMAKE_BUILD_TYPE="Release" -DCMAKE_JOB_POOLS="j=2" ..
-
-# RUN make obcpp cuda_check load_torchvision_model VERBOSE=1
-RUN ninja obcpp
->>>>>>> Stashed changes
 
 # login as non-root user
 # USER $USERNAME
