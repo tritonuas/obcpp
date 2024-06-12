@@ -163,8 +163,7 @@ DEF_GCS_HANDLE(Post, airdrop) {
         float drop_lat = airdrop_target.coordinate().latitude();
         float drop_lng = airdrop_target.coordinate().longitude();
         state->getAirdrop()->send(
-            makeLatLngPacket(SEND_LATLNG, bottle, TARGET_ACQUIRED, drop_lat, drop_lng, curr_alt_m)
-        );
+            makeLatLngPacket(SEND_LATLNG, bottle, TARGET_ACQUIRED, drop_lat, drop_lng, curr_alt_m));
     }
     LOG_RESPONSE(INFO, "Uploaded airdrop targets coordinates", OK);
 }
