@@ -5,22 +5,32 @@
 #include <string>
 
 #include "cv/saliency.hpp"
+#include "utilities/common.hpp"
 #include "loguru.hpp"
 
 // expected arguments: <path-to-model> <path-to-image> 
 int main(int argc, const char* argv[]) {
+ 
   if (argc != 3) {
     std::cerr << "usage: example-app <path-to-model> <path-to-image>\n";
     return -1;
   }
 
   // convert image to tensor
+ 
   const char* modelPath = argv[1];
+  auto startLoad = getUnixTime_ms().count();
   Saliency sal(modelPath);
+  auto endLoad = getUnixTime_ms().count();
+  LOG_F(INFO, "time to load: %u milliseconds", endLoad - startLoad);
+
   const char* imgPath = argv[2];
   cv::Mat img = cv::imread(imgPath, cv::IMREAD_COLOR);
 
+  auto startSalience = getUnixTime_ms().count();
   std::vector<CroppedTarget> predictions = sal.salience(img); 
+  auto endSalience = getUnixTime_ms().count();
+  LOG_F(INFO, "time to saliency: %u milliseconds", endSalience - startSalience);
   
   img = cv::imread(imgPath, cv::IMREAD_COLOR);
   
@@ -36,6 +46,7 @@ int main(int argc, const char* argv[]) {
   // cv::namedWindow("cropped targets", cv::WINDOW_FULLSCREEN);
   // cv::imshow("cropped targets", img);
   // cv::waitKey(0);  
+ 
   cv::imwrite("croppedTargets.jpg", img);
   LOG_F(INFO, "saved croppedTargets.jpg to build/");
   // testing: save input image to file path (cv::imsave?) with bounding boxes overlayed

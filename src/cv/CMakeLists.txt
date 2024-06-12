@@ -14,6 +14,7 @@ set(FILES
 set(LIB_DEPS
     obcpp_protos
     obcpp_utilities
+    obcpp_camera
 )
 
 add_library(${LIB_NAME} STATIC
