@@ -237,26 +237,16 @@ DEF_GCS_HANDLE(Get, camera, capture) {
 
     std::optional<ImageData> image = cam->takePicture(1000ms, state->getMav());
 
+    if (state->config.camera.save_images_to_file) {
+        image->saveToFile(state->config.camera.save_dir);
+    }
+
     if (!image.has_value()) {
         LOG_RESPONSE(ERROR, "Failed to capture image", INTERNAL_SERVER_ERROR);
         return;
     }
 
     std::optional<ImageTelemetry> telemetry = image->TELEMETRY;
-
-    try {
-        std::filesystem::path save_dir = state->config.camera.save_dir;
-        std::filesystem::path img_filepath =
-            save_dir / (std::to_string(image->TIMESTAMP) + std::string(".jpg"));
-        std::filesystem::path json_filepath =
-            save_dir / (std::to_string(image->TIMESTAMP) + std::string(".json"));
-        saveImageToFile(image->DATA, img_filepath);
-        if (image->TELEMETRY.has_value()) {
-            saveImageTelemetryToFile(image->TELEMETRY.value(), json_filepath);
-        }
-    } catch (std::exception& e) {
-        LOG_F(ERROR, "Failed to save image and telemetry to file");
-    }
 
     ManualImage manual_image;
     manual_image.set_img_b64(cvMatToBase64(image->DATA));

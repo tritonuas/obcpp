@@ -58,6 +58,7 @@
         "_comment": "See CameraConfig struct in datatypes.hpp for detailed explanations",
         "type": "mock",
         "save_dir": "/workspaces/obcpp/images/",
+        "save_images_to_file": false,
         "mock": {
             "images_dir": "/workspaces/obcpp/tests/integration/images/saliency/"
         },

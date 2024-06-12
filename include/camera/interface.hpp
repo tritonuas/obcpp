@@ -45,6 +45,13 @@ struct ImageData {
     cv::Mat DATA;
     uint64_t TIMESTAMP;
     std::optional<ImageTelemetry> TELEMETRY;
+
+    /**
+     * Saves the image to a file
+     * @param directory directory to save the image in
+     * @returns true/false if saving was successful
+     */
+    bool saveToFile(std::string directory) const;
 };
 
 std::string cvMatToBase64(cv::Mat image);

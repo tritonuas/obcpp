@@ -72,6 +72,7 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
 
     SET_CONFIG_OPT(camera, type);
     SET_CONFIG_OPT(camera, save_dir);
+    SET_CONFIG_OPT(camera, save_images_to_file);
     SET_CONFIG_OPT(camera, mock, images_dir);
 
     SET_CONFIG_OPT(camera, lucid, sensor_shutter_mode);

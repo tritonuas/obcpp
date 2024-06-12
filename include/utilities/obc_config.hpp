@@ -121,6 +121,8 @@ struct CameraConfig {
     std::string type;
     // directory to save images to
     std::string save_dir;
+    // whether or not to save to save_dir
+    bool save_images_to_file;
     struct {
         // directory to randomly pick images from
         // for the mock camera
