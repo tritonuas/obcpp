@@ -52,6 +52,9 @@ Tick* FlySearchTick::tick() {
     if (this->curr_mission_item != curr_waypoint) {
         for (int i = 0; i < this->state->config.pathing.coverage.hover.pictures_per_stop; i++) {
             auto photo = this->state->getCamera()->takePicture(500ms, this->state->getMav());
+            if (state->config.camera.save_images_to_file) {
+                photo->saveToFile(state->config.camera.save_dir);
+            }
 
             if (photo.has_value()) {
                 // Update the last photo time

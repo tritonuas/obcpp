@@ -69,3 +69,22 @@ std::optional<ImageTelemetry> queryMavlinkImageTelemetry(
     .roll_deg = roll_deg
   };
 }
+
+bool ImageData::saveToFile(std::string directory) const {
+    try {
+        std::filesystem::path save_dir = directory;
+        std::filesystem::path img_filepath =
+            save_dir / (std::to_string(this->TIMESTAMP) + std::string(".jpg"));
+        std::filesystem::path json_filepath =
+            save_dir / (std::to_string(this->TIMESTAMP) + std::string(".json"));
+        saveImageToFile(this->DATA, img_filepath);
+        if (this->TELEMETRY.has_value()) {
+            saveImageTelemetryToFile(this->TELEMETRY.value(), json_filepath);
+        }
+    } catch (std::exception& e) {
+        LOG_F(ERROR, "Failed to save image and telemetry to file");
+        return false;
+    }
+
+    return true;
+}
