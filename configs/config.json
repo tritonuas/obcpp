@@ -85,6 +85,6 @@
         }
     },
     "mavlink_parameters": {
-        "Q_GUIDED_MODE": 1
+        "Q_GUIDED_MODE": 1 // hover over loiter waypoints
     }
 }
