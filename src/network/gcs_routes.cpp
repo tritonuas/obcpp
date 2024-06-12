@@ -137,30 +137,32 @@ DEF_GCS_HANDLE(Post, airdrop) {
     nlohmann::json waypoints = nlohmann::json::parse(request.body);
     AirdropTarget airdrop_target;
 
-    if (waypoints.is_array()) {
-        for (const auto& waypoint : waypoints) {  
-            google::protobuf::util::JsonStringToMessage(waypoint, &airdrop_target);
+    if (!waypoints.is_array()) {
+        LOG_RESPONSE(ERROR, "Waypoints is not a vactor", BAD_REQUEST);
+    }
 
-            bottle_t bottle;
-            if (airdrop_target.index() == BottleDropIndex::A) {
-                bottle = UDP2_A;
-            } else if (airdrop_target.index() == BottleDropIndex::B) {
-                bottle = UDP2_B;
-            } else if (airdrop_target.index() == BottleDropIndex::C) {
-                bottle = UDP2_C;
-            } else if (airdrop_target.index() == BottleDropIndex::D) {
-                bottle = UDP2_D;
-            } else if (airdrop_target.index() == BottleDropIndex::E) {
-                bottle = UDP2_E;
-            } else {
-                LOG_RESPONSE(ERROR, "Invalid bottle index", BAD_REQUEST);
-                return;
-            }
+    for (const auto& waypoint : waypoints) {  
+        google::protobuf::util::JsonStringToMessage(waypoint.dump(), &airdrop_target);
 
-            float drop_lat = airdrop_target.coordinate().latitude();
-            float drop_lng = airdrop_target.coordinate().longitude();
-            state->getAirdrop()->send(makeLatLngPacket(SEND_LATLNG, bottle, TARGET_ACQUIRED, drop_lat, drop_lng, curr_alt_m));
+        bottle_t bottle;
+        if (airdrop_target.index() == BottleDropIndex::A) {
+            bottle = UDP2_A;
+        } else if (airdrop_target.index() == BottleDropIndex::B) {
+            bottle = UDP2_B;
+        } else if (airdrop_target.index() == BottleDropIndex::C) {
+            bottle = UDP2_C;
+        } else if (airdrop_target.index() == BottleDropIndex::D) {
+            bottle = UDP2_D;
+        } else if (airdrop_target.index() == BottleDropIndex::E) {
+            bottle = UDP2_E;
+        } else {
+            LOG_RESPONSE(ERROR, "Invalid bottle index", BAD_REQUEST);
+            return;
         }
+
+        float drop_lat = airdrop_target.coordinate().latitude();
+        float drop_lng = airdrop_target.coordinate().longitude();
+        state->getAirdrop()->send(makeLatLngPacket(SEND_LATLNG, bottle, TARGET_ACQUIRED, drop_lat, drop_lng, curr_alt_m));
     }
     LOG_RESPONSE(INFO, "Uploaded airdrop targets coordinates", OK);
 }
