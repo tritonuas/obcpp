@@ -24,7 +24,7 @@ std::string messagesToJson(Iterator begin, Iterator end) {
 
     std::string json = "[";
     while (it != end) {
-        google::protobuf::Message& message = *it;
+        const google::protobuf::Message& message = *it;
         std::string message_json;
 
         google::protobuf::util::MessageToJsonString(message, &message_json);

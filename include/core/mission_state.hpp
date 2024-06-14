@@ -18,6 +18,7 @@
 #include "network/airdrop_client.hpp"
 #include "network/mavlink.hpp"
 #include "pathing/cartesian.hpp"
+#include "pathing/mission_path.hpp"
 #include "protos/obc.pb.h"
 #include "ticks/ids.hpp"
 #include "utilities/constants.hpp"
@@ -31,7 +32,7 @@ class Tick;
 
 class MissionState {
  public:
-    MissionState();
+    explicit MissionState(OBCConfig config);
     ~MissionState();
 
     const std::optional<CartesianConverter<GPSProtoVec>>& getCartesianConverter();
@@ -42,8 +43,11 @@ class MissionState {
 
     void setTick(Tick* newTick);
 
-    void setInitPath(std::vector<GPSCoord> init_path);
-    const std::vector<GPSCoord>& getInitPath();
+    void setInitPath(const MissionPath& init_path);
+    MissionPath getInitPath();
+
+    void setCoveragePath(const MissionPath& coverage_path);
+    MissionPath getCoveragePath();
 
     std::vector<GPSCoord> airdrop_path;
 
@@ -55,10 +59,10 @@ class MissionState {
      */
     template <typename T>
     std::optional<LockPtr<T>> getTickLockPtr() {
-        try {
-            return LockPtr(std::dynamic_pointer_cast<T>(this->tick), &this->tick_mut);
-        } catch (std::bad_cast ex) {
-            LOG_F(ERROR, "Error creating TickLockRef: %s", ex.what());
+        auto ptr = std::dynamic_pointer_cast<T>(this->tick);
+        if (ptr != nullptr) {
+            return LockPtr(ptr, &this->tick_mut);
+        } else {
             return {};
         }
     }
@@ -96,11 +100,10 @@ class MissionState {
     void setCamera(std::shared_ptr<CameraInterface> camera);
 
     MissionParameters mission_params;  // has its own mutex
-    RRTConfig rrt_config;
-    AirdropSearchConfig coverage_pathing_config;
-    CameraConfig camera_config;
-    float takeoff_alt_m;
+
     std::unordered_set<BottleDropIndex> dropped_bottles;
+
+    OBCConfig config;
 
  private:
     std::mutex converter_mut;
@@ -110,7 +113,9 @@ class MissionState {
     std::shared_ptr<Tick> tick;
 
     std::mutex init_path_mut;  // for reading/writing the initial path
-    std::vector<GPSCoord> init_path;
+    MissionPath init_path;
+    std::mutex coverage_path_mut;  // for reading/writing the coverage path
+    MissionPath coverage_path;
 
     std::shared_ptr<MavlinkClient> mav;
     std::shared_ptr<AirdropClient> airdrop;

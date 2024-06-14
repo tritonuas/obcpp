@@ -250,5 +250,7 @@ No formatter has been added yet. Formatting will be enforced once one is set up.
 If you are having problems sending UDP broadcast packets from the jetson, ensure that the default gateway ip is set correctly. You can use the following command to do this:
 
 ```
-route add default gw 192.168.1.1
+route add default gw 10.42.0.1
 ```
+
+Essentially what this is doing is telling the Jetson that the default network gateway is itself on the jetspot hotspot network.

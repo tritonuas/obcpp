@@ -101,7 +101,12 @@ class Environment {
      * on the edge are counted as outside the polygon (to be more
      * conservative)
      *
-     * Public ONLY for the sake of testing
+     * Public ONLY for the sake of testing     <-- no (read below)
+     * 
+     * Making this static so that other parts of the code can access it
+     * but really this should just be a detacted helper function, should
+     * refactor this eventually, but for rn static is the easy thing to do
+     * - tyler
      *
      * @param point ==> given point
      * @return      ==> whether or not the point is in this polygon object
@@ -109,7 +114,7 @@ class Environment {
      *  [TODO] make a method to augment the polygon to get similar polygons
      *  [TODO] something that increases cost based on time in the edge
      */
-    bool isPointInPolygon(const Polygon& polygon, const XYZCoord& point) const;
+    static bool isPointInPolygon(const Polygon& polygon, const XYZCoord& point);
 
     /**
      * Checks wheter a line segment is in bounds or not, it must NOT intersect

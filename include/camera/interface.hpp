@@ -7,6 +7,7 @@
 #include <optional>
 #include <unordered_map>
 #include <deque>
+#include <filesystem>
 
 #include <nlohmann/json.hpp>
 #include <opencv2/opencv.hpp>
@@ -14,6 +15,7 @@
 
 #include "network/mavlink.hpp"
 #include "utilities/datatypes.hpp"
+#include "utilities/obc_config.hpp"
 
 using json = nlohmann::json;
 using Mat = cv::Mat;
@@ -41,8 +43,23 @@ std::optional<ImageTelemetry> queryMavlinkImageTelemetry(
 
 struct ImageData {
     cv::Mat DATA;
+    uint64_t TIMESTAMP;
     std::optional<ImageTelemetry> TELEMETRY;
+
+    /**
+     * Saves the image to a file
+     * @param directory directory to save the image in
+     * @returns true/false if saving was successful
+     */
+    bool saveToFile(std::string directory) const;
 };
+
+std::string cvMatToBase64(cv::Mat image);
+
+void saveImageToFile(cv::Mat image, const std::filesystem::path& filepath);
+
+void saveImageTelemetryToFile(const ImageTelemetry& telemetry,
+                              const std::filesystem::path& filepath);
 
 class CameraInterface {
  protected:
@@ -71,6 +88,15 @@ class CameraInterface {
     virtual std::optional<ImageData> getLatestImage() = 0;
     // Get all the recently buffered images
     virtual std::deque<ImageData> getAllImages() = 0;
+
+    virtual void startStreaming() = 0;
+
+    /**
+    * Blocking call that takes an image. If it takes longer than the timeout 
+    * to capture the image, no image is returned.
+    */
+    virtual std::optional<ImageData> takePicture(const std::chrono::milliseconds& timeout,
+        std::shared_ptr<MavlinkClient> mavlinkClient) = 0;
 };
 
 #endif  // INCLUDE_CAMERA_INTERFACE_HPP_

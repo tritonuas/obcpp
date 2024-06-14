@@ -1,15 +1,15 @@
-name: Push x86 Docker Image
+name: Push ARM Docker Image
 
 on:
   push:
     branches:
-      - main
+      - main 
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  TAG: "x86"
-  DOCKERFILE_PATH: 'docker/Dockerfile.x86'
+  TAG: "arm"
+  DOCKERFILE_PATH: 'docker/Dockerfile.arm'
 
 jobs:
   changes:
@@ -24,19 +24,39 @@ jobs:
         filters: |
           dockerfile:
             - ${{ env.DOCKERFILE_PATH }}
-          workflow-file:
-            - .github/workflows/docker-x86.yml 
 
   build-and-push-image:
     needs: changes
-    if: ${{ needs.changes.outputs.dockerfile == 'true' }} || ${{ needs.changes.outputs.workflow-file == 'true' }}
+    if: ${{ needs.changes.outputs.dockerfile == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
     steps:
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # this might remove tools that are actually needed,
+          # if set to "true" but frees about 6 GB
+          tool-cache: true
+          
+          # all of these default to true, but feel free to set to
+          # "false" if necessary for your workflow
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          swap-storage: true
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+    
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
       - name: Log in to the Container registry
         uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
@@ -54,6 +74,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
         with:
+          platforms: linux/arm64
           file: ${{ env.DOCKERFILE_PATH }} 
           context: .
           push: true

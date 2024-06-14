@@ -7,9 +7,9 @@
 template <typename T>
 class LockPtr {
  public:
-    std::shared_ptr<T> ptr;
+    std::shared_ptr<T> data;
 
-    LockPtr(std::shared_ptr<T> ptr, std::mutex* mut): mut {mut}, ptr {ptr} {
+    LockPtr(std::shared_ptr<T> ptr, std::mutex* mut): mut {mut}, data {ptr} {
         mut->lock();
     }
 

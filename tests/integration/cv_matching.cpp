@@ -7,6 +7,7 @@
 
 #include "cv/matching.hpp"
 #include "utilities/constants.hpp"
+#include "utilities/common.hpp"
 
 // Download these test images by running "make pull_matching_test_images" or from the test.zip here https://drive.google.com/drive/u/1/folders/1opXBWx6bBF7J3-JSFtrhfFIkYis9qhGR
 // Or, any cropped not-stolen images will work
@@ -79,7 +80,10 @@ int main(int argc, char* argv[]) {
     cv::Mat ref4 = cv::imread(refImagePath4);
     referenceImages.push_back(std::make_pair(ref4, BottleDropIndex(1)));
 
+    auto startLoad = getUnixTime_ms().count();
     Matching matcher(bottlesToDrop, referenceImages, modelPath);
+    auto endLoad = getUnixTime_ms().count();
+    LOG_F(INFO, "time to load: %lu milliseconds", endLoad - startLoad);
     cv::Mat image = cv::imread(imageMatchPath);
     Bbox dummyBox(0, 0, 0, 0);
     CroppedTarget cropped = {
@@ -95,15 +99,21 @@ int main(int argc, char* argv[]) {
         false
     };
 
+    auto startMatch = getUnixTime_ms().count();
     MatchResult result = matcher.match(cropped);
+    auto endMatch = getUnixTime_ms().count();
     LOG_F(INFO, "\nTRUE MATCH TEST:\nClosest is bottle at index %d\nThe similarity is %.3f\n",
         int(result.bottleDropIndex),
         result.distance);
 
+    auto startMatchFalse = getUnixTime_ms().count();
     MatchResult resultFalse = matcher.match(croppedFalse);
+    auto endMatchFalse = getUnixTime_ms().count();
     LOG_F(INFO, "\nFALSE MATCH TEST:\nClosest is bottle at index %d\nThe similarity is %.3f\n",
         int(resultFalse.bottleDropIndex),
         resultFalse.distance);
+    LOG_F(INFO, "time to match: %lu milliseconds",
+        (endMatch - startMatch + endMatchFalse - startMatchFalse)/2);
 
     return 0;
 }

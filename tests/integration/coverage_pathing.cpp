@@ -12,20 +12,26 @@
 #include "network/gcs_routes.hpp"
 #include "pathing/plotting.hpp"
 #include "pathing/static.hpp"
-#include "ticks/mission_prep.hpp"
 #include "ticks/mav_upload.hpp"
+#include "ticks/mission_prep.hpp"
 #include "ticks/path_gen.hpp"
 #include "ticks/tick.hpp"
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
 #include "utilities/http.hpp"
 
-#define DECLARE_HANDLER_PARAMS(STATE, REQ, RESP)                            \
-    std::shared_ptr<MissionState> STATE = std::make_shared<MissionState>(); \
-    httplib::Request REQ;                                                   \
+#define DECLARE_HANDLER_PARAMS(STATE, REQ, RESP)                    \
+    int argc = 2;                                                   \
+    char path1[] = "bin/obcpp";                                     \
+    char path2[] = "../configs/dev-config.json";                    \
+    char *paths[] = {path1, path2};                                 \
+    char **paths_ptr = paths;                                       \
+    std::shared_ptr<MissionState> STATE =                           \
+        std::make_shared<MissionState>(OBCConfig(argc, paths_ptr)); \
+    httplib::Request REQ;                                           \
     httplib::Response RESP
 
-const static char* mission_json_2020 = R"(
+const static char *mission_json_2020 = R"(
 {
     "BottleAssignments": [
         {
@@ -257,10 +263,12 @@ int main() {
 
     RRTPoint start = RRTPoint(state->mission_params.getWaypoints()[0], 0);
 
-    CoveragePathing search(start, 20, state->mission_params.getFlightBoundary(),
-                         state->mission_params.getAirdropBoundary(), {}, {true, true, true});
+    ForwardCoveragePathing search(start, 20, state->mission_params.getFlightBoundary(),
+                                  state->mission_params.getAirdropBoundary(), state->config, {});
 
+    std::cout << "Running Search" << std::endl;
     std::vector<XYZCoord> path = search.run();
+    std::cout << "Search Complete" << std::endl;
 
     // plot the path
     std::cout << "Start Plotting" << std::endl;

@@ -30,7 +30,7 @@ Tick* AirdropPrepTick::tick() {
         break;
     }
 
-    DetectedTarget target = results.ptr->detected_targets.at(results.ptr->matches.at(next_bottle));
+    DetectedTarget target = results.data->detected_targets.at(results.data->matches.at(next_bottle));
 
     state->airdrop_path = generateAirdropApproach(state, target.coord);
 

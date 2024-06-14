@@ -1,19 +1,15 @@
 version: "3"
 services:
   obcpp:
-    image: tritonuas/obcpp:jetson
+    image: ghcr.io/tritonuas/obcpp:jetson
     runtime: nvidia
     network_mode: "host"
     #ports:
     #  - 5010:5010
-  sitl:
-    image: tritonuas/plane.rascal
-    network_mode: "host"
-    environment:
-      - "SITL_HOME=38.31542593549111,-76.55062632801757,8,0"
-      - SITL_SPEEDUP=1
-    volumes:
-      - sitl:/app/logs
+  not-stolen-israeli-code: 
+    image: ghcr.io/tritonuas/not-stolen-israeli-code:latest
+    ports:
+      - 5069:5000
   dozzle:
     container_name: dozzle
     image: amir20/dozzle:latest

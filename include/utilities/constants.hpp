@@ -14,10 +14,6 @@ const size_t MAX_CV_PIPELINES = 5;
 const double TWO_PI = 2 * M_PI;
 const double HALF_PI = M_PI / 2;
 
-// FROM OBC PYTHON
-const double TURNING_RADIUS = 30.0;
-const double POINT_SEPARATION = 10.0;
-
 // RRT CONSTANTS
 const int ITERATIONS_PER_WAYPOINT = 256;  // number of times RRT is ran per waypoint
 const double SEARCH_RADIUS =

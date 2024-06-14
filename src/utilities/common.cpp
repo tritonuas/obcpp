@@ -1,7 +1,10 @@
 #include "utilities/common.hpp"
 
 #include <chrono>
+#include <utility>
+#include <vector>
 
+#include "utilities/datatypes.hpp"
 
 std::chrono::seconds getUnixTime_s() {
     const auto now = std::chrono::system_clock::now();

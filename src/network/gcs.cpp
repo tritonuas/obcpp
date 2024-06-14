@@ -58,16 +58,10 @@ void GCSServer::_bindHandlers() {
     BIND_HANDLER(Post, mission);
     BIND_HANDLER(Post, airdrop);
     BIND_HANDLER(Get, path, initial);
+    BIND_HANDLER(Get, path, coverage);
     BIND_HANDLER(Get, path, initial, new);
     BIND_HANDLER(Post, path, initial, validate);
-    BIND_HANDLER(Get, camera, status);
-    BIND_HANDLER(Post, camera, start);
-    BIND_HANDLER(Post, camera, stop);
-    BIND_HANDLER(Post, camera, mock, start);
-    BIND_HANDLER(Post, camera, mock, stop);
     BIND_HANDLER(Get, camera, capture);
-    BIND_HANDLER(Get, camera, config);
-    BIND_HANDLER(Post, camera, config);
     BIND_HANDLER(Post, takeoff, autonomous);
     BIND_HANDLER(Post, takeoff, manual);
 

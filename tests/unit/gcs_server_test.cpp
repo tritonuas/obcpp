@@ -14,13 +14,19 @@
 #include "core/mission_state.hpp"
 #include "resources/json_snippets.hpp"
 #include "utilities/http.hpp"
+#include "utilities/obc_config.hpp"
 #include "ticks/mission_prep.hpp"
 #include "ticks/path_gen.hpp"
 #include "ticks/mav_upload.hpp"
 #include "ticks/tick.hpp"
 
 #define DECLARE_HANDLER_PARAMS(STATE, REQ, RESP) \
-    std::shared_ptr<MissionState> STATE = std::make_shared<MissionState>(); \
+    int argc = 2; \
+    char path1[] = "bin/obcpp"; \
+    char path2[] = "../../../configs/dev-config.json"; \
+    char *paths[] = {path1, path2}; \
+    char **paths_ptr = paths; \
+    std::shared_ptr<MissionState> STATE = std::make_shared<MissionState>(OBCConfig(argc, paths_ptr)); \
     httplib::Request REQ; \
     httplib::Response RESP 
 

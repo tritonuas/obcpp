@@ -1,7 +1,7 @@
 // See this page for reference of options: https://containers.dev/implementors/json_reference
 {
-	"name": "ARM",
-	"image": "ghcr.io/tritonuas/obcpp:arm",
+	"name": "x86",
+	"image": "ghcr.io/tritonuas/obcpp:x86",
 	// enable when need to connect over USB to pixhawk
 	// also: need to run obcpp with sudo or add tuas user to dialout group with
 	// 	   `sudo usermod -aG dialout tuas && newgrp && bash`

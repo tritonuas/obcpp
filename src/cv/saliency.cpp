@@ -7,6 +7,7 @@
 #include <opencv2/opencv.hpp>
 #include "utilities/logging.hpp"
 
+
 #define REGULAR_TARGET 1
 #define MANNIKIN 2
 
@@ -34,7 +35,12 @@ std::vector<CroppedTarget> Saliency::salience(cv::Mat image) {
     tensor = tensor.toType(c10::kFloat).div(255);
     // swap axis
     tensor = Saliency::transpose(tensor, { (2), (0), (1) });
-    auto input_to_net = ToInput(tensor);
+    
+    // eventually add device as member of Saliency
+    c10::Device device = torch::cuda::is_available() ? torch::kCUDA : torch::kCPU;
+    auto tensor_cuda = tensor.to(device);
+
+    auto input_to_net = ToInput(tensor_cuda);
 
     /* 
      * forward() runs an inference on the input image using the provided model

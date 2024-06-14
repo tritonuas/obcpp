@@ -26,9 +26,14 @@ run-jetson-pixhawk-compose:
 stop-jetson-pixhawk-compose:
 	docker compose -f jetson-pixhawk-compose.yml down
 
+run-sitl-compose:
+	docker compose -f sitl-compose.yml up -d
+
+stop-sitl-compose:
+	docker compose -f sitl-compose.yml down
+
 run-jetson-cuda-check:
 	docker run -it --rm --runtime nvidia -i ghcr.io/tritonuas/obcpp:jetson /obcpp/build/bin/cuda_check
-
 
 # NOTE: Use this target for development where you want to quicly edit source code and recompile.
 # This will spawn up the jetson container, launch you into a bash shell and mount the 
@@ -37,4 +42,4 @@ run-jetson-cuda-check:
 # Note that to re-run cmake inside the container you'll need the really long CMake command
 # in the Dockerfile.jetson.
 jetson-develop:
-	cd .. && docker run -it --net=host --runtime=nvidia --platform=linux/arm64 --volume=./:/obcpp ghcr.io/tritonuas/obcpp:jetson /bin/bash
+	cd .. && docker run -it --net=host --runtime=nvidia --platform=linux/arm64 --volume=./:/obcpp --device=/dev/ttyACM0 tritonuas/obcpp:jetson /bin/bash

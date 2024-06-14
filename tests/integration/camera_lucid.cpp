@@ -1,4 +1,5 @@
 #include <deque>
+#include <filesystem>
 
 #include <opencv2/opencv.hpp>
 #include <loguru.hpp>
@@ -6,6 +7,7 @@
 #include "camera/interface.hpp"
 #include "camera/lucid.hpp"
 #include "core/mission_state.hpp"
+#include "network/mavlink.hpp"
 #include "utilities/common.hpp"
 
 using namespace std::chrono_literals;
@@ -21,24 +23,26 @@ int main (int argc, char *argv[]) {
     }
     OBCConfig config(argc, argv);
 
-    LucidCamera camera(config.camera_config);
+    auto mav = std::make_shared<MavlinkClient>("serial:///dev/ttyACM0");
+
+    LucidCamera camera(config.camera);
 
     camera.connect();
     LOG_F(INFO, "Connected to LUCID camera!");
 
-    camera.startTakingPictures(1s, nullptr);
+    camera.startTakingPictures(1s, mav);
 
     // need to sleep to let camera background thread to run
     std::this_thread::sleep_for(10s);
-
     camera.stopTakingPictures();
 
     std::deque<ImageData> images = camera.getAllImages();
     for (const ImageData& image : images) {
-        std::filesystem::path output_file =  
-            output_dir / 
-            (std::string("lucid_") + std::to_string(getUnixTime_ms().count()) + std::string(".jpg"));
-        LOG_F(INFO, "Saving LUCID image to %s", output_file.string().c_str());
-        cv::imwrite(output_file, image.DATA);
+        std::filesystem::path filepath = config.camera.save_dir / std::to_string(image.TIMESTAMP);
+        saveImageToFile(image.DATA, filepath);
+        if (image.TELEMETRY.has_value()) {
+            saveImageTelemetryToFile(image.TELEMETRY.value(), filepath);
+        }
+        LOG_F(INFO, "Saving LUCID image to %s", filepath.string().c_str());
     }
 }

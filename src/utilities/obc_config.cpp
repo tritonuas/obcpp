@@ -3,149 +3,103 @@
 #include <fstream>
 #include <stdexcept>
 #include <string>
+#include <iostream>
 
 #include "nlohmann/json.hpp"
 #include "udp_squared/internal/enum.h"
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
-
-using json = nlohmann::json;
+#include "utilities/logging.hpp"
+#include "utilities/obc_config_macros.hpp"
 
 OBCConfig::OBCConfig(int argc, char* argv[]) {
     // If config-json name is passed in
-    if (argc > 1) {
-        // Load in json file
-        std::ifstream configStream(argv[1]);
-        if (!configStream.is_open()) {
-            throw std::invalid_argument(std::string("Invalid path to config file: ") +
-                                        std::string(argv[1]));
-        }
-        json configs = json::parse(configStream);
-
-        // Set configs
-        this->logging.dir = configs["logging"]["dir"];
-        this->network.mavlink.connect = configs["network"]["mavlink"]["connect"];
-        this->network.gcs.port = configs["network"]["gcs"]["port"];
-
-        this->rrt_config.iterations_per_waypoint =
-            configs["pathing"]["rrt"]["iterations_per_waypoint"];
-        this->rrt_config.rewire_radius = configs["pathing"]["rrt"]["rewire_radius"];
-        this->rrt_config.optimize = configs["pathing"]["rrt"]["optimize"];
-        this->rrt_config.point_fetch_method = configs["pathing"]["rrt"]["point_fetch_methods"];
-        this->rrt_config.allowed_to_skip_waypoints =
-            configs["pathing"]["rrt"]["allowed_to_skip_waypoints"];
-
-        this->coverage_pathing_config.coverage_altitude_m =
-            configs["pathing"]["coverage"]["coverage_altitude_m"];
-        this->coverage_pathing_config.optimize = configs["pathing"]["coverage"]["optimize"];
-        this->coverage_pathing_config.vertical = configs["pathing"]["coverage"]["vertical"];
-        this->coverage_pathing_config.one_way = configs["pathing"]["coverage"]["one_way"];
-
-        this->airdrop_pathing_config.drop_method = configs["pathing"]["airdrop"]["drop_method"];
-        this->airdrop_pathing_config.drop_angle_rad =
-            configs["pathing"]["airdrop"]["drop_angle_rad"];
-        this->airdrop_pathing_config.drop_altitude_m =
-            configs["pathing"]["airdrop"]["drop_altitude_m"];
-        this->airdrop_pathing_config.guided_drop_distance_m =
-            configs["pathing"]["airdrop"]["guided_drop_distance_m"];
-        this->airdrop_pathing_config.unguided_drop_distance_m =
-            configs["pathing"]["airdrop"]["unguided_drop_distance_m"];
-
-        this->camera_config.type = configs["camera"]["type"];
-
-        this->camera_config.mock.images_dir = configs["camera"]["mock"]["images_dir"];
-
-        this->camera_config.lucid.sensor_shutter_mode =
-            configs["camera"]["lucid"]["sensor_shuttle_mode"];
-
-        this->camera_config.lucid.acquisition_frame_rate_enable =
-            configs["camera"]["lucid"]["acquisition_frame_rate_enable"];
-        this->camera_config.lucid.target_brightness =
-            configs["camera"]["lucid"]["target_brightness"];
-        this->camera_config.lucid.exposure_auto = configs["camera"]["lucid"]["exposure_auto"];
-        this->camera_config.lucid.exposure_time = configs["camera"]["lucid"]["exposure_time"];
-        this->camera_config.lucid.exposure_auto_damping =
-            configs["camera"]["lucid"]["exposure_auto_damping"];
-        this->camera_config.lucid.exposure_auto_algorithm =
-            configs["camera"]["lucid"]["exposure_auto_algorithm"];
-        this->camera_config.lucid.exposure_auto_upper_limit =
-            configs["camera"]["lucid"]["exposure_auto_upper_limit"];
-        this->camera_config.lucid.exposure_auto_lower_limit =
-            configs["camera"]["lucid"]["exposure_auto_lower_limit"];
-
-        this->camera_config.lucid.stream_auto_negotiate_packet_size =
-            configs["camera"]["lucid"]["stream_auto_negotiate_packet_size"];
-        this->camera_config.lucid.stream_packet_resend_enable =
-            configs["camera"]["lucid"]["stream_packet_resend_enable"];
-
-        this->camera_config.lucid.device_link_throughput_limit_mode =
-            configs["camera"]["lucid"]["device_link_throughput_limit_mode"];
-        this->camera_config.lucid.device_link_throughput_limit =
-            configs["camera"]["lucid"]["device_link_throughput_limit"];
-
-        this->camera_config.lucid.gamma_enable = configs["camera"]["lucid"]["gamma_enable"];
-        this->camera_config.lucid.gamma = configs["camera"]["lucid"]["gamma"];
-        this->camera_config.lucid.gain_auto = configs["camera"]["lucid"]["gain_auto"];
-        this->camera_config.lucid.gain_auto_upper_limit =
-            configs["camera"]["lucid"]["gain_auto_upper_limit"];
-        this->camera_config.lucid.gain_auto_lower_limit =
-            configs["camera"]["lucid"]["gain_auto_lower_limit"];
-
-        this->takeoff.altitude_m = configs["takeoff"]["altitude_m"];
-    } else {
-        makeDefault();
+    if (argc != 2) {
+        LOG_F(FATAL, "You must specify a config file. e.g. bin/obcpp ../configs/dev-config.json");
     }
-}
 
-void OBCConfig::makeDefault() {
-    // Set configs
-    this->logging.dir = "/workspaces/obcpp/logs";
-    this->network.mavlink.connect = "tcp://172.17.0.1:5760";
-    this->network.gcs.port = 5010;
+    // Load in json file
+    std::ifstream configStream(argv[1]);
+    if (!configStream.is_open()) {
+        throw std::invalid_argument(std::string("Invalid path to config file: ") +
+                                    std::string(argv[1]));
+    }
+    // the macros expect this to be called "configs" so don't change it without also
+    // changing the macros
+    nlohmann::json configs = nlohmann::json::parse(configStream, nullptr, true, true);
 
-    this->rrt_config.iterations_per_waypoint = ITERATIONS_PER_WAYPOINT;
-    this->rrt_config.rewire_radius = REWIRE_RADIUS;
-    this->rrt_config.optimize = true;
-    this->rrt_config.point_fetch_method = NEAREST;
-    this->rrt_config.allowed_to_skip_waypoints = false;
+    // Read this in first before anything else so that all of the read in values get logged
+    // to the config file. Otherwise they will be output to the terminal but not saved to
+    // the file.
+    SET_CONFIG_OPT(logging, dir);
+    initLogging(this->logging.dir, true, argc, argv);
 
-    this->coverage_pathing_config.coverage_altitude_m = COVERAGE_ALTITUDE_M;
-    this->coverage_pathing_config.optimize = true;
-    this->coverage_pathing_config.vertical = false;
-    this->coverage_pathing_config.one_way = false;
+    SET_CONFIG_OPT(network, mavlink, connect);
+    SET_CONFIG_OPT(network, gcs, port);
 
-    this->airdrop_pathing_config.drop_method = UNGUIDED;  // unguided
-    this->airdrop_pathing_config.drop_angle_rad = DROP_ANGLE_RAD;
-    this->airdrop_pathing_config.drop_altitude_m = DROP_ALTITUDE_M;
-    this->airdrop_pathing_config.guided_drop_distance_m = GUIDED_DROP_DISTANCE_M;
-    this->airdrop_pathing_config.unguided_drop_distance_m = UNGUIDED_DROP_DISTANCE_M;
+    SET_CONFIG_OPT(pathing, rrt, iterations_per_waypoint);
+    SET_CONFIG_OPT(pathing, rrt, rewire_radius);
+    SET_CONFIG_OPT(pathing, rrt, optimize);
 
-    this->camera_config.type = "mock";
+    SET_CONFIG_OPT_VARIANT(PointFetchMethod, pathing, rrt, point_fetch_method);
 
-    this->camera_config.mock.images_dir = "/workspaces/obcpp/tests/integration/images/saliency/";
+    SET_CONFIG_OPT(pathing, rrt, allowed_to_skip_waypoints);
 
-    this->camera_config.lucid.sensor_shutter_mode = "Rolling";
+    SET_CONFIG_OPT_VARIANT(AirdropCoverageMethod, pathing, coverage, method);
 
-    this->camera_config.lucid.acquisition_frame_rate_enable = true;
-    this->camera_config.lucid.target_brightness = 70;
-    this->camera_config.lucid.exposure_auto = "Continuous";
-    this->camera_config.lucid.exposure_time = 3000;
-    this->camera_config.lucid.exposure_auto_damping = 1;
-    this->camera_config.lucid.exposure_auto_algorithm = "Median";
-    this->camera_config.lucid.exposure_auto_upper_limit = 500;
-    this->camera_config.lucid.exposure_auto_lower_limit = 360;
+    SET_CONFIG_OPT(pathing, coverage, altitude_m);
+    SET_CONFIG_OPT(pathing, coverage, camera_vision_m);
+    SET_CONFIG_OPT(pathing, coverage, hover, hover_time_s);
+    SET_CONFIG_OPT(pathing, coverage, hover, pictures_per_stop);
+    SET_CONFIG_OPT(pathing, coverage, forward, optimize);
+    SET_CONFIG_OPT(pathing, coverage, forward, vertical);
+    SET_CONFIG_OPT(pathing, coverage, forward, one_way);
 
-    this->camera_config.lucid.stream_auto_negotiate_packet_size = true;
-    this->camera_config.lucid.stream_packet_resend_enable = true;
+    SET_CONFIG_OPT(cv, matching_model_dir);
+    SET_CONFIG_OPT(cv, segmentation_model_dir);
+    SET_CONFIG_OPT(cv, saliency_model_dir);
+    SET_CONFIG_OPT(cv, not_stolen_addr);
+    SET_CONFIG_OPT(cv, not_stolen_port);
 
-    this->camera_config.lucid.device_link_throughput_limit_mode = "On";
-    this->camera_config.lucid.device_link_throughput_limit = 125000000;
+    SET_CONFIG_OPT_VARIANT(AirdropDropMethod, pathing, approach, drop_method);
+    SET_CONFIG_OPT(pathing, approach, drop_angle_rad);
+    SET_CONFIG_OPT(pathing, approach, drop_altitude_m);
+    SET_CONFIG_OPT(pathing, approach, guided_drop_distance_m);
+    SET_CONFIG_OPT(pathing, approach, unguided_drop_distance_m);
 
-    this->camera_config.lucid.gamma_enable = true;
-    this->camera_config.lucid.gamma = 0.5;
-    this->camera_config.lucid.gain_auto = "Continuous";
-    this->camera_config.lucid.gain_auto_upper_limit = 10;
-    this->camera_config.lucid.gain_auto_lower_limit = 1;
+    SET_CONFIG_OPT(pathing, dubins, turning_radius);
+    SET_CONFIG_OPT(pathing, dubins, point_separation);
 
-    this->takeoff.altitude_m = TAKEOFF_ALTITUDE_M;
+    SET_CONFIG_OPT(camera, type);
+    SET_CONFIG_OPT(camera, save_dir);
+    SET_CONFIG_OPT(camera, save_images_to_file);
+    SET_CONFIG_OPT(camera, mock, images_dir);
+
+    SET_CONFIG_OPT(camera, lucid, sensor_shutter_mode);
+    SET_CONFIG_OPT(camera, lucid, acquisition_frame_rate_enable);
+    SET_CONFIG_OPT(camera, lucid, target_brightness);
+    SET_CONFIG_OPT(camera, lucid, exposure_auto);
+    SET_CONFIG_OPT(camera, lucid, exposure_time);
+    SET_CONFIG_OPT(camera, lucid, exposure_auto_damping);
+    SET_CONFIG_OPT(camera, lucid, exposure_auto_algorithm);
+    SET_CONFIG_OPT(camera, lucid, exposure_auto_upper_limit);
+    SET_CONFIG_OPT(camera, lucid, exposure_auto_lower_limit);
+
+    SET_CONFIG_OPT(camera, lucid, stream_auto_negotiate_packet_size);
+    SET_CONFIG_OPT(camera, lucid, stream_packet_resend_enable);
+
+    SET_CONFIG_OPT(camera, lucid, device_link_throughput_limit_mode);
+    SET_CONFIG_OPT(camera, lucid, device_link_throughput_limit);
+
+    SET_CONFIG_OPT(camera, lucid, gamma_enable);
+    SET_CONFIG_OPT(camera, lucid, gamma);  // bruh
+    SET_CONFIG_OPT(camera, lucid, gain_auto);
+    SET_CONFIG_OPT(camera, lucid, gain_auto_upper_limit);
+    SET_CONFIG_OPT(camera, lucid, gain_auto_lower_limit);
+
+    SET_CONFIG_OPT(takeoff, altitude_m);
+
+    for (const auto& [param, val] : configs.at("mavlink_parameters").items()) {
+        this->mavlink_parameters.param_map.insert({param, val});
+    }
 }
