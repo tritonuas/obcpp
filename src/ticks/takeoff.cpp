@@ -5,6 +5,8 @@
 #include "ticks/ids.hpp"
 #include "utilities/constants.hpp"
 #include "ticks/fly_waypoints.hpp"
+#include "ticks/mav_upload.hpp"
+#include "ticks/fly_search.hpp"
 
 TakeoffTick::TakeoffTick(std::shared_ptr<MissionState> state)
     :Tick(state, TickID::Takeoff) {}
@@ -14,11 +16,15 @@ std::chrono::milliseconds TakeoffTick::getWait() const {
 }
 
 Tick* TakeoffTick::tick() {
-    // TODO: figure out how to check mavsdk for flight mode, and if flight mode is
-    // autonomous then go to next state
     if (state->getMav()->flight_mode() == mavsdk::Telemetry::FlightMode::Mission) {
         LOG_F(INFO, "Plane has entered autonomous");
-        return new FlyWaypointsTick(this->state);
+
+        // NOTE: keep in sync with active_takeoff tick
+        // transitions to flying waypoints tick, such that when the flying waypoints
+        // tick is done it transitions to uploading the coverage path
+        return new FlyWaypointsTick(this->state, new MavUploadTick(
+            this->state, new FlySearchTick(this->state),
+            state->getCoveragePath(), false));
     }
 
     return nullptr;

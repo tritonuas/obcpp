@@ -6,8 +6,8 @@
 #include "ticks/mav_upload.hpp"
 #include "utilities/constants.hpp"
 
-FlyWaypointsTick::FlyWaypointsTick(std::shared_ptr<MissionState> state)
-    :Tick(state, TickID::FlyWaypoints) {}
+FlyWaypointsTick::FlyWaypointsTick(std::shared_ptr<MissionState> state, Tick* next_tick)
+    :Tick(state, TickID::FlyWaypoints), next_tick(next_tick) {}
 
 std::chrono::milliseconds FlyWaypointsTick::getWait() const {
     return FLY_WAYPOINTS_TICK_WAIT;
@@ -18,8 +18,7 @@ Tick* FlyWaypointsTick::tick() {
     bool isMissionFinished = state->getMav()->isMissionFinished();
 
     if (isMissionFinished) {
-        return new MavUploadTick(this->state, new FlySearchTick(this->state),
-                state->getCoveragePath(), false);
+        return next_tick;
     }
 
     return nullptr;

@@ -13,11 +13,15 @@
  */
 class FlyWaypointsTick : public Tick {
  public:
-    explicit FlyWaypointsTick(std::shared_ptr<MissionState> state);
+    explicit FlyWaypointsTick(std::shared_ptr<MissionState> state,
+        Tick* next_tick);
 
     std::chrono::milliseconds getWait() const override;
 
     Tick* tick() override;
+
+ private:
+    Tick* next_tick;
 };
 
 #endif  // INCLUDE_TICKS_FLY_WAYPOINTS_HPP_
