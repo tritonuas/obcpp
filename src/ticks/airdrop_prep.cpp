@@ -17,12 +17,11 @@ AirdropPrepTick::AirdropPrepTick(std::shared_ptr<MissionState> state)
 std::chrono::milliseconds AirdropPrepTick::getWait() const { return AIRDROP_PREP_TICK_WAIT; }
 
 Tick* AirdropPrepTick::tick() {
-    std::shared_ptr<CVAggregator> cv_aggregator = state->getCV();
-    LockPtr<CVResults> results = cv_aggregator->getResults();
     BottleDropIndex next_bottle = BottleDropIndex::A;
 
+    auto dropped_bottles = state->getDroppedBottles();
     for (int i = BottleDropIndex::A; i <= BottleDropIndex::E; i++) {
-        if (state->dropped_bottles.contains(static_cast<BottleDropIndex>(i))) {
+        if (dropped_bottles.contains(static_cast<BottleDropIndex>(i))) {
             continue;
         }
 
@@ -30,15 +29,20 @@ Tick* AirdropPrepTick::tick() {
         break;
     }
 
-    DetectedTarget target = results.data->detected_targets.at(results.data->matches.at(next_bottle));
+    auto cv_aggregator = state->getCV();
+    {
+        LockPtr<CVResults> results = cv_aggregator->getResults();
+        auto target = results.data->detected_targets.at(results.data->matches.at(next_bottle));
 
-    state->airdrop_path = generateAirdropApproach(state, target.coord);
+        LOG_F(INFO, "Routing to airdrop target %d at (%f, %f)", static_cast<int>(next_bottle),
+            target.coord.latitude(), target.coord.longitude());
 
-    bool isMissionFinished = state->getMav()->isMissionFinished();
+        state->setAirdropPath(generateAirdropApproach(state, target.coord));
+    }
 
-    if (isMissionFinished) {
+    if (state->getMav()->isMissionFinished()) {
         return new MavUploadTick(this->state, new AirdropApproachTick(this->state),   
-                state->airdrop_path, false);
+                state->getAirdropPath(), false);
     }
 
     return nullptr;

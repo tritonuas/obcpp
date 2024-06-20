@@ -590,7 +590,7 @@ MissionPath generateSearchPath(std::shared_ptr<MissionState> state) {
     }
 }
 
-std::vector<GPSCoord> generateAirdropApproach(std::shared_ptr<MissionState> state,
+MissionPath generateAirdropApproach(std::shared_ptr<MissionState> state,
                                               const GPSCoord &goal) {
     // finds starting location
     std::shared_ptr<MavlinkClient> mav = state->getMav();
@@ -619,5 +619,5 @@ std::vector<GPSCoord> generateAirdropApproach(std::shared_ptr<MissionState> stat
         gps_path.push_back(state->getCartesianConverter().value().toLatLng(wpt));
     }
 
-    return gps_path;
+    return MissionPath(MissionPath::Type::FORWARD, gps_path);
 }

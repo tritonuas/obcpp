@@ -49,7 +49,11 @@ class MissionState {
     void setCoveragePath(const MissionPath& coverage_path);
     MissionPath getCoveragePath();
 
-    std::vector<GPSCoord> airdrop_path;
+    void setAirdropPath(const MissionPath& airdrop_path);
+    MissionPath getAirdropPath();
+
+    void markBottleAsDropped(BottleDropIndex bottle);
+    std::unordered_set<BottleDropIndex> getDroppedBottles();
 
     /*
      * Gets a locking reference to the underlying tick for the given tick subclass T.
@@ -101,7 +105,6 @@ class MissionState {
 
     MissionParameters mission_params;  // has its own mutex
 
-    std::unordered_set<BottleDropIndex> dropped_bottles;
 
     OBCConfig config;
 
@@ -116,6 +119,11 @@ class MissionState {
     MissionPath init_path;
     std::mutex coverage_path_mut;  // for reading/writing the coverage path
     MissionPath coverage_path;
+    std::mutex airdrop_path_mut;
+    MissionPath airdrop_path;
+
+    std::mutex dropped_bottles_mut;
+    std::unordered_set<BottleDropIndex> dropped_bottles;
 
     std::shared_ptr<MavlinkClient> mav;
     std::shared_ptr<AirdropClient> airdrop;
