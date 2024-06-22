@@ -9,7 +9,7 @@
 // Or, any cropped not-stolen images will work
 
 // this image should be located at a relative path to the CMake build dir
-const std::string imagePath = "mock_image.jpg";
+const std::string imagePath = "../tests/integration/images/black_mountain/1718243323.jpg";
 
 const std::string refImagePath0 = "../bin/test/test/000000910.jpg";
 const std::string refImagePath1 = "../bin/test/test/000000920.jpg";
@@ -20,13 +20,14 @@ const std::string refImagePath4 = "../bin/test/test/000000005.jpg";
 // matching model can be downloaded from here: https://drive.google.com/drive/folders/1ciDfycNyJiLvRhJhwQZoeKH7vgV6dGHJ?usp=drive_link
 const std::string matchingModelPath = "../models/target_siamese_1.pt";
 // segmentation model can be downloaded from here: https://drive.google.com/file/d/1U2EbfJFzcjVnjTuD6ud-bIf8YOiEassf/view?usp=drive_link
-const std::string segmentationModelPath = "../models/fcn.pth";
+const std::string segmentationModelPath = "../models/fcn-model_20-epochs_06-01-2023T21-16-02.pth";
+const std::string saliencyModelPath = "../models/torchscript_19.pth";
 
 // mock telemetry data
-const double latitude = 38.31568;
-const double longitude = 76.55006;
-const double altitude = 75;
-const double airspeed = 20;
+const double latitude = 32.990795399999996;
+const double longitude = -117.1282463;
+const double altitude = 30.108001708984375;
+const double airspeed = 7.378872394561768;
 const double yaw = 100;
 const double pitch = 5;
 const double roll = 3;
@@ -35,24 +36,25 @@ const double roll = 3;
 // with an arbitrary image as input
 int main() {
     cv::Mat image = cv::imread(imagePath);
+    if (!image.data) {
+        std::cout << "failed to open testing image from " << imagePath << std::endl;
+        return 1;
+    }
     ImageTelemetry mockTelemetry(latitude, longitude, altitude, airspeed,
         yaw, pitch, roll);
-    ImageData imageData("mock_image", imagePath, image, mockTelemetry);
+    ImageData imageData(image, 0, mockTelemetry);
 
     std::array<Bottle, NUM_AIRDROP_BOTTLES> bottlesToDrop;
 
     Bottle bottle1;
-    bottle1.set_shapecolor(ODLCColor::Red);
-    bottle1.set_shape(ODLCShape::Circle);
-    bottle1.set_alphanumericcolor(ODLCColor::Orange);
-    bottle1.set_alphanumeric("J");
+    bottle1.set_ismannikin(true);
     bottlesToDrop[0] = bottle1;
 
     Bottle bottle2;
-    bottle2.set_shapecolor(ODLCColor::Blue);
-    bottle2.set_shape(ODLCShape::Circle);
-    bottle2.set_alphanumericcolor(ODLCColor::Orange);
-    bottle2.set_alphanumeric("G");
+    bottle2.set_shapecolor(ODLCColor::Green);
+    bottle2.set_shape(ODLCShape::Rectangle);
+    bottle2.set_alphanumericcolor(ODLCColor::Purple);
+    bottle2.set_alphanumeric("B");
     bottlesToDrop[1] = bottle2;
 
     Bottle bottle3;
@@ -88,7 +90,7 @@ int main() {
     cv::Mat ref4 = cv::imread(refImagePath4);
     referenceImages.push_back(std::make_pair(ref4, BottleDropIndex(1)));
 
-    Pipeline pipeline(PipelineParams(bottlesToDrop, referenceImages, matchingModelPath, segmentationModelPath));
+    Pipeline pipeline(PipelineParams(bottlesToDrop, referenceImages, matchingModelPath, segmentationModelPath, saliencyModelPath));
 
     PipelineResults output = pipeline.run(imageData);
 
