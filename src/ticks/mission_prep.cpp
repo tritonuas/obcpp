@@ -60,10 +60,27 @@ std::vector<std::pair<cv::Mat, BottleDropIndex>>
 
     std::vector<std::pair<cv::Mat, BottleDropIndex>> ref_imgs;
 
-    int curr_bottle_idx = BottleDropIndex::A;
+    int curr_bottle_idx = BottleDropIndex::Undefined;
     for (const auto& bottle : competitionObjectives) {
+        curr_bottle_idx++;
+
+        // don't generate reference images for mannikin since matching model doesn't
+        // match mannikins (handled by saliency)
+        if (bottle.ismannikin()) {
+            continue;
+        }
+
         httplib::Client client(this->state->config.cv.not_stolen_addr, this->state->config.cv.not_stolen_port);
         auto res = client.Get(this->getNotStolenRoute(bottle));
+        // connection failed
+        if (!res) {
+            LOG_F(ERROR, "Failed to send request to not-stolen at %s:%u. Reason: %s",
+                this->state->config.cv.not_stolen_addr.c_str(),
+                this->state->config.cv.not_stolen_port,
+                httplib::to_string(res.error()).c_str());
+            return {};
+        }
+
         if (res->status != 200) {
             LOG_F(ERROR, "Got invalid response from not-stolen: %s", res->body.c_str());
             continue;
@@ -73,7 +90,6 @@ std::vector<std::pair<cv::Mat, BottleDropIndex>>
         cv::Mat ref_img(cv::imdecode(data_mat,1)); //put 0 if you want greyscale
 
         ref_imgs.push_back({ref_img, (BottleDropIndex)curr_bottle_idx});
-        curr_bottle_idx++;
     }
     return ref_imgs;
 }
