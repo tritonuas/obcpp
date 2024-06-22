@@ -60,7 +60,15 @@ std::vector<CroppedTarget> Saliency::salience(cv::Mat image) {
     std::vector<CroppedTarget> targets;
     targets = extractTargets(listDetections, image);
 
-    LOG_F(INFO, "salience ok");
+    LOG_F(INFO, "saliency found %ld targets", targets.size());
+    for (auto const& target: targets) {
+        LOG_F(INFO, "\ttarget at bbox: (%d, %d, %d, %d). ismannikin: %d", 
+            target.bbox.x1, 
+            target.bbox.y1,
+            target.bbox.x2, 
+            target.bbox.y2, 
+            target.isMannikin);
+    }
     return targets;
 }
 
