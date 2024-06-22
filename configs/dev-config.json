@@ -49,7 +49,7 @@
     },
     "cv": {
         "matching_model_dir": "/workspaces/obcpp/models/target_siamese_1.pt",
-        "segmentation_model_dir": "/workspaces/obcpp/models/fcn.pth",
+        "segmentation_model_dir": "/workspaces/obcpp/models/fcn-model_20-epochs_06-01-2023T21-16-02.pth",
         "saliency_model_dir": "/workspaces/obcpp/models/torchscript_19.pth",
         "not_stolen_addr": "localhost",
         "not_stolen_port": 5069
