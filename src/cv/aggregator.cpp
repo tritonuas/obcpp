@@ -7,11 +7,12 @@
 CVAggregator::CVAggregator(Pipeline&& p): pipeline{p} {
     this->num_worker_threads = 0;
     this->results = std::make_shared<CVResults>();
-    this->results->matches[BottleDropIndex::A] = -1;
-    this->results->matches[BottleDropIndex::B] = -1;
-    this->results->matches[BottleDropIndex::C] = -1;
-    this->results->matches[BottleDropIndex::D] = -1;
-    this->results->matches[BottleDropIndex::E] = -1;
+    // set each bottle to be initially unmatched
+    this->results->matches[BottleDropIndex::A] = {};
+    this->results->matches[BottleDropIndex::B] = {};
+    this->results->matches[BottleDropIndex::C] = {};
+    this->results->matches[BottleDropIndex::D] = {};
+    this->results->matches[BottleDropIndex::E] = {};
 }
 
 CVAggregator::~CVAggregator() {}
@@ -50,21 +51,22 @@ void CVAggregator::worker(ImageData image, int thread_num) {
             // newly inserted target, once we insert it after the if/else
             size_t detected_target_index = this->results->detected_targets.size();
 
-            size_t curr_match_idx = this->results->matches[curr_target.likely_bottle];
-            if (curr_match_idx < 0) {
+            std::optional<size_t> curr_match_idx = this->results->matches[curr_target.likely_bottle];
+            if (!curr_match_idx.has_value()) {
                 LOG_F(INFO, "Made first match between target %ld and bottle %d",
                     detected_target_index, curr_target.likely_bottle);
 
                 this->results->matches[curr_target.likely_bottle] = detected_target_index;
             } else {
-                auto curr_match = this->results->detected_targets[curr_match_idx];
+                auto curr_match = this->results->detected_targets[curr_match_idx.value()];
 
                 if (curr_match.match_distance > curr_target.match_distance) {
                     LOG_F(INFO,
                         "Swapping match on bottle %d from target %ld -> %ld (distance %f -> %f)",
                         static_cast<int>(curr_match.likely_bottle),
-                        this->results->matches[curr_match.likely_bottle],
-                        detected_target_index, curr_match.match_distance,
+                        this->results->matches[curr_match.likely_bottle].value_or(0),
+                        detected_target_index,
+                        curr_match.match_distance,
                         curr_target.match_distance);
 
                     this->results->matches[curr_match.likely_bottle] = detected_target_index;
