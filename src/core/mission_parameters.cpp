@@ -59,7 +59,7 @@ Polyline MissionParameters::getWaypoints() {
     return this->waypoints;
 }
 
-const std::vector<Bottle>& MissionParameters::getAirdropBottles() {
+std::vector<Bottle> MissionParameters::getAirdropBottles() {
     ReadLock lock(this->mut);
 
     return this->bottles;

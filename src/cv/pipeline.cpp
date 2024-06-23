@@ -60,7 +60,7 @@ PipelineResults Pipeline::run(const ImageData &imageData) {
             targetPosition.latitude(), targetPosition.longitude(),
             static_cast<int>(potentialMatch.bottleDropIndex), potentialMatch.distance);
         detectedTargets.push_back(DetectedTarget(targetPosition,
-            potentialMatch.bottleDropIndex, potentialMatch.distance));
+            potentialMatch.bottleDropIndex, potentialMatch.distance, target));
     }
 
     LOG_F(INFO, "Finished Pipeline on an image");

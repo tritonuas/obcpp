@@ -8,15 +8,6 @@
 #include "utilities/constants.hpp"
 #include "protos/obc.pb.h"
 
-struct DetectedTarget {
-    DetectedTarget(GPSCoord coord, BottleDropIndex index, double match_distance)
-        :coord{coord}, likely_bottle{index}, match_distance{match_distance} {}
-
-    GPSCoord coord;
-    BottleDropIndex likely_bottle;
-    double match_distance;
-};
-
 class Bbox {
  public:
     int x1;
@@ -32,6 +23,16 @@ struct CroppedTarget {
     cv::Mat croppedImage;
     Bbox bbox;
     bool isMannikin;
+};
+
+struct DetectedTarget {
+    DetectedTarget(GPSCoord coord, BottleDropIndex index, double match_distance, CroppedTarget crop)
+        :coord{coord}, likely_bottle{index}, match_distance{match_distance}, crop{crop} {}
+
+    GPSCoord coord;
+    BottleDropIndex likely_bottle;
+    double match_distance;
+    CroppedTarget crop;
 };
 
 cv::Mat crop(cv::Mat original, Bbox bbox);
