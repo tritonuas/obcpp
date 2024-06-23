@@ -153,33 +153,39 @@ add_custom_target(pull_models
 # Saliency model
 add_custom_target(pull_saliency
   COMMAND gdown 1S1IfXlGs_pCH49DwZmbD-tZA5YH0A1gx -O ${CMAKE_BINARY_DIR}/../models/torchscript_19.pth
+  USES_TERMINAL
 )
 
 # Matching model 
 add_custom_target(pull_matching
   COMMAND gdown 1NeFiAfSSLXAZWlehfd0ox7p_jFF4YdrO -O ${CMAKE_BINARY_DIR}/../models/target_siamese_1.pt
+  USES_TERMINAL
 )
 
 
 # Segmentation model
 add_custom_target(pull_segmentation
   COMMAND gdown 1U2EbfJFzcjVnjTuD6ud-bIf8YOiEassf -O ${CMAKE_BINARY_DIR}/../models/fcn-model_20-epochs_06-01-2023T21-16-02.pth
+  USES_TERMINAL
 )
 # =============================
 
 # =============================
 # Pull testing images
+add_custom_target(pull_test_images
+  DEPENDS pull_matching_test_images pull_saliency_test_images 
+)
 
 # pull cropped images from fraternal_targets testing folder
 add_custom_target(pull_matching_test_images
-  COMMAND gdown 1opxdXw75jSQZu9s61njE6hjQkfHiKvgp -O ${CMAKE_BINARY_DIR}/../tests/integration/images/test.zip && 
-    mkdir -p ${CMAKE_BINARY_DIR}/../tests/integration/images/matching_cropped &&
-    unzip ${CMAKE_BINARY_DIR}/../tests/integration/images/test.zip -d ${CMAKE_BINARY_DIR}/../tests/integration/images/matching_cropped
+  COMMAND gdown 1vmP3HUS1SyqhdtJrP4QuFpGbyoyfaYSe --folder -O ${CMAKE_BINARY_DIR}/../tests/integration/images/matching
+  USES_TERMINAL
 )
 
 # pull cropped images from saliency images testing folder
 add_custom_target(pull_saliency_test_images
   COMMAND gdown 1JvtQUroZJHo51E37_IA2D1mfdJj2smyR --folder -O ${CMAKE_BINARY_DIR}/../tests/integration/images/saliency
+  USES_TERMINAL
 )
 
 # =============================
