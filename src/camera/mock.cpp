@@ -7,6 +7,7 @@
 #include <filesystem>
 
 #include <loguru.hpp>
+#include "nlohmann/json.hpp"
 
 #include "network/mavlink.hpp"
 #include "utilities/locks.hpp"
@@ -21,7 +22,14 @@ MockCamera::MockCamera(CameraConfig config) : CameraInterface(config) {
             cv::Mat img = cv::imread(dir_entry.path().string());
             // if the image is read
             if (img.data != NULL) {
-                this->mock_images.push_back(img);
+                std::optional<ImageTelemetry> telemetry =
+                    this->getTelemetryFromJsonFile(dir_entry.path());
+
+                ImageData img_data(
+                    img,
+                    0,
+                    telemetry);
+                this->mock_images.push_back(img_data);
             }
         });
 }
@@ -93,18 +101,41 @@ std::optional<ImageData> MockCamera::takePicture(const std::chrono::milliseconds
         std::shared_ptr<MavlinkClient> mavlinkClient) {
     int random_idx = randomInt(0, this->mock_images.size()-1);
 
-    std::optional<ImageTelemetry> telemetry = queryMavlinkImageTelemetry(mavlinkClient);
-
-    cv:Mat newImage = this->mock_images.at(random_idx);
+    ImageData img_data = this->mock_images.at(random_idx);
     uint64_t timestamp = getUnixTime_s().count();
 
+    // if we can't find corresonding telemtry json, just query mavlink
+    if (!img_data.TELEMETRY.has_value()) {
+        img_data.TELEMETRY = queryMavlinkImageTelemetry(mavlinkClient);
+    }
+
     ImageData imageData {
-        .DATA = newImage,
+        .DATA = img_data.DATA,
         .TIMESTAMP = timestamp,
-        .TELEMETRY = telemetry,
+        .TELEMETRY = img_data.TELEMETRY,
     };
 
     return imageData;
 }
 
 void MockCamera::startStreaming() {}
+
+std::optional<ImageTelemetry> MockCamera::getTelemetryFromJsonFile(std::filesystem::path img_path) {
+    img_path.replace_extension("json");
+    std::ifstream telemetry_stream(img_path);
+    if (!telemetry_stream.is_open()) {
+        // no corresponding telemetry json found
+        return {};
+    }
+    nlohmann::json json = nlohmann::json::parse(telemetry_stream, nullptr, true, true);
+    return ImageTelemetry {
+        .latitude_deg = json["latitude_deg"],
+        .longitude_deg = json["longitude_deg"],
+        .altitude_agl_m = json["altitude_agl_m"],
+        .airspeed_m_s = json["airspeed_m_s"],
+        .heading_deg = json["heading_deg"],
+        .yaw_deg = json["yaw_deg"],
+        .pitch_deg = json["pitch_deg"],
+        .roll_deg = json["roll_deg"],
+    };
+}

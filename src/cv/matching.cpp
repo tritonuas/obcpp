@@ -83,6 +83,9 @@ Matching::Matching(std::array<Bottle, NUM_AIRDROP_BOTTLES>
 * NOTE: Matching only occurs if loading model and ref. images was successful.
 */
 MatchResult Matching::match(const CroppedTarget& croppedTarget) {
+    if (referenceFeatures.empty()) {
+        return MatchResult(BottleDropIndex::A, -std::numeric_limits<double>::infinity());
+    }
     std::vector<torch::jit::IValue> input = toInput(croppedTarget.croppedImage);
     torch::Tensor output = this->torch_module.forward(input).toTensor();
     int minIndex = 0;

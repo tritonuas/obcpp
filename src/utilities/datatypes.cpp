@@ -126,7 +126,7 @@ std::string ODLCColorToString(const ODLCColor& color) {
         case ODLCColor::Brown: return "BROWN";
         case ODLCColor::Orange: return "ORANGE";
         // maybe return optional nullopt here instead of defaulting to WHITE
-        // in case of an unknown color 
+        // in case of an unknown color
         default: return "WHITE";
     }
 }

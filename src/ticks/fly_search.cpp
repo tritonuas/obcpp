@@ -57,8 +57,6 @@ Tick* FlySearchTick::tick() {
             }
 
             if (photo.has_value()) {
-                // TODO: debug why this is crashing and fix it
-
                 // Update the last photo time
                 this->last_photo_time = getUnixTime_ms();
                 // Run the pipeline on the photo
