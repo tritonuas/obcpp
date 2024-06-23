@@ -35,7 +35,7 @@ std::vector<CroppedTarget> Saliency::salience(cv::Mat image) {
     tensor = tensor.toType(c10::kFloat).div(255);
     // swap axis
     tensor = Saliency::transpose(tensor, { (2), (0), (1) });
-    
+
     // eventually add device as member of Saliency
     c10::Device device = torch::cuda::is_available() ? torch::kCUDA : torch::kCPU;
     auto tensor_cuda = tensor.to(device);
@@ -61,12 +61,12 @@ std::vector<CroppedTarget> Saliency::salience(cv::Mat image) {
     targets = extractTargets(listDetections, image);
 
     LOG_F(INFO, "saliency found %ld targets", targets.size());
-    for (auto const& target: targets) {
-        LOG_F(INFO, "\ttarget at bbox: (%d, %d, %d, %d). ismannikin: %d", 
-            target.bbox.x1, 
+    for (auto const& target : targets) {
+        LOG_F(INFO, "\ttarget at bbox: (%d, %d, %d, %d). ismannikin: %d",
+            target.bbox.x1,
             target.bbox.y1,
-            target.bbox.x2, 
-            target.bbox.y2, 
+            target.bbox.x2,
+            target.bbox.y2,
             target.isMannikin);
     }
     return targets;

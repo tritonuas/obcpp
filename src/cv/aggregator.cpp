@@ -51,7 +51,8 @@ void CVAggregator::worker(ImageData image, int thread_num) {
             // newly inserted target, once we insert it after the if/else
             size_t detected_target_index = this->results->detected_targets.size();
 
-            std::optional<size_t> curr_match_idx = this->results->matches[curr_target.likely_bottle];
+            std::optional<size_t> curr_match_idx =
+                this->results->matches[curr_target.likely_bottle];
             if (!curr_match_idx.has_value()) {
                 LOG_F(INFO, "Made first match between target %ld and bottle %d",
                     detected_target_index, curr_target.likely_bottle);

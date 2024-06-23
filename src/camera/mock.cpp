@@ -22,13 +22,13 @@ MockCamera::MockCamera(CameraConfig config) : CameraInterface(config) {
             cv::Mat img = cv::imread(dir_entry.path().string());
             // if the image is read
             if (img.data != NULL) {
-                std::optional<ImageTelemetry> telemetry = this->getTelemetryFromJsonFile(dir_entry.path());
+                std::optional<ImageTelemetry> telemetry =
+                    this->getTelemetryFromJsonFile(dir_entry.path());
 
                 ImageData img_data(
                     img,
                     0,
-                    telemetry
-                );
+                    telemetry);
                 this->mock_images.push_back(img_data);
             }
         });
@@ -126,7 +126,7 @@ std::optional<ImageTelemetry> MockCamera::getTelemetryFromJsonFile(std::filesyst
     if (!telemetry_stream.is_open()) {
         // no corresponding telemetry json found
         return {};
-    } 
+    }
     nlohmann::json json = nlohmann::json::parse(telemetry_stream, nullptr, true, true);
     return ImageTelemetry {
         .latitude_deg = json["latitude_deg"],

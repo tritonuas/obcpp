@@ -4,6 +4,8 @@
 #include <memory>
 #include <chrono>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "ticks/tick.hpp"
 #include "cv/pipeline.hpp"
@@ -25,7 +27,7 @@ class MissionPrepTick : public Tick {
 
     Tick* tick() override;
  private:
-    std::vector<std::pair<cv::Mat, BottleDropIndex>> 
+    std::vector<std::pair<cv::Mat, BottleDropIndex>>
         generateReferenceImages(std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives);
 
     std::string getNotStolenRoute(const Bottle& target);
