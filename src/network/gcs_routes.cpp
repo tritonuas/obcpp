@@ -487,26 +487,34 @@ try {
 
     LockPtr<CVResults> results = state->getCV()->getResults();
 
+    // gcs sends target ids + 1 so that target 0 gets mapped to 1, and then -1 gets mapped to
+    // 0 which is the protobuf null value
+    int a_id = (matchings.bottle_a_id() - 1);
+    int b_id = (matchings.bottle_b_id() - 1);
+    int c_id = (matchings.bottle_c_id() - 1);
+    int d_id = (matchings.bottle_d_id() - 1);
+    int e_id = (matchings.bottle_e_id() - 1);
+
     // obviously this should be cleaned up, but it should work for now
-    if (matchings.bottle_a_id() >= 0) { // negative is invalid
-        LOG_F(INFO, "Updating bottle A to id %d", matchings.bottle_a_id());
-        results.data->matches[BottleDropIndex::A] = static_cast<size_t>(matchings.bottle_a_id());
+    if (a_id >= 0) { // negative is invalid
+        LOG_F(INFO, "Updating bottle A to id %d", a_id);
+        results.data->matches[BottleDropIndex::A] = static_cast<size_t>(a_id);
     }
-    if (matchings.bottle_b_id() >= 0) {
-        LOG_F(INFO, "Updating bottle B to id %d", matchings.bottle_b_id());
-        results.data->matches[BottleDropIndex::B] = static_cast<size_t>(matchings.bottle_b_id());
+    if (b_id >= 0) {
+        LOG_F(INFO, "Updating bottle B to id %d", b_id);
+        results.data->matches[BottleDropIndex::B] = static_cast<size_t>(b_id);
     }
-    if (matchings.bottle_c_id() >= 0) {
-        LOG_F(INFO, "Updating bottle C to id %d", matchings.bottle_c_id());
-        results.data->matches[BottleDropIndex::C] = static_cast<size_t>(matchings.bottle_c_id());
+    if (c_id >= 0) {
+        LOG_F(INFO, "Updating bottle C to id %d", c_id);
+        results.data->matches[BottleDropIndex::C] = static_cast<size_t>(c_id);
     }
-    if (matchings.bottle_d_id() >= 0) {
-        LOG_F(INFO, "Updating bottle D to id %d", matchings.bottle_d_id());
-        results.data->matches[BottleDropIndex::D] = static_cast<size_t>(matchings.bottle_d_id());
+    if (d_id >= 0) {
+        LOG_F(INFO, "Updating bottle D to id %d", d_id);
+        results.data->matches[BottleDropIndex::D] = static_cast<size_t>(d_id);
     }
-    if (matchings.bottle_e_id() >= 0) {
-        LOG_F(INFO, "Updating bottle E to id %d", matchings.bottle_e_id());
-        results.data->matches[BottleDropIndex::E] = static_cast<size_t>(matchings.bottle_e_id());
+    if (e_id >= 0) {
+        LOG_F(INFO, "Updating bottle E to id %d", e_id);
+        results.data->matches[BottleDropIndex::E] = static_cast<size_t>(e_id);
     }
 
     LOG_RESPONSE(INFO, "Updated bottle matchings", OK);
