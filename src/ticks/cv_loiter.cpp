@@ -24,6 +24,20 @@ void CVLoiterTick::setStatus(Status status) {
 Tick* CVLoiterTick::tick() {
     // Tick is called if Search Zone coverage path is finished
 
+    // // print out current state of matching for debugging
+    // LockPtr<CVResults> cv_results = this->state->getCV()->getResults();
+    // for (const auto& match: cv_results.data->matches) {
+    //     if (match.second.has_value()) {
+    //         LOG_F(INFO, "Bottle %d is matched with target at lat: %f, lon: %f",
+    //             match.first,
+    //             cv_results.data->detected_targets.at(match.second.value()).coord.latitude(),
+    //             cv_results.data->detected_targets.at(match.second.value()).coord.longitude()
+    //         );
+    //     } else {
+    //         LOG_F(INFO, "Bottle %d is not matched with a target", match.first);
+    //     }
+    // }
+
     // Check status of the CV Results
     if (status == Status::Validated) {
         return new AirdropPrepTick(this->state);

@@ -55,25 +55,41 @@ Tick* MissionPrepTick::tick() {
 }
 
 
-std::vector<std::pair<cv::Mat, BottleDropIndex>> 
-    MissionPrepTick::generateReferenceImages(std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives) {
-
+std::vector<std::pair<cv::Mat, BottleDropIndex>> MissionPrepTick::generateReferenceImages
+    (std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives) {
     std::vector<std::pair<cv::Mat, BottleDropIndex>> ref_imgs;
 
-    int curr_bottle_idx = BottleDropIndex::A;
+    int curr_bottle_idx = BottleDropIndex::Undefined;
     for (const auto& bottle : competitionObjectives) {
-        httplib::Client client(this->state->config.cv.not_stolen_addr, this->state->config.cv.not_stolen_port);
+        curr_bottle_idx++;
+
+        // don't generate reference images for mannikin since matching model doesn't
+        // match mannikins (handled by saliency)
+        if (bottle.ismannikin()) {
+            continue;
+        }
+
+        httplib::Client client(this->state->config.cv.not_stolen_addr,
+            this->state->config.cv.not_stolen_port);
         auto res = client.Get(this->getNotStolenRoute(bottle));
+        // connection failed
+        if (!res) {
+            LOG_F(ERROR, "Failed to send request to not-stolen at %s:%u. Reason: %s",
+                this->state->config.cv.not_stolen_addr.c_str(),
+                this->state->config.cv.not_stolen_port,
+                httplib::to_string(res.error()).c_str());
+            return {};
+        }
+
         if (res->status != 200) {
             LOG_F(ERROR, "Got invalid response from not-stolen: %s", res->body.c_str());
             continue;
         }
-        std::vector<uint8_t> vectordata(res->body.begin(),res->body.end());
+        std::vector<uint8_t> vectordata(res->body.begin(), res->body.end());
         cv::Mat data_mat(vectordata, true);
-        cv::Mat ref_img(cv::imdecode(data_mat,1)); //put 0 if you want greyscale
+        cv::Mat ref_img(cv::imdecode(data_mat, 1));  // put 0 if you want greyscale
 
         ref_imgs.push_back({ref_img, (BottleDropIndex)curr_bottle_idx});
-        curr_bottle_idx++;
     }
     return ref_imgs;
 }
@@ -85,7 +101,7 @@ std::string MissionPrepTick::getNotStolenRoute(const Bottle& target) {
     std::string shape_type = ODLCShapeToString(target.shape());
     std::string shape_color = ODLCColorToString(target.shapecolor());
 
-    return std::string("/generate?shape_type=") + shape_type + 
+    return std::string("/generate?shape_type=") + shape_type +
         std::string("&shape_color=") + shape_color +
         std::string("&char_type=") + char_type +
         std::string("&char_color=") + char_color;

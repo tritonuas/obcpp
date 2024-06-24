@@ -17,7 +17,8 @@
 struct CVResults {
     std::vector<DetectedTarget> detected_targets;
     // mapping from bottle -> index into detected_targets
-    std::unordered_map<BottleDropIndex, size_t> matches;
+    // (optional is none if we don't have a match yet)
+    std::unordered_map<BottleDropIndex, std::optional<size_t>> matches;
 };
 
 

@@ -23,9 +23,6 @@ images/*
 
 tests/integration/images/*
 !tests/integration/images/.gitkeep
-!tests/integration/images/saliency/
-!tests/integration/images/saliency/.gitkeep
-tests/integration/images/saliency/*.jpg
 
 .vscode/*
 !.vscode/c_cpp_properties.json
