@@ -49,6 +49,8 @@ Tick* AirdropPrepTick::tick() {
     // the or condition here shouldn't be met because above we check for value before setting next_bottle,
     // but just in case we default to whatever location target 0 was found at
     auto target = results.data->detected_targets.at(results.data->matches.at(next_bottle).value_or(0));
+    // IMPORTANT: need to set the altitude of the target coord to the config value so it doesn't
+    // try and nosedive into the ground...
     target.coord.set_altitude(state->config.pathing.approach.drop_altitude_m);
 
     LOG_F(INFO, "Routing to airdrop target %d at (%f, %f) alt %f", static_cast<int>(next_bottle),
