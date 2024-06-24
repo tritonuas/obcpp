@@ -64,12 +64,18 @@ Tick* CVLoiterTick::tick() {
 
                 auto target = results.data->detected_targets.at(index);
 
+                float alt = state->getMav()->altitude_agl_m();
+
+                LOG_F(INFO, "Sending coord(%f, %f) alt %f to bottle %d", 
+                    target.coord.latitude(),
+                    target.coord.longitude(),
+                    alt,
+                    static_cast<int>(bottle));
                 // assumes that the bottle_t enum in the udp2 stuff is the same as
                 // BottleDropIndex enum
                 state->getAirdrop()->send(makeLatLngPacket(
                     SEND_LATLNG, static_cast<bottle_t>(bottle), OBC_NULL,
-                    target.coord.latitude(), target.coord.longitude(),
-                    state->getMav()->altitude_agl_m()));
+                    target.coord.latitude(), target.coord.longitude(), alt));
             }
         }
 

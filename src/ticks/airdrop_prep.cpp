@@ -26,27 +26,35 @@ Tick* AirdropPrepTick::tick() {
         return new ManualLandingTick(state);
     }
 
+    LockPtr<CVResults> results = state->getCV()->getResults();
+
     for (int i = BottleDropIndex::A; i <= BottleDropIndex::E; i++) {
         if (dropped_bottles.contains(static_cast<BottleDropIndex>(i))) {
             continue;
         }
 
         next_bottle = static_cast<BottleDropIndex>(i);
+
+        if (!results.data->matches.at(next_bottle).has_value()) {
+            LOG_F(INFO, "Skipping bottle %d because we didn't match it", 
+                static_cast<int>(next_bottle));
+            state->markBottleAsDropped(next_bottle);
+            continue;
+        }
+
         break;
     }
     state->markBottleAsDropped(next_bottle);
 
-    auto cv_aggregator = state->getCV();
-    {
-        LockPtr<CVResults> results = cv_aggregator->getResults();
-        auto target = results.data->detected_targets.at(results.data->matches.at(next_bottle).value_or(0));
-        target.coord.set_altitude(state->config.pathing.approach.drop_altitude_m);
+    // the or condition here shouldn't be met because above we check for value before setting next_bottle,
+    // but just in case we default to whatever location target 0 was found at
+    auto target = results.data->detected_targets.at(results.data->matches.at(next_bottle).value_or(0));
+    target.coord.set_altitude(state->config.pathing.approach.drop_altitude_m);
 
-        LOG_F(INFO, "Routing to airdrop target %d at (%f, %f) alt %f", static_cast<int>(next_bottle),
-            target.coord.latitude(), target.coord.longitude(), target.coord.altitude());
+    LOG_F(INFO, "Routing to airdrop target %d at (%f, %f) alt %f", static_cast<int>(next_bottle),
+        target.coord.latitude(), target.coord.longitude(), target.coord.altitude());
 
-        state->setAirdropPath(generateAirdropApproach(state, target.coord));
-    }
+    state->setAirdropPath(generateAirdropApproach(state, target.coord));
 
     state->getAirdrop()->send(makeArmPacket(
         DISARM, UDP2_ALL, OBC_NULL, state->getMav()->altitude_agl_m()));
