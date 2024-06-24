@@ -82,6 +82,8 @@ void AirdropClient::_establishConnection() {
 }
 
 bool AirdropClient::send(packet_t packet) {
+    return true;
+
     set_send_thread();
 
     for (int i = 0; i < 8; i++) {

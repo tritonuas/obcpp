@@ -367,8 +367,15 @@ DEF_GCS_HANDLE(Get, targets, all) {
         IdentifiedTarget out;
         out.set_id(id);
         out.set_picture(cvMatToBase64(target.crop.croppedImage));
-        out.set_allocated_coordinate(&target.coord);
         out.set_ismannikin(target.crop.isMannikin);
+
+        GPSCoord* coord = new GPSCoord;
+        coord->set_altitude(target.coord.altitude());
+        coord->set_longitude(target.coord.longitude());
+        coord->set_latitude(target.coord.latitude());
+        out.set_allocated_coordinate(coord); // will be freed in destructor
+
+        out_data.push_back(std::move(out));
 
         // not setting target info because that doesn't really make sense with the current context
         // of the matching algorithm, since the algorithm is matching cropped targets to the
@@ -383,6 +390,8 @@ DEF_GCS_HANDLE(Get, targets, all) {
 }
 
 DEF_GCS_HANDLE(Get, targets, matched) {
+try {
+
     LOG_REQUEST("GET", "/targets/matched");
 
     /*
@@ -394,27 +403,9 @@ DEF_GCS_HANDLE(Get, targets, matched) {
         struct and then send that down, when really we should only need to send the id
         down because all of the IdentifiedTarget information should have been sent
         in the GET /targets/all endpoint
-        
-        That is what this stupid vector is. We have to construct a bunch of Identified targets
-        so that we can send them down, but because of the way protobuf works we have to
-        call the set_allocated_target function which takes a pointer to an IdentifiedTarget.
-        For the bottles this is ok because we actually store the Bottles inside of mission
-        parameters, so we can get a vector of all of the bottles easily and just use the
-        pointer to that copied vector which we get below this vector. But for this one
-        we actually need to allocate a bunch of identified targets such that they
-        don't go out of scope before we use them for serialization. This vector will
-        basically "own" the constructed identified targets we make so that they don't
-        go out of scope until the end of this function.
-
-        And this all could be solved by changing the MatchedTargets protobuf message
-        to just take an index instead of an IdentifiedTarget, but I'm scared to do that
-        two days before competition because idk if there are other assumptions on this
-        protobuf message right now, especially in the frontend, and I don't want to rewrite
-        the frontend Report page...
 
         - tyler
     */
-    std::vector<std::unique_ptr<IdentifiedTarget>> alloc_targets;
 
     // this vector of bottles needs to live as long as this function because we need to give a ptr
     // to these bottles when constructing the MatchedTarget protobuf, and we don't want that data
@@ -426,44 +417,69 @@ DEF_GCS_HANDLE(Get, targets, matched) {
 
     LockPtr<CVResults> results = state->getCV()->getResults();
     for (const auto& [bottle, target_index] : results.data->matches) {
-        if (target_index >= results.data->detected_targets.size()) {
+        if (!target_index.has_value()) {
+            continue;
+        }
+
+        if (target_index.value() >= results.data->detected_targets.size()) {
             LOG_RESPONSE(ERROR, "Out of bounds match error", INTERNAL_SERVER_ERROR);
             return;
         }
 
-        const DetectedTarget& detected_target = results.data->detected_targets.at(target_index);
+        LOG_F(INFO, "bottle %d matched with target %ld", static_cast<int>(bottle), target_index.value());
+
+        const DetectedTarget& detected_target = results.data->detected_targets.at(target_index.value());
 
         MatchedTarget matched_target;
         
         Bottle* curr_bottle = nullptr;
         for (auto& b : bottles) {
-            if (b.index() == target_index) {
-                curr_bottle = &b;
+            if (b.index() == bottle) {
+                curr_bottle = new Bottle;
+                // this is soooo goooooood :0
+                curr_bottle->set_index(b.index());
+                curr_bottle->set_alphanumeric(b.alphanumeric());
+                curr_bottle->set_alphanumericcolor(b.alphanumericcolor());
+                curr_bottle->set_shape(b.shape());
+                curr_bottle->set_shapecolor(b.shapecolor());
             }
         }
         if (curr_bottle == nullptr) {
-            LOG_RESPONSE(ERROR, "Cannot find bottle with right index", INTERNAL_SERVER_ERROR);
-            return;
+            LOG_F(WARNING, "Unmatched bottle");
+            continue;
         }
-        matched_target.set_allocated_bottle(curr_bottle);
+        matched_target.set_allocated_bottle(curr_bottle); // freed in destructor
 
-        auto identified_target = std::make_unique<IdentifiedTarget>();
+        auto identified_target = new IdentifiedTarget;
 
-        identified_target->set_id(target_index);
+        identified_target->set_id(target_index.value());
+        identified_target->set_alphanumeric(curr_bottle->alphanumeric());
+        identified_target->set_alphanumericcolor(curr_bottle->alphanumericcolor());
+        identified_target->set_shape(curr_bottle->shape());
+        identified_target->set_shapecolor(curr_bottle->shapecolor());
 
-        // don't think we need to set anything other than the ID ? (as per long comment up above)
-
-        matched_target.set_allocated_target(identified_target.get());
-        alloc_targets.push_back(std::move(identified_target)); // keep the ptr alive
+        matched_target.set_allocated_target(identified_target); // will be freed in destructor
 
         out_data.push_back(matched_target);
+    }
+
+    for (auto& matched_target : out_data) {
+        LOG_F(INFO, "bottle %d matched to target %d", 
+            static_cast<int>(matched_target.bottle().index()),
+            matched_target.target().id());
     }
 
     std::string out_data_json = messagesToJson(out_data.begin(), out_data.end());
     LOG_RESPONSE(INFO, "Got serialized target match data", OK, out_data_json.c_str(), mime::json);
 }
+catch (std::exception ex) {
+    LOG_RESPONSE(ERROR, "Who fucking knows what just happened", INTERNAL_SERVER_ERROR);
+}
+
+}
 
 DEF_GCS_HANDLE(Post, targets, matched) {
+try {
     LOG_REQUEST("POST", "/targets/matched");
 
     ManualTargetMatch matchings;
@@ -494,4 +510,9 @@ DEF_GCS_HANDLE(Post, targets, matched) {
     }
 
     LOG_RESPONSE(INFO, "Updated bottle matchings", OK);
+}
+catch (std::exception ex) {
+    LOG_RESPONSE(ERROR, "Who fucking knows what just happened", INTERNAL_SERVER_ERROR);
+}
+
 }

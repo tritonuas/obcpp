@@ -15,6 +15,8 @@ class AirdropApproachTick : public Tick {
  public:
     explicit AirdropApproachTick(std::shared_ptr<MissionState> state);
 
+    void init() override;
+
     std::chrono::milliseconds getWait() const override;
 
     Tick* tick() override;

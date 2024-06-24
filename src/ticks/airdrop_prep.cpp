@@ -8,6 +8,7 @@
 #include "ticks/airdrop_approach.hpp"
 #include "ticks/ids.hpp"
 #include "ticks/path_gen.hpp"
+#include "ticks/manual_landing.hpp"
 #include "ticks/mav_upload.hpp"
 #include "utilities/logging.hpp"
 
@@ -20,6 +21,11 @@ Tick* AirdropPrepTick::tick() {
     BottleDropIndex next_bottle = BottleDropIndex::A;
 
     auto dropped_bottles = state->getDroppedBottles();
+
+    if (dropped_bottles.size() >= NUM_AIRDROP_BOTTLES) {
+        return new ManualLandingTick(state);
+    }
+
     for (int i = BottleDropIndex::A; i <= BottleDropIndex::E; i++) {
         if (dropped_bottles.contains(static_cast<BottleDropIndex>(i))) {
             continue;
@@ -28,14 +34,16 @@ Tick* AirdropPrepTick::tick() {
         next_bottle = static_cast<BottleDropIndex>(i);
         break;
     }
+    state->markBottleAsDropped(next_bottle);
 
     auto cv_aggregator = state->getCV();
     {
         LockPtr<CVResults> results = cv_aggregator->getResults();
-        auto target = results.data->detected_targets.at(results.data->matches.at(next_bottle));
+        auto target = results.data->detected_targets.at(results.data->matches.at(next_bottle).value_or(0));
+        target.coord.set_altitude(state->config.pathing.approach.drop_altitude_m);
 
-        LOG_F(INFO, "Routing to airdrop target %d at (%f, %f)", static_cast<int>(next_bottle),
-            target.coord.latitude(), target.coord.longitude());
+        LOG_F(INFO, "Routing to airdrop target %d at (%f, %f) alt %f", static_cast<int>(next_bottle),
+            target.coord.latitude(), target.coord.longitude(), target.coord.altitude());
 
         state->setAirdropPath(generateAirdropApproach(state, target.coord));
     }

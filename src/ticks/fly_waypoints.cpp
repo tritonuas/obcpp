@@ -9,6 +9,10 @@
 FlyWaypointsTick::FlyWaypointsTick(std::shared_ptr<MissionState> state, Tick* next_tick)
     :Tick(state, TickID::FlyWaypoints), next_tick(next_tick) {}
 
+void FlyWaypointsTick::init() {
+    state->getMav()->startMission();
+}
+
 std::chrono::milliseconds FlyWaypointsTick::getWait() const {
     return FLY_WAYPOINTS_TICK_WAIT;
 }

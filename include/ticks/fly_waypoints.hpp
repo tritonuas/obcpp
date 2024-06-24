@@ -16,6 +16,8 @@ class FlyWaypointsTick : public Tick {
     explicit FlyWaypointsTick(std::shared_ptr<MissionState> state,
         Tick* next_tick);
 
+    void init() override;
+
     std::chrono::milliseconds getWait() const override;
 
     Tick* tick() override;

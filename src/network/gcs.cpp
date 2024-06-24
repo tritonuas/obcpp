@@ -70,4 +70,5 @@ void GCSServer::_bindHandlers() {
     BIND_HANDLER(Post, targets, validate);
     BIND_HANDLER(Get, targets, all);
     BIND_HANDLER(Get, targets, matched);
+    BIND_HANDLER(Post, targets, matched);
 }

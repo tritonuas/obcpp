@@ -1,5 +1,6 @@
 #include "cv/pipeline.hpp"
 #include "utilities/logging.hpp"
+#include "protos/obc.pb.h"
 
 // TODO: eventually we will need to invoke non-default constructors for all the
 // modules of the pipeline (to customize model filepath, etc...)
@@ -51,8 +52,11 @@ PipelineResults Pipeline::run(const ImageData &imageData) {
         // TODO: determine what to do if image is missing telemetry metadata
         GPSCoord targetPosition;
         if (imageData.TELEMETRY.has_value()) {
-            targetPosition = GPSCoord(this->ecefLocalizer.localize(
-                imageData.TELEMETRY.value(), target.bbox));
+            // targetPosition = GPSCoord(this->ecefLocalizer.localize(
+            //     imageData.TELEMETRY.value(), target.bbox));
+            targetPosition.set_latitude(imageData.TELEMETRY.value().latitude_deg);
+            targetPosition.set_longitude(imageData.TELEMETRY.value().longitude_deg);
+            targetPosition.set_altitude(0);
         }
 
         VLOG_F(TRACE, "Detected target %ld/%ld at [%f, %f] matched to bottle %d with %f distance.",

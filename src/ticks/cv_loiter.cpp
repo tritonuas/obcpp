@@ -49,8 +49,14 @@ Tick* CVLoiterTick::tick() {
         LockPtr<CVResults> results = state->getCV()->getResults();
 
         for (const auto& bottle : ALL_BOTTLES) {
+            // contains will never be false but whatever
             if (results.data->matches.contains(bottle)) {
-                std::size_t index = results.data->matches.at(bottle);
+                auto opt = results.data->matches.at(bottle);
+                if (!opt.has_value()) {
+                    continue; 
+                }
+
+                std::size_t index = opt.value();
                 
                 if (index >= results.data->detected_targets.size()) {
                     continue;

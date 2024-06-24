@@ -11,6 +11,10 @@
 AirdropApproachTick::AirdropApproachTick(std::shared_ptr<MissionState> state)
     :Tick(state, TickID::AirdropApproach) {}
 
+void AirdropApproachTick::init() {
+    state->getMav()->startMission();
+}
+
 std::chrono::milliseconds AirdropApproachTick::getWait() const {
     return AIRDROP_APPROACH_TICK_WAIT;
 }
