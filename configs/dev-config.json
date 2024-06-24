@@ -27,7 +27,7 @@
         },
         "coverage": {
             "altitude_m": 30.0,
-            "camera_vision_m": 6.0,
+            "camera_vision_m": 5.0,
             "method": "hover",
             "hover": {
                 "pictures_per_stop": 1,
@@ -42,7 +42,7 @@
         "approach": {
             "drop_method": "unguided",
             "drop_angle_rad": 2.52134317,
-            "drop_altitude_m": 26.0,
+            "drop_altitude_m": 35.0,
             "guided_drop_distance_m": 50.0,
             "unguided_drop_distance_m": 50.0
         }

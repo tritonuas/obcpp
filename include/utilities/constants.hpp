@@ -40,6 +40,9 @@ const double DROP_ALTITUDE_M = 26.0;
 const double GUIDED_DROP_DISTANCE_M = 50.0;
 const double UNGUIDED_DROP_DISTANCE_M = 50.0;
 
+// mavlink
+const uint16_t WIND_COV = 231;
+
 const int DEFAULT_GCS_PORT = 5010;
 
 const int NUM_AIRDROP_BOTTLES = 5;

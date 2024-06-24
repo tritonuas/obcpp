@@ -6,6 +6,8 @@
 #include <string>
 
 #include "ticks/tick.hpp"
+#include "pathing/static.hpp"
+#include "ticks/airdrop_approach.hpp"
 
 /*
  * Determines the approach path of the next airdrop target, or determines that we are finished

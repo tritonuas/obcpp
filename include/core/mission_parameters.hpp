@@ -26,10 +26,11 @@ class MissionParameters {
 
     // Getters for singular value
     // Use when only need to read one value
+
     Polygon getFlightBoundary();
     Polygon getAirdropBoundary();
     Polyline getWaypoints();
-    const std::vector<Bottle>& getAirdropBottles();
+    std::vector<Bottle> getAirdropBottles();
 
     // Getters for multiple values
     // Use when need to get multiple values

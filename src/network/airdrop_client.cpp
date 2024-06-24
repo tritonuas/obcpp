@@ -82,12 +82,16 @@ void AirdropClient::_establishConnection() {
 }
 
 bool AirdropClient::send(packet_t packet) {
+    return true;
+
     set_send_thread();
 
-    auto res = send_ad_packet(this->socket, packet);
-    if (res.is_err) {
-        LOG_F(ERROR, "%s", res.data.err);
-        return false;
+    for (int i = 0; i < 8; i++) {
+        auto res = send_ad_packet(this->socket, packet);
+        if (res.is_err) {
+            LOG_F(ERROR, "%s", res.data.err);
+            return false;
+        }
     }
 
     // TODO: helper to go from packet -> str

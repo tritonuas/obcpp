@@ -89,6 +89,26 @@ MissionPath MissionState::getCoveragePath() {
     return this->coverage_path;
 }
 
+void MissionState::setAirdropPath(const MissionPath& airdrop_path) {
+    Lock lock(this->airdrop_path_mut);
+    this->airdrop_path = airdrop_path;
+}
+
+MissionPath MissionState::getAirdropPath() {
+    Lock lock(this->airdrop_path_mut);
+    return this->airdrop_path;
+}
+
+void MissionState::markBottleAsDropped(BottleDropIndex bottle) {
+    Lock lock(this->dropped_bottles_mut);
+    this->dropped_bottles.insert(bottle);
+}
+
+std::unordered_set<BottleDropIndex> MissionState::getDroppedBottles() {
+    Lock lock(this->dropped_bottles_mut);
+    return this->dropped_bottles;
+}
+
 std::shared_ptr<MavlinkClient> MissionState::getMav() {
     return this->mav;
 }

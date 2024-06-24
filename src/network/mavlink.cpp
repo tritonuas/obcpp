@@ -145,6 +145,24 @@ MavlinkClient::MavlinkClient(OBCConfig config)
         Lock lock(this->data_mut);
         this->data.armed = armed;
     });
+
+    this->passthrough->subscribe_message(WIND_COV, [this](const mavlink_message_t& message) {
+        // auto payload = message.payload64;
+        // LOG_F(INFO, "UNIX TIME: %lu", payload[0]);
+
+        // /*
+        //     NOT TESTED - don't actually know where the data is in thie uint64_t[]
+        //     TODO - test on actual pixhawk to make sure that the data makes sense
+        // */
+
+        // this->data.wind.x = payload[1];
+        // this->data.wind.y = payload[2];
+        // this->data.wind.z = payload[3];
+
+        this->data.wind.x = 0;
+        this->data.wind.y = 0;
+        this->data.wind.z = 0;
+    });
     // this->telemetry->subscribe_attitude_euler(
     //     [this](mavsdk::Telemetry::EulerAngle attitude) {
     //         VLOG_F(DEBUG, "Yaw: %f, Pitch: %f, Roll: %f)",
@@ -315,6 +333,11 @@ double MavlinkClient::pitch_deg() {
 double MavlinkClient::roll_deg() {
     Lock lock(this->data_mut);
     return this->data.roll_deg;
+}
+
+XYZCoord MavlinkClient::wind() {
+    Lock lock(this->data_mut);
+    return this->data.wind;
 }
 
 bool MavlinkClient::isArmed() {

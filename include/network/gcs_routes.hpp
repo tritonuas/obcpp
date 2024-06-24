@@ -65,19 +65,11 @@ DEF_GCS_HANDLE(Get, mission);
 DEF_GCS_HANDLE(Post, mission);
 
 /*
- * POST /airdrop
- * 
- * {
- *      TODO: fill in the expected JSON format
- * }
- * 
- * TODO: reference protobuf class that encompasses the JSON
+ * POST /targets/locations
  * ---
- * Response is plain text that says whether posting was successful or not
- * 200 OK: waypoints were in correct format and uploaded to server
- * 400 BAD REQUEST: waypoints were not in correct format; ignored
+ * Upload the bottle locations to the OBC
  */
-DEF_GCS_HANDLE(Post, airdrop);
+DEF_GCS_HANDLE(Post, targets, locations);
 
 /*
  * GET /path/initial
@@ -153,13 +145,36 @@ DEF_GCS_HANDLE(Post, takeoff, autonomous);
 /**
  * POST /targets/validate
  * ---
+ * validate the current set of matched targets and go onto airdrop mode
  */
 DEF_GCS_HANDLE(Post, targets, validate);
 
 /**
  * POST /targets/reject
  * ---
+ * tell the plane to do the search path again because we missed targets
  */
 DEF_GCS_HANDLE(Post, targets, reject);
+
+/**
+ * GET /targets/all
+ * ---
+ * get all of the targets that have been identified & send to the GCS
+ */
+DEF_GCS_HANDLE(Get, targets, all);
+
+/**
+ * GET /targets/matched
+ * ---
+ * get the current mappings between identified targets and bottles
+ */
+DEF_GCS_HANDLE(Get, targets, matched);
+
+/**
+ * POST /targets/matched
+ * ---
+ * manual override for mappings between targets
+ */
+DEF_GCS_HANDLE(Post, targets, matched);
 
 #endif  // INCLUDE_NETWORK_GCS_ROUTES_HPP_

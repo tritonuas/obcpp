@@ -490,7 +490,7 @@ std::vector<XYZCoord> HoverCoveragePathing::run() {
 }
 
 AirdropApproachPathing::AirdropApproachPathing(const RRTPoint &start, const XYZCoord &goal,
-                                               RRTPoint wind, Polygon bounds,
+                                               XYZCoord wind, Polygon bounds,
                                                const OBCConfig &config,
                                                std::vector<Polygon> obstacles):
     start(start),
@@ -520,9 +520,10 @@ RRTPoint AirdropApproachPathing::getDropLocation() const {
     XYZCoord drop_offset(
         drop_distance * std::cos(drop_angle), drop_distance * std::sin(drop_angle), 0);
 
-    double wind_strength_coef = wind.coord.norm() * WIND_CONST_PER_ALTITUDE;
-    XYZCoord wind_offset(wind_strength_coef * std::cos(wind.psi),
-                         wind_strength_coef * std::sin(wind.psi), 0);
+    double wind_strength_coef = wind.norm() * WIND_CONST_PER_ALTITUDE;
+    double wind_angle = std::atan2(wind.y, wind.x);
+    XYZCoord wind_offset(wind_strength_coef * std::cos(wind_angle),
+                         wind_strength_coef * std::sin(wind_angle), 0);
     XYZCoord drop_location(goal.x + drop_offset.x + wind_offset.x,
                            goal.y + drop_offset.y + wind_offset.y,
                            config.pathing.approach.drop_altitude_m);
@@ -564,9 +565,8 @@ MissionPath generateInitialPath(std::shared_ptr<MissionState> state) {
 
     std::vector<XYZCoord> path = rrt.getPointsToGoal();
     std::vector<GPSCoord> output_coords;
-    int count = 0;
 
-    for (XYZCoord wpt : path) {
+    for (const XYZCoord& wpt : path) {
         output_coords.push_back(state->getCartesianConverter()->toLatLng(wpt));
     }
 
@@ -588,4 +588,36 @@ MissionPath generateSearchPath(std::shared_ptr<MissionState> state) {
         return MissionPath(MissionPath::Type::HOVER, gps_coords,
             state->config.pathing.coverage.hover.hover_time_s);
     }
+}
+
+MissionPath generateAirdropApproach(std::shared_ptr<MissionState> state,
+                                              const GPSCoord &goal) {
+    // finds starting location
+    std::shared_ptr<MavlinkClient> mav = state->getMav();
+    std::pair<double, double> start_lat_long = mav->latlng_deg();
+    GPSCoord start_gps =
+        makeGPSCoord(start_lat_long.first, start_lat_long.second, mav->altitude_agl_m());
+    double start_angle = 90 - mav->heading_deg();
+    XYZCoord start_xyz = state->getCartesianConverter().value().toXYZ(start_gps);
+    RRTPoint start_rrt(start_xyz, start_angle);
+
+    // pathing
+    XYZCoord goal_xyz = state->getCartesianConverter().value().toXYZ(goal);
+    AirdropApproachPathing airdrop_planner(start_rrt, goal_xyz, mav->wind(),
+                                           state->mission_params.getFlightBoundary(),
+                                           state->config, {});
+    std::vector<XYZCoord> xyz_path = airdrop_planner.run();
+
+    // try to fly to the third waypoint in the path
+    // prevents the drone from passing the initial waypoint
+    // [TODO]-done out of laziness, forgot if the path includes starting location
+    xyz_path.erase(xyz_path.begin());
+    xyz_path.erase(xyz_path.begin());
+
+    std::vector<GPSCoord> gps_path;
+    for (const XYZCoord &wpt : xyz_path) {
+        gps_path.push_back(state->getCartesianConverter().value().toLatLng(wpt));
+    }
+
+    return MissionPath(MissionPath::Type::FORWARD, gps_path);
 }

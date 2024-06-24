@@ -256,7 +256,7 @@ class HoverCoveragePathing {
 
 class AirdropApproachPathing {
  public:
-    AirdropApproachPathing(const RRTPoint &start, const XYZCoord &goal, RRTPoint wind,
+    AirdropApproachPathing(const RRTPoint &start, const XYZCoord &goal, XYZCoord wind,
                            Polygon bounds, const OBCConfig &config,
                            std::vector<Polygon> obstacles = {});
     /**
@@ -278,11 +278,14 @@ class AirdropApproachPathing {
     const Dubins dubins;
     const OBCConfig config;
 
-    RRTPoint wind;
+    XYZCoord wind;
 };
 
 MissionPath generateInitialPath(std::shared_ptr<MissionState> state);
 
 MissionPath generateSearchPath(std::shared_ptr<MissionState> state);
+
+MissionPath generateAirdropApproach(std::shared_ptr<MissionState> state,
+                                              const GPSCoord &goal);
 
 #endif  // INCLUDE_PATHING_STATIC_HPP_

@@ -118,8 +118,8 @@ DEF_GCS_HANDLE(Post, mission) {
     }
 }
 
-DEF_GCS_HANDLE(Post, airdrop) {
-    LOG_REQUEST("POST", "/airdrop");
+DEF_GCS_HANDLE(Post, targets, locations) {
+    LOG_REQUEST("POST", "/targets/locations");
 
     if (state->getAirdrop() == nullptr) {
         LOG_RESPONSE(ERROR, "Airdrop not connected", BAD_REQUEST);
@@ -303,7 +303,7 @@ DEF_GCS_HANDLE(Post, dodropnow) {
 }
 
 DEF_GCS_HANDLE(Post, takeoff, manual) {
-    LOG_REQUEST("POST", "takeoff/manual");
+    LOG_REQUEST("POST", "/takeoff/manual");
 
     auto lock_ptr = state->getTickLockPtr<WaitForTakeoffTick>();
     if (!lock_ptr.has_value()) {
@@ -315,7 +315,7 @@ DEF_GCS_HANDLE(Post, takeoff, manual) {
 }
 
 DEF_GCS_HANDLE(Post, takeoff, autonomous) {
-    LOG_REQUEST("POST", "takeoff/autonomous");
+    LOG_REQUEST("POST", "/takeoff/autonomous");
 
     auto lock_ptr = state->getTickLockPtr<WaitForTakeoffTick>();
     if (!lock_ptr.has_value()) {
@@ -327,7 +327,7 @@ DEF_GCS_HANDLE(Post, takeoff, autonomous) {
 }
 
 DEF_GCS_HANDLE(Post, targets, validate) {
-    LOG_REQUEST("POST", "targets/validate");
+    LOG_REQUEST("POST", "/targets/validate");
     auto lock_ptr = state->getTickLockPtr<CVLoiterTick>();
 
     if (!lock_ptr.has_value()) {
@@ -340,7 +340,7 @@ DEF_GCS_HANDLE(Post, targets, validate) {
 }
 
 DEF_GCS_HANDLE(Post, targets, reject) {
-    LOG_REQUEST("POST", "targets/reject");
+    LOG_REQUEST("POST", "/targets/reject");
     auto lock_ptr = state->getTickLockPtr<CVLoiterTick>();
 
     if (!lock_ptr.has_value()) {
@@ -350,4 +350,169 @@ DEF_GCS_HANDLE(Post, targets, reject) {
 
     lock_ptr->data->setStatus(CVLoiterTick::Status::Rejected);
     LOG_RESPONSE(INFO, "Set status of CVLoiter Tick to rejected", OK);
+}
+
+DEF_GCS_HANDLE(Get, targets, all) {
+    LOG_REQUEST("GET", "/targets/all");
+
+    LockPtr<CVResults> results = state->getCV()->getResults();
+
+    // Convert to protobuf serialization
+    std::vector<IdentifiedTarget> out_data;
+
+    int id = 0; // id of the target is the index in the detected_targets vector
+    // See layout of Identified target proto here:
+    // https://github.com/tritonuas/protos/blob/master/obc.proto
+    for (auto& target : results.data->detected_targets) {
+        IdentifiedTarget out;
+        out.set_id(id);
+        out.set_picture(cvMatToBase64(target.crop.croppedImage));
+        out.set_ismannikin(target.crop.isMannikin);
+
+        GPSCoord* coord = new GPSCoord;
+        coord->set_altitude(target.coord.altitude());
+        coord->set_longitude(target.coord.longitude());
+        coord->set_latitude(target.coord.latitude());
+        out.set_allocated_coordinate(coord); // will be freed in destructor
+
+        out_data.push_back(std::move(out));
+
+        // not setting target info because that doesn't really make sense with the current context
+        // of the matching algorithm, since the algorithm is matching cropped targets to the
+        // expected not-stolen generated images, so it isn't really classifying targets with a 
+        // specific alphanumeric, color, etc...
+
+        id++;
+    }
+
+    std::string out_data_json = messagesToJson(out_data.begin(), out_data.end());
+    LOG_RESPONSE(INFO, "Got serialized target data", OK, out_data_json.c_str(), mime::json);
+}
+
+DEF_GCS_HANDLE(Get, targets, matched) {
+try {
+
+    LOG_REQUEST("GET", "/targets/matched");
+
+    /*
+        NOTE / TODO:
+        ok so these protobuf messages should really be refactored a bit
+        currently the MatchedTarget protobuf message contains both a Bottle and
+        IdentifiedTarget, which in theory seems fine but gets annoying because
+        now to make the message to send down here we have to construct an entire IdentifiedTarget
+        struct and then send that down, when really we should only need to send the id
+        down because all of the IdentifiedTarget information should have been sent
+        in the GET /targets/all endpoint
+
+        - tyler
+    */
+
+    // this vector of bottles needs to live as long as this function because we need to give a ptr
+    // to these bottles when constructing the MatchedTarget protobuf, and we don't want that data
+    // to go out of scope and become garbage
+    std::vector<Bottle> bottles = state->mission_params.getAirdropBottles();
+
+    // convert to protobuf serialization
+    std::vector<MatchedTarget> out_data;
+
+    LockPtr<CVResults> results = state->getCV()->getResults();
+    for (const auto& [bottle, target_index] : results.data->matches) {
+        if (!target_index.has_value()) {
+            continue;
+        }
+
+        if (target_index.value() >= results.data->detected_targets.size()) {
+            LOG_RESPONSE(ERROR, "Out of bounds match error", INTERNAL_SERVER_ERROR);
+            return;
+        }
+
+        LOG_F(INFO, "bottle %d matched with target %ld", static_cast<int>(bottle), target_index.value());
+
+        const DetectedTarget& detected_target = results.data->detected_targets.at(target_index.value());
+
+        MatchedTarget matched_target;
+        
+        Bottle* curr_bottle = nullptr;
+        for (auto& b : bottles) {
+            if (b.index() == bottle) {
+                curr_bottle = new Bottle;
+                // this is soooo goooooood :0
+                curr_bottle->set_index(b.index());
+                curr_bottle->set_alphanumeric(b.alphanumeric());
+                curr_bottle->set_alphanumericcolor(b.alphanumericcolor());
+                curr_bottle->set_shape(b.shape());
+                curr_bottle->set_shapecolor(b.shapecolor());
+            }
+        }
+        if (curr_bottle == nullptr) {
+            LOG_F(WARNING, "Unmatched bottle");
+            continue;
+        }
+        matched_target.set_allocated_bottle(curr_bottle); // freed in destructor
+
+        auto identified_target = new IdentifiedTarget;
+
+        identified_target->set_id(target_index.value());
+        identified_target->set_alphanumeric(curr_bottle->alphanumeric());
+        identified_target->set_alphanumericcolor(curr_bottle->alphanumericcolor());
+        identified_target->set_shape(curr_bottle->shape());
+        identified_target->set_shapecolor(curr_bottle->shapecolor());
+
+        matched_target.set_allocated_target(identified_target); // will be freed in destructor
+
+        out_data.push_back(matched_target);
+    }
+
+    for (auto& matched_target : out_data) {
+        LOG_F(INFO, "bottle %d matched to target %d", 
+            static_cast<int>(matched_target.bottle().index()),
+            matched_target.target().id());
+    }
+
+    std::string out_data_json = messagesToJson(out_data.begin(), out_data.end());
+    LOG_RESPONSE(INFO, "Got serialized target match data", OK, out_data_json.c_str(), mime::json);
+}
+catch (std::exception ex) {
+    LOG_RESPONSE(ERROR, "Who fucking knows what just happened", INTERNAL_SERVER_ERROR);
+}
+
+}
+
+DEF_GCS_HANDLE(Post, targets, matched) {
+try {
+    LOG_REQUEST("POST", "/targets/matched");
+
+    ManualTargetMatch matchings;
+    google::protobuf::util::JsonStringToMessage(request.body, &matchings);
+
+    LockPtr<CVResults> results = state->getCV()->getResults();
+
+    // obviously this should be cleaned up, but it should work for now
+    if (matchings.bottle_a_id() >= 0) { // negative is invalid
+        LOG_F(INFO, "Updating bottle A to id %d", matchings.bottle_a_id());
+        results.data->matches[BottleDropIndex::A] = static_cast<size_t>(matchings.bottle_a_id());
+    }
+    if (matchings.bottle_b_id() >= 0) {
+        LOG_F(INFO, "Updating bottle B to id %d", matchings.bottle_b_id());
+        results.data->matches[BottleDropIndex::B] = static_cast<size_t>(matchings.bottle_b_id());
+    }
+    if (matchings.bottle_c_id() >= 0) {
+        LOG_F(INFO, "Updating bottle C to id %d", matchings.bottle_c_id());
+        results.data->matches[BottleDropIndex::C] = static_cast<size_t>(matchings.bottle_c_id());
+    }
+    if (matchings.bottle_d_id() >= 0) {
+        LOG_F(INFO, "Updating bottle D to id %d", matchings.bottle_d_id());
+        results.data->matches[BottleDropIndex::D] = static_cast<size_t>(matchings.bottle_d_id());
+    }
+    if (matchings.bottle_e_id() >= 0) {
+        LOG_F(INFO, "Updating bottle E to id %d", matchings.bottle_e_id());
+        results.data->matches[BottleDropIndex::E] = static_cast<size_t>(matchings.bottle_e_id());
+    }
+
+    LOG_RESPONSE(INFO, "Updated bottle matchings", OK);
+}
+catch (std::exception ex) {
+    LOG_RESPONSE(ERROR, "Who fucking knows what just happened", INTERNAL_SERVER_ERROR);
+}
+
 }

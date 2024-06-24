@@ -2,22 +2,23 @@
 #define INCLUDE_NETWORK_MAVLINK_HPP_
 
 #include <mavsdk/mavsdk.h>
-#include <mavsdk/plugins/telemetry/telemetry.h>
-#include <mavsdk/plugins/mission_raw/mission_raw.h>
-#include <mavsdk/plugins/geofence/geofence.h>
 #include <mavsdk/plugins/action/action.h>
+#include <mavsdk/plugins/geofence/geofence.h>
 #include <mavsdk/plugins/mavlink_passthrough/mavlink_passthrough.h>
+#include <mavsdk/plugins/mission_raw/mission_raw.h>
+#include <mavsdk/plugins/telemetry/telemetry.h>
 #include <mavsdk/plugins/param/param.h>
-#include <memory>
-#include <vector>
-#include <mutex>
-#include <string>
+
 #include <chrono>
-#include <iostream>
-#include <thread>
-#include <optional>
 #include <cmath>
+#include <iostream>
+#include <memory>
+#include <mutex>
+#include <optional>
+#include <string>
+#include <thread>
 #include <utility>
+#include <vector>
 
 #include "protos/obc.pb.h"
 #include "utilities/datatypes.hpp"
@@ -39,18 +40,18 @@ class MavlinkClient {
     /*
      * BLOCKING. Continues to try to upload the mission based on the passed through MissionConfig
      * until it is successfully received by the plane.
-     * 
+     *
      * Uploading the mission takes two steps:
      * 1. uploading the geofence data (the flight boundary)
      * 2. uploading the waypoints data (this is what actually is called the "mission" in
      *    the mavlink terms)
-     * 
+     *
      * This function will continue to try and upload these two items until it has successfully
      * uploaded both. Since it is blocking, this should usually be called inside of a separate
      * thread if async behavior is desired. TODO: consider if it would be better to have this
      * function only attempt one mission upload, and have the retrying behavior start from the
      * outside.
-     * 
+     *
      * The only way this function fails is if there is no cached mission inside
      * of the state, or if the initial path is empty, which will make it return false. This
      * should never happen due to how the state machine is set up, but it is there just in case.
@@ -71,6 +72,7 @@ class MavlinkClient {
     double yaw_deg();
     double pitch_deg();
     double roll_deg();
+    XYZCoord wind();
     bool isArmed();
     mavsdk::Telemetry::FlightMode flight_mode();
     int32_t curr_waypoint() const;
@@ -90,18 +92,19 @@ class MavlinkClient {
     std::unique_ptr<mavsdk::Param> param;
 
     struct Data {
-        double lat_deg {};
-        double lng_deg {};
-        double altitude_agl_m {};
-        double altitude_msl_m {};
-        double groundspeed_m_s {};
-        double airspeed_m_s {};
-        double heading_deg {};
-        double yaw_deg {};
-        double pitch_deg {};
-        double roll_deg {};
-        mavsdk::Telemetry::FlightMode flight_mode {};
-        bool armed {};
+        double lat_deg{};
+        double lng_deg{};
+        double altitude_agl_m{};
+        double altitude_msl_m{};
+        double groundspeed_m_s{};
+        double airspeed_m_s{};
+        double heading_deg{};
+        double yaw_deg{};
+        double pitch_deg{};
+        double roll_deg{};
+        XYZCoord wind{0, 0, 0};
+        mavsdk::Telemetry::FlightMode flight_mode{};
+        bool armed{};
     } data;
     std::mutex data_mut;
 };

@@ -40,6 +40,39 @@ Tick* CVLoiterTick::tick() {
 
     // Check status of the CV Results
     if (status == Status::Validated) {
+
+        const std::array<BottleDropIndex, NUM_AIRDROP_BOTTLES> ALL_BOTTLES = {
+            BottleDropIndex::A, BottleDropIndex::B, BottleDropIndex::C,
+            BottleDropIndex::D, BottleDropIndex::E
+        };
+
+        LockPtr<CVResults> results = state->getCV()->getResults();
+
+        for (const auto& bottle : ALL_BOTTLES) {
+            // contains will never be false but whatever
+            if (results.data->matches.contains(bottle)) {
+                auto opt = results.data->matches.at(bottle);
+                if (!opt.has_value()) {
+                    continue; 
+                }
+
+                std::size_t index = opt.value();
+                
+                if (index >= results.data->detected_targets.size()) {
+                    continue;
+                }
+
+                auto target = results.data->detected_targets.at(index);
+
+                // assumes that the bottle_t enum in the udp2 stuff is the same as
+                // BottleDropIndex enum
+                state->getAirdrop()->send(makeLatLngPacket(
+                    SEND_LATLNG, static_cast<bottle_t>(bottle), OBC_NULL,
+                    target.coord.latitude(), target.coord.longitude(),
+                    state->getMav()->altitude_agl_m()));
+            }
+        }
+
         return new AirdropPrepTick(this->state);
     } else if (status == Status::Rejected) {
         // TODO: Tell Mav to restart Search Mission
