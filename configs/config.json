@@ -98,7 +98,7 @@
         "AFS_GEOFENCE": 0,          // dont terminate flight if outside the geofence
         // "AFS_RC": 1,                // enable RC part of AFS (termination if we lose RC)
         "AFS_RC_MAN_ONLY": 0,       // do afs RC failsafe in any flight mode, not just manual
-        "AFS_RC_FAIL_TIME": 15.0,  // seconds before terminating flight because of RC loss
+        "AFS_RC_FAIL_TIME": 180.0,  // seconds before terminating flight because of RC loss
 
         // return to home RC loss stuff
         // this set of parameters tells the plane to do RTL after 30 seconds of RC loss
@@ -106,7 +106,7 @@
         "THR_FAILSAFE": 1,          // enable normal failsafe parameters
         "FS_SHORT_TIMEOUT": 1.0,      // 1 second
         "FS_SHORT_ACTN": 0,         // continue auto mission, or go to RTL if in manual
-        "FS_LONG_TIMEOUT": 5.0,    // 30 seconds
+        "FS_LONG_TIMEOUT": 30.0,    // 30 seconds
         "FS_LONG_ACTN": 1           // RTL
     }
 }
