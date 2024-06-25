@@ -70,7 +70,17 @@ MavlinkClient::MavlinkClient(OBCConfig config)
     for (const auto& [param, val] : config.mavlink_parameters.param_map) {
         LOG_F(INFO, "Setting %s to %d", param.c_str(), val);
         while (true) {
-            auto result = this->param->set_param_int(param, val);
+            // stupid hack: need to change config file to encode type of data as well, 
+            // or figure that out in a smart way
+            auto result = mavsdk::Param::Result::Unknown;
+            if (param == "FS_LONG_TIMEOUT" ||
+                param == "AFS_RC_FAIL_TIME" ||
+                param == "FS_SHORT_TIMEOUT") {
+                result = this->param->set_param_float(param, val);
+            } else {
+                result = this->param->set_param_int(param, val);
+            }
+
             if (result != mavsdk::Param::Result::Success) {
                 LOG_S(ERROR) << "Failed to set param " << result;
                 std::this_thread::sleep_for(1s);
@@ -101,6 +111,40 @@ MavlinkClient::MavlinkClient(OBCConfig config)
         LOG_S(WARNING) << "Setting mavlink polling rate to 1.0 failed: " << set_rate_result
                        << ". Trying again...";
         std::this_thread::sleep_for(1s);
+    }
+
+    // set home position
+
+    LOG_F(INFO, "Attempting to set home position");
+    bool set_home = false;
+    int attempts = 0;
+    while (attempts < 3) {
+        mavsdk::MavlinkPassthrough::CommandLong command;
+        command.command = MAV_CMD_DO_SET_HOME;
+        command.target_compid = this->passthrough->get_our_compid();
+        command.target_sysid = this->passthrough->get_our_sysid();
+        command.param1 = 0; // use specified location
+        command.param2 = 0; // dont care about yaw, pitch, roll
+        command.param3 = 0; // ..
+        command.param4 = 0; // ..
+        command.param5 = 38.315339; // currently hardcoded to competitions RTL position, this should be set in gcs eventually
+        command.param6 = -76.548108;
+        command.param7 = 0; // altitude
+
+        auto result = this->passthrough->send_command_long(command);
+      
+        if (result == mavsdk::MavlinkPassthrough::Result::Success) {
+            LOG_F(INFO, "Successfully uploaded home position");
+            set_home = true;
+            break;
+        }
+
+        LOG_S(WARNING) << "Could not set home position because " << result << ". Trying again...";
+        attempts++;
+        std::this_thread::sleep_for(100ms);
+    }
+    if (!set_home) {
+        LOG_F(WARNING, "Could not set home position!");
     }
 
     LOG_F(INFO, "Setting mavlink telemetry subscriptions");
