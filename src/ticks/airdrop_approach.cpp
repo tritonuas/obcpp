@@ -21,7 +21,19 @@ std::chrono::milliseconds AirdropApproachTick::getWait() const {
 }
 
 Tick* AirdropApproachTick::tick() {
+    if (state->getMav()->isAtFinalWaypoint()) {
+        if (state->next_bottle_to_drop.has_value()) {
+            LOG_F(INFO, "Dropping bottle %d", state->next_bottle_to_drop.value());
+            state->getAirdrop()->send(makeDropNowPacket(state->next_bottle_to_drop.value()));
+            state->getAirdrop()->send(makeDropNowPacket(state->next_bottle_to_drop.value()));
+            state->getAirdrop()->send(makeDropNowPacket(state->next_bottle_to_drop.value()));
+        } else {
+            LOG_F(ERROR, "Cannot drop bottle because no bottle to drop");
+        }
+    }
+
     if (state->getMav()->isMissionFinished()) {
+
         if (state->getDroppedBottles().size() >= NUM_AIRDROP_BOTTLES) {
             return new ManualLandingTick(state);
         } else {

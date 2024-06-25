@@ -108,6 +108,8 @@ class MissionState {
 
     OBCConfig config;
 
+    std::optional<bottle_t> next_bottle_to_drop;
+
  private:
     std::mutex converter_mut;
     std::optional<CartesianConverter<GPSProtoVec>> converter;
@@ -135,6 +137,7 @@ class MissionState {
     // Gives an index into cv_detected_targets, and specifies that that bottle is matched
     // with the detected_target specified by the index
     std::array<size_t, NUM_AIRDROP_BOTTLES> cv_matches;
+
 
     void _setTick(Tick* newTick);  // does not acquire the tick_mut
 };

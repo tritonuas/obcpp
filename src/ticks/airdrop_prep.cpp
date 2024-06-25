@@ -58,11 +58,13 @@ Tick* AirdropPrepTick::tick() {
 
     state->setAirdropPath(generateAirdropApproach(state, target.coord));
 
-    state->getAirdrop()->send(makeArmPacket(
-        DISARM, UDP2_ALL, OBC_NULL, state->getMav()->altitude_agl_m()));
+    state->next_bottle_to_drop = static_cast<bottle_t>(next_bottle);
+
+    // state->getAirdrop()->send(makeArmPacket(
+    //     DISARM, UDP2_ALL, OBC_NULL, state->getMav()->altitude_agl_m()));
         
-    state->getAirdrop()->send(makeArmPacket(
-        ARM, static_cast<bottle_t>(next_bottle), OBC_NULL, state->getMav()->altitude_agl_m()));
+    // state->getAirdrop()->send(makeArmPacket(
+    //     ARM, static_cast<bottle_t>(next_bottle), OBC_NULL, state->getMav()->altitude_agl_m()));
 
     return new MavUploadTick(this->state, new AirdropApproachTick(this->state),   
             state->getAirdropPath(), false);

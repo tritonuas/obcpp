@@ -405,6 +405,10 @@ bool MavlinkClient::isMissionFinished() {
     return this->mission->mission_progress().current == this->mission->mission_progress().total;
 }
 
+bool MavlinkClient::isAtFinalWaypoint() {
+    return this->mission->mission_progress().current == this->mission->mission_progress().total - 1;
+}
+
 mavsdk::Telemetry::RcStatus MavlinkClient::get_conn_status() {
     return this->telemetry->rc_status();
 }

@@ -77,6 +77,7 @@ class MavlinkClient {
     mavsdk::Telemetry::FlightMode flight_mode();
     int32_t curr_waypoint() const;
     bool isMissionFinished();
+    bool isAtFinalWaypoint();
     mavsdk::Telemetry::RcStatus get_conn_status();
     bool armAndHover(std::shared_ptr<MissionState> state);
     bool startMission();

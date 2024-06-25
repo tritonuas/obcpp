@@ -619,5 +619,5 @@ MissionPath generateAirdropApproach(std::shared_ptr<MissionState> state,
         gps_path.push_back(state->getCartesianConverter().value().toLatLng(wpt));
     }
 
-    return MissionPath(MissionPath::Type::FORWARD, gps_path);
+    return MissionPath(MissionPath::Type::HOVER_AT_FINAL, gps_path, 5);
 }
