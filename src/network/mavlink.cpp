@@ -91,9 +91,11 @@ MavlinkClient::MavlinkClient(OBCConfig config)
         }
     }
 
+    /*
     LOG_F(INFO, "Logging out all mavlink params at TRACE level...");
     auto all_params = this->param->get_all_params();
     VLOG_S(TRACE) << all_params;
+    */
 
     // Set position update rate (1 Hz)
     // TODO: set the 1.0 update rate value in the obc config
@@ -163,7 +165,7 @@ MavlinkClient::MavlinkClient(OBCConfig config)
     this->telemetry->subscribe_flight_mode([this](mavsdk::Telemetry::FlightMode flight_mode) {
         std::ostringstream stream;
         stream << flight_mode;
-        VLOG_F(DEBUG, "Mav Flight Mode: %s", stream.str().c_str());
+        LOG_F(INFO, "Mav Flight Mode: %s", stream.str().c_str());
 
         Lock lock(this->data_mut);
         this->data.flight_mode = flight_mode;

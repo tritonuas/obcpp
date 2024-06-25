@@ -93,9 +93,10 @@
         // return to kill RC loss stuff
         // this set of parameters terminates flight if we lose RC for more than 3 minutes
         "AFS_ENABLE": 1,            // turn on advanced failsafe options
-        "AFS_TERMINATE": 0,         // this gets set to 1 if we manually terminate flight, so make sure it is set to 0
+	"AFS_TERM_ACTION": 42,      // magic number to actually make it kill itself
+        // "AFS_TERMINATE": 0,         // this gets set to 1 if we manually terminate flight, so make sure it is set to 0
         "AFS_GEOFENCE": 0,          // dont terminate flight if outside the geofence
-        "AFS_RC": 1,                // enable RC part of AFS (termination if we lose RC)
+        // "AFS_RC": 1,                // enable RC part of AFS (termination if we lose RC)
         "AFS_RC_MAN_ONLY": 0,       // do afs RC failsafe in any flight mode, not just manual
         "AFS_RC_FAIL_TIME": 15.0,  // seconds before terminating flight because of RC loss
 
