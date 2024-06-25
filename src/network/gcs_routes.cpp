@@ -524,3 +524,14 @@ catch (std::exception ex) {
 }
 
 }
+
+DEF_GCS_HANDLE(Post, kill, kill, kill) {
+    LOG_REQUEST("POST", "/kill/kill/kill");
+
+    if (state->getMav() != nullptr) {
+        state->getMav()->KILL_THE_PLANE_DO_NOT_CALL_THIS_ACCIDENTALLY();
+        LOG_RESPONSE(ERROR, "Attempted to kill the plane", OK);
+    } else {
+        LOG_RESPONSE(ERROR, "Cannot kill the plane: no mav connection", BAD_REQUEST);
+    }
+}

@@ -81,6 +81,8 @@ class MavlinkClient {
     bool armAndHover(std::shared_ptr<MissionState> state);
     bool startMission();
 
+    void KILL_THE_PLANE_DO_NOT_CALL_THIS_ACCIDENTALLY();
+
  private:
     mavsdk::Mavsdk mavsdk;
     std::shared_ptr<mavsdk::System> system;
