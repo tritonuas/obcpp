@@ -165,10 +165,18 @@ MavlinkClient::MavlinkClient(OBCConfig config)
     this->telemetry->subscribe_flight_mode([this](mavsdk::Telemetry::FlightMode flight_mode) {
         std::ostringstream stream;
         stream << flight_mode;
-        LOG_F(INFO, "Mav Flight Mode: %s", stream.str().c_str());
+
+        std::string flight_mode_str = stream.str();
+
+        static std::string prev_flight_mode = "";
 
         Lock lock(this->data_mut);
         this->data.flight_mode = flight_mode;
+
+        if (flight_mode_str != prev_flight_mode) {
+            LOG_F(INFO, "Mav Flight Mode: %s", flight_mode_str.c_str());
+            prev_flight_mode = flight_mode_str;
+        }
     });
     this->telemetry->subscribe_fixedwing_metrics(
         [this](mavsdk::Telemetry::FixedwingMetrics fwmets) {

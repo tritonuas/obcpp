@@ -355,6 +355,11 @@ DEF_GCS_HANDLE(Post, targets, reject) {
 DEF_GCS_HANDLE(Get, targets, all) {
     LOG_REQUEST("GET", "/targets/all");
 
+    if (state->getCV() == nullptr) {
+        LOG_RESPONSE(ERROR, "CV not connected yet", BAD_REQUEST);
+        return;
+    }
+
     LockPtr<CVResults> results = state->getCV()->getResults();
 
     // Convert to protobuf serialization
@@ -391,8 +396,12 @@ DEF_GCS_HANDLE(Get, targets, all) {
 
 DEF_GCS_HANDLE(Get, targets, matched) {
 try {
-
     LOG_REQUEST("GET", "/targets/matched");
+
+    if (state->getCV() == nullptr) {
+        LOG_RESPONSE(ERROR, "CV not connected yet", BAD_REQUEST);
+        return;
+    }
 
     /*
         NOTE / TODO:
@@ -482,39 +491,50 @@ DEF_GCS_HANDLE(Post, targets, matched) {
 try {
     LOG_REQUEST("POST", "/targets/matched");
 
-    ManualTargetMatch matchings;
-    google::protobuf::util::JsonStringToMessage(request.body, &matchings);
+    // not using protobufs cause that shit is NOT working
+    // json string will be in the format
+    // {"A": 3}
+
+    json j = json::parse(request.body);
+
+    if (state->getCV() == nullptr) {
+        LOG_RESPONSE(ERROR, "CV not init yet", BAD_REQUEST);
+        return;
+    }
 
     LockPtr<CVResults> results = state->getCV()->getResults();
 
-    // gcs sends target ids + 1 so that target 0 gets mapped to 1, and then -1 gets mapped to
-    // 0 which is the protobuf null value
-    int a_id = (matchings.bottle_a_id() - 1);
-    int b_id = (matchings.bottle_b_id() - 1);
-    int c_id = (matchings.bottle_c_id() - 1);
-    int d_id = (matchings.bottle_d_id() - 1);
-    int e_id = (matchings.bottle_e_id() - 1);
+    LOG_S(INFO) << j;
+
+    for (auto& [key, val] : j.items()) {
+        std::cout << "key: " << key << ", val: " << val << std::endl;
+    }
 
     // obviously this should be cleaned up, but it should work for now
-    if (a_id >= 0) { // negative is invalid
-        LOG_F(INFO, "Updating bottle A to id %d", a_id);
-        results.data->matches[BottleDropIndex::A] = static_cast<size_t>(a_id);
+    if (j.contains("A")) {
+        int id = j.at("A");
+        LOG_F(INFO, "Updating bottle A to id %d", id);
+        results.data->matches[BottleDropIndex::A] = static_cast<size_t>(id);
     }
-    if (b_id >= 0) {
-        LOG_F(INFO, "Updating bottle B to id %d", b_id);
-        results.data->matches[BottleDropIndex::B] = static_cast<size_t>(b_id);
+    if (j.contains("B")) {
+        int id = j.at("B");
+        LOG_F(INFO, "Updating bottle B to id %d", id);
+        results.data->matches[BottleDropIndex::B] = static_cast<size_t>(id);
     }
-    if (c_id >= 0) {
-        LOG_F(INFO, "Updating bottle C to id %d", c_id);
-        results.data->matches[BottleDropIndex::C] = static_cast<size_t>(c_id);
+    if (j.contains("C")) {
+        int id = j.at("C");
+        LOG_F(INFO, "Updating bottle C to id %d", id);
+        results.data->matches[BottleDropIndex::C] = static_cast<size_t>(id);
     }
-    if (d_id >= 0) {
-        LOG_F(INFO, "Updating bottle D to id %d", d_id);
-        results.data->matches[BottleDropIndex::D] = static_cast<size_t>(d_id);
+    if (j.contains("D")) {
+        int id = j.at("D");
+        LOG_F(INFO, "Updating bottle D to id %d", id);
+        results.data->matches[BottleDropIndex::D] = static_cast<size_t>(id);
     }
-    if (e_id >= 0) {
-        LOG_F(INFO, "Updating bottle E to id %d", e_id);
-        results.data->matches[BottleDropIndex::E] = static_cast<size_t>(e_id);
+    if (j.contains("E")) {
+        int id = j.at("E");
+        LOG_F(INFO, "Updating bottle E to id %d", id);
+        results.data->matches[BottleDropIndex::E] = static_cast<size_t>(id);
     }
 
     LOG_RESPONSE(INFO, "Updated bottle matchings", OK);
