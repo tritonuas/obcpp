@@ -89,6 +89,7 @@
     },
     "mavlink_parameters": {
         "Q_GUIDED_MODE": 1, // hover over loiter waypoints
+        "WP_RADIUS": 7, // 7m flex around waypoints
 
         // return to kill RC loss stuff
         // this set of parameters terminates flight if we lose RC for more than 3 minutes
