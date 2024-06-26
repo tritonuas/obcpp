@@ -4,7 +4,7 @@
     },
     "network": {
         "mavlink": {
-            "connect": "tcp://192.168.1.5:14552"
+            "connect": "tcp://192.168.1.7:14552"
         },
         "gcs": {
             "port": 5010

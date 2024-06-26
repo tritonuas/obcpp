@@ -131,7 +131,9 @@ MavlinkClient::MavlinkClient(OBCConfig config)
         command.param4 = 0; // ..
         command.param5 = 38.315339; // currently hardcoded to competitions RTL position, this should be set in gcs eventually
         command.param6 = -76.548108;
-        command.param7 = 0; // altitude
+        command.param7 = 43.2; // altitude
+
+	// test test test
 
         auto result = this->passthrough->send_command_long(command);
       

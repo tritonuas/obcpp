@@ -572,7 +572,7 @@ DEF_GCS_HANDLE(Get, oh, shit)  {
 
     GPSCoord center;
     center.set_latitude(38.31440741337194);
-    center.set_longitude(76.54460728168489);
+    center.set_longitude(-76.54460728168489);
     center.set_altitude(0);
 
     LockPtr<CVResults> results = state->getCV()->getResults();

@@ -11,7 +11,7 @@
         }
     },
     "takeoff": {
-        "altitude_m": 30.0
+        "altitude_m": 60.0
     },
     "pathing": {
         "dubins": {
