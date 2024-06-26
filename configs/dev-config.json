@@ -1,10 +1,10 @@
 {
     "logging": {
-        "dir": "/workspaces/obcpp/logs"
+        "dir": "/obcpp/logs"
     },
     "network": {
         "mavlink": {
-            "connect": "tcp://127.0.0.1:14552"
+            "connect": "tcp://192.168.1.5:14552"
         },
         "gcs": {
             "port": 5010
@@ -48,19 +48,19 @@
         }
     },
     "cv": {
-        "matching_model_dir": "/workspaces/obcpp/models/target_siamese_1.pt",
-        "segmentation_model_dir": "/workspaces/obcpp/models/fcn-model_20-epochs_06-01-2023T21-16-02.pth",
-        "saliency_model_dir": "/workspaces/obcpp/models/torchscript_19.pth",
+        "matching_model_dir": "/obcpp/models/target_siamese_1.pt",
+        "segmentation_model_dir": "/obcpp/models/fcn-model_20-epochs_06-01-2023T21-16-02.pth",
+        "saliency_model_dir": "/obcpp/models/torchscript_19.pth",
         "not_stolen_addr": "localhost",
         "not_stolen_port": 5069
     },
     "camera": {
         "_comment": "See CameraConfig struct in datatypes.hpp for detailed explanations",
-        "type": "mock",
-        "save_dir": "/workspaces/obcpp/images/",
+        "type": "lucid",
+        "save_dir": "/obcpp/images/",
         "save_images_to_file": false,
         "mock": {
-            "images_dir": "/workspaces/obcpp/tests/integration/images/saliency/"
+            "images_dir": "/obcpp/tests/integration/images/saliency/"
         },
         "lucid": {
             "sensor_shutter_mode": "Rolling",

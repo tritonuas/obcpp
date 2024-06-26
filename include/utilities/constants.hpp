@@ -8,7 +8,7 @@
 #include <unordered_map>
 
 // Max number of CV pipelines that can be running at the same time
-const size_t MAX_CV_PIPELINES = 5;
+const size_t MAX_CV_PIPELINES = 2;
 
 // common ratios of pi
 const double TWO_PI = 2 * M_PI;

@@ -64,7 +64,13 @@ DEF_GCS_HANDLE(Get, connections) {
         mav_conn = state->getMav()->get_conn_status();
     }
 
-    bool camera_good = state->getCamera()->isConnected();
+
+    bool camera_good = false;
+
+    if (state->getCamera()) {
+    	camera_good = state->getCamera()->isConnected();
+    }
+
 
     OBCConnInfo info;
     for (auto const& [bottle_index, ms_since_last_heartbeat] : lost_airdrop_conns) {
