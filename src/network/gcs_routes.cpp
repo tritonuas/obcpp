@@ -561,3 +561,35 @@ DEF_GCS_HANDLE(Post, kill, kill, kill) {
         LOG_RESPONSE(ERROR, "Cannot kill the plane: no mav connection", BAD_REQUEST);
     }
 }
+
+DEF_GCS_HANDLE(Get, oh, shit)  {
+    LOG_REQUEST("GET", "/oh/shit");
+
+    if (state->getCV() == nullptr) {
+        LOG_RESPONSE(ERROR, "No CV yet :(", BAD_REQUEST);
+        return;
+    }
+
+    GPSCoord center;
+    center.set_latitude(38.31440741337194);
+    center.set_longitude(76.54460728168489);
+    center.set_altitude(0);
+
+    LockPtr<CVResults> results = state->getCV()->getResults();
+
+    for (int i = 1; i <= 5; i++) {
+        CroppedTarget crop;
+        crop.isMannikin = false;
+        crop.croppedImage = cv::Mat(cv::Size(20, 20), CV_8UC3, cv::Scalar(255));
+
+        DetectedTarget target(center, static_cast<BottleDropIndex>(i), 100.0, crop);
+        target.coord = center;
+        target.likely_bottle = static_cast<BottleDropIndex>(i);
+        target.crop = crop;
+
+        results.data->detected_targets.push_back(target);
+    }
+
+    LOG_RESPONSE(INFO, "Oh shit", OK);
+}
+

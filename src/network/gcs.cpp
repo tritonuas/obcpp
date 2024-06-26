@@ -73,4 +73,6 @@ void GCSServer::_bindHandlers() {
     BIND_HANDLER(Post, targets, matched);
 
     BIND_HANDLER(Post, kill, kill, kill);
+
+    BIND_HANDLER(Get, oh, shit);
 }

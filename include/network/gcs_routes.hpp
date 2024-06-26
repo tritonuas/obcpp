@@ -186,4 +186,7 @@ DEF_GCS_HANDLE(Post, targets, matched);
  */
 DEF_GCS_HANDLE(Post, kill, kill, kill);
 
+
+DEF_GCS_HANDLE(Get, oh, shit);
+
 #endif  // INCLUDE_NETWORK_GCS_ROUTES_HPP_
