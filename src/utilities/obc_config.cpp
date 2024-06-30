@@ -49,6 +49,7 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
 
     SET_CONFIG_OPT(network, mavlink, connect);
     SET_CONFIG_OPT(network, mavlink, log_params);
+    SET_CONFIG_OPT(network, mavlink, telem_poll_rate);
     SET_CONFIG_OPT(network, gcs, port);
 
     SET_CONFIG_OPT(pathing, rrt, iterations_per_waypoint);

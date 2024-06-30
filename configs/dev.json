@@ -5,7 +5,8 @@
     "network": {
         "mavlink": {
             "connect": "tcp://localhost:14552",
-            "log_params": false
+            "log_params": false,
+            "telem_poll_rate": 2.0
         },
         "gcs": {
             "port": 5010

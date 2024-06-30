@@ -60,6 +60,8 @@ Tick* AirdropPrepTick::tick() {
 
     state->setAirdropPath(generateAirdropApproach(state, target.coord));
 
+    LOG_F(INFO, "Generated approach path");
+
     state->next_bottle_to_drop = static_cast<bottle_t>(next_bottle);
 
     // If we ever switch to use the actual guided part of the protocol probably want

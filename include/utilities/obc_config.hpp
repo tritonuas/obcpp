@@ -25,6 +25,7 @@ struct NetworkConfig {
     struct {
         std::string connect;
         bool log_params;
+        float telem_poll_rate;
     } mavlink;
 };
 

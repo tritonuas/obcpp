@@ -594,9 +594,14 @@ MissionPath generateAirdropApproach(std::shared_ptr<MissionState> state,
                                               const GPSCoord &goal) {
     // finds starting location
     std::shared_ptr<MavlinkClient> mav = state->getMav();
-    std::pair<double, double> start_lat_long = mav->latlng_deg();
+    std::pair<double, double> start_lat_long = {38.315339, -76.548108};
+//        command.param5 = 38.315339;
+ //       command.param6 = -76.548108;
+
     GPSCoord start_gps =
         makeGPSCoord(start_lat_long.first, start_lat_long.second, mav->altitude_agl_m());
+
+    /*
     double start_angle = 90 - mav->heading_deg();
     XYZCoord start_xyz = state->getCartesianConverter().value().toXYZ(start_gps);
     RRTPoint start_rrt(start_xyz, start_angle);
@@ -613,11 +618,22 @@ MissionPath generateAirdropApproach(std::shared_ptr<MissionState> state,
     // [TODO]-done out of laziness, forgot if the path includes starting location
     xyz_path.erase(xyz_path.begin());
     xyz_path.erase(xyz_path.begin());
+    */
 
     std::vector<GPSCoord> gps_path;
+    //XYZCoord pt = state->getCartesianConverter().value().toXYZ(goal);
+
+    /*
     for (const XYZCoord &wpt : xyz_path) {
         gps_path.push_back(state->getCartesianConverter().value().toLatLng(wpt));
     }
+    */
 
-    return MissionPath(MissionPath::Type::HOVER_AT_FINAL, gps_path, 5);
+    gps_path.push_back(goal);
+    gps_path.push_back(goal);
+    gps_path.push_back(goal);
+    gps_path.push_back(goal);
+    gps_path.push_back(goal);
+
+    return MissionPath(MissionPath::Type::HOVER, gps_path, 5);
 }

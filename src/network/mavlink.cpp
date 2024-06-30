@@ -106,11 +106,12 @@ MavlinkClient::MavlinkClient(OBCConfig config)
 
     // Set position update rate (1 Hz)
     // TODO: set the 1.0 update rate value in the obc config
+    float telem_poll_rate = config.network.mavlink.telem_poll_rate;
     while (true) {
-        LOG_F(INFO, "Attempting to set telemetry polling rate to %f...", 1.0);
-        const auto set_rate_result = this->telemetry->set_rate_position(1.0);
+        LOG_F(INFO, "Attempting to set telemetry polling rate to %f...", telem_poll_rate);
+        const auto set_rate_result = this->telemetry->set_rate_position(telem_poll_rate);
         if (set_rate_result == mavsdk::Telemetry::Result::Success) {
-            LOG_F(INFO, "Successfully set mavlink polling rate to %f", 1.0);
+            LOG_F(INFO, "Successfully set mavlink polling rate to %f", telem_poll_rate);
             break;
         } else if (set_rate_result == mavsdk::Telemetry::Result::Unsupported) {
             LOG_F(INFO, "Setting mavlink polling rate Unsupported, so skipping");

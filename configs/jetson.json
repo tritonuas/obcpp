@@ -5,14 +5,15 @@
     "network": {
         "mavlink": {
             "connect": "serial:///dev/ttyACM0",
-            "log_params": false
+            "log_params": false,
+            "telem_poll_rate": 1.0
         },
         "gcs": {
             "port": 5010
         }
     },
     "takeoff": {
-        "altitude_m": 30.0
+        "altitude_m": 60.0
     },
     "pathing": {
         "dubins": {
