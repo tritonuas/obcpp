@@ -1,8 +1,12 @@
 #ifndef INCLUDE_CV_CLASSIFICATION_HPP_
 #define INCLUDE_CV_CLASSIFICATION_HPP_
 
-#include <string>
-#include <opencv2/opencv.hpp>
+#include "cv/utilities.hpp"
+#include <torch/torch.h>
+#include "cv/segmentation.hpp"
+
+#include <map>
+
 
 struct ClassificationResults {
     // TODO: replace with protobuf structs instead of strings
@@ -24,6 +28,9 @@ struct ClassificationResults {
 // inferences.
 class Classification {
  public:
+    Classification() {}
+    explicit Classification(const std::string &shapeModelPath, \
+        const std::string &characterModelPath, const std::string &colorModelPath);
     // classify takes a cropped image of the target (saliency output) and
     // two binary masks to represent which region of pixels correspond to
     // shape and character respectivel (output of segmentation). Using this
@@ -32,6 +39,11 @@ class Classification {
     ClassificationResults classify(cv::Mat croppedImage, cv::Mat shapeMask, cv::Mat characterMask);
 
  private:
+    torch::jit::script::Module shapeModel;
+    torch::jit::script::Module characterModel;
+    torch::jit::script::Module colorModel;
+    std::map<int, std::string> index_to_shape;
+
     // classifyShape takes a cropped image of the target (output of saliency)
     // and a binary mask (output of segmentation). The binary mask should
     // represent which region of pixels correspond to the shape region of
@@ -51,5 +63,6 @@ class Classification {
     // that's passed in.
     std::string classifyColor(cv::Mat croppedImage, cv::Mat mask);
 };
+
 
 #endif  // INCLUDE_CV_CLASSIFICATION_HPP_
