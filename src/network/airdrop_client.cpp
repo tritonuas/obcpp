@@ -82,8 +82,6 @@ void AirdropClient::_establishConnection() {
 }
 
 bool AirdropClient::send(packet_t packet) {
-    return true;
-
     set_send_thread();
 
     for (int i = 0; i < 8; i++) {
@@ -197,7 +195,7 @@ void AirdropClient::_receiveWorker() {
             continue;
         }
 
-        VLOG_F(TRACE, "RECEIVED AIRDROP PACKET %d %d", (int)packet.header, (int)packet.id);
+        LOG_F(INFO, "RECEIVED AIRDROP PACKET %d %d", (int)packet.header, (int)packet.id);
 
         Lock lock(this->recv_mut);
         this->recv_queue.emplace(packet);

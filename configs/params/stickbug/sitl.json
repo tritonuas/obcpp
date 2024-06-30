@@ -1,0 +1,4 @@
+{
+    // Disable flight termination via AFS
+    "AFS_TERM_ACTION": 0
+}

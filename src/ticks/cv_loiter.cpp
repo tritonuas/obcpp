@@ -40,7 +40,6 @@ Tick* CVLoiterTick::tick() {
 
     // Check status of the CV Results
     if (status == Status::Validated) {
-
         const std::array<BottleDropIndex, NUM_AIRDROP_BOTTLES> ALL_BOTTLES = {
             BottleDropIndex::A, BottleDropIndex::B, BottleDropIndex::C,
             BottleDropIndex::D, BottleDropIndex::E
@@ -53,23 +52,29 @@ Tick* CVLoiterTick::tick() {
             if (results.data->matches.contains(bottle)) {
                 auto opt = results.data->matches.at(bottle);
                 if (!opt.has_value()) {
-                    continue; 
+                    continue;
                 }
 
                 std::size_t index = opt.value();
-                
+
                 if (index >= results.data->detected_targets.size()) {
                     continue;
                 }
 
                 auto target = results.data->detected_targets.at(index);
 
+                float alt = state->getMav()->altitude_agl_m();
+
+                LOG_F(INFO, "Sending coord(%f, %f) alt %f to bottle %d",
+                    target.coord.latitude(),
+                    target.coord.longitude(),
+                    alt,
+                    static_cast<int>(bottle));
                 // assumes that the bottle_t enum in the udp2 stuff is the same as
                 // BottleDropIndex enum
                 state->getAirdrop()->send(makeLatLngPacket(
                     SEND_LATLNG, static_cast<bottle_t>(bottle), OBC_NULL,
-                    target.coord.latitude(), target.coord.longitude(),
-                    state->getMav()->altitude_agl_m()));
+                    target.coord.latitude(), target.coord.longitude(), alt));
             }
         }
 

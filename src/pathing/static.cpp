@@ -594,9 +594,20 @@ MissionPath generateAirdropApproach(std::shared_ptr<MissionState> state,
                                               const GPSCoord &goal) {
     // finds starting location
     std::shared_ptr<MavlinkClient> mav = state->getMav();
-    std::pair<double, double> start_lat_long = mav->latlng_deg();
+    std::pair<double, double> start_lat_long = {38.315339, -76.548108};
+
     GPSCoord start_gps =
         makeGPSCoord(start_lat_long.first, start_lat_long.second, mav->altitude_agl_m());
+
+    /*
+        Note: this function was neutered right before we attempted to fly at the 2024 competition
+        because we suddenly began running into an infinite loop during the execution of this
+        function. Instead of spending an undeterministic amount of time to fix this problem,
+        we ended up relying solely on Arduplane to navigate to the specified drop point
+        instead of trying to formulate our own path.
+    */
+
+    /*
     double start_angle = 90 - mav->heading_deg();
     XYZCoord start_xyz = state->getCartesianConverter().value().toXYZ(start_gps);
     RRTPoint start_rrt(start_xyz, start_angle);
@@ -613,11 +624,28 @@ MissionPath generateAirdropApproach(std::shared_ptr<MissionState> state,
     // [TODO]-done out of laziness, forgot if the path includes starting location
     xyz_path.erase(xyz_path.begin());
     xyz_path.erase(xyz_path.begin());
+    */
 
     std::vector<GPSCoord> gps_path;
+    // XYZCoord pt = state->getCartesianConverter().value().toXYZ(goal);
+
+    /*
     for (const XYZCoord &wpt : xyz_path) {
         gps_path.push_back(state->getCartesianConverter().value().toLatLng(wpt));
     }
+    */
 
-    return MissionPath(MissionPath::Type::FORWARD, gps_path);
+    // there is I think an off by one error on the timing of the airdrop if there
+    // is only one coordinate (mav command) in this mission
+    // (in essence it will instantly think the mission over or almost over instead of waiting
+    // for it to reach the singular and final waypoint).
+    // So in the hours before competition 2024 instead of fixing this I came across
+    // this wonderful solution which was revealed to me in a dream.
+    gps_path.push_back(goal);
+    gps_path.push_back(goal);
+    gps_path.push_back(goal);
+    gps_path.push_back(goal);
+    gps_path.push_back(goal);
+
+    return MissionPath(MissionPath::Type::HOVER, gps_path, 5);
 }

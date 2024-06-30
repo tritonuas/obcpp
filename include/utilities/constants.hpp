@@ -7,8 +7,13 @@
 #include <string>
 #include <unordered_map>
 
-// Max number of CV pipelines that can be running at the same time
-const size_t MAX_CV_PIPELINES = 5;
+// Max number of CV pipelines that can be running at the same time.
+// NOTE: This number has a large impact on how much memory the OBCpp
+// program uses. Each time a new pipeline is loaded into memory,
+// all the models and other pipeline state must be allocated. This
+// can be on the order of hundreds of megabytes. So, be sure to test
+// how much is reasonable to avoid running out of memory on the Jetson.
+const size_t MAX_CV_PIPELINES = 2;
 
 // common ratios of pi
 const double TWO_PI = 2 * M_PI;

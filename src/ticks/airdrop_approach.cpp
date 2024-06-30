@@ -6,6 +6,7 @@
 #include "ticks/mav_upload.hpp"
 #include "ticks/fly_waypoints.hpp"
 #include "ticks/airdrop_prep.hpp"
+#include "ticks/manual_landing.hpp"
 #include "utilities/constants.hpp"
 
 AirdropApproachTick::AirdropApproachTick(std::shared_ptr<MissionState> state)
@@ -20,9 +21,24 @@ std::chrono::milliseconds AirdropApproachTick::getWait() const {
 }
 
 Tick* AirdropApproachTick::tick() {
+    if (state->getMav()->isAtFinalWaypoint()) {
+        if (state->next_bottle_to_drop.has_value()) {
+            LOG_F(INFO, "Dropping bottle %d", state->next_bottle_to_drop.value());
+            state->getAirdrop()->send(makeDropNowPacket(state->next_bottle_to_drop.value()));
+            state->getAirdrop()->send(makeDropNowPacket(state->next_bottle_to_drop.value()));
+            state->getAirdrop()->send(makeDropNowPacket(state->next_bottle_to_drop.value()));
+        } else {
+            LOG_F(ERROR, "Cannot drop bottle because no bottle to drop");
+        }
+    }
+
     if (state->getMav()->isMissionFinished()) {
-        return new MavUploadTick(state, new FlyWaypointsTick(state,
-            new AirdropPrepTick(state)), state->getInitPath(), false);
+        if (state->getDroppedBottles().size() >= NUM_AIRDROP_BOTTLES) {
+            return new ManualLandingTick(state);
+        } else {
+            return new MavUploadTick(state, new FlyWaypointsTick(state,
+                new AirdropPrepTick(state)), state->getInitPath(), false);
+        }
     }
 
     return nullptr;

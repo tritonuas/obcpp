@@ -1,0 +1,4 @@
+{
+    // Magic number to enable flight termination via AFS
+    "AFS_TERM_ACTION": 42
+}

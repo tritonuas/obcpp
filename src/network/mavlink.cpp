@@ -70,9 +70,26 @@ MavlinkClient::MavlinkClient(OBCConfig config)
     for (const auto& [param, val] : config.mavlink_parameters.param_map) {
         LOG_F(INFO, "Setting %s to %d", param.c_str(), val);
         while (true) {
-            auto result = this->param->set_param_int(param, val);
+            // stupid hack: need to change config file to encode type of data as well,
+            // or figure that out in a smart way
+            // tyler's recommendation: create a file at configs/params/types.json which
+            // contains a mapping from each param we would set to its type "int" or "float",
+            // load that in, and then use that information to decide whether or not each
+            // parameter is an int or a float. There also might be a smart way to
+            // dynamically figure it out here as well, but any good solution shouldn't
+            // require a recompile to change the typing of a specific parameter if you
+            // get it wrong.
+            auto result = mavsdk::Param::Result::Unknown;
+            if (param == "FS_LONG_TIMEOUT" ||
+                param == "AFS_RC_FAIL_TIME" ||
+                param == "FS_SHORT_TIMEOUT") {
+                result = this->param->set_param_float(param, val);
+            } else {
+                result = this->param->set_param_int(param, val);
+            }
+
             if (result != mavsdk::Param::Result::Success) {
-                LOG_S(ERROR) << "Failed to set param " << result;
+                LOG_S(ERROR) << "Failed to set " << param << " to " << val << " because " << result;
                 std::this_thread::sleep_for(1s);
                 continue;
             }
@@ -81,17 +98,20 @@ MavlinkClient::MavlinkClient(OBCConfig config)
         }
     }
 
-    LOG_F(INFO, "Logging out all mavlink params at TRACE level...");
-    auto all_params = this->param->get_all_params();
-    VLOG_S(TRACE) << all_params;
+    if (config.network.mavlink.log_params) {
+        LOG_F(INFO, "Logging out all mavlink params...");
+        auto all_params = this->param->get_all_params();
+        LOG_S(INFO) << all_params;
+    }
 
     // Set position update rate (1 Hz)
     // TODO: set the 1.0 update rate value in the obc config
+    float telem_poll_rate = config.network.mavlink.telem_poll_rate;
     while (true) {
-        LOG_F(INFO, "Attempting to set telemetry polling rate to %f...", 1.0);
-        const auto set_rate_result = this->telemetry->set_rate_position(1.0);
+        LOG_F(INFO, "Attempting to set telemetry polling rate to %f...", telem_poll_rate);
+        const auto set_rate_result = this->telemetry->set_rate_position(telem_poll_rate);
         if (set_rate_result == mavsdk::Telemetry::Result::Success) {
-            LOG_F(INFO, "Successfully set mavlink polling rate to %f", 1.0);
+            LOG_F(INFO, "Successfully set mavlink polling rate to %f", telem_poll_rate);
             break;
         } else if (set_rate_result == mavsdk::Telemetry::Result::Unsupported) {
             LOG_F(INFO, "Setting mavlink polling rate Unsupported, so skipping");
@@ -119,10 +139,18 @@ MavlinkClient::MavlinkClient(OBCConfig config)
     this->telemetry->subscribe_flight_mode([this](mavsdk::Telemetry::FlightMode flight_mode) {
         std::ostringstream stream;
         stream << flight_mode;
-        VLOG_F(DEBUG, "Mav Flight Mode: %s", stream.str().c_str());
+
+        std::string flight_mode_str = stream.str();
+
+        static std::string prev_flight_mode = "";
 
         Lock lock(this->data_mut);
         this->data.flight_mode = flight_mode;
+
+        if (flight_mode_str != prev_flight_mode) {
+            LOG_F(INFO, "Mav Flight Mode: %s", flight_mode_str.c_str());
+            prev_flight_mode = flight_mode_str;
+        }
     });
     this->telemetry->subscribe_fixedwing_metrics(
         [this](mavsdk::Telemetry::FixedwingMetrics fwmets) {
@@ -150,15 +178,16 @@ MavlinkClient::MavlinkClient(OBCConfig config)
         // auto payload = message.payload64;
         // LOG_F(INFO, "UNIX TIME: %lu", payload[0]);
 
-        // /*
-        //     NOT TESTED - don't actually know where the data is in thie uint64_t[]
-        //     TODO - test on actual pixhawk to make sure that the data makes sense
-        // */
+        /*
+            NOT TESTED - don't actually know where the data is in thie uint64_t[]
+            TODO - test on actual pixhawk to make sure that the data makes sense
+        */
 
         // this->data.wind.x = payload[1];
         // this->data.wind.y = payload[2];
         // this->data.wind.z = payload[3];
 
+        // can try and implement this for real if we need actual wind data
         this->data.wind.x = 0;
         this->data.wind.y = 0;
         this->data.wind.z = 0;
@@ -359,6 +388,10 @@ bool MavlinkClient::isMissionFinished() {
     return this->mission->mission_progress().current == this->mission->mission_progress().total;
 }
 
+bool MavlinkClient::isAtFinalWaypoint() {
+    return this->mission->mission_progress().current == this->mission->mission_progress().total - 1;
+}
+
 mavsdk::Telemetry::RcStatus MavlinkClient::get_conn_status() {
     return this->telemetry->rc_status();
 }
@@ -431,4 +464,10 @@ bool MavlinkClient::startMission() {
 
     LOG_F(INFO, "Mission Started!");
     return true;
+}
+
+void MavlinkClient::KILL_THE_PLANE_DO_NOT_CALL_THIS_ACCIDENTALLY() {
+    LOG_F(ERROR, "KILLING THE PLANE: SETTING AFS_TERMINATE TO 1");
+    auto result = this->param->set_param_int("AFS_TERMINATE", 1);
+    LOG_S(ERROR) << "KILL RESULT: " << result;
 }
