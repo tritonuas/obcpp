@@ -33,7 +33,6 @@ Tick* AirdropApproachTick::tick() {
     }
 
     if (state->getMav()->isMissionFinished()) {
-
         if (state->getDroppedBottles().size() >= NUM_AIRDROP_BOTTLES) {
             return new ManualLandingTick(state);
         } else {

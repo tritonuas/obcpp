@@ -70,8 +70,15 @@ MavlinkClient::MavlinkClient(OBCConfig config)
     for (const auto& [param, val] : config.mavlink_parameters.param_map) {
         LOG_F(INFO, "Setting %s to %d", param.c_str(), val);
         while (true) {
-            // stupid hack: need to change config file to encode type of data as well, 
+            // stupid hack: need to change config file to encode type of data as well,
             // or figure that out in a smart way
+            // tyler's recommendation: create a file at configs/params/types.json which
+            // contains a mapping from each param we would set to its type "int" or "float",
+            // load that in, and then use that information to decide whether or not each
+            // parameter is an int or a float. There also might be a smart way to
+            // dynamically figure it out here as well, but any good solution shouldn't
+            // require a recompile to change the typing of a specific parameter if you
+            // get it wrong.
             auto result = mavsdk::Param::Result::Unknown;
             if (param == "FS_LONG_TIMEOUT" ||
                 param == "AFS_RC_FAIL_TIME" ||
@@ -170,15 +177,16 @@ MavlinkClient::MavlinkClient(OBCConfig config)
         // auto payload = message.payload64;
         // LOG_F(INFO, "UNIX TIME: %lu", payload[0]);
 
-        // /*
-        //     NOT TESTED - don't actually know where the data is in thie uint64_t[]
-        //     TODO - test on actual pixhawk to make sure that the data makes sense
-        // */
+        /*
+            NOT TESTED - don't actually know where the data is in thie uint64_t[]
+            TODO - test on actual pixhawk to make sure that the data makes sense
+        */
 
         // this->data.wind.x = payload[1];
         // this->data.wind.y = payload[2];
         // this->data.wind.z = payload[3];
 
+        // can try and implement this for real if we need actual wind data
         this->data.wind.x = 0;
         this->data.wind.y = 0;
         this->data.wind.z = 0;

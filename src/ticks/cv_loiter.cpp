@@ -40,7 +40,6 @@ Tick* CVLoiterTick::tick() {
 
     // Check status of the CV Results
     if (status == Status::Validated) {
-
         const std::array<BottleDropIndex, NUM_AIRDROP_BOTTLES> ALL_BOTTLES = {
             BottleDropIndex::A, BottleDropIndex::B, BottleDropIndex::C,
             BottleDropIndex::D, BottleDropIndex::E
@@ -53,11 +52,11 @@ Tick* CVLoiterTick::tick() {
             if (results.data->matches.contains(bottle)) {
                 auto opt = results.data->matches.at(bottle);
                 if (!opt.has_value()) {
-                    continue; 
+                    continue;
                 }
 
                 std::size_t index = opt.value();
-                
+
                 if (index >= results.data->detected_targets.size()) {
                     continue;
                 }
@@ -66,7 +65,7 @@ Tick* CVLoiterTick::tick() {
 
                 float alt = state->getMav()->altitude_agl_m();
 
-                LOG_F(INFO, "Sending coord(%f, %f) alt %f to bottle %d", 
+                LOG_F(INFO, "Sending coord(%f, %f) alt %f to bottle %d",
                     target.coord.latitude(),
                     target.coord.longitude(),
                     alt,

@@ -24,7 +24,7 @@ using json = nlohmann::json;
 
 LucidCamera::LucidCamera(CameraConfig config) :
     CameraInterface(config) {
-	    this->connect();
+    this->connect();
     this->startStreaming();
 }
 
