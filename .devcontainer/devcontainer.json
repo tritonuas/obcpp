@@ -10,8 +10,8 @@
 	// Enable network mode host if on Linux and testing airdrop connectivity
     // "appPort": [ "45906:45906/udp", "45907:45907/udp" ], // port forward airdrop ports for local testing
 	"runArgs": [
-		"--network=host",
-        "--device=/dev/ttyACM0"
+		"--network=host"
+        // "--device=/dev/ttyACM0"
 	],
 
 	"extensions.verifySignature": false,

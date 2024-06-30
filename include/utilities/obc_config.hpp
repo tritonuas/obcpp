@@ -24,6 +24,7 @@ struct NetworkConfig {
     } gcs;
     struct {
         std::string connect;
+        bool log_params;
     } mavlink;
 };
 

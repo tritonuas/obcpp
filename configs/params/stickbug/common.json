@@ -1,0 +1,36 @@
+{  
+    // Tell the Quadplane to transition to VTOL mode to fulfill loiter waypoint commands,
+    // such as MAV_CMD_NAV_LOITER_TIME.
+    "Q_GUIDED_MODE": 1,
+
+    // Allow a waypoint to be considered "Hit" if the plane travels within 7m of it.
+    "WP_RADIUS": 7,
+
+    /*
+        Enables AFS (Advanced Failsafe Setup)
+
+        Essentially, this tells the plane that after losing RC communications for
+        3 minutes, it should attempt to terminate flight by crashing.
+
+        However, whether or not the plane will actually execute the terminate command
+        depends on the value of AFS_TERM_ACTION. If AFS_TERM_ACTION is 42 or 43 then
+        the plane will actually terminate flight by initating a crash. If it is any
+        other number, then it won't actually terminate flight.
+
+        We set AFS_TERM_ACTION accordingly in the other, more specific, configs.
+    */
+    "AFS_ENABLE": 1,
+    "AFS_GEOFENCE": 0,          // dont terminate flight if outside the geofence
+    "AFS_RC_MAN_ONLY": 0,       // do afs RC failsafe in any flight mode, not just manual
+    "AFS_RC_FAIL_TIME": 180.0,  // seconds before terminating flight because of RC loss
+
+    /*
+        In contrast to the AFS settings set above, these are the standard failsafe
+        parameters we set.
+    */
+    "THR_FAILSAFE": 1,          // enable normal failsafe parameters
+    "FS_SHORT_TIMEOUT": 1.0,    // 1 second of comms loss leads to short action, described below
+    "FS_SHORT_ACTN": 0,         // continue auto mission, or go to RTL if in manual
+    "FS_LONG_TIMEOUT": 30.0,    // 30 seconds of comms loss leads to long action, described below
+    "FS_LONG_ACTN": 1           // RTL
+}
