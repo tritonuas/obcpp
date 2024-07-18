@@ -24,6 +24,8 @@ using json = nlohmann::json;
 
 LucidCamera::LucidCamera(CameraConfig config) :
     CameraInterface(config) {
+    this->connect();
+    this->startStreaming();
 }
 
 void LucidCamera::connect() {
@@ -52,7 +54,7 @@ void LucidCamera::connect() {
                 break;
             });
 
-        LOG_F(ERROR, "Lucid camera connection failed! Retrying in %ld ms",
+        LOG_F(INFO, "Lucid camera connection failed! Retrying in %ld ms",
             this->connectionRetry.count());
         std::this_thread::sleep_for(this->connectionRetry);
     }

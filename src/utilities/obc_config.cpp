@@ -14,12 +14,25 @@
 
 OBCConfig::OBCConfig(int argc, char* argv[]) {
     // If config-json name is passed in
-    if (argc != 2) {
-        LOG_F(FATAL, "You must specify a config file. e.g. bin/obcpp ../configs/dev-config.json");
+    if (argc != 5) {
+        LOG_F(ERROR, "INVALID COMMAND LINE ARGUMENTS");
+        LOG_F(ERROR, "Expected use: ./obcpp [config_dir] [rel_config_path] [plane_name] [flight_type]");  // NOLINT
+        LOG_F(ERROR, "Example 1 (Test Flight with Jetson): bin/obcpp ../configs jetson stickbug test-flight");  // NOLINT
+        LOG_F(ERROR, "Example 2 (Local Testing with SITL): bin/obcpp ../configs dev stickbug sitl");  // NOLINT
+        LOG_F(ERROR, "For more help, check the README");
+        LOG_F(FATAL, "ABORTING...");
     }
 
+    std::string configs_dir = argv[1];
+    std::string config_file = std::string(argv[2]) + ".json";
+    std::string plane_name = argv[3];
+    std::string flight_type_file = std::string(argv[4]) + ".json";
+
+    auto config_file_path = std::filesystem::path(configs_dir) / config_file;
+    auto params_dir = std::filesystem::path(configs_dir) / "params" / plane_name;
+
     // Load in json file
-    std::ifstream configStream(argv[1]);
+    std::ifstream configStream(config_file_path);
     if (!configStream.is_open()) {
         throw std::invalid_argument(std::string("Invalid path to config file: ") +
                                     std::string(argv[1]));
@@ -35,6 +48,8 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
     initLogging(this->logging.dir, true, argc, argv);
 
     SET_CONFIG_OPT(network, mavlink, connect);
+    SET_CONFIG_OPT(network, mavlink, log_params);
+    SET_CONFIG_OPT(network, mavlink, telem_poll_rate);
     SET_CONFIG_OPT(network, gcs, port);
 
     SET_CONFIG_OPT(pathing, rrt, iterations_per_waypoint);
@@ -99,7 +114,29 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
 
     SET_CONFIG_OPT(takeoff, altitude_m);
 
-    for (const auto& [param, val] : configs.at("mavlink_parameters").items()) {
+    std::string common_params_path = params_dir / "common.json";
+    std::ifstream common_params_stream(common_params_path);
+    if (!common_params_stream.is_open()) {
+        LOG_F(FATAL, "Invalid path to common params file: %s (Does this file exist?)",
+            common_params_path.c_str());
+    }
+    std::string specific_params_path = params_dir / flight_type_file;
+    std::ifstream specific_params_stream(specific_params_path);
+    if (!specific_params_stream.is_open()) {
+        LOG_F(FATAL, "Invalid path to specific params file: %s (Does this file exist?)",
+            specific_params_path.c_str());
+    }
+
+    auto common_params = nlohmann::json::parse(common_params_stream, nullptr, true, true);
+    auto specific_params = nlohmann::json::parse(specific_params_stream, nullptr, true, true);
+
+    for (const auto& [param, val] : common_params.items()) {
         this->mavlink_parameters.param_map.insert({param, val});
+    }
+
+    for (const auto& [param, val] : specific_params.items()) {
+        // specifically using [] syntax here so that it overwrites any params that
+        // were previously set in the common file
+        this->mavlink_parameters.param_map[param] = val;
     }
 }

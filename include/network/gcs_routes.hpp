@@ -177,4 +177,16 @@ DEF_GCS_HANDLE(Get, targets, matched);
  */
 DEF_GCS_HANDLE(Post, targets, matched);
 
+/**
+ * POST /kill/kill/kill
+ * 
+ * TELLS THE PLANE TO CRASH ITSELF
+ * 
+ * ONLY CALL THIS IN EMERGENCY SITUATIONS
+ */
+DEF_GCS_HANDLE(Post, kill, kill, kill);
+
+
+DEF_GCS_HANDLE(Get, oh, shit);
+
 #endif  // INCLUDE_NETWORK_GCS_ROUTES_HPP_

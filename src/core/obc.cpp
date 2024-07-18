@@ -39,13 +39,15 @@ OBC::OBC(OBCConfig config) {
         this->state->setCamera(std::make_shared<MockCamera>(this->state->config.camera));
     } else if (this->state->config.camera.type == "lucid") {
         #ifdef ARENA_SDK_INSTALLED
-            this->state->setCamera(std::make_shared<LucidCamera>(this->state->config.camera));           //NOLINT
+            this->state->setCamera(std::make_shared<LucidCamera>(this->state->config.camera));  // NOLINT
+            LOG_F(INFO, "Connected to lucid");
         #else
             LOG_F(FATAL, "Attempting to create Lucid Camera without having ArenaSDK installed.");
         #endif
     } else {
         // default to mock if it's neither "mock" or "lucid"
         this->state->setCamera(std::make_shared<MockCamera>(this->state->config.camera));
+        LOG_F(WARNING, "deafault camera config");
     }
 }
 

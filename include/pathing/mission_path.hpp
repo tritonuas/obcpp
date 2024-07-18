@@ -25,7 +25,7 @@
 class MissionPath {
  public:
     enum class Type {
-        FORWARD, HOVER
+        FORWARD, HOVER, HOVER_AT_FINAL
     };
 
     MissionPath(Type type, std::vector<GPSCoord> path, int hover_wait_s = 5);
@@ -42,6 +42,7 @@ class MissionPath {
 
     void generateHoverCommands();
     void generateForwardCommands();
+    void generateHoverAtFinalCommands();
 };
 
 #endif  // INCLUDE_PATHING_MISSION_PATH_HPP_

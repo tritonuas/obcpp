@@ -1,17 +1,19 @@
 {
     "logging": {
-        "dir": "/obcpp/logs"
+        "dir": "/workspaces/obcpp/logs"
     },
     "network": {
         "mavlink": {
-            "connect": "serial:///dev/ttyACM0"
+            "connect": "serial:///dev/ttyACM0",
+            "log_params": false,
+            "telem_poll_rate": 1.0
         },
         "gcs": {
             "port": 5010
         }
     },
     "takeoff": {
-        "altitude_m": 30.0
+        "altitude_m": 60.0
     },
     "pathing": {
         "dubins": {
@@ -49,7 +51,7 @@
     },
     "cv": {
         "matching_model_dir": "/obcpp/models/target_siamese_1.pt",
-        "segmentation_model_dir": "/obcpp/models/fcn.pth",
+        "segmentation_model_dir": "/obcpp/models/fcn-model_20-epochs_06-01-2023T21-16-02.pth",
         "saliency_model_dir": "/obcpp/models/torchscript_19.pth",
         "not_stolen_addr": "localhost",
         "not_stolen_port": 5069
@@ -87,7 +89,7 @@
             "gain_auto_lower_limit": 1
         }
     },
-    "mavlink_parameters": {
-        "Q_GUIDED_MODE": 1 // hover over loiter waypoints
+    "mavlink": {
+        "log_params": false
     }
 }
