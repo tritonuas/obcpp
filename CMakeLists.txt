@@ -6,7 +6,7 @@ add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=1)
 
 # Disable in-source builds to prevent source tree corruption.
 if(" ${CMAKE_SOURCE_DIR}" STREQUAL " ${CMAKE_BINARY_DIR}")
-  message(FATAL_ERROR "
+    message(FATAL_ERROR "
 FATAL: In-source builds are not allowed.
        You should create a separate directory for build files.
        If you think this error is wrong, try clearing cache:
@@ -57,7 +57,7 @@ project(obcpp VERSION 1.0)
 set(LOGURU_WITH_STREAMS TRUE)
 
 # =============================
-# Dependencies 
+# Dependencies
 set(FETCHCONTENT_QUIET FALSE)
 set(DEPS_DIRECTORY ${PROJECT_SOURCE_DIR}/deps)
 
@@ -103,11 +103,11 @@ add_definitions( -DMAGICKCORE_HDRI_ENABLE=0 )
 
 find_package(ImageMagick COMPONENTS Magick++ REQUIRED)
 # =============================
-# Build speed up 
+# Build speed up
 
 # function to enable unity build for a target
 function(set_unity_for_target target_name)
-  set_target_properties(${target_name} PROPERTIES UNITY_BUILD ON UNITY_BUILD_MODE BATCH UNITY_BUILD_BATCH_SIZE 16 UNITY_BUILD_UNIQUE_ID "MY_UNITY_ID")
+    set_target_properties(${target_name} PROPERTIES UNITY_BUILD ON UNITY_BUILD_MODE BATCH UNITY_BUILD_BATCH_SIZE 16 UNITY_BUILD_UNIQUE_ID "MY_UNITY_ID")
 endfunction()
 
 # =============================
@@ -120,6 +120,7 @@ add_subdirectory(src)
 # =============================
 # Integration tests
 
+add_subdirectory(tests/integration)
 
 # =============================
 
@@ -131,7 +132,7 @@ add_subdirectory(${DEPS_DIRECTORY}/google-test)
 
 # =============================
 # Pull models
-add_custom_target(pull_models 
+add_custom_target(pull_models
   DEPENDS pull_saliency pull_matching pull_segmentation
 )
 
@@ -141,7 +142,7 @@ add_custom_target(pull_saliency
   USES_TERMINAL
 )
 
-# Matching model 
+# Matching model
 add_custom_target(pull_matching
   COMMAND gdown 1NeFiAfSSLXAZWlehfd0ox7p_jFF4YdrO -O ${CMAKE_BINARY_DIR}/../models/target_siamese_1.pt
   USES_TERMINAL
@@ -158,7 +159,7 @@ add_custom_target(pull_segmentation
 # =============================
 # Pull testing images
 add_custom_target(pull_test_images
-  DEPENDS pull_matching_test_images pull_saliency_test_images 
+  DEPENDS pull_matching_test_images pull_saliency_test_images
 )
 
 # pull cropped images from fraternal_targets testing folder
@@ -176,13 +177,13 @@ add_custom_target(pull_saliency_test_images
 # =============================
 
 # =============================
-# Linting 
+# Linting
 
 # Adding lint target if cpplint executable is found
 find_program(CPPLINT "cpplint")
 if(CPPLINT)
-  # define lint target
-  add_custom_target(lint
+    # define lint target
+    add_custom_target(lint
     COMMAND cpplint
     # Do not require licenses, TODO assignment, Google versions of C++ libs
     # also don't check for runtime/references since Google's public style guidelines are behind https://github.com/cpplint/cpplint/issues/148
@@ -195,6 +196,6 @@ if(CPPLINT)
     ../include
   )
 else()
-  message(FATAL_ERROR "cpplint executable not found. Check the README for steps to install it on your system")
+    message(FATAL_ERROR "cpplint executable not found. Check the README for steps to install it on your system")
 endif()
 # =============================
