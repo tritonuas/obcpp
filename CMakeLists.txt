@@ -122,6 +122,21 @@ add_subdirectory(src)
 
 add_subdirectory(tests/integration)
 
+# cuda_check
+add_executable(cuda_check ${SOURCES} tests/integration/cuda_check.cpp)
+target_add_torch(cuda_check)
+target_add_json(cuda_check)
+target_add_httplib(cuda_check)
+target_add_mavsdk(cuda_check)
+target_add_matplot(cuda_check)
+target_add_protobuf(cuda_check)
+target_add_opencv(cuda_check)
+target_add_loguru(cuda_check)
+# for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
+# target_add_imagemagick(cuda_check)
+target_include_directories(cuda_check PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(cuda_check PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
+
 # =============================
 
 # =============================
