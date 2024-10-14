@@ -1,11 +1,14 @@
 #ifndef INCLUDE_CV_CLASSIFICATION_HPP_
 #define INCLUDE_CV_CLASSIFICATION_HPP_
 
-#include "cv/utilities.hpp"
 #include <torch/torch.h>
-#include "cv/segmentation.hpp"
 
 #include <map>
+#include <string>
+
+#include "cv/utilities.hpp"
+#include "cv/segmentation.hpp"
+
 
 
 struct ClassificationResults {
