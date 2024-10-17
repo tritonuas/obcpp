@@ -20,24 +20,7 @@
 #include "ticks/mav_upload.hpp"
 #include "ticks/tick.hpp"
 
-// TODO: figure out why it is seg faulting when running these unit tests and fix it...
-// I think it's something to do with DECLARE_HANDLER_PARAMS not being up to
-// date with updated command line arguments, but after trying to fix that it was
-// stil seg faulting and I want a green checkmark...
-
-/*
-#define DECLARE_HANDLER_PARAMS(STATE, REQ, RESP) \
-    int argc = 2; \
-    char path1[] = "bin/obcpp"; \
-    char path2[] = "../configs"; \
-    char path3[] = "dev"; \
-    char path4[] = "stickbug"; \
-    char path5[] = "sitl"; \
-    char *paths[] = {path1, path2, path3, path4, path5}; \
-    char **paths_ptr = paths; \
-    std::shared_ptr<MissionState> STATE = std::make_shared<MissionState>(OBCConfig(argc, paths_ptr)); \
-    httplib::Request REQ; \
-    httplib::Response RESP 
+#include "handler_params.hpp"
 
 // Might have to change this later on if we preload
 // mission from file
@@ -215,4 +198,3 @@ TEST(GCSServerTest, SetupStateTransitions) {
     // todo: figure out way to mock the mav connection
     // so we can validate the path and mock mission upload
 }
-*/
