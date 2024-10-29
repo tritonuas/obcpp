@@ -40,6 +40,8 @@ void initLogging(std::string directory, bool print_stderr, int argc, char* argv[
     loguru::add_file(everything_logs.c_str(),
         loguru::Truncate, loguru::Verbosity_MAX);
 
+    //  TODO: Use Loguru Severity Levels to filter out messages^
+
     // Overwrite default mavsdk logging to standard out,
     // and redirect to loguru, but use higher level of logging
     // levels so that they only get written to special mavlink
