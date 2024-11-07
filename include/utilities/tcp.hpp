@@ -10,7 +10,7 @@
 
 class TCPClient{
  public:
-    TCPClient(std::string host, std::string port);
+    TCPClient(std::string host, uint16_t port);
     ~TCPClient();
  private:
     int sockfd;
