@@ -19,6 +19,12 @@ Environment::Environment(const Polygon& valid_region, const Polygon& airdrop_zon
       bounds(findBounds(valid_region)),
       obstacles(obstacles) {}
 
+Environment::Environment(const Polygon& valid_region, const Polygon& airdrop_zone, const Polygon& mapping_zone,
+                         const std::vector<XYZCoord>& goals, const std::vector<Polygon>& obstacles) 
+    : mapping_zone(mapping_zone) {
+    Environment(valid_region, airdrop_zone, goals, obstacles);
+}
+
 bool Environment::isPointInBounds(const XYZCoord& point) const {
     if (!isPointInPolygon(valid_region, point)) {
         return false;

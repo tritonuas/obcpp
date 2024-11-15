@@ -24,6 +24,9 @@ class Environment {
     Environment(const Polygon& valid_region, const Polygon& airdrop_zone,
                 const std::vector<XYZCoord>& goals, const std::vector<Polygon>& obstacles);
 
+    Environment(const Polygon& valid_region, const Polygon& airdrop_zone, const Polygon& mapping_zone,
+                const std::vector<XYZCoord>& goals, const std::vector<Polygon>& obstacles);
+
     /**
      * Check if a point is in the valid region
      *
@@ -245,6 +248,7 @@ class Environment {
  private:
     const Polygon valid_region;            // boundary of the valid map
     const Polygon airdrop_zone;            // boundary of the airdrop zone (subset of valid_region)
+    const Polygon mapping_zone;            // boundary of the mapping zone (subset of valid region)
     const std::vector<XYZCoord> goals;     // goal point
     const std::vector<Polygon> obstacles;  // obstacles in the map
 
