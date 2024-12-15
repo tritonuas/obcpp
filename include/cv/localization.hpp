@@ -9,12 +9,16 @@
 // TODO: these should be constants in the config file
 // (or maybe queried by camera)
 #define PIXEL_SIZE_MM 0.0024
-#define FOCAL_LENGTH_MM 50
-#define IMG_WIDTH_PX 5472
-#define IMG_HEIGHT_PX 3648
+// #define FOCAL_LENGTH_MM 50
+#define IMG_WIDTH_PX 2028
+#define IMG_HEIGHT_PX 1520
 #define EARTH_RADIUS_M 6378137
-#define SENSOR_WIDTH 15.86  // mm
+// #define SENSOR_WIDTH 15.86  // mm
 #define METER_TO_FT 3.28084
+
+// These are for the specific for the pi M12 cam used in testflight
+// ANGLE_OF_VIEW_RATIO is the same as sensor width/focal length
+#define ANGLE_OF_VIEW_RATIO 1.0823765
 
 // Localization is responsible for calculating the real world latitude/longitude
 // of competition targets.
@@ -41,7 +45,7 @@ class Localization {
 
     CameraIntrinsics camera{
         .pixelSize = PIXEL_SIZE_MM,
-        .focalLength = FOCAL_LENGTH_MM,
+        // .focalLength = FOCAL_LENGTH_MM,
         .resolutionX = IMG_WIDTH_PX,
         .resolutionY = IMG_HEIGHT_PX,
     };
@@ -92,6 +96,8 @@ class GSDLocalization : Localization {
     GPSCoord localize(const ImageTelemetry& telemetry, const Bbox& targetBbox) override;
     GPSCoord CalcOffset(const double offset_x, const double offset_y,
                         const double lat, const double lon);
+
+    std::tuple<double, double, double> debug(const ImageTelemetry& telemetry, const Bbox& targetBbox);
     double distanceInMetersBetweenCords(const double lat1, const double lon1,
                                         const double lat2, const double lon2);
 };
