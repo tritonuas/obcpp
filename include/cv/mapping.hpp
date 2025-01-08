@@ -12,5 +12,4 @@ class Mapping {
         // add other member functions here
 };
 
-
 #endif // CV_MAPPING_HPP

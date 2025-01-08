@@ -9,6 +9,7 @@ set(FILES
     saliency.cpp
     segmentation.cpp
     utilities.cpp
+    mapping.cpp
 )
 
 set(LIB_DEPS
