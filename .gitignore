@@ -24,6 +24,9 @@ images/*
 tests/integration/images/*
 !tests/integration/images/.gitkeep
 
+tests/integration/output/*
+!tests/integration/output/.gitkeep
+
 .vscode/*
 !.vscode/c_cpp_properties.json
 

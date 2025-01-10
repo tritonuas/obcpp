@@ -1,15 +1,19 @@
 #ifndef CV_MAPPING_HPP
 #define CV_MAPPING_HPP
+#include <iostream>
+#include <opencv2/opencv.hpp>
+#include <string>
 
-// Mapping is responsible for mapping the set of images taken from the PyCam to an single mapped image. 
+// Mapping is responsible for mapping the set of images taken from the PyCam to an single mapped image.
 
 class Mapping {
-    public:
-        Mapping();
-        ~Mapping();
-        void mapImages(); // Arbituary function name/type so change as needed. 
+   public:
+    Mapping() = default;
+    ~Mapping() = default;
+    // Probably will only need the input and output paths
+    void mapImages(const std::string& input_path, const std::string& output_path);
 
-        // add other member functions here
+    // Add instance variables
 };
 
-#endif // CV_MAPPING_HPP
+#endif  // CV_MAPPING_HPP
