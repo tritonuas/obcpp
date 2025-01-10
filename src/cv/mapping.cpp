@@ -13,14 +13,7 @@
 
 namespace fs = std::filesystem;
 
-void Mapping::mapImages(const std::string& input_path, const std::string& output_path) {
-    // Minimum number of images required to stitch
-    const int min_img_to_stitch = 2;
-
-    // Collect all images from the input path with .jpg/.png/.jpeg, etc.
-    std::vector<cv::Mat> images;
-    std::vector<std::string> image_filenames;
-
+void Mapping::loadImages(const std::string& input_path) {
     // Iterate over the directory
     for (const auto& entry : fs::directory_iterator(input_path)) {
         if (!entry.is_regular_file()) {
@@ -42,6 +35,13 @@ void Mapping::mapImages(const std::string& input_path, const std::string& output
             }
         }
     }
+
+    std::cout << "Images are loaded." << std::endl;
+}
+
+void Mapping::mapImages(const std::string& output_path) {
+    // Minimum number of images required to stitch
+    const int min_img_to_stitch = 2;
 
     // Check if there are enough images to stitch
     if (static_cast<int>(images.size()) < min_img_to_stitch) {
@@ -74,7 +74,7 @@ void Mapping::mapImages(const std::string& input_path, const std::string& output
         }
 
         // Construct output path and save the stitched image
-        std::string stitched_filename = output_path + "/" + time_str + ".jpg";
+        std::string stitched_filename = output_path + "/" + time_str + ".png";
         if (cv::imwrite(stitched_filename, stitched_image)) {
             std::cout << "Stitched image saved to " << stitched_filename << std::endl;
         } else {

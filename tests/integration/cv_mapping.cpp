@@ -6,6 +6,7 @@ int main() {
     std::string output_dir = "../../tests/integration/output";
 
     Mapping mapper;
-    mapper.mapImages(input_dir, output_dir);
+    mapper.loadImages(input_dir);
+    mapper.mapImages(output_dir);
     return 0;
 }

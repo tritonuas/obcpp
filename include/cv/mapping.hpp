@@ -10,10 +10,17 @@ class Mapping {
    public:
     Mapping() = default;
     ~Mapping() = default;
-    // Probably will only need the input and output paths
-    void mapImages(const std::string& input_path, const std::string& output_path);
 
-    // Add instance variables
+    // Collect all images from the input path with .jpg/.png/.jpeg
+    void loadImages(const std::string& input_path);
+
+    // The mapping function itself
+    void mapImages(const std::string& output_path);
+
+   private:
+    // Instance variables for the image objects and their respective filenames
+    std::vector<cv::Mat> images;
+    std::vector<std::string> image_filenames;
 };
 
 #endif  // CV_MAPPING_HPP
