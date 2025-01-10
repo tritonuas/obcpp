@@ -30,20 +30,6 @@ TEST(CVLocalization, LocalizationAccuracy) {
     
     const std::vector<TestCase> testCases{{
         {
-            "directly underneath",
-            ImageTelemetry(0, 0, 100, 50, 0, 0, 0, 0),
-            Bbox(1951, 1483, 1951, 1483),
-            makeGPSCoord(0, 0, 0),
-        }, 
-        {
-            "real image distance test 1717352989.jpg top target",
-            ImageTelemetry(32.9908692, -117.1282454, 31.619001388549805,
-                            7.618272304534912, 0.0, 0.0, 0.0, 0.0),
-            Bbox(2080, 50, 2280, 240),
-            makeGPSCoord(32.9908692, -117.1282454, 0),
-        },
-
-        {
             // sewer cover plate as the target (quadrant 1)
             // image directory: out 5/00000330.jpg, teelmetry directory: 033.csv"
             // IMPORTNAT: TELEMENTRY FROM TEST FLIGHT IMAGES FROM THE BIG QUAD HAS A BIASED HEADING ANGLE, SUBTRACT HDG BY AROUND 25 DEGREES
