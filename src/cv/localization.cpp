@@ -152,11 +152,15 @@ GPSCoord GSDLocalization::localize(const ImageTelemetry& telemetry, const Bbox& 
     double target_camera_cord_theta;
 
     // Check if xy coord is in quadrant 2 or 3, if so need to add pi (atan returns a value in the range -π/2 to π/2 radians)
+    // also check for if xy coord == 0, if so just set theta to 0 to avoid zero error
     if (target_camera_cord_x < 0 && target_camera_cord_y < 0) {
         target_camera_cord_theta = atan(target_camera_cord_y/target_camera_cord_x) + M_PI;
 
-    }else if(target_camera_cord_x < 0 && target_camera_cord_y > 0){
+    } else if(target_camera_cord_x < 0 && target_camera_cord_y > 0) {
         target_camera_cord_theta = atan(target_camera_cord_y/target_camera_cord_x) + M_PI;
+
+    } else if(target_camera_cord_x == 0 || target_camera_cord_y == 0) {
+        target_camera_cord_theta == 0;
 
     } else {
         target_camera_cord_theta = atan(target_camera_cord_y/target_camera_cord_x);
@@ -267,11 +271,15 @@ std::tuple<double, double, double> GSDLocalization::debug(const ImageTelemetry& 
     double target_camera_cord_theta;
 
     // Check if xy coord is in quadrant 2 or 3, if so need to add pi (atan returns a value in the range -π/2 to π/2 radians)
+    // also check for if xy coord == 0, if so just set theta to 0 to avoid zero error
     if (target_camera_cord_x < 0 && target_camera_cord_y < 0) {
         target_camera_cord_theta = atan(target_camera_cord_y/target_camera_cord_x) + M_PI;
 
-    }else if(target_camera_cord_x < 0 && target_camera_cord_y > 0){
+    } else if(target_camera_cord_x < 0 && target_camera_cord_y > 0) {
         target_camera_cord_theta = atan(target_camera_cord_y/target_camera_cord_x) + M_PI;
+
+    } else if(target_camera_cord_x == 0 || target_camera_cord_y == 0) {
+        target_camera_cord_theta == 0;
 
     } else {
         target_camera_cord_theta = atan(target_camera_cord_y/target_camera_cord_x);
