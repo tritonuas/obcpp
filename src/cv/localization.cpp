@@ -152,15 +152,20 @@ GPSCoord GSDLocalization::localize(const ImageTelemetry& telemetry, const Bbox& 
     double target_camera_cord_theta;
 
     // Check if xy coord is in quadrant 2 or 3, if so need to add pi (atan returns a value in the range -π/2 to π/2 radians)
-    // also check for if xy coord == 0, if so just set theta to 0 to avoid zero error
+    // also check for if x coord == 0, if so just set theta to pi or -pi to avoid divison by 0 in the atan function
     if (target_camera_cord_x < 0 && target_camera_cord_y < 0) {
         target_camera_cord_theta = atan(target_camera_cord_y/target_camera_cord_x) + M_PI;
 
     } else if(target_camera_cord_x < 0 && target_camera_cord_y > 0) {
         target_camera_cord_theta = atan(target_camera_cord_y/target_camera_cord_x) + M_PI;
 
-    } else if(target_camera_cord_x == 0 || target_camera_cord_y == 0) {
-        target_camera_cord_theta == 0;
+    } else if(target_camera_cord_x == 0) {
+        if (target_camera_cord_y > 1) {
+            target_camera_cord_theta == M_PI;
+            
+        } else {
+            target_camera_cord_theta == -M_PI;
+        }
 
     } else {
         target_camera_cord_theta = atan(target_camera_cord_y/target_camera_cord_x);
@@ -271,15 +276,20 @@ std::tuple<double, double, double> GSDLocalization::debug(const ImageTelemetry& 
     double target_camera_cord_theta;
 
     // Check if xy coord is in quadrant 2 or 3, if so need to add pi (atan returns a value in the range -π/2 to π/2 radians)
-    // also check for if xy coord == 0, if so just set theta to 0 to avoid zero error
+    // also check for if x coord == 0, if so just set theta to pi or -pi to avoid divison by 0 in the atan function
     if (target_camera_cord_x < 0 && target_camera_cord_y < 0) {
         target_camera_cord_theta = atan(target_camera_cord_y/target_camera_cord_x) + M_PI;
 
     } else if(target_camera_cord_x < 0 && target_camera_cord_y > 0) {
         target_camera_cord_theta = atan(target_camera_cord_y/target_camera_cord_x) + M_PI;
 
-    } else if(target_camera_cord_x == 0 || target_camera_cord_y == 0) {
-        target_camera_cord_theta == 0;
+    } else if(target_camera_cord_x == 0) {
+        if (target_camera_cord_y > 1) {
+            target_camera_cord_theta == M_PI;
+
+        } else {
+            target_camera_cord_theta == -M_PI;
+        }
 
     } else {
         target_camera_cord_theta = atan(target_camera_cord_y/target_camera_cord_x);
