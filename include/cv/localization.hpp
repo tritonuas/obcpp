@@ -1,8 +1,8 @@
 #ifndef INCLUDE_CV_LOCALIZATION_HPP_
 #define INCLUDE_CV_LOCALIZATION_HPP_
 
+#include <tuple>
 #include "cv/utilities.hpp"
-
 #include "camera/interface.hpp"
 #include "utilities/datatypes.hpp"
 
@@ -97,7 +97,8 @@ class GSDLocalization : Localization {
     GPSCoord CalcOffset(const double offset_x, const double offset_y,
                         const double lat, const double lon);
 
-    std::tuple<double, double, double> debug(const ImageTelemetry& telemetry, const Bbox& targetBbox);
+    std::tuple<double, double, double>
+    debug(const ImageTelemetry& telemetry, const Bbox& targetBbox);
     double distanceInMetersBetweenCords(const double lat1, const double lon1,
                                         const double lat2, const double lon2);
 };
