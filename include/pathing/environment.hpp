@@ -22,7 +22,8 @@
 class Environment {
  public:
     Environment(const Polygon& valid_region, const Polygon& airdrop_zone,
-                const std::vector<XYZCoord>& goals, const std::vector<Polygon>& obstacles);
+                const Polygon& mapping_region, const std::vector<XYZCoord>& goals,
+                const std::vector<Polygon>& obstacles);
 
     /**
      * Check if a point is in the valid region
@@ -102,7 +103,7 @@ class Environment {
      * conservative)
      *
      * Public ONLY for the sake of testing     <-- no (read below)
-     * 
+     *
      * Making this static so that other parts of the code can access it
      * but really this should just be a detacted helper function, should
      * refactor this eventually, but for rn static is the easy thing to do
@@ -234,6 +235,43 @@ class Environment {
                                             const XYZCoord& rayEnd, bool vertical) const;
 
     /**
+     * Finds all intersections between a line segment and a polygon, and returns them as a list
+     *
+     * @param start_point the start point of the line segment
+     * @param end_point the end point of the line segment
+     *
+     * @return a list of intersections
+     */
+    std::vector<XYZCoord> findMappingRegionIntersections(const XYZCoord& start_point,
+                                                         const XYZCoord& end_point) const;
+
+    /**
+     * Checks if a point is in the mapping region
+     *
+     * @param point the point to check
+     *
+     * @return true if the point is in the mapping region, false otherwise
+     */
+    bool isPointInMappingRegion(const XYZCoord& point) const;
+
+    /**
+     * Checks if a line is in the mapping region
+     *
+     * @param start_point the start point of the line
+     * @param end_point the end point of the line
+     *
+     * @return true if the line is completely in the mapping region, false otherwise
+     */
+    bool isLineInMappingRegion(const XYZCoord& start_point, const XYZCoord& end_point) const;
+
+    /**
+     * Returns a random point in the mapping region
+     *
+     * @return a random point in the mapping region
+     */
+    XYZCoord getRandomPointInMappingRegion() const;
+
+    /**
      * Returns a new polygon that is scaled by a given factor
      *
      * @param scale the factor to scale the polygon by
@@ -243,9 +281,10 @@ class Environment {
     Polygon scale(double scale, const Polygon& source_polygon) const;
 
  private:
-    const Polygon valid_region;            // boundary of the valid map
-    const Polygon airdrop_zone;            // boundary of the airdrop zone (subset of valid_region)
-    const std::vector<XYZCoord> goals;     // goal point
+    const Polygon valid_region;         // boundary of the valid map
+    const Polygon airdrop_zone;         // boundary of the airdrop zone (subset of valid_region)
+    const Polygon mapping_region;       // boundary of the mapping region (subset of valid_region)
+    const std::vector<XYZCoord> goals;  // goal point
     const std::vector<Polygon> obstacles;  // obstacles in the map
 
     int goals_found;  // whether or not the goal has been found, once it becomes ture, it will never
