@@ -552,6 +552,12 @@ MissionPath generateInitialPath(std::shared_ptr<MissionState> state) {
         goals.emplace_back(state->mission_params.getWaypoints()[i]);
     }
 
+    // Hypothesis: more efficient to check detours distance cost before RRT
+    // TODO: add mapping polygon to MissionState
+    std::vector<XYZCoord> detour_goals = findPossibleDetours(start, goals, 
+            state->mission_params.getFlightBoundary(), state->mission_params.getMappingBoundary());
+
+
     double init_angle =
         std::atan2(goals.front().y - state->mission_params.getWaypoints().front().y,
                    goals.front().x - state->mission_params.getWaypoints().front().x);
@@ -648,4 +654,18 @@ MissionPath generateAirdropApproach(std::shared_ptr<MissionState> state,
     gps_path.push_back(goal);
 
     return MissionPath(MissionPath::Type::HOVER, gps_path, 5);
+}
+
+std::vector<XYZCoord> ForwardCoveragePathing::findPossibleDetours(const RRTPoint &start, 
+                                                    const std::vector<XYZCoord> goals, 
+                                                    const Polygon bounds, 
+                                                    const Polygon mapping_zone) {
+    /* Outline: 
+    for each pair of goals, 
+        check nearest vertex of mapping boundary rectangle
+        calculate stright-line path distance from waypoint -> vertex -> vertex-> waypoint
+        if shortest distance is within some factor of the straight-line distance between goals
+            insert the pair of vertecies as goals in between the existing goals
+
+    */
 }
