@@ -28,10 +28,14 @@ class RRT {
         std::vector<double> angles = {});
     RRT(RRTPoint start, std::vector<XYZCoord> goals, double search_radius, Environment airspace,
         const OBCConfig &config, std::vector<double> angles = {});
-
+        
     /**
      * RRT(-star) algorithm
-     *
+     * - Make Basic distance calculator, comparing the ratio of the straight line path
+     * to the added path
+     * - Add another constructor for the Environment class that takes in a mapped area, since 
+     * the Evironment is reinstantiated after every task is completed
+     * - 
      * TODO - do all iterations to try to find the most efficient path?
      *  - maybe do the tolarance as stright distance / num iterations
      *  - not literally that function, but something that gets more leniant the
