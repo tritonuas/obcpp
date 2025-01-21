@@ -668,4 +668,26 @@ std::vector<XYZCoord> ForwardCoveragePathing::findPossibleDetours(const RRTPoint
             insert the pair of vertecies as goals in between the existing goals
 
     */
+
+    for (auto it = goals.begin(); it != prev(goals.end()); ++it) {
+        XYZCoord curGoal = *it;
+        XYZCoord nextGoal = *next(it);
+        XYZCoord nearestVertex = *mapping_zone.begin();
+        XYZCoord prevVertex = *prev(mapping_zone.end());
+        XYZCoord nextVertex;
+        double directDist = curGoal.distanceTo(nextGoal);
+        double vertexDist = curGoal.distanceTo(nearestVertex);
+
+        for (auto v_it = mapping_zone.begin(); v_it != mapping_zone.end(); ++v_it) {
+            if (curGoal.distanceTo(*v_it) < vertexDist) {
+                nearestVertex = *v_it;
+                prevVertex = *prev(v_it);
+                nextVertex = *next(v_it);
+            }
+        }
+
+        if (nextVertex = *mapping_zone.end()) {
+            nextVertex = mapping_zone.begin();
+        }
+    }
 }
