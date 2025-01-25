@@ -1,6 +1,3 @@
-#ifndef INCLUDE_CAMERA_LUCID_HPP_
-#define INCLUDE_CAMERA_LUCID_HPP_
-
 #ifdef ARENA_SDK_INSTALLED
 
 #include <ArenaApi.h>
@@ -29,7 +26,7 @@ using namespace std::chrono_literals; // NOLINT
  * This class is thread safe, meaning that you can access camera resources
  * across different threads even though there's one physical camera.
 */
-class LucidCamera : public CameraInterface {
+class RaspPi : public CameraInterface {
  public:
     explicit LucidCamera(CameraConfig config);
     ~LucidCamera();
