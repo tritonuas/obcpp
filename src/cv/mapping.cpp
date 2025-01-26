@@ -20,7 +20,7 @@ namespace fs = std::filesystem;
 // ---------------------
 
 // Read and optionally downscale an image so its largest dimension <= max_dim
-static cv::Mat readAndResize(const cv::Mat& input, int max_dim) {
+cv::Mat Mapping::readAndResize(const cv::Mat& input, int max_dim) {
     if (input.empty()) {
         return cv::Mat();  // return empty on failure
     }
@@ -39,7 +39,8 @@ static cv::Mat readAndResize(const cv::Mat& input, int max_dim) {
 }
 
 // Chunk the list of indices into overlapping subsets
-static std::vector<std::vector<int>> chunkListWithOverlap(int num_images, int chunk_size, int overlap) {
+std::vector<std::vector<int>> Mapping::chunkListWithOverlap(int num_images, int chunk_size,
+                                                            int overlap) {
     if (overlap >= chunk_size) {
         throw std::runtime_error("Overlap must be smaller than chunk_size.");
     }
@@ -57,9 +58,9 @@ static std::vector<std::vector<int>> chunkListWithOverlap(int num_images, int ch
 }
 
 // Perform a single-pass stitch on a set of already-loaded images (they will be resized here)
-static std::pair<cv::Stitcher::Status, cv::Mat> globalStitch(const std::vector<cv::Mat>& images,
-                                                             cv::Stitcher::Mode mode,
-                                                             int max_dim) {
+std::pair<cv::Stitcher::Status, cv::Mat> Mapping::globalStitch(const std::vector<cv::Mat>& images,
+                                                               cv::Stitcher::Mode mode,
+                                                               int max_dim) {
     // Prepare the stitcher
     cv::Ptr<cv::Stitcher> stitcher = cv::Stitcher::create(mode);
 
@@ -82,7 +83,7 @@ static std::pair<cv::Stitcher::Status, cv::Mat> globalStitch(const std::vector<c
 }
 
 // Utility to get a timestamp string like "2025-01-24-12-34-56"
-static std::string currentDateTimeStr() {
+std::string Mapping::currentDateTimeStr() {
     auto now = std::chrono::system_clock::now();
     std::time_t tt = std::chrono::system_clock::to_time_t(now);
     std::tm local_tm;
@@ -139,25 +140,25 @@ void Mapping::loadImages(const std::string& input_path) {
     std::cout << "Images are loaded. Count: " << images.size() << std::endl;
 }
 
-void Mapping::mapImages(const std::string& output_path) {
+void Mapping::mapImages(const std::string& output_path, const int chunk_size,
+                        const int chunk_overlap, const int max_dim) {
     // If no images, nothing to do
     if (images.empty()) {
         std::cerr << "No images available to stitch. Exiting.\n";
         return;
     }
 
-    // ----------------------------------
-    // Configuration (mirroring Python)
-    // ----------------------------------
-    const int chunk_size = 5;
-    const int chunk_overlap = 2;
     const cv::Stitcher::Mode stitcher_mode = cv::Stitcher::SCANS;
-    const int max_dim = 5000;  // resizing limit
 
-    // Create output directory if not exist
+    // Create the main output directory if it doesn't exist
     if (!fs::exists(output_path)) {
         fs::create_directories(output_path);
     }
+
+    // Create a unique subdirectory for this run (e.g. "output/2025-01-24-12-34-56")
+    const std::string timestamp = currentDateTimeStr();
+    const std::string run_subdir = output_path + "/" + timestamp;
+    fs::create_directories(run_subdir);
 
     // Split image indices into overlapping chunks
     std::vector<std::vector<int>> chunked_indices =
@@ -165,13 +166,13 @@ void Mapping::mapImages(const std::string& output_path) {
 
     // We'll store partial results (stitched chunks or original chunk images) here
     std::vector<cv::Mat> partial_results;
-    partial_results.reserve(chunked_indices.size());  // Just a guess; might be bigger if fails.
+    partial_results.reserve(chunked_indices.size());  // Might be larger if stitching fails.
 
     int chunk_index = 0;
     for (const auto& chunk : chunked_indices) {
         chunk_index++;
-        std::cout << "\n[INFO] Stitching chunk #" << chunk_index
-                  << " with " << chunk.size() << " images..." << std::endl;
+        std::cout << "\n[INFO] Stitching chunk #" << chunk_index << " with " << chunk.size()
+                  << " images..." << std::endl;
 
         // Gather cv::Mat for this chunk
         std::vector<cv::Mat> chunk_images;
@@ -184,13 +185,12 @@ void Mapping::mapImages(const std::string& output_path) {
         auto [status, stitched] = globalStitch(chunk_images, stitcher_mode, max_dim);
 
         if (status == cv::Stitcher::OK && !stitched.empty()) {
-            // Save partial stitched result
-            std::string ts = currentDateTimeStr();
-            std::string out_path =
-                output_path + "/0_chunk_" + std::to_string(chunk_index) + "_" + ts + ".jpg";
+            // Save partial stitched result to the run_subdir
+            std::string out_path = run_subdir + "/chunk_" + std::to_string(chunk_index) + "_" +
+                                   currentDateTimeStr() + ".jpg";
             if (cv::imwrite(out_path, stitched)) {
-                std::cout << "[INFO] Chunk #" << chunk_index
-                          << " stitched OK -> " << out_path << std::endl;
+                std::cout << "[INFO] Chunk #" << chunk_index << " stitched OK -> " << out_path
+                          << std::endl;
             } else {
                 std::cerr << "[WARNING] Failed to save chunk result to " << out_path << std::endl;
             }
@@ -200,7 +200,6 @@ void Mapping::mapImages(const std::string& output_path) {
         } else {
             std::cout << "[WARNING] Stitch failed for chunk #" << chunk_index
                       << ". Status code: " << static_cast<int>(status) << std::endl;
-            // Retain original chunk images for final pass
             std::cout << "[INFO] Retaining original images for final pass." << std::endl;
             // i.e., store them individually in partial_results
             for (auto& cimg : chunk_images) {
@@ -221,17 +220,17 @@ void Mapping::mapImages(const std::string& output_path) {
     std::cout << "\n[INFO] Merging all partial results in one pass..." << std::endl;
     auto [final_status, final_stitched] = globalStitch(partial_results, stitcher_mode, max_dim);
     if (final_status == cv::Stitcher::OK && !final_stitched.empty()) {
-        std::string ts = currentDateTimeStr();
-        std::string final_out_path = output_path + "/final_merged_" + ts + ".jpg";
+        std::string final_out_path = run_subdir + "/final_merged_" + currentDateTimeStr() + ".jpg";
         if (cv::imwrite(final_out_path, final_stitched)) {
             std::cout << "[INFO] Final merged panorama -> " << final_out_path << std::endl;
         } else {
             std::cerr << "[WARNING] Failed to save final merged panorama.\n";
         }
     } else {
-        std::cerr << "[WARNING] Final merge failed. Status code: "
-                  << static_cast<int>(final_status) << std::endl;
-        std::cerr << "Partial results remain in memory. You may consider saving them individually.\n";
+        std::cerr << "[WARNING] Final merge failed. Status code: " << static_cast<int>(final_status)
+                  << std::endl;
+        std::cerr
+            << "Partial results remain in memory. You may consider saving them individually.\n";
     }
 
     std::cout << "\n[INFO] Done.\n";
