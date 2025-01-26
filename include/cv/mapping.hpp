@@ -2,8 +2,11 @@
 #define INCLUDE_CV_MAPPING_HPP_
 
 #include <iostream>
-#include <opencv2/opencv.hpp>
 #include <string>
+#include <utility>
+#include <vector>
+
+#include "opencv2/opencv.hpp"
 
 // Mapping is responsible for mapping the set of images taken from the PyCam to an single mapped
 // image.
@@ -41,4 +44,4 @@ class Mapping {
     std::vector<std::string> image_filenames;
 };
 
-#endif  // CV_MAPPING_HPP
+#endif  // INCLUDE_CV_MAPPING_HPP_

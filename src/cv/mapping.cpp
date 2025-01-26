@@ -1,17 +1,18 @@
-#include "cv/mapping.hpp"
-
 #include <algorithm>
 #include <chrono>
 #include <ctime>
 #include <filesystem>
 #include <iomanip>
 #include <iostream>
-#include <opencv2/opencv.hpp>
-#include <opencv2/stitching.hpp>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
+
+#include "opencv2/opencv.hpp"
+#include "opencv2/stitching.hpp"
+
+#include "cv/mapping.hpp"
 
 namespace fs = std::filesystem;
 
