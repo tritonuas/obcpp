@@ -63,7 +63,6 @@ set(DEPS_DIRECTORY ${PROJECT_SOURCE_DIR}/deps)
 
 include(${DEPS_DIRECTORY}/torch/torch.cmake)
 include(${DEPS_DIRECTORY}/torchvision/torchvision.cmake)
-include(${DEPS_DIRECTORY}/arena-sdk/arena.cmake)
 include(${DEPS_DIRECTORY}/json/json.cmake)
 include(${DEPS_DIRECTORY}/opencv/opencv.cmake)
 include(${DEPS_DIRECTORY}/httplib/httplib.cmake)
