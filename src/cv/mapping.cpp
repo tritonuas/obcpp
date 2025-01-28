@@ -238,9 +238,9 @@ void Mapping::secondPass(const std::string& run_subdir, cv::Stitcher::Mode mode,
         // Build final filename
         std::string final_name = run_subdir + "/final_" + currentDateTimeStr() + ".jpg";
         if (cv::imwrite(final_name, final_stitched)) {
-            std::cout << "Final panorama saved to: " << final_name << "\n";
+            std::cout << "Final image saved to: " << final_name << "\n";
         } else {
-            std::cerr << "Failed to save final panorama to " << final_name << "\n";
+            std::cerr << "Failed to save final image to " << final_name << "\n";
         }
     } else {
         std::cerr << "Final stitching failed. Status = " << static_cast<int>(status) << "\n";

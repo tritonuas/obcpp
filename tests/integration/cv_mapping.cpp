@@ -1,33 +1,74 @@
+#include <filesystem>
 #include <iostream>
-#include <string>
 
 #include "cv/mapping.hpp"
 
+namespace fs = std::filesystem;
+
 int main() {
-    // Input directory where new images appear
-    std::string input_dir = "../tests/integration/images";
+    cv::Stitcher::Mode scan_mode = cv::Stitcher::SCANS;
+    try {
+        // Set up paths based on the folder structure described above
+        fs::path base_dir = "../tests/integration/mapping";
+        fs::path batch1_dir = base_dir / "batch1";
+        fs::path batch2_dir = base_dir / "batch2";
+        fs::path live_images_dir = base_dir / "images";  // the "live" folder seen by firstPass()
+        fs::path output_dir = base_dir / "output";
 
-    // Directory to save chunk results (and eventually final)
-    std::string output_dir = "../tests/integration/output";
+        // Make sure the "live" and "output" directories exist (create if they don't)
+        if (!fs::exists(live_images_dir)) {
+            fs::create_directories(live_images_dir);
+        }
+        if (!fs::exists(output_dir)) {
+            fs::create_directories(output_dir);
+        }
 
-    // Stitching parameters
-    const int chunk_size = 5;
-    const int overlap = 2;
-    const int max_dim = 5000;
+        // 1. Simulate receiving Batch 1 images
+        // Clear out the live_images_dir if you want to start fresh
+        // (Alternatively, you can let it remain if there's something from a prior run.)
+        for (const auto& entry : fs::directory_iterator(live_images_dir)) {
+            fs::remove_all(entry.path());
+        }
+        // Copy Batch 1 images into the "images/" folder
+        for (const auto& entry : fs::directory_iterator(batch1_dir)) {
+            if (entry.is_regular_file()) {
+                fs::copy_file(entry.path(), live_images_dir / entry.path().filename(),
+                              fs::copy_options::overwrite_existing);
+            }
+        }
 
-    // Create the mapper
-    Mapping mapper;
+        // 2. Instantiate the mapper and process the first batch
+        Mapping mapper;
+        const int chunk_size = 5;
+        const int chunk_overlap = 2;
+        const int max_dim = 3000;
 
-    // First pass (can be called multiple times if you receive images in bursts)
-    mapper.firstPass(input_dir,   // Where images are located
-                     output_dir,  // Where to save chunk results
-                     chunk_size, overlap, cv::Stitcher::SCANS, max_dim);
+        std::cout << "==> Processing Batch 1...\n";
+        mapper.firstPass(live_images_dir.string(), output_dir.string(), chunk_size, chunk_overlap,
+                         scan_mode, max_dim);
 
-    // If more images arrive, we can call firstPass(...) again.
-    // ...
-    // Suppose no more images are coming, so do the second pass.
+        // 3. Simulate time passing, and receiving Batch 2 images
+        // Copy Batch 2 images into "images/"
+        for (const auto& entry : fs::directory_iterator(batch2_dir)) {
+            if (entry.is_regular_file()) {
+                fs::copy_file(entry.path(), live_images_dir / entry.path().filename(),
+                              fs::copy_options::overwrite_existing);
+            }
+        }
 
-    mapper.secondPass(output_dir, cv::Stitcher::SCANS, max_dim);
+        // 4. Process the second batch with the same mapper instance
+        std::cout << "==> Processing Batch 2...\n";
+        mapper.firstPass(live_images_dir.string(), output_dir.string(), chunk_size, chunk_overlap,
+                         scan_mode, max_dim);
 
+        // 5. Finally, call secondPass to merge all chunk images in output/
+        std::cout << "==> Merging all partial chunk images into final...\n";
+        mapper.secondPass(output_dir.string(), scan_mode, max_dim);
+
+        std::cout << "Integration test completed.\n";
+    } catch (const std::exception& e) {
+        std::cerr << "Exception in incremental integration test: " << e.what() << "\n";
+        return 1;
+    }
     return 0;
 }
