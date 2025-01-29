@@ -3,7 +3,7 @@ set(LIB_NAME obcpp_camera)
 set(FILES
     interface.cpp
     mock.cpp
-    lucid.cpp
+    rpi.cpp
 )
 
 SET(LIB_DEPS
