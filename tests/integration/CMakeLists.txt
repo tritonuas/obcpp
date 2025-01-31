@@ -245,7 +245,6 @@ target_link_libraries(airdrop_packets PRIVATE -Wl,--copy-dt-needed-entries ${Ima
 
 # add_executable(camera_playground camera_playground.cpp)
 # target_include_directories(camera_playground PRIVATE ${INCLUDE_DIRECTORY})
-# target_add_arena(camera_playground)
 # add_custom_target(
 #     run_camera_playground
 #     ${CMAKE_COMMAND}

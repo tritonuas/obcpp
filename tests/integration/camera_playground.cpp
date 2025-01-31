@@ -21,8 +21,6 @@
 #pragma GCC diagnostic pop
 #endif
 
-#include "ArenaApi.h"
-
 #define TAB1 "  "
 #define TAB2 "    "
 #define TAB3 "      "
