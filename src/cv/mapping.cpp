@@ -79,12 +79,8 @@ std::pair<cv::Stitcher::Status, cv::Mat> Mapping::globalStitch(const std::vector
 std::string Mapping::currentDateTimeStr() {
     auto now = std::chrono::system_clock::now();
     std::time_t tt = std::chrono::system_clock::to_time_t(now);
-    std::tm local_tm;
-#ifdef _WIN32
-    localtime_s(&local_tm, &tt);
-#else
-    local_tm = *std::localtime(&tt);
-#endif
+    std::tm local_tm = *std::localtime(&tt);
+
     std::stringstream ss;
     ss << std::put_time(&local_tm, "%Y-%m-%d-%H-%M-%S");
     return ss.str();
