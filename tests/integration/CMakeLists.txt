@@ -118,6 +118,20 @@ target_add_loguru(cv_mapping)
 target_include_directories(cv_mapping PRIVATE ${ImageMagick_INCLUDE_DIRS})
 target_link_libraries(cv_mapping PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
+# cv_yolo
+add_executable(cv_yolo ${SOURCES} "cv_yolo.cpp")
+target_link_libraries(cv_yolo PRIVATE obcpp_lib)
+target_include_directories(cv_yolo PRIVATE ${INCLUDE_DIRECTORY})
+target_add_torch(cv_yolo)
+target_add_opencv(cv_yolo) 
+target_add_torchvision(cv_yolo)
+target_add_matplot(cv_yolo)
+target_add_json(cv_yolo)
+target_add_loguru(cv_yolo)
+target_add_onnxruntime(cv_yolo)
+target_include_directories(cv_yolo PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(cv_yolo PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
+
 # cv_segmentation
 add_executable(cv_segmentation "cv_segmentation.cpp")
 target_link_libraries(cv_segmentation PRIVATE obcpp_lib)

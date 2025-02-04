@@ -1,0 +1,76 @@
+#ifndef INCLUDE_CV_YOLO_HPP_
+#define INCLUDE_CV_YOLO_HPP_
+
+#include <onnxruntime_cxx_api.h>
+
+#include <opencv2/opencv.hpp>
+#include <string>
+#include <vector>
+
+/// Simple struct to store a detection result
+struct Detection {
+    float x1;
+    float y1;
+    float x2;
+    float y2;
+    float confidence;
+    int class_id;
+};
+
+class YOLO {
+ public:
+    /**
+     * @brief Construct a new YOLO object
+     *
+     * @param modelPath Path to the YOLO .onnx file
+     * @param confThreshold Minimum confidence threshold for a detection
+     * @param inputWidth Width of the model input
+     * @param inputHeight Height of the model input
+     */
+    YOLO(const std::string &modelPath, float confThreshold = 0.25f, int inputWidth = 640,
+         int inputHeight = 640);
+
+    /**
+     * @brief Destroy the YOLO object
+     */
+    ~YOLO();
+
+    /**
+     * @brief Perform inference on an input image
+     *
+     * @param image Input image (cv::Mat in BGR format)
+     * @return std::vector<Detection> A list of detections
+     */
+    std::vector<Detection> detect(const cv::Mat &image);
+
+ private:
+    /// Preprocess a cv::Mat to match the model's input shape and format
+    /// Returns float array of size [1 x 3 x inputHeight x inputWidth]
+    std::vector<float> preprocess(const cv::Mat &image);
+    /**
+     * @brief Resize + pad the image to maintain aspect ratio as typical YOLO does.
+     *
+     * @param src       The original BGR image
+     * @param newWidth  Target width (e.g. 640)
+     * @param newHeight Target height (e.g. 640)
+     * @param color     Letterbox color fill (default 114 for typical YOLO)
+     * @return cv::Mat  The letterboxed image of size [newHeight x newWidth]
+     */
+    cv::Mat letterbox(const cv::Mat &src, int newWidth, int newHeight,
+                      const cv::Scalar &color = cv::Scalar(114, 114, 114));
+
+ private:
+    Ort::Env env_;
+    Ort::Session *session_;
+    Ort::SessionOptions sessionOptions_;
+
+    float confThreshold_;
+    int inputWidth_;
+    int inputHeight_;
+
+    // Input/Output node information
+    std::vector<std::string> inputNames_;
+    std::vector<std::string> outputNames_;
+};
+
+#endif  // INCLUDE_CV_YOLO_HPP_

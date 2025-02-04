@@ -61,6 +61,7 @@ set(LOGURU_WITH_STREAMS TRUE)
 set(FETCHCONTENT_QUIET FALSE)
 set(DEPS_DIRECTORY ${PROJECT_SOURCE_DIR}/deps)
 
+include(${DEPS_DIRECTORY}/onnxruntime/onnxruntime.cmake)
 include(${DEPS_DIRECTORY}/torch/torch.cmake)
 include(${DEPS_DIRECTORY}/torchvision/torchvision.cmake)
 include(${DEPS_DIRECTORY}/arena-sdk/arena.cmake)
