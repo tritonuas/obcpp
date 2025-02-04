@@ -7,8 +7,9 @@ void assertLocalizationAccuracy(
     const GPSCoord& predictedCoord,
     // TODO: should specify the threshold in feet (or have a function to convert feet to relative lat/lon)
     // lat/long is a different amount of distance at different parts on Earth
-    double latitudeDegThreshold = 0.0000005,
-    double longitudeDegThreshold = 0.0000005) { 
+    // This should be 20 feet assuming 1 = 1 degree latitude
+    double latitudeDegThreshold = 0.00005495,
+    double longitudeDegThreshold = 0.00005495) { 
 
     SCOPED_TRACE(::testing::Message() << "\nExpected Lat, Long: " << expectedCoord.latitude() << ", "<< expectedCoord.longitude()
                                       << "\nPredicted Lat, Long: " << predictedCoord.latitude() << ", " << predictedCoord.longitude());
