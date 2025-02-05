@@ -11,10 +11,6 @@ env:
   HOME_DIR: /home/tuas
   # https://stackoverflow.com/a/71158878
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
-  # this is needed for CMake to find where ArenaSDK is
-  # installed to. See the Dockerfile for what is installed
-  # to this path
-  ARENA_EXTRACTED_PATH: "/arena-tmp/ArenaSDK_Linux_x64"
 
 jobs:
   test:
@@ -34,15 +30,12 @@ jobs:
       - name: Clone Repo
         run: git clone --branch $BRANCH_NAME https://oauth2:${{secrets.GITHUB_TOKEN}}@github.com/tritonuas/obcpp.git $HOME_DIR/obcpp
 
-      - name: cat arena.cmake
-        run: cat "$HOME_DIR/obcpp/deps/arena-sdk/arena.cmake"
-
       - name: Pull Submodules
         run: cd "$HOME_DIR/obcpp" && git rm protos && git submodule add https://oauth2:${{secrets.GITHUB_TOKEN}}@github.com/tritonuas/protos.git && cd protos && git pull
 
       - name: Set up CMake
         # uses ${CMAKE_PREFIX_PATH} set in Dockerfile env
-        run: cd "$HOME_DIR/obcpp" && rm -rf build && mkdir build && cd build && sudo ARENA_EXTRACTED_PATH="/arena-tmp/ArenaSDK_Linux_x64" cmake -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" -DCMAKE_JOB_POOLS="j=4" ..
+        run: cd "$HOME_DIR/obcpp" && rm -rf build && mkdir build && cd build && sudo cmake -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" -DCMAKE_JOB_POOLS="j=4" ..
 
       - name: Run Tests
         run: cd "$HOME_DIR/obcpp/build" && sudo ninja test

@@ -1,7 +1,6 @@
 #include <iostream>
 #include <string>
 
-// #include "ArenaApi.h"
 #include <torch/torch.h>
 #include <nlohmann/json.hpp>
 #include <opencv2/opencv.hpp>
