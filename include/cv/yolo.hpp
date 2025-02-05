@@ -67,6 +67,9 @@ class YOLO {
     float confThreshold_;
     int inputWidth_;
     int inputHeight_;
+    float scale_ = 1.f;
+    int padTop_ = 0;
+    int padLeft_ = 0;
 
     // Input/Output node information
     std::vector<std::string> inputNames_;

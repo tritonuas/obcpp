@@ -51,17 +51,30 @@ YOLO::~YOLO() {
 }
 
 std::vector<float> YOLO::preprocess(const cv::Mat& image) {
-    // 1. Letterbox to [inputWidth_ x inputHeight_] with gray(114,114,114)
+    // Compute letterbox scale
+    float r =
+        std::min((float)inputWidth_ / (float)image.cols, (float)inputHeight_ / (float)image.rows);
+    int unpadW = std::round(image.cols * r);
+    int unpadH = std::round(image.rows * r);
+    int dw = inputWidth_ - unpadW;   // total horizontal padding
+    int dh = inputHeight_ - unpadH;  // total vertical padding
+
+    // We'll store these so we can "un-letterbox" later:
+    scale_ = r;
+    padLeft_ = dw / 2;  // per-side left padding
+    padTop_ = dh / 2;   // per-side top padding
+
+    // Then call letterbox(...). This returns a 640×640 image, but we
+    // know how it was scaled & padded:
     cv::Mat resized = letterbox(image, inputWidth_, inputHeight_, cv::Scalar(114, 114, 114));
 
-    // 2. Convert BGR to RGB if your model is RGB-based
-    //    (If your model expects BGR, remove this line!)
-    // cv::cvtColor(resized, resized, cv::COLOR_BGR2RGB);
+    // [Optional] Convert BGR->RGB if your model is truly trained on RGB:
+    cv::cvtColor(resized, resized, cv::COLOR_BGR2RGB);
 
-    // 3. Convert [0..255] to floats [0..1]
+    // Convert to float [0..1]
     resized.convertTo(resized, CV_32F, 1.0f / 255.0f);
 
-    // 4. Reorder from HWC to CHW
+    // HWC -> CHW
     std::vector<float> inputData(inputWidth_ * inputHeight_ * 3);
     size_t index = 0;
     for (int c = 0; c < 3; c++) {
@@ -118,11 +131,16 @@ std::vector<Detection> YOLO::detect(const cv::Mat& image) {
     for (auto s : shape) std::cout << s << " ";
     std::cout << "]" << std::endl;
 
-    float scaleWidth = static_cast<float>(image.cols) / static_cast<float>(inputWidth_);
-    float scaleHeight = static_cast<float>(image.rows) / static_cast<float>(inputHeight_);
+    // float scaleWidth = static_cast<float>(image.cols) / static_cast<float>(inputWidth_);
+    // float scaleHeight = static_cast<float>(image.rows) / static_cast<float>(inputHeight_);
 
     for (size_t i = 0; i < numDetections; i++) {
         size_t offset = i * elementsPerDetection;
+        // "Un-letterbox" each detection
+        //    1) subtract padLeft_ / padTop_
+        //    2) divide by scale_
+        // This maps from 640×640 letterboxed coords back to original image coords.
+
         float x1 = outputData[offset + 0];
         float y1 = outputData[offset + 1];
         float x2 = outputData[offset + 2];
@@ -130,17 +148,30 @@ std::vector<Detection> YOLO::detect(const cv::Mat& image) {
         float conf = outputData[offset + 4];
         float cls = outputData[offset + 5];
 
-        std::cout << "Row " << i << " raw: [" << outputData[offset + 0] << ", "
-                  << outputData[offset + 1] << ", " << outputData[offset + 2] << ", "
-                  << outputData[offset + 3] << ", " << outputData[offset + 4] << ", "
-                  << outputData[offset + 5] << "]" << std::endl;
-
         if (conf >= confThreshold_) {
+            // Remove the letterbox offset
+            x1 -= padLeft_;
+            y1 -= padTop_;
+            x2 -= padLeft_;
+            y2 -= padTop_;
+
+            // Scale back up to original image
+            x1 /= scale_;
+            y1 /= scale_;
+            x2 /= scale_;
+            y2 /= scale_;
+
+            // Optionally clamp coords to image boundaries:
+            x1 = std::max(0.f, std::min(x1, (float)image.cols - 1));
+            y1 = std::max(0.f, std::min(y1, (float)image.rows - 1));
+            x2 = std::max(0.f, std::min(x2, (float)image.cols - 1));
+            y2 = std::max(0.f, std::min(y2, (float)image.rows - 1));
+
             Detection det;
-            det.x1 = x1 * scaleWidth;
-            det.y1 = y1 * scaleHeight;
-            det.x2 = x2 * scaleWidth;
-            det.y2 = y2 * scaleHeight;
+            det.x1 = x1;
+            det.y1 = y1;
+            det.x2 = x2;
+            det.y2 = y2;
             det.confidence = conf;
             det.class_id = static_cast<int>(cls);
             detections.push_back(det);
