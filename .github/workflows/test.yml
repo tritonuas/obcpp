@@ -28,10 +28,7 @@ jobs:
         run: echo "$BRANCH_NAME"
 
       - name: Clone Repo
-        run: git clone --branch $BRANCH_NAME https://oauth2:${{secrets.GITHUB_TOKEN}}@github.com/tritonuas/obcpp.git $HOME_DIR/obcpp
-
-      - name: Pull Submodules
-        run: cd "$HOME_DIR/obcpp" && git rm protos && git submodule add https://oauth2:${{secrets.GITHUB_TOKEN}}@github.com/tritonuas/protos.git && cd protos && git pull
+        run: git clone --branch $BRANCH_NAME --recurse-submodules https://github.com/tritonuas/obcpp.git $HOME_DIR/obcpp
 
       - name: Set up CMake
         # uses ${CMAKE_PREFIX_PATH} set in Dockerfile env
