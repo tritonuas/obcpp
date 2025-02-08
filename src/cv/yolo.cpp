@@ -12,9 +12,7 @@ YOLO::YOLO(const std::string& modelPath, float confThreshold, int inputWidth, in
     // Initialize session options if needed
     sessionOptions_.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
 
-    // // Create the session
-    // session_ = new Ort::Session(env_, modelPath.c_str(), sessionOptions_);
-
+    // Create the session
     try {
         session_ = new Ort::Session(env_, modelPath.c_str(), sessionOptions_);
         std::cout << "Model loaded successfully.\n";
@@ -37,8 +35,7 @@ YOLO::YOLO(const std::string& modelPath, float confThreshold, int inputWidth, in
     size_t numOutputNodes = session_->GetOutputCount();
     outputNames_.resize(numOutputNodes);
     for (size_t i = 0; i < numOutputNodes; i++) {
-        auto name =
-            session_->GetOutputNameAllocated(i, allocator);  // Correct function for output nodes
+        auto name = session_->GetOutputNameAllocated(i, allocator);  // function for output nodes
         outputNames_[i] = std::string(name.get());
     }
 }
@@ -64,11 +61,11 @@ std::vector<float> YOLO::preprocess(const cv::Mat& image) {
     padLeft_ = dw / 2;  // per-side left padding
     padTop_ = dh / 2;   // per-side top padding
 
-    // Then call letterbox(...). This returns a 640×640 image, but we
-    // know how it was scaled & padded:
+    // Then call letterbox(...). This returns a new image of size (inputWidth_ x inputHeight_),
+    // but we know how it was scaled & padded:
     cv::Mat resized = letterbox(image, inputWidth_, inputHeight_, cv::Scalar(114, 114, 114));
 
-    // [Optional] Convert BGR->RGB if your model is truly trained on RGB:
+    // Convert BGR->RGB if your model is trained on RGB:
     cv::cvtColor(resized, resized, cv::COLOR_BGR2RGB);
 
     // Convert to float [0..1]
@@ -117,30 +114,19 @@ std::vector<Detection> YOLO::detect(const cv::Mat& image) {
         session_->Run(Ort::RunOptions{nullptr}, inputNamesCStr.data(), &inputTensor, 1,
                       outputNamesCStr.data(), outputNamesCStr.size());
 
-    // Process the output as before...
+    // Extract output
     float* outputData = outputTensors[0].GetTensorMutableData<float>();
 
-    // The rest of your detection code...
     std::vector<Detection> detections;
-    size_t numDetections = 300;
-    size_t elementsPerDetection = 6;
+    size_t numDetections = 300;       // for example
+    size_t elementsPerDetection = 6;  // [x1, y1, x2, y2, conf, classID]
 
     auto shapeInfo = outputTensors[0].GetTensorTypeAndShapeInfo();
     auto shape = shapeInfo.GetShape();
-    std::cout << "Output shape = [ ";
-    for (auto s : shape) std::cout << s << " ";
-    std::cout << "]" << std::endl;
-
-    // float scaleWidth = static_cast<float>(image.cols) / static_cast<float>(inputWidth_);
-    // float scaleHeight = static_cast<float>(image.rows) / static_cast<float>(inputHeight_);
-
+    
+    // Parse the output data
     for (size_t i = 0; i < numDetections; i++) {
         size_t offset = i * elementsPerDetection;
-        // "Un-letterbox" each detection
-        //    1) subtract padLeft_ / padTop_
-        //    2) divide by scale_
-        // This maps from 640×640 letterboxed coords back to original image coords.
-
         float x1 = outputData[offset + 0];
         float y1 = outputData[offset + 1];
         float x2 = outputData[offset + 2];
@@ -155,13 +141,13 @@ std::vector<Detection> YOLO::detect(const cv::Mat& image) {
             x2 -= padLeft_;
             y2 -= padTop_;
 
-            // Scale back up to original image
+            // Scale back to original image
             x1 /= scale_;
             y1 /= scale_;
             x2 /= scale_;
             y2 /= scale_;
 
-            // Optionally clamp coords to image boundaries:
+            // Clamp coords to image boundaries
             x1 = std::max(0.f, std::min(x1, (float)image.cols - 1));
             y1 = std::max(0.f, std::min(y1, (float)image.rows - 1));
             x2 = std::max(0.f, std::min(x2, (float)image.cols - 1));
@@ -174,6 +160,7 @@ std::vector<Detection> YOLO::detect(const cv::Mat& image) {
             det.y2 = y2;
             det.confidence = conf;
             det.class_id = static_cast<int>(cls);
+
             detections.push_back(det);
         }
     }
@@ -182,29 +169,44 @@ std::vector<Detection> YOLO::detect(const cv::Mat& image) {
 }
 
 cv::Mat YOLO::letterbox(const cv::Mat& src, int newWidth, int newHeight, const cv::Scalar& color) {
-    // Scale = min of width-ratio or height-ratio
     float r = std::min((float)newWidth / (float)src.cols, (float)newHeight / (float)src.rows);
 
-    // Compute padded (unscaled) width/height
     int unpadW = std::round(src.cols * r);
     int unpadH = std::round(src.rows * r);
 
-    // Resize to the new scaled dimensions
     cv::Mat dst;
     cv::resize(src, dst, cv::Size(unpadW, unpadH));
 
-    // Compute padding to match requested newWidth/newHeight
-    int dw = newWidth - unpadW;   // total padding width
-    int dh = newHeight - unpadH;  // total padding height
+    int dw = newWidth - unpadW;
+    int dh = newHeight - unpadH;
 
-    // Divide padding into 2 sides (left/right, top/bottom)
     int top = std::round(dh / 2.0f);
     int bottom = dh - top;
     int left = std::round(dw / 2.0f);
     int right = dw - left;
 
-    // Apply border
     cv::copyMakeBorder(dst, dst, top, bottom, left, right, cv::BORDER_CONSTANT, color);
-
     return dst;
+}
+
+void YOLO::drawAndPrintDetections(cv::Mat& image, const std::vector<Detection>& detections) {
+    // Iterate through each detection and draw
+    for (const auto& det : detections) {
+        // Print detection info
+        std::cout << "Detected class: " << det.class_id << " conf: " << det.confidence << " box: ["
+                  << det.x1 << ", " << det.y1 << ", " << det.x2 << ", " << det.y2 << "]"
+                  << std::endl;
+
+        // Draw the bounding box
+        cv::rectangle(image, cv::Point(static_cast<int>(det.x1), static_cast<int>(det.y1)),
+                      cv::Point(static_cast<int>(det.x2), static_cast<int>(det.y2)),
+                      cv::Scalar(0, 255, 0),  // green box
+                      2);
+
+        // Draw label (class + confidence) above the box
+        std::string label = "ID:" + std::to_string(det.class_id) +
+                            " conf:" + std::to_string(det.confidence).substr(0, 4);
+        cv::putText(image, label, cv::Point(static_cast<int>(det.x1), static_cast<int>(det.y1) - 5),
+                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0), 1);
+    }
 }

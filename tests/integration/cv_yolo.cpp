@@ -31,29 +31,11 @@ int main(int argc, char** argv) {
     // Perform detection
     std::vector<Detection> results = yolo.detect(image);
 
-    // Print detections and draw bounding boxes
-    for (const auto& det : results) {
-        std::cout << "Detected class: " << det.class_id << " conf: " << det.confidence << " box: ["
-                  << det.x1 << ", " << det.y1 << ", " << det.x2 << ", " << det.y2 << "]"
-                  << std::endl;
-
-        // Draw the bounding box
-        cv::rectangle(image, cv::Point(static_cast<int>(det.x1), static_cast<int>(det.y1)),
-                      cv::Point(static_cast<int>(det.x2), static_cast<int>(det.y2)),
-                      cv::Scalar(0, 255, 0),  // BGR color (green)
-                      2                       // thickness
-        );
-
-        // Optionally, draw the class ID and confidence near the top-left corner of the box
-        std::string label = "ID:" + std::to_string(det.class_id) +
-                            " conf:" + std::to_string(det.confidence).substr(0, 4);
-        cv::putText(image, label, cv::Point(static_cast<int>(det.x1), static_cast<int>(det.y1) - 5),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0),  // matching color
-                    1);
-    }
+    // NEW: Let YOLO handle drawing/printing
+    yolo.drawAndPrintDetections(image, results);
 
     // Save the output image
-    std::string outputFile = "../test/integration/images/output_yolo.jpg";
+    std::string outputFile = "../tests/integration/images/output_yolo.jpg";
     if (!cv::imwrite(outputFile, image)) {
         std::cerr << "Failed to write output image to " << outputFile << std::endl;
         return -1;

@@ -43,10 +43,19 @@ class YOLO {
      */
     std::vector<Detection> detect(const cv::Mat &image);
 
+    /**
+     * @brief Draws and prints the given detections on the image
+     *
+     * @param image The original image on which boxes and labels will be drawn
+     * @param detections The list of detections to visualize
+     */
+    void drawAndPrintDetections(cv::Mat &image, const std::vector<Detection> &detections);
+
  private:
     /// Preprocess a cv::Mat to match the model's input shape and format
     /// Returns float array of size [1 x 3 x inputHeight x inputWidth]
     std::vector<float> preprocess(const cv::Mat &image);
+
     /**
      * @brief Resize + pad the image to maintain aspect ratio as typical YOLO does.
      *
