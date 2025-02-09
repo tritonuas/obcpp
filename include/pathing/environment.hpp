@@ -79,16 +79,17 @@ class Environment {
     const XYZCoord& getGoal(int index) const;
 
     /**
-     * Generate a random point in the valid region
+     * Generate a random point in a valid region or mapping region
      *
-     * The function uniformly selects a point in the valid region, but the probaiblity it actually
-     * selects a point depends on how large it is compared to the valid region.
+     * The function uniformly selects a point in the region, but the probaiblity it actually
+     * selects a point depends on how large it is compared to the region.
      *
      * @param start_point the startpoint used to generate a random point
      * @param search_radius the radius of the search region
+     * @param use_mapping_region whether or not to use the mapping region
      * @return a random XYZCoord in the valid region
      */
-    XYZCoord getRandomPoint() const;
+    XYZCoord getRandomPoint(bool use_mapping_region) const;
 
     /**
      * Get number of Goals
@@ -237,39 +238,25 @@ class Environment {
     /**
      * Finds all intersections between a line segment and a polygon, and returns them as a list
      *
+     * @param polygon the polygon to check intersections
      * @param start_point the start point of the line segment
      * @param end_point the end point of the line segment
      *
      * @return a list of intersections
      */
-    std::vector<XYZCoord> findMappingRegionIntersections(const XYZCoord& start_point,
-                                                         const XYZCoord& end_point) const;
+    std::vector<XYZCoord> findIntersectionsWithPolygon(const Polygon& polygon,
+                                                       const XYZCoord& start_point,
+                                                       const XYZCoord& end_point) const;
 
     /**
-     * Checks if a point is in the mapping region
+     * Estimate the area and path length covered by the given new goals
      *
-     * @param point the point to check
+     * @param goals the new goals
      *
-     * @return true if the point is in the mapping region, false otherwise
+     * @return a pair of the area covered and the path length
      */
-    bool isPointInMappingRegion(const XYZCoord& point) const;
-
-    /**
-     * Checks if a line is in the mapping region
-     *
-     * @param start_point the start point of the line
-     * @param end_point the end point of the line
-     *
-     * @return true if the line is completely in the mapping region, false otherwise
-     */
-    bool isLineInMappingRegion(const XYZCoord& start_point, const XYZCoord& end_point) const;
-
-    /**
-     * Returns a random point in the mapping region
-     *
-     * @return a random point in the mapping region
-     */
-    XYZCoord getRandomPointInMappingRegion() const;
+    std::pair<double, double> estimateAreaCoveredAndPathLength(
+        const std::vector<XYZCoord>& goals) const;
 
     /**
      * Returns a new polygon that is scaled by a given factor

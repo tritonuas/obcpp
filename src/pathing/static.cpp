@@ -532,48 +532,6 @@ RRTPoint AirdropApproachPathing::getDropLocation() const {
     return RRTPoint(drop_location, angle);
 }
 
-// Function to estimate the area covered by the given goals and path length
-std::pair<double, double> estimateAreaCoveredAndPathLength(const std::vector<XYZCoord> &goals,
-                                                           const Environment &airspace) {
-    double area_covered = 0.0;
-    double path_length = 0.0;
-
-    for (int i = 0; i < goals.size(); ++i) {
-        XYZCoord start_point = goals[i];
-        XYZCoord end_point = goals[(i + 1) % goals.size()];
-        path_length += start_point.distanceTo(end_point);
-
-        // if line is completely in bounds
-        if (airspace.isLineInMappingRegion(start_point, end_point)) {
-            area_covered += start_point.distanceTo(end_point) * SEARCH_RADIUS * 2;
-        } else {
-            // find the intersection points with the boundaries of the airspace
-            std::vector<XYZCoord> intersections =
-                airspace.findMappingRegionIntersections(start_point, end_point);
-            // find if start and end points are in bounds
-            bool start_in_bounds = airspace.isPointInMappingRegion(start_point);
-            bool end_in_bounds = airspace.isPointInMappingRegion(end_point);
-
-            // calculate the area covered
-            if (start_in_bounds) {
-                area_covered += start_point.distanceTo(intersections[0]) * SEARCH_RADIUS;
-                intersections.erase(intersections.begin());
-            }
-
-            if (end_in_bounds) {
-                area_covered += end_point.distanceTo(intersections.back()) * SEARCH_RADIUS;
-                intersections.pop_back();
-            }
-
-            for (int i = 0; i < intersections.size(); i += 2) {
-                area_covered += intersections[i].distanceTo(intersections[i + 1]) * SEARCH_RADIUS;
-            }
-        }
-    }
-
-    return {area_covered, path_length};
-}
-
 std::vector<std::vector<XYZCoord>> generateGoalListDeviations(const std::vector<XYZCoord> &goals,
                                                               XYZCoord deviation_point) {
     std::vector<std::vector<XYZCoord>> goal_list_deviations;
@@ -590,8 +548,9 @@ std::vector<std::vector<XYZCoord>> generateRankedNewGoalsList(const std::vector<
                                                               const Environment &airspace) {
     // generate deviation points randomly in the mapping region
     std::vector<XYZCoord> deviation_points;
-    for (int i = 0; i < 50; i++) {
-        deviation_points.push_back(airspace.getRandomPointInMappingRegion());
+    for (int i = 0; i < 200; i++) {
+        deviation_points.push_back(airspace.getRandomPoint(true));
+        printf("Deviation point: %f, %f\n", deviation_points.back().x, deviation_points.back().y);
     }
 
     // each deviation point can be inserted between any two goals
@@ -606,7 +565,7 @@ std::vector<std::vector<XYZCoord>> generateRankedNewGoalsList(const std::vector<
     // run each goal list and get the area covered and the length of the path
     std::vector<std::pair<double, double>> area_length_pairs;
     for (const std::vector<XYZCoord> &new_goals : new_goals_list) {
-        area_length_pairs.push_back(estimateAreaCoveredAndPathLength(new_goals, airspace));
+        area_length_pairs.push_back(airspace.estimateAreaCoveredAndPathLength(new_goals));
     }
 
     // rank the new goal lists by the area covered and the length of the path

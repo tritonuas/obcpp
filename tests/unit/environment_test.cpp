@@ -248,9 +248,9 @@ TEST(EnvironmentTest, VerticalRayIntersectsEdge) {
 }
 
 /*
- *   tests Environment::findmappingregionintersections()
+ *   tests Environment::findIntersectionsWithPolygon()
  */
-TEST(EnvironmentTest, FindMappingRegionIntersections) {
+TEST(EnvironmentTest, FindIntersectionsWithPolygon) {
     Polygon mapping_region1 = {
         {XYZCoord(10, 10, 0), XYZCoord(100, 10, 0), XYZCoord(100, 100, 0), XYZCoord(50, 100, 0)}};
     Environment test_env1({}, {}, mapping_region1, {}, {});
@@ -259,19 +259,22 @@ TEST(EnvironmentTest, FindMappingRegionIntersections) {
     XYZCoord end1(120.0, 50.0, 0.0);
 
     std::vector<XYZCoord> expect1 = {XYZCoord(24.0, 10.0, 0.0), XYZCoord(100.0, 500.0 / 12, 0)};
-    std::vector<XYZCoord> result1 = test_env1.findMappingRegionIntersections(start1, end1);
+    std::vector<XYZCoord> result1 =
+        test_env1.findIntersectionsWithPolygon(mapping_region1, start1, end1);
     EXPECT_EQ(expect1, result1);
 
     XYZCoord start2(20.0, 20.0, 0.0);
     XYZCoord end2(120.0, 50.0, 0.0);
     std::vector<XYZCoord> expect2 = {XYZCoord(100.0, 44.0, 0.0)};
-    std::vector<XYZCoord> result2 = test_env1.findMappingRegionIntersections(start2, end2);
+    std::vector<XYZCoord> result2 =
+        test_env1.findIntersectionsWithPolygon(mapping_region1, start2, end2);
     EXPECT_EQ(expect2, result2);
 
     XYZCoord start3(0.0, 0.0, 0.0);
     XYZCoord end3(50.0, 50.0, 0.0);
     std::vector<XYZCoord> expect3 = {XYZCoord(10.0, 10.0, 0.0)};
-    std::vector<XYZCoord> result3 = test_env1.findMappingRegionIntersections(start3, end3);
+    std::vector<XYZCoord> result3 =
+        test_env1.findIntersectionsWithPolygon(mapping_region1, start3, end3);
     EXPECT_EQ(expect3, result3);
 
     Polygon mapping_region2 = {{XYZCoord(0.0, 0.0, 0.0), XYZCoord(50.0, 100.0, 0.0),
@@ -283,7 +286,8 @@ TEST(EnvironmentTest, FindMappingRegionIntersections) {
     XYZCoord end4(200.0, 50.0, 0.0);
     std::vector<XYZCoord> expect4 = {XYZCoord(25.0, 50.0, 0.0), XYZCoord(75.0, 50.0, 0.0),
                                      XYZCoord(125.0, 50.0, 0.0), XYZCoord(175.0, 50.0, 0.0)};
-    std::vector<XYZCoord> result4 = test_env2.findMappingRegionIntersections(start4, end4);
+    std::vector<XYZCoord> result4 =
+        test_env2.findIntersectionsWithPolygon(mapping_region2, start4, end4);
     EXPECT_EQ(expect4, result4);
 
     // test with start point and end point on the edge; they should be included in the intersections
@@ -291,6 +295,7 @@ TEST(EnvironmentTest, FindMappingRegionIntersections) {
     XYZCoord end5(175.0, 50.0, 0.0);
     std::vector<XYZCoord> expect5 = {XYZCoord(25.0, 50.0, 0.0), XYZCoord(75.0, 50.0, 0.0),
                                      XYZCoord(125.0, 50.0, 0.0), XYZCoord(175.0, 50.0, 0.0)};
-    std::vector<XYZCoord> result5 = test_env2.findMappingRegionIntersections(start5, end5);
+    std::vector<XYZCoord> result5 =
+        test_env2.findIntersectionsWithPolygon(mapping_region2, start5, end5);
     EXPECT_EQ(expect5, result5);
 }
