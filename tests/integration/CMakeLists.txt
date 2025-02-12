@@ -106,6 +106,17 @@ target_add_loguru(cv_saliency)
 target_include_directories(cv_saliency PRIVATE ${ImageMagick_INCLUDE_DIRS})
 target_link_libraries(cv_saliency PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
+# cv_mapping
+add_executable(cv_mapping ${SOURCES} "cv_mapping.cpp")
+target_link_libraries(cv_mapping PRIVATE obcpp_lib)
+target_include_directories(cv_mapping PRIVATE ${INCLUDE_DIRECTORY})
+target_add_opencv(cv_mapping) 
+target_add_matplot(cv_mapping)
+target_add_json(cv_mapping)
+target_add_loguru(cv_mapping)
+target_include_directories(cv_mapping PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(cv_mapping PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
+
 # cv_segmentation
 add_executable(cv_segmentation "cv_segmentation.cpp")
 target_link_libraries(cv_segmentation PRIVATE obcpp_lib)

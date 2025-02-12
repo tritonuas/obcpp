@@ -24,6 +24,23 @@ images/*
 tests/integration/images/*
 !tests/integration/images/.gitkeep
 
+tests/integration/output/*
+!tests/integration/output/.gitkeep
+
+!tests/integration/mapping/.gitkeep
+
+tests/integration/mapping/batch1/*
+!tests/integration/mapping/batch1/.gitkeep
+
+tests/integration/mapping/batch2/*
+!tests/integration/mapping/batch2/.gitkeep
+
+tests/integration/mapping/images/*
+!tests/integration/mapping/images/.gitkeep
+
+tests/integration/mapping/output/*
+!tests/integration/mapping/output/.gitkeep
+
 .vscode/*
 !.vscode/c_cpp_properties.json
 
