@@ -9,15 +9,15 @@ function(target_add_onnxruntime target_name)
     FetchContent_MakeAvailable(onnxruntime)
     
     # Add the include directory for the headers.
-    target_include_directories(${target_name} PRIVATE 
+    target_include_directories(${target_name} PUBLIC 
         ${onnxruntime_SOURCE_DIR}/include
     )
     
     # Tell the linker where to find the onnxruntime library.
-    target_link_directories(${target_name} PRIVATE 
+    target_link_directories(${target_name} PUBLIC 
         ${onnxruntime_SOURCE_DIR}/lib
     )
     
     # Now link against onnxruntime.
-    target_link_libraries(${target_name} PRIVATE onnxruntime)
+    target_link_libraries(${target_name} PUBLIC onnxruntime)
 endfunction()
