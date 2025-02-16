@@ -1,9 +1,9 @@
 #include "utilities/obc_config.hpp"
 
 #include <fstream>
+#include <iostream>
 #include <stdexcept>
 #include <string>
-#include <iostream>
 
 #include "nlohmann/json.hpp"
 #include "udp_squared/internal/enum.h"
@@ -16,9 +16,15 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
     // If config-json name is passed in
     if (argc != 5) {
         LOG_F(ERROR, "INVALID COMMAND LINE ARGUMENTS");
-        LOG_F(ERROR, "Expected use: ./obcpp [config_dir] [rel_config_path] [plane_name] [flight_type]");  // NOLINT
-        LOG_F(ERROR, "Example 1 (Test Flight with Jetson): bin/obcpp ../configs jetson stickbug test-flight");  // NOLINT
-        LOG_F(ERROR, "Example 2 (Local Testing with SITL): bin/obcpp ../configs dev stickbug sitl");  // NOLINT
+        LOG_F(
+            ERROR,
+            "Expected use: ./obcpp [config_dir] [rel_config_path] [plane_name] [flight_type]");  // NOLINT
+        LOG_F(ERROR,
+              "Example 1 (Test Flight with Jetson): bin/obcpp ../configs jetson stickbug "
+              "test-flight");  // NOLINT
+        LOG_F(
+            ERROR,
+            "Example 2 (Local Testing with SITL): bin/obcpp ../configs dev stickbug sitl");  // NOLINT
         LOG_F(ERROR, "For more help, check the README");
         LOG_F(FATAL, "ABORTING...");
     }
@@ -70,9 +76,7 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
     SET_CONFIG_OPT(pathing, coverage, forward, vertical);
     SET_CONFIG_OPT(pathing, coverage, forward, one_way);
 
-    SET_CONFIG_OPT(cv, matching_model_dir);
-    SET_CONFIG_OPT(cv, segmentation_model_dir);
-    SET_CONFIG_OPT(cv, saliency_model_dir);
+    SET_CONFIG_OPT(cv, yolo_model_dir);
     SET_CONFIG_OPT(cv, not_stolen_addr);
     SET_CONFIG_OPT(cv, not_stolen_port);
 
@@ -118,13 +122,13 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
     std::ifstream common_params_stream(common_params_path);
     if (!common_params_stream.is_open()) {
         LOG_F(FATAL, "Invalid path to common params file: %s (Does this file exist?)",
-            common_params_path.c_str());
+              common_params_path.c_str());
     }
     std::string specific_params_path = params_dir / flight_type_file;
     std::ifstream specific_params_stream(specific_params_path);
     if (!specific_params_stream.is_open()) {
         LOG_F(FATAL, "Invalid path to specific params file: %s (Does this file exist?)",
-            specific_params_path.c_str());
+              specific_params_path.c_str());
     }
 
     auto common_params = nlohmann::json::parse(common_params_stream, nullptr, true, true);

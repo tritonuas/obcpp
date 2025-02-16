@@ -1,10 +1,11 @@
 #include "cv/aggregator.hpp"
-#include "utilities/locks.hpp"
-#include "utilities/constants.hpp"
-#include "utilities/logging.hpp"
-#include "utilities/lockptr.hpp"
 
-CVAggregator::CVAggregator(Pipeline&& p): pipeline{p} {
+#include "utilities/constants.hpp"
+#include "utilities/lockptr.hpp"
+#include "utilities/locks.hpp"
+#include "utilities/logging.hpp"
+
+CVAggregator::CVAggregator(Pipeline&& p) : pipeline{std::move(p)} {
     this->num_worker_threads = 0;
     this->results = std::make_shared<CVResults>();
     // set each bottle to be initially unmatched
@@ -26,7 +27,7 @@ void CVAggregator::runPipeline(const ImageData& image) {
 
     if (this->num_worker_threads > MAX_CV_PIPELINES) {
         LOG_F(WARNING, "Tried to spawn more than %ld CVAggregator workers at one time.",
-            MAX_CV_PIPELINES);
+              MAX_CV_PIPELINES);
         this->overflow_queue.push(image);
         LOG_F(WARNING, "CVAggregator overflow queue at size %ld", this->overflow_queue.size());
         return;
@@ -55,7 +56,7 @@ void CVAggregator::worker(ImageData image, int thread_num) {
                 this->results->matches[curr_target.likely_bottle];
             if (!curr_match_idx.has_value()) {
                 LOG_F(INFO, "Made first match between target %ld and bottle %d",
-                    detected_target_index, curr_target.likely_bottle);
+                      detected_target_index, curr_target.likely_bottle);
 
                 this->results->matches[curr_target.likely_bottle] = detected_target_index;
             } else {
@@ -63,12 +64,11 @@ void CVAggregator::worker(ImageData image, int thread_num) {
 
                 if (curr_match.match_distance > curr_target.match_distance) {
                     LOG_F(INFO,
-                        "Swapping match on bottle %d from target %ld -> %ld (distance %f -> %f)",
-                        static_cast<int>(curr_match.likely_bottle),
-                        this->results->matches[curr_match.likely_bottle].value_or(0),
-                        detected_target_index,
-                        curr_match.match_distance,
-                        curr_target.match_distance);
+                          "Swapping match on bottle %d from target %ld -> %ld (distance %f -> %f)",
+                          static_cast<int>(curr_match.likely_bottle),
+                          this->results->matches[curr_match.likely_bottle].value_or(0),
+                          detected_target_index, curr_match.match_distance,
+                          curr_target.match_distance);
 
                     this->results->matches[curr_match.likely_bottle] = detected_target_index;
                 }

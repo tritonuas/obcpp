@@ -1,6 +1,7 @@
 #ifndef INCLUDE_CV_YOLO_HPP_
 #define INCLUDE_CV_YOLO_HPP_
 
+#include <cmath>
 #include <onnxruntime_cxx_api.h>
 
 #include <opencv2/opencv.hpp>

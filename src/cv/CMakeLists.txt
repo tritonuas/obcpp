@@ -4,10 +4,7 @@ set(FILES
     aggregator.cpp
     hdr.cpp
     localization.cpp
-    matching.cpp
     pipeline.cpp
-    saliency.cpp
-    segmentation.cpp
     utilities.cpp
     mapping.cpp
     yolo.cpp

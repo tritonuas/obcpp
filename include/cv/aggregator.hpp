@@ -1,16 +1,17 @@
 #ifndef INCLUDE_CV_AGGREGATOR_HPP_
 #define INCLUDE_CV_AGGREGATOR_HPP_
 
-#include <mutex>
-#include <memory>
-#include <vector>
-#include <future>
-#include <queue>
+#include <cmath>
 #include <functional>
+#include <future>
+#include <memory>
+#include <mutex>
+#include <queue>
 #include <unordered_map>
+#include <vector>
 
-#include "cv/utilities.hpp"
 #include "cv/pipeline.hpp"
+#include "cv/utilities.hpp"
 #include "utilities/constants.hpp"
 #include "utilities/lockptr.hpp"
 
@@ -20,8 +21,6 @@ struct CVResults {
     // (optional is none if we don't have a match yet)
     std::unordered_map<BottleDropIndex, std::optional<size_t>> matches;
 };
-
-
 
 class CVAggregator {
  public:
