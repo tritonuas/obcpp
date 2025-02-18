@@ -49,8 +49,9 @@ YOLO::~YOLO() {
 
 std::vector<float> YOLO::preprocess(const cv::Mat& image) {
     // Compute letterbox scale
-    float r =
-        std::min((float)inputWidth_ / (float)image.cols, (float)inputHeight_ / (float)image.rows);
+    float r = std::min(static_cast<float>(inputWidth_) / static_cast<float>(image.cols),
+                       static_cast<float>(inputHeight_) / static_cast<float>(image.rows));
+
     int unpadW = std::round(image.cols * r);
     int unpadH = std::round(image.rows * r);
     int dw = inputWidth_ - unpadW;   // total horizontal padding
@@ -123,7 +124,7 @@ std::vector<Detection> YOLO::detect(const cv::Mat& image) {
 
     auto shapeInfo = outputTensors[0].GetTensorTypeAndShapeInfo();
     auto shape = shapeInfo.GetShape();
-    
+
     // Parse the output data
     for (size_t i = 0; i < numDetections; i++) {
         size_t offset = i * elementsPerDetection;
@@ -148,10 +149,10 @@ std::vector<Detection> YOLO::detect(const cv::Mat& image) {
             y2 /= scale_;
 
             // Clamp coords to image boundaries
-            x1 = std::max(0.f, std::min(x1, (float)image.cols - 1));
-            y1 = std::max(0.f, std::min(y1, (float)image.rows - 1));
-            x2 = std::max(0.f, std::min(x2, (float)image.cols - 1));
-            y2 = std::max(0.f, std::min(y2, (float)image.rows - 1));
+            x1 = std::max(0.f, std::min(x1, static_cast<float>(image.cols) - 1));
+            y1 = std::max(0.f, std::min(y1, static_cast<float>(image.rows) - 1));
+            x2 = std::max(0.f, std::min(x2, static_cast<float>(image.cols) - 1));
+            y2 = std::max(0.f, std::min(y2, static_cast<float>(image.rows) - 1));
 
             Detection det;
             det.x1 = x1;
@@ -169,7 +170,8 @@ std::vector<Detection> YOLO::detect(const cv::Mat& image) {
 }
 
 cv::Mat YOLO::letterbox(const cv::Mat& src, int newWidth, int newHeight, const cv::Scalar& color) {
-    float r = std::min((float)newWidth / (float)src.cols, (float)newHeight / (float)src.rows);
+    float r = std::min(static_cast<float>(newWidth) / static_cast<float>(src.cols),
+                       static_cast<float>(newHeight) / static_cast<float>(src.rows));
 
     int unpadW = std::round(src.cols * r);
     int unpadH = std::round(src.rows * r);
