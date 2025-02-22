@@ -5,7 +5,6 @@
 #include <future>
 
 #include "camera/mock.hpp"
-#include "camera/lucid.hpp"
 #include "core/obc.hpp"
 #include "core/mission_state.hpp"
 #include "ticks/tick.hpp"
@@ -38,12 +37,7 @@ OBC::OBC(OBCConfig config) {
     if (this->state->config.camera.type == "mock") {
         this->state->setCamera(std::make_shared<MockCamera>(this->state->config.camera));
     } else if (this->state->config.camera.type == "lucid") {
-        #ifdef ARENA_SDK_INSTALLED
-            this->state->setCamera(std::make_shared<LucidCamera>(this->state->config.camera));  // NOLINT
-            LOG_F(INFO, "Connected to lucid");
-        #else
-            LOG_F(FATAL, "Attempting to create Lucid Camera without having ArenaSDK installed.");
-        #endif
+        LOG_F(FATAL, "ATTEMPTING TO CONNECT TO LUCID CAMERA: LUCID CAMERA NO LONGER EXISTS");
     } else {
         // default to mock if it's neither "mock" or "lucid"
         this->state->setCamera(std::make_shared<MockCamera>(this->state->config.camera));

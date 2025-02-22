@@ -125,8 +125,11 @@ GPSCoord GSDLocalization::localize(const ImageTelemetry& telemetry, const Bbox& 
     GPSCoord gps;
 
     // Ground Sample Distance (mm/pixel), 1.0~2.5cm per px is ideal aka 10mm~25mm ppx
-    double GSD = (SENSOR_WIDTH * (telemetry.altitude_agl_m * 1000))
-                 / (FOCAL_LENGTH_MM * IMG_WIDTH_PX);
+    // double GSD = (SENSOR_WIDTH * (telemetry.altitude_agl_m * 1000))
+    //              / (FOCAL_LENGTH_MM * IMG_WIDTH_PX);
+
+    double GSD = (ANGLE_OF_VIEW_RATIO * (telemetry.altitude_agl_m * 1000)
+                 /IMG_WIDTH_PX);
 
     // Midpoints of the image
     double img_mid_x = IMG_WIDTH_PX / 2;
@@ -144,13 +147,39 @@ GPSCoord GSDLocalization::localize(const ImageTelemetry& telemetry, const Bbox& 
     double target_camera_cord_x = target_x - (IMG_WIDTH_PX / 2);
     double target_camera_cord_y = (IMG_HEIGHT_PX / 2) - target_y;
 
-    // Angle of Bearing (Angle from north to target)
-    double thetaB = telemetry.heading_deg + atan(target_camera_cord_x / target_camera_cord_y);
+    // Convert to polar coordinates
+    double target_camera_cord_r = sqrt((target_camera_cord_y * target_camera_cord_y)
+    + (target_camera_cord_x * target_camera_cord_x));
+    double target_camera_cord_theta;
 
-    // Translate bearing to the 3 quadrant if applicable
+    // Check if xy coord is in quadrant 2 or 3, if so need to add pi
+    // (atan returns a value in the range -π/2 to π/2 radians)
+    // also check for if x coord == 0, if so just set theta to pi or -pi to
+    // (avoid divison by 0 in the atan function)
     if (target_camera_cord_x < 0 && target_camera_cord_y < 0) {
-        thetaB = 180.0 + thetaB;
+        target_camera_cord_theta = atan(target_camera_cord_y/target_camera_cord_x) + M_PI;
+
+    } else if (target_camera_cord_x < 0 && target_camera_cord_y > 0) {
+        target_camera_cord_theta = atan(target_camera_cord_y/target_camera_cord_x) + M_PI;
+
+    } else if (target_camera_cord_x == 0) {
+        if (target_camera_cord_y > 1) {
+            target_camera_cord_theta == M_PI;
+        } else {
+            target_camera_cord_theta == -M_PI;
+        }
+
+    } else {
+        target_camera_cord_theta = atan(target_camera_cord_y/target_camera_cord_x);
     }
+
+    // Transfrom the coordinate to real-world orientation by subtracting heading angle
+    double hdg_radians = telemetry.heading_deg * M_PI / 180;
+    target_camera_cord_theta = target_camera_cord_theta - hdg_radians;
+
+    // Convert back to regular coordinates
+    target_camera_cord_x = target_camera_cord_r*cos(target_camera_cord_theta);
+    target_camera_cord_y = target_camera_cord_r*sin(target_camera_cord_theta);
 
     // Finds the offset of the bbox
     double calc_cam_offset_x_m = target_camera_cord_x * GSD * 0.001;  // mm to M
@@ -216,3 +245,67 @@ GPSCoord GSDLocalization::CalcOffset(const double offset_x, const double offset_
     return output;
 }
 
+std::tuple<double, double, double>
+GSDLocalization::debug(const ImageTelemetry& telemetry, const Bbox& targetBbox) {
+    GPSCoord gps;
+
+    // Ground Sample Distance (mm/pixel), 1.0~2.5cm per px is ideal aka 10mm~25mm ppx
+    // double GSD = (SENSOR_WIDTH * (telemetry.altitude_agl_m * 1000))
+    //              / (FOCAL_LENGTH_MM * IMG_WIDTH_PX);
+
+    double GSD = (ANGLE_OF_VIEW_RATIO * (telemetry.altitude_agl_m * 1000)
+                 /IMG_WIDTH_PX);
+
+    // Midpoints of the image
+    double img_mid_x = IMG_WIDTH_PX / 2;
+    double img_mid_y = IMG_HEIGHT_PX / 2;
+
+    // midpoints of bounding box around the target
+    double target_x = (targetBbox.x1 + targetBbox.x2)/2;
+    double target_y = (targetBbox.y1 + targetBbox.y2)/2;
+
+    // calculations of bearing
+    // L = (distance(middle, bbox))*GSD
+    double length = (sqrt(pow((target_x - img_mid_x), 2) + pow((target_y - img_mid_y), 2) * GSD));
+
+    // Translate Image Cordinates to Camera Cordinate (Origin to Center of Image instead of Top Left) NOLINT
+    double target_camera_cord_x = target_x - (IMG_WIDTH_PX / 2);
+    double target_camera_cord_y = (IMG_HEIGHT_PX / 2) - target_y;
+
+    // Convert to polar coordinates
+    double target_camera_cord_r =
+    sqrt((target_camera_cord_y * target_camera_cord_y)
+    + (target_camera_cord_x * target_camera_cord_x));
+    double target_camera_cord_theta;
+
+    // Check if xy coord is in quadrant 2 or 3,
+    // f so need to add pi (atan returns a value in the range -π/2 to π/2 radians)
+    // also check for if x coord == 0,
+    // if so just set theta to pi or -pi to avoid divison by 0 in the atan function
+    if (target_camera_cord_x < 0 && target_camera_cord_y < 0) {
+        target_camera_cord_theta = atan(target_camera_cord_y/target_camera_cord_x) + M_PI;
+
+    } else if (target_camera_cord_x < 0 && target_camera_cord_y > 0) {
+        target_camera_cord_theta = atan(target_camera_cord_y/target_camera_cord_x) + M_PI;
+
+    } else if (target_camera_cord_x == 0) {
+        if (target_camera_cord_y > 1) {
+            target_camera_cord_theta == M_PI;
+        } else {
+            target_camera_cord_theta == -M_PI;
+        }
+    } else {
+        target_camera_cord_theta = atan(target_camera_cord_y/target_camera_cord_x);
+    }
+
+    // Transfrom the coordinate to real-world orientation by subtracting heading angle
+    double hdg_radians = (telemetry.heading_deg) * M_PI / 180;
+    target_camera_cord_theta = target_camera_cord_theta - hdg_radians;
+    // Convert back to regular coordinates
+    target_camera_cord_x = target_camera_cord_r*cos(target_camera_cord_theta);
+    target_camera_cord_y = target_camera_cord_r*sin(target_camera_cord_theta);
+    // Finds the offset of the bbox
+    double calc_cam_offset_x_m = target_camera_cord_x * GSD * 0.001;  // mm to M
+    double calc_cam_offset_y_m = target_camera_cord_y * GSD * 0.001;  // mm to M
+    return std::make_tuple(GSD, calc_cam_offset_x_m, calc_cam_offset_y_m);
+}

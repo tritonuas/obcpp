@@ -94,28 +94,6 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
     SET_CONFIG_OPT(camera, save_images_to_file);
     SET_CONFIG_OPT(camera, mock, images_dir);
 
-    SET_CONFIG_OPT(camera, lucid, sensor_shutter_mode);
-    SET_CONFIG_OPT(camera, lucid, acquisition_frame_rate_enable);
-    SET_CONFIG_OPT(camera, lucid, target_brightness);
-    SET_CONFIG_OPT(camera, lucid, exposure_auto);
-    SET_CONFIG_OPT(camera, lucid, exposure_time);
-    SET_CONFIG_OPT(camera, lucid, exposure_auto_damping);
-    SET_CONFIG_OPT(camera, lucid, exposure_auto_algorithm);
-    SET_CONFIG_OPT(camera, lucid, exposure_auto_upper_limit);
-    SET_CONFIG_OPT(camera, lucid, exposure_auto_lower_limit);
-
-    SET_CONFIG_OPT(camera, lucid, stream_auto_negotiate_packet_size);
-    SET_CONFIG_OPT(camera, lucid, stream_packet_resend_enable);
-
-    SET_CONFIG_OPT(camera, lucid, device_link_throughput_limit_mode);
-    SET_CONFIG_OPT(camera, lucid, device_link_throughput_limit);
-
-    SET_CONFIG_OPT(camera, lucid, gamma_enable);
-    SET_CONFIG_OPT(camera, lucid, gamma);  // bruh
-    SET_CONFIG_OPT(camera, lucid, gain_auto);
-    SET_CONFIG_OPT(camera, lucid, gain_auto_upper_limit);
-    SET_CONFIG_OPT(camera, lucid, gain_auto_lower_limit);
-
     SET_CONFIG_OPT(takeoff, altitude_m);
 
     std::string common_params_path = params_dir / "common.json";
