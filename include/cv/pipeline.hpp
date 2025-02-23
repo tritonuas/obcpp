@@ -2,10 +2,12 @@
 #define INCLUDE_CV_PIPELINE_HPP_
 
 #include <cmath>
-#include <opencv2/opencv.hpp>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
+
+#include <opencv2/opencv.hpp>
 
 #include "camera/interface.hpp"
 #include "cv/localization.hpp"
@@ -24,7 +26,7 @@ struct PipelineResults {
 
 struct PipelineParams {
     // Adjust as needed; you can rename `saliencyModelPath` to `yoloModelPath` for clarity
-    PipelineParams(std::string yoloModelPath) : yoloModelPath{yoloModelPath} {}
+    explicit PipelineParams(std::string yoloModelPath) : yoloModelPath{yoloModelPath} {}
 
     // If you no longer need reference images or anything else,
     // you can remove them entirely or keep them as placeholders.
