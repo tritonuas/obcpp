@@ -1,12 +1,17 @@
 #ifndef INCLUDE_CV_YOLO_HPP_
 #define INCLUDE_CV_YOLO_HPP_
 
+<<<<<<< HEAD
 #include <cmath>
 #include <onnxruntime_cxx_api.h>
+=======
+>>>>>>> feat/yolo
 
-#include <opencv2/opencv.hpp>
+#include <onnxruntime_cxx_api.h>
 #include <string>
 #include <vector>
+
+#include <opencv2/opencv.hpp>
 
 /// Simple struct to store a detection result
 struct Detection {
