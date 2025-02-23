@@ -3,7 +3,6 @@ add_executable(playground "playground.cpp")
 target_link_libraries(playground PRIVATE obcpp_lib)
 target_include_directories(playground PRIVATE ${INCLUDE_DIRECTORY} ${GEN_PROTOS_DIRECTORY})
 target_add_torch(playground)
-# target_add_arena(playground)
 target_add_json(playground)
 target_add_opencv(playground) 
 target_add_httplib(playground)
@@ -246,8 +245,24 @@ target_add_mavsdk(airdrop_approach)
 target_add_matplot(airdrop_approach)
 target_add_loguru(airdrop_approach)
 
-target_include_directories(coverage_pathing_2 PRIVATE ${ImageMagick_INCLUDE_DIRS})
-target_link_libraries(coverage_pathing_2 PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
+target_include_directories(airdrop_approach PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(airdrop_approach PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
+
+add_executable(deviation_ranking "deviation_ranking.cpp")
+target_link_libraries(deviation_ranking PRIVATE obcpp_lib)
+target_include_directories(deviation_ranking PRIVATE ${INCLUDE_DIRECTORY})
+target_add_protobuf(deviation_ranking)
+target_add_torch(deviation_ranking)
+target_add_torchvision(deviation_ranking)
+target_add_json(deviation_ranking)
+target_add_opencv(deviation_ranking)
+target_add_httplib(deviation_ranking)
+target_add_mavsdk(deviation_ranking)
+target_add_matplot(deviation_ranking)
+target_add_loguru(deviation_ranking)
+
+target_include_directories(deviation_ranking PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(deviation_ranking PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
 add_executable(airdrop_packets "airdrop_packets.cpp")
 target_link_libraries(airdrop_packets PRIVATE obcpp_lib)
@@ -271,28 +286,11 @@ target_link_libraries(airdrop_packets PRIVATE -Wl,--copy-dt-needed-entries ${Ima
 
 # add_executable(camera_playground camera_playground.cpp)
 # target_include_directories(camera_playground PRIVATE ${INCLUDE_DIRECTORY})
-# target_add_arena(camera_playground)
 # add_custom_target(
 #     run_camera_playground
 #     ${CMAKE_COMMAND}
 #     -E env LD_LIBRARY_s/target_siamese_1.pt
 # )
-
-add_executable(camera_lucid "camera_lucid.cpp")
-target_link_libraries(camera_lucid PRIVATE obcpp_lib)
-target_include_directories(camera_lucid PRIVATE ${INCLUDE_DIRECTORY})
-target_add_arena(camera_lucid)
-target_add_protobuf(camera_lucid)
-target_add_torch(camera_lucid)
-target_add_torchvision(camera_lucid)
-target_add_json(camera_lucid)
-target_add_opencv(camera_lucid)
-target_add_httplib(camera_lucid)
-target_add_mavsdk(camera_lucid)
-target_add_matplot(camera_lucid)
-target_add_loguru(camera_lucid)
-target_include_directories(camera_lucid PRIVATE ${ImageMagick_INCLUDE_DIRS})
-target_link_libraries(camera_lucid PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
 add_executable(camera_mock "camera_mock.cpp")
 target_link_libraries(camera_mock PRIVATE obcpp_lib)
