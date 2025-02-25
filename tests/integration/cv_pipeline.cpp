@@ -4,13 +4,6 @@
 
 #include "cv/pipeline.hpp"
 
-// Example image path
-const std::string imagePath = "../tests/integration/images/000000001.jpg";
-
-// Example YOLO model path
-// (Previously named saliencyModelPath, you can rename it as you wish.)
-const std::string yoloModelPath = "../models/yolo11x.onnx";
-
 // Mock telemetry data
 const double latitude = 32.990795399999996;
 const double longitude = -117.1282463;
@@ -20,7 +13,17 @@ const double yaw = 100;
 const double pitch = 5;
 const double roll = 3;
 
-int main() {
+int main(int argc, char** argv) {
+    std::string yoloModelPath = "../models/yolo11x.onnx";
+    std::string imagePath = "../tests/integration/images/image3.jpg";
+
+    if (argc > 1) {
+        yoloModelPath = argv[1];
+    }
+    if (argc > 2) {
+        imagePath = argv[2];
+    }
+
     // Load test image
     cv::Mat image = cv::imread(imagePath);
     if (!image.data) {
@@ -46,7 +49,7 @@ int main() {
 
     // Print info for each target
     for (size_t i = 0; i < output.targets.size(); ++i) {
-        const auto &t = output.targets[i];
+        const auto& t = output.targets[i];
         LOG_F(INFO,
               "Target #%ld: class_id=%d, match_distance=%.2f, "
               "bbox=[%d %d %d %d], lat=%.5f, lon=%.5f",
