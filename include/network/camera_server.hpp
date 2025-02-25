@@ -1,21 +1,15 @@
 #include <iostream>
 #include <boost/array.hpp>
 #include <boost/asio.hpp>
+#include "camera_data.hpp"
 
 // https://www.codeproject.com/Articles/1264257/Socket-Programming-in-Cplusplus-using-boost-asio-T
 using namespace boost::asio;
 using ip::tcp;
 
-
-struct image_data_t {
-    int width;
-    int height;
-    size_t image_size_bytes;
-    std::vector<std::uint8_t> data;
-};
-
-
-class CameraServer
+// OBC-side socket.
+// Sends requests to take pics to camera, sends it back up to 
+class ObcCameraServer
 {
 public:
     /*
@@ -23,11 +17,11 @@ public:
      * Params:
      *   - port (int)  - which port to occupy
      */
-    explicit CameraServer(int port);
-    ~CameraServer();
+    explicit ObcCameraServer(int port);
+    ~ObcCameraServer();
 
     /*
-     * Connect to server (OBC)
+     * Connect to client (camera)
      * Params:
      *   - IP (string) - regular ip
      *   - port (int)  - port
@@ -37,12 +31,18 @@ public:
     /*
      * Sends command to take and return pic
      * Params:
-     *   TODO: IDK WHAT TO SEND
+     *   - type (RequestType_t) - what OBC wants camera to do
+     * Returns:
+     *  - bool - if success or not
      */
-    bool send(std::string command);
+    bool send(RequestType_t type);
 
-    // Recieves a command to take pics
-    image_data read();
+    /*
+     * Reads the response
+     * Returns:
+     *   - CameraResponse_t - response that camera passed in
+     */
+    CameraResponse_t read();
 
 private:
     // ig?
