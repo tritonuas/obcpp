@@ -1,70 +1,60 @@
 #include "cv/pipeline.hpp"
-#include "utilities/logging.hpp"
+
 #include "protos/obc.pb.h"
+#include "utilities/logging.hpp"
 
-// TODO: eventually we will need to invoke non-default constructors for all the
-// modules of the pipeline (to customize model filepath, etc...)
-// TODO: I also want to have a way to customize if the model will use
-// matching vs segmentation/classification
-Pipeline::Pipeline(const PipelineParams& p) :
-    // assumes reference images passed to pipeline from not_stolen
-        matcher(p.competitionObjectives, p.referenceImages, p.matchingModelPath),
-        segmentor(p.segmentationModelPath),
-        detector(p.saliencyModelPath) {}
-
-/*
- *  Entrypoint of CV Pipeline. At a high level, it will include the following
- *  stages:
- *      - Saliency takes the full size image and outputs any cropped targets
- *        that are detected
- *      - Cropped targets are passed into target matching where they will
- *        be compared against targets associated with each water bottle.
- *        All targets (regardless of match status) will be passed onto
- *        later stages.
- *      - Bounding boxes predicted from saliency and GPS telemetry from when
- *        the photo was captured are passed into the localization algorithm.
- *        Here, the real latitude/longitude coordinates of the target are
- *        calculated.
- *      - Note, we may use a slight variation of this pipeline where the
- *        target matching stage is replaced by segmentation/classification.
- */
-PipelineResults Pipeline::run(const ImageData &imageData) {
+// Pipeline constructor
+Pipeline::Pipeline(const PipelineParams& p)
+    : yoloDetector(std::make_unique<YOLO>(p.yoloModelPath, 0.05f, 640, 640)) {}
+PipelineResults Pipeline::run(const ImageData& imageData) {
     LOG_F(INFO, "Running pipeline on an image");
 
-    VLOG_F(TRACE, "Saliency Start");
-    std::vector<CroppedTarget> saliencyResults = this->detector.salience(imageData.DATA);
+    // 1) YOLO DETECTION
+    // -------------------------------------------------------------------------
+    std::vector<Detection> yoloResults = this->yoloDetector->detect(imageData.DATA);
 
-    // if saliency finds no potential targets, end early with no results
-    if (saliencyResults.empty()) {
-        LOG_F(INFO, "No saliency results, terminating...");
+    // If YOLO finds no potential targets, end early
+    if (yoloResults.empty()) {
+        LOG_F(INFO, "No YOLO detections, terminating...");
         return PipelineResults(imageData, {});
     }
 
-    VLOG_F(TRACE, "Saliency cropped %ld potential targets", saliencyResults.size());
+    // 2) CONSTRUCT DETECTED TARGETS & LOCALIZE
+    // -------------------------------------------------------------------------
     std::vector<DetectedTarget> detectedTargets;
-    size_t curr_target_num = 0;
-    for (CroppedTarget target : saliencyResults) {
-        VLOG_F(TRACE, "Working on target %ld/%ld", ++curr_target_num, saliencyResults.size());
-        VLOG_F(TRACE, "Matching Start");
-        MatchResult potentialMatch = this->matcher.match(target);
+    detectedTargets.reserve(yoloResults.size());
 
-        VLOG_F(TRACE, "Localization Start");
-        // TODO: determine what to do if image is missing telemetry metadata
+    for (const auto& det : yoloResults) {
+        // Convert YOLO coords to your Bbox struct
+        Bbox box;
+        box.x1 = static_cast<int>(det.x1);
+        box.y1 = static_cast<int>(det.y1);
+        box.x2 = static_cast<int>(det.x2);
+        box.y2 = static_cast<int>(det.y2);
+
+        // Build a CroppedTarget (if you still want the cropped image and isMannikin info)
+        CroppedTarget target;
+        target.bbox = box;
+        target.croppedImage = crop(imageData.DATA, box);
+        // If class_id == 1 means mannikin (depends on your model’s labeling)
+        target.isMannikin = (det.class_id == 1);
+
+        // 3) LOCALIZATION (unchanged)
+        // ---------------------------------------------------------------------
         GPSCoord targetPosition;
         if (imageData.TELEMETRY.has_value()) {
-            // targetPosition = GPSCoord(this->ecefLocalizer.localize(
-            //     imageData.TELEMETRY.value(), target.bbox));
-            targetPosition.set_latitude(imageData.TELEMETRY.value().latitude_deg);
-            targetPosition.set_longitude(imageData.TELEMETRY.value().longitude_deg);
-            targetPosition.set_altitude(0);
+            // e.g. use ECEFLocalization
+            targetPosition = this->ecefLocalizer.localize(imageData.TELEMETRY.value(), box);
         }
 
-        VLOG_F(TRACE, "Detected target %ld/%ld at [%f, %f] matched to bottle %d with %f distance.",
-            curr_target_num, saliencyResults.size(),
-            targetPosition.latitude(), targetPosition.longitude(),
-            static_cast<int>(potentialMatch.bottleDropIndex), potentialMatch.distance);
-        detectedTargets.push_back(DetectedTarget(targetPosition,
-            potentialMatch.bottleDropIndex, potentialMatch.distance, target));
+        // 4) Push into final vector
+        //    For "likely_bottle" and "match_distance", you can store YOLO info,
+        //    or just dummy values. Below we store class_id -> BottleDropIndex,
+        //    and 1/confidence as a pseudo "distance".
+        // ---------------------------------------------------------------------
+        detectedTargets.push_back(
+            DetectedTarget{targetPosition, static_cast<BottleDropIndex>(det.class_id),
+                           (det.confidence > 0.f) ? 1.0 / det.confidence : 9999.0, target});
     }
 
     LOG_F(INFO, "Finished Pipeline on an image");

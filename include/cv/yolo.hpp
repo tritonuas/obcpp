@@ -1,7 +1,6 @@
 #ifndef INCLUDE_CV_YOLO_HPP_
 #define INCLUDE_CV_YOLO_HPP_
 
-
 #include <onnxruntime_cxx_api.h>
 #include <string>
 #include <vector>
