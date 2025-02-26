@@ -7,7 +7,7 @@
 #include <memory>
 #include <mutex>
 #include <queue>
-#include <unordered_map>
+#include <thread>
 #include <vector>
 
 #include "cv/pipeline.hpp"
@@ -16,20 +16,19 @@
 #include "utilities/lockptr.hpp"
 
 struct CVResults {
+    // All detected targets collected from any pipeline run
     std::vector<DetectedTarget> detected_targets;
-    // mapping from bottle -> index into detected_targets
-    // (optional is none if we don't have a match yet)
-    std::unordered_map<BottleDropIndex, std::optional<size_t>> matches;
 };
 
 class CVAggregator {
  public:
     explicit CVAggregator(Pipeline&& p);
-
     ~CVAggregator();
 
+    // Spawn a thread to run the pipeline on the given imageData
     void runPipeline(const ImageData& image);
 
+    // Lockable pointer to retrieve aggregator results
     LockPtr<CVResults> getResults();
 
  private:
@@ -40,9 +39,10 @@ class CVAggregator {
     std::mutex mut;
     int num_worker_threads;
 
-    // For when too many pipelines are active at the same time
+    // For when too many pipelines are active at once
     std::queue<ImageData> overflow_queue;
 
+    // Shared aggregator results
     std::shared_ptr<CVResults> results;
 };
 

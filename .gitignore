@@ -41,6 +41,9 @@ tests/integration/mapping/images/*
 tests/integration/mapping/output/*
 !tests/integration/mapping/output/.gitkeep
 
+tests/integration/aggregator/*
+!tests/integration/aggregator/.gitkeep
+
 .vscode/*
 !.vscode/c_cpp_properties.json
 

@@ -5,15 +5,9 @@
 #include "utilities/locks.hpp"
 #include "utilities/logging.hpp"
 
-CVAggregator::CVAggregator(Pipeline&& p) : pipeline{std::move(p)} {
+CVAggregator::CVAggregator(Pipeline&& p) : pipeline(std::move(p)) {
     this->num_worker_threads = 0;
     this->results = std::make_shared<CVResults>();
-    // set each bottle to be initially unmatched
-    this->results->matches[BottleDropIndex::A] = {};
-    this->results->matches[BottleDropIndex::B] = {};
-    this->results->matches[BottleDropIndex::C] = {};
-    this->results->matches[BottleDropIndex::D] = {};
-    this->results->matches[BottleDropIndex::E] = {};
 }
 
 CVAggregator::~CVAggregator() {}
@@ -25,68 +19,54 @@ LockPtr<CVResults> CVAggregator::getResults() {
 void CVAggregator::runPipeline(const ImageData& image) {
     Lock lock(this->mut);
 
-    if (this->num_worker_threads > MAX_CV_PIPELINES) {
-        LOG_F(WARNING, "Tried to spawn more than %ld CVAggregator workers at one time.",
-              MAX_CV_PIPELINES);
+    if (this->num_worker_threads >= MAX_CV_PIPELINES) {
+        // If we have too many running workers, just queue the new image
+        LOG_F(WARNING, "Too many CVAggregator workers (%d). Pushing to overflow queue...",
+              this->num_worker_threads);
         this->overflow_queue.push(image);
-        LOG_F(WARNING, "CVAggregator overflow queue at size %ld", this->overflow_queue.size());
+        LOG_F(WARNING, "Overflow queue size is now %ld", this->overflow_queue.size());
         return;
     }
 
-    static int thread_num = 0;
-    this->num_worker_threads++;
-    std::thread worker(&CVAggregator::worker, this, image, ++thread_num);
-    worker.detach();
+    static int thread_counter = 0;
+    ++this->num_worker_threads;
+    std::thread worker_thread(&CVAggregator::worker, this, image, ++thread_counter);
+    worker_thread.detach();  // We don’t need to join in the caller
 }
 
 void CVAggregator::worker(ImageData image, int thread_num) {
     loguru::set_thread_name(("cv worker " + std::to_string(thread_num)).c_str());
-    LOG_F(INFO, "New CVAggregator worker spawned.");
+    LOG_F(INFO, "New CVAggregator worker #%d spawned.", thread_num);
 
     while (true) {
-        auto results = this->pipeline.run(image);
+        // Run the pipeline
+        auto pipeline_results = this->pipeline.run(image);
 
-        Lock lock(this->mut);
-        for (auto curr_target : results.targets) {
-            // this->detected_targets.size() will end up being the index of the
-            // newly inserted target, once we insert it after the if/else
-            size_t detected_target_index = this->results->detected_targets.size();
+        // Accumulate the detected targets
+        {
+            Lock lock(this->mut);
+            this->results->detected_targets.insert(this->results->detected_targets.end(),
+                                                   pipeline_results.targets.begin(),
+                                                   pipeline_results.targets.end());
+        }
 
-            std::optional<size_t> curr_match_idx =
-                this->results->matches[curr_target.likely_bottle];
-            if (!curr_match_idx.has_value()) {
-                LOG_F(INFO, "Made first match between target %ld and bottle %d",
-                      detected_target_index, curr_target.likely_bottle);
-
-                this->results->matches[curr_target.likely_bottle] = detected_target_index;
-            } else {
-                auto curr_match = this->results->detected_targets[curr_match_idx.value()];
-
-                if (curr_match.match_distance > curr_target.match_distance) {
-                    LOG_F(INFO,
-                          "Swapping match on bottle %d from target %ld -> %ld (distance %f -> %f)",
-                          static_cast<int>(curr_match.likely_bottle),
-                          this->results->matches[curr_match.likely_bottle].value_or(0),
-                          detected_target_index, curr_match.match_distance,
-                          curr_target.match_distance);
-
-                    this->results->matches[curr_match.likely_bottle] = detected_target_index;
-                }
+        // If no more queued images, we're done
+        {
+            Lock lock(this->mut);
+            if (this->overflow_queue.empty()) {
+                break;
             }
-
-            // do this last so we can still meaningfully access local var curr_target
-            // before this line
-            this->results->detected_targets.push_back(std::move(curr_target));
+            // Otherwise, pop the next image and loop again
+            image = std::move(this->overflow_queue.front());
+            this->overflow_queue.pop();
         }
-
-        if (this->overflow_queue.empty()) {
-            break;
-        }
-
-        image = std::move(this->overflow_queue.front());
-        this->overflow_queue.pop();
     }
 
-    LOG_F(INFO, "CVAggregator worker terminating.");
-    this->num_worker_threads--;
+    // Mark ourselves as finished
+    {
+        Lock lock(this->mut);
+        LOG_F(INFO, "CVAggregator worker #%d terminating. Active threads: %d -> %d", thread_num,
+              this->num_worker_threads, this->num_worker_threads - 1);
+        --this->num_worker_threads;
+    }
 }
