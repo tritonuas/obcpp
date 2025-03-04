@@ -53,10 +53,9 @@ std::vector<std::vector<int>> Mapping::chunkListWithOverlap(int num_images, int 
 std::pair<cv::Stitcher::Status, cv::Mat> Mapping::globalStitch(const std::vector<cv::Mat>& images,
                                                                cv::Stitcher::Mode mode,
                                                                int max_dim) {
-    // Create stitcher
     cv::Ptr<cv::Stitcher> stitcher = cv::Stitcher::create(mode);
 
-    // Resize all input images
+    // Resize
     std::vector<cv::Mat> resized;
     resized.reserve(images.size());
     for (const auto& im : images) {
@@ -67,12 +66,20 @@ std::pair<cv::Stitcher::Status, cv::Mat> Mapping::globalStitch(const std::vector
     }
 
     if (resized.size() < 2) {
+        // Not enough images to stitch
         return {cv::Stitcher::ERR_NEED_MORE_IMGS, cv::Mat()};
     }
 
-    // Perform stitching
     cv::Mat stitched;
-    cv::Stitcher::Status status = stitcher->stitch(resized, stitched);
+    cv::Stitcher::Status status;
+    try {
+        status = stitcher->stitch(resized, stitched);
+    } catch (const cv::Exception& e) {
+        std::cerr << "[globalStitch] OpenCV exception: " << e.what() << "\n";
+        // Return an error status so the caller can skip saving
+        return {cv::Stitcher::ERR_CAMERA_PARAMS_ADJUST_FAIL, cv::Mat()};
+    }
+
     return {status, stitched};
 }
 
