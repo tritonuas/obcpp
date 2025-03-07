@@ -212,3 +212,21 @@ void YOLO::drawAndPrintDetections(cv::Mat& image, const std::vector<Detection>& 
                     cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0), 1);
     }
 }
+
+void YOLO::processAndSaveImage(const cv::Mat& image, const std::string& outputFile) {
+    // Create a copy of the input image so that the original is preserved
+    cv::Mat outputImage = image.clone();
+
+    // Run detection
+    std::vector<Detection> detections = detect(outputImage);
+
+    // Draw detections and print detection info to console
+    drawAndPrintDetections(outputImage, detections);
+
+    // Save the output image
+    if (!cv::imwrite(outputFile, outputImage)) {
+        std::cerr << "Failed to write output image to " << outputFile << std::endl;
+    } else {
+        std::cout << "Output saved to " << outputFile << std::endl;
+    }
+}

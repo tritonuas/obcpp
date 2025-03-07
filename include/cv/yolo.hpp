@@ -2,10 +2,10 @@
 #define INCLUDE_CV_YOLO_HPP_
 
 #include <onnxruntime_cxx_api.h>
-#include <string>
-#include <vector>
 
 #include <opencv2/opencv.hpp>
+#include <string>
+#include <vector>
 
 /// Simple struct to store a detection result
 struct Detection {
@@ -36,7 +36,7 @@ class YOLO {
     ~YOLO();
 
     /**
-     * @brief Perform inference on an input image
+     * @brief Perform inference on an input image.
      *
      * @param image Input image (cv::Mat in BGR format)
      * @return std::vector<Detection> A list of detections
@@ -44,16 +44,23 @@ class YOLO {
     std::vector<Detection> detect(const cv::Mat &image);
 
     /**
-     * @brief Draws and prints the given detections on the image
+     * @brief Draws and prints the given detections on the image.
      *
      * @param image The original image on which boxes and labels will be drawn
      * @param detections The list of detections to visualize
      */
     void drawAndPrintDetections(cv::Mat &image, const std::vector<Detection> &detections);
 
+    /**
+     * @brief Process an input image: detect objects, draw detections, and save the output image.
+     *
+     * @param image The input image (cv::Mat in BGR format)
+     * @param outputFile Path to save the output image.
+     */
+    void processAndSaveImage(const cv::Mat &image, const std::string &outputFile);
+
  private:
     /// Preprocess a cv::Mat to match the model's input shape and format
-    /// Returns float array of size [1 x 3 x inputHeight x inputWidth]
     std::vector<float> preprocess(const cv::Mat &image);
 
     /**

@@ -16,12 +16,25 @@ const double roll = 3;
 int main(int argc, char** argv) {
     std::string yoloModelPath = "../models/yolo11x.onnx";
     std::string imagePath = "../tests/integration/images/image3.jpg";
+    std::string outputPath = "../tests/integration/output/output_pipeline.jpg";
+
+    bool do_preprocess = true;  // Default: perform preprocessing
 
     if (argc > 1) {
         yoloModelPath = argv[1];
     }
     if (argc > 2) {
         imagePath = argv[2];
+    }
+    if (argc > 3) {
+        outputPath = argv[3];
+    }
+    // Optional fourth argument to disable preprocessing (e.g., "false" or "0")
+    if (argc > 4) {
+        std::string preprocessArg = argv[4];
+        if (preprocessArg == "false" || preprocessArg == "0") {
+            do_preprocess = false;
+        }
     }
 
     // Load test image
@@ -31,23 +44,22 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    // Prepare telemetry
+    // Prepare telemetry data
     ImageTelemetry mockTelemetry(latitude, longitude, altitude, airspeed, yaw, pitch, roll);
     ImageData imageData(image, 0, mockTelemetry);
 
-    // Construct pipeline
-    // Only YOLO path is used; we ignore all other references.
-    PipelineParams params(yoloModelPath /* pass any config you need */);
+    // Construct the pipeline with the given parameters.
+    PipelineParams params(yoloModelPath, outputPath, do_preprocess);
     Pipeline pipeline(params);
 
     // Run pipeline
     PipelineResults output = pipeline.run(imageData);
 
-    // Show how many targets YOLO + localization found
+    // Report number of detected targets.
     size_t numTargets = output.targets.size();
     LOG_F(INFO, "Detected %ld targets.", numTargets);
 
-    // Print info for each target
+    // Print details for each detected target.
     for (size_t i = 0; i < output.targets.size(); ++i) {
         const auto& t = output.targets[i];
         LOG_F(INFO,
