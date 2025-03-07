@@ -31,7 +31,7 @@ class CameraClient {
          *   - image (vector)  - vector of bytes of image
          * It should also probably have a terminator
          */
-        bool send(std::string header, std::vector<std::uint8_t> image);
+        bool send(std::vector<std::uint8_t> image);
 
         // Recieves a command to take pics 
         CameraResponse_t read();

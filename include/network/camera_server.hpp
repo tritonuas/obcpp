@@ -48,5 +48,6 @@ private:
     // ig?
     string ip;
     int port;
-    tcp::socket socket;
+    std::pair<int, int> camera_res; // used for reconstruction
+    asio::tcp::socket socket;
 };
