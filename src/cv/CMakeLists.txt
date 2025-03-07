@@ -8,6 +8,7 @@ set(FILES
     utilities.cpp
     mapping.cpp
     yolo.cpp
+    preprocess.cpp
 )
 
 set(LIB_DEPS

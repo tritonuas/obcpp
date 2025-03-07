@@ -80,6 +80,16 @@ target_add_onnxruntime(cv_aggregator)
 target_include_directories(cv_aggregator PRIVATE ${ImageMagick_INCLUDE_DIRS})
 target_link_libraries(cv_aggregator PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
+# cv_preprocess
+add_executable(cv_preprocess ${SOURCES} "cv_preprocess.cpp")
+target_link_libraries(cv_preprocess PRIVATE obcpp_lib)
+target_include_directories(cv_preprocess PRIVATE ${INCLUDE_DIRECTORY})
+target_add_opencv(cv_preprocess) 
+target_add_matplot(cv_preprocess)
+target_add_json(cv_preprocess)
+target_add_loguru(cv_preprocess)
+target_include_directories(cv_preprocess PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(cv_preprocess PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
 # cv_mapping
 add_executable(cv_mapping ${SOURCES} "cv_mapping.cpp")
