@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 
+#include "cv/preprocess.hpp"  // include the Preprocess header
 #include "opencv2/opencv.hpp"
 #include "opencv2/stitching.hpp"
 
@@ -50,22 +51,22 @@ std::vector<std::vector<int>> Mapping::chunkListWithOverlap(int num_images, int 
     return chunks;
 }
 
+// -----------------------------------------------------------------------------
+// Updated: globalStitch() now simply clones its images because they have already been pre-processed
+// -----------------------------------------------------------------------------
 std::pair<cv::Stitcher::Status, cv::Mat> Mapping::globalStitch(const std::vector<cv::Mat>& images,
-                                                               cv::Stitcher::Mode mode,
-                                                               int max_dim) {
+                                                               cv::Stitcher::Mode mode, int max_dim,
+                                                               bool /*preprocess*/) {
     cv::Ptr<cv::Stitcher> stitcher = cv::Stitcher::create(mode);
 
-    // Resize
-    std::vector<cv::Mat> resized;
-    resized.reserve(images.size());
+    std::vector<cv::Mat> processed;
+    processed.reserve(images.size());
+    // Simply clone images – they are assumed to be preprocessed already.
     for (const auto& im : images) {
-        cv::Mat tmp = readAndResize(im, max_dim);
-        if (!tmp.empty()) {
-            resized.push_back(tmp);
-        }
+        processed.push_back(im.clone());
     }
 
-    if (resized.size() < 2) {
+    if (processed.size() < 2) {
         // Not enough images to stitch
         return {cv::Stitcher::ERR_NEED_MORE_IMGS, cv::Mat()};
     }
@@ -73,10 +74,9 @@ std::pair<cv::Stitcher::Status, cv::Mat> Mapping::globalStitch(const std::vector
     cv::Mat stitched;
     cv::Stitcher::Status status;
     try {
-        status = stitcher->stitch(resized, stitched);
+        status = stitcher->stitch(processed, stitched);
     } catch (const cv::Exception& e) {
         std::cerr << "[globalStitch] OpenCV exception: " << e.what() << "\n";
-        // Return an error status so the caller can skip saving
         return {cv::Stitcher::ERR_CAMERA_PARAMS_ADJUST_FAIL, cv::Mat()};
     }
 
@@ -97,15 +97,15 @@ std::string Mapping::currentDateTimeStr() {
 // processChunk()
 // -----------------------------------------------------------------------------
 void Mapping::processChunk(const std::vector<cv::Mat>& chunk_images, const std::string& run_subdir,
-                           cv::Stitcher::Mode mode, int max_dim) {
+                           cv::Stitcher::Mode mode, int max_dim, bool preprocess) {
     if (chunk_images.empty()) return;
 
     chunk_counter++;
     std::cout << "\nProcessing chunk #" << chunk_counter << " with " << chunk_images.size()
               << " images.\n";
 
-    // Stitch the chunk
-    auto [status, stitched] = globalStitch(chunk_images, mode, max_dim);
+    // Stitch the chunk using the (now ignored) preprocess flag
+    auto [status, stitched] = globalStitch(chunk_images, mode, max_dim, preprocess);
 
     // Build an output filename for this chunk
     std::string chunk_filename = run_subdir + "/chunk_" + std::to_string(chunk_counter) + "_" +
@@ -115,12 +115,9 @@ void Mapping::processChunk(const std::vector<cv::Mat>& chunk_images, const std::
         if (cv::imwrite(chunk_filename, stitched)) {
             std::cout << "Saved chunk result to: " << chunk_filename << "\n";
         } else {
-            std::cerr << "Failed to save chunk result to disk. "
-                      << "This chunk will be lost.\n";
+            std::cerr << "Failed to save chunk result to disk. This chunk will be lost.\n";
         }
     } else {
-        // If stitching fails, optionally fallback to saving each original chunk image
-        // or skip them. Up to you:
         std::cerr << "Chunk stitching failed, status = " << static_cast<int>(status)
                   << ". Not saving chunk.\n";
     }
@@ -130,7 +127,20 @@ void Mapping::processChunk(const std::vector<cv::Mat>& chunk_images, const std::
 // firstPass()
 // -----------------------------------------------------------------------------
 void Mapping::firstPass(const std::string& input_path, const std::string& run_subdir,
-                        int chunk_size, int overlap, cv::Stitcher::Mode mode, int max_dim) {
+                        int chunk_size, int overlap, cv::Stitcher::Mode mode, int max_dim,
+                        bool preprocess) {
+    // Create a run folder if not already done
+    if (current_run_folder.empty()) {
+        current_run_folder = run_subdir + "/" + currentDateTimeStr();
+        try {
+            fs::create_directories(current_run_folder);
+            std::cout << "Created run folder: " << current_run_folder << "\n";
+        } catch (const fs::filesystem_error& e) {
+            std::cerr << "Error creating run folder: " << e.what() << "\n";
+            throw;
+        }
+    }
+
     // 1. Re-scan directory for image filenames
     std::vector<std::string> all_filenames;
     for (const auto& entry : fs::directory_iterator(input_path)) {
@@ -142,11 +152,10 @@ void Mapping::firstPass(const std::string& input_path, const std::string& run_su
         }
     }
 
-    // 2. Sort them so that we process in a consistent order
+    // 2. Sort them for consistent processing
     std::sort(all_filenames.begin(), all_filenames.end());
 
-    // 3. If we have processed some images before, skip them
-    //    i.e., only handle [processed_image_count ... end]
+    // 3. Skip already processed images
     if (static_cast<int>(all_filenames.size()) <= processed_image_count) {
         std::cout << "No new images found to process.\n";
         return;
@@ -154,59 +163,55 @@ void Mapping::firstPass(const std::string& input_path, const std::string& run_su
 
     std::vector<std::string> new_files(all_filenames.begin() + processed_image_count,
                                        all_filenames.end());
+    image_filenames = all_filenames;
 
-    // Update the total image_filenames if needed
-    image_filenames = all_filenames;  // or keep them updated incrementally
-
-    // 4. Load the new images into memory
+    // 4. Load and preprocess new images
     images.clear();
+    Preprocess preprocessor;  // instantiate the Preprocess object
     for (const auto& filename : new_files) {
         cv::Mat img = cv::imread(filename);
         if (!img.empty()) {
+            if (preprocess) {
+                // Apply custom preprocessing before further processing
+                img = preprocessor.cropRight(img);
+                img = readAndResize(img, max_dim);
+            }
             images.push_back(img);
         } else {
             std::cerr << "Warning: Failed to load image: " << filename << "\n";
         }
     }
+    std::cout << "Loaded and preprocessed " << images.size() << " new images.\n";
 
-    std::cout << "Loaded " << images.size() << " new images.\n";
-
-    // 5. Chunk the new images (which are currently in 'images')
+    // 5. Chunk the preprocessed images
     auto chunks = chunkListWithOverlap(static_cast<int>(images.size()), chunk_size, overlap);
-
     for (auto& chunk_indices : chunks) {
-        // Gather the images for this chunk
         std::vector<cv::Mat> chunk_imgs;
         chunk_imgs.reserve(chunk_indices.size());
         for (int idx : chunk_indices) {
             chunk_imgs.push_back(images[idx]);
         }
-        // Process (stitch + save)
-        processChunk(chunk_imgs, run_subdir, mode, max_dim);
+        processChunk(chunk_imgs, current_run_folder, mode, max_dim, preprocess);
     }
 
-    // 6. Update how many images we've processed in total
+    // 6. Update processed count and free memory
     processed_image_count = static_cast<int>(all_filenames.size());
-
-    // 7. Clear the images from memory after done
     images.clear();
 }
 
 // -----------------------------------------------------------------------------
 // secondPass()
 // -----------------------------------------------------------------------------
-void Mapping::secondPass(const std::string& run_subdir, cv::Stitcher::Mode mode, int max_dim) {
-    // We want to read the chunk images we saved in 'run_subdir'
-    // Identify all chunk files: chunk_*.jpg, chunk_*.png, etc.
-    std::vector<std::string> chunk_files;
-    for (const auto& entry : fs::directory_iterator(run_subdir)) {
-        if (!entry.is_regular_file()) continue;
+void Mapping::secondPass(const std::string& run_subdir, cv::Stitcher::Mode mode, int max_dim,
+                         bool preprocess) {
+    std::string folder_to_scan = current_run_folder.empty() ? run_subdir : current_run_folder;
 
+    // Identify all chunk files (e.g., chunk_*.jpg)
+    std::vector<std::string> chunk_files;
+    for (const auto& entry : fs::directory_iterator(folder_to_scan)) {
+        if (!entry.is_regular_file()) continue;
         std::string filename = entry.path().filename().string();
-        // Basic check: does it start with "chunk_" and end with ".jpg"?
-        // Or do a better pattern check if needed.
         if (filename.rfind("chunk_", 0) == 0) {
-            // starts with "chunk_"
             auto ext = entry.path().extension().string();
             std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
             if (ext == ".jpg" || ext == ".jpeg" || ext == ".png") {
@@ -216,11 +221,11 @@ void Mapping::secondPass(const std::string& run_subdir, cv::Stitcher::Mode mode,
     }
 
     if (chunk_files.empty()) {
-        std::cerr << "No chunk images found in " << run_subdir << ". Nothing to stitch.\n";
+        std::cerr << "No chunk images found in " << folder_to_scan << ". Nothing to stitch.\n";
         return;
     }
 
-    // Load these chunk images (should be fewer/larger than original set)
+    // Load chunk images (assumed to be already preprocessed)
     std::vector<cv::Mat> chunk_images;
     chunk_images.reserve(chunk_files.size());
     for (const auto& cfile : chunk_files) {
@@ -232,14 +237,14 @@ void Mapping::secondPass(const std::string& run_subdir, cv::Stitcher::Mode mode,
         }
     }
 
-    std::cout << "Loaded " << chunk_images.size() << " chunk images. Attempting final stitch...\n";
+    std::cout << "Loaded " << chunk_images.size() << " chunk images from " << folder_to_scan
+              << ". Attempting final stitch...\n";
 
-    // Stitch them all to produce final
-    auto [status, final_stitched] = globalStitch(chunk_images, mode, max_dim);
+    // Stitch without additional preprocessing (images are already preprocessed)
+    auto [status, final_stitched] = globalStitch(chunk_images, mode, max_dim, preprocess);
 
     if (status == cv::Stitcher::OK && !final_stitched.empty()) {
-        // Build final filename
-        std::string final_name = run_subdir + "/final_" + currentDateTimeStr() + ".jpg";
+        std::string final_name = folder_to_scan + "/final_" + currentDateTimeStr() + ".jpg";
         if (cv::imwrite(final_name, final_stitched)) {
             std::cout << "Final image saved to: " << final_name << "\n";
         } else {
@@ -249,7 +254,6 @@ void Mapping::secondPass(const std::string& run_subdir, cv::Stitcher::Mode mode,
         std::cerr << "Final stitching failed. Status = " << static_cast<int>(status) << "\n";
     }
 
-    // Optionally clear chunk_images from memory
     chunk_images.clear();
 }
 
@@ -261,5 +265,6 @@ void Mapping::reset() {
     image_filenames.clear();
     processed_image_count = 0;
     chunk_counter = 0;
+    current_run_folder.clear();
     std::cout << "Mapping state has been reset.\n";
 }
