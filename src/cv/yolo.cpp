@@ -1,5 +1,7 @@
 #include "cv/yolo.hpp"
 
+#include <atomic>
+
 // For simplicity, we are not doing advanced error handling
 // Make sure to catch and handle exceptions in production code
 
@@ -213,20 +215,32 @@ void YOLO::drawAndPrintDetections(cv::Mat& image, const std::vector<Detection>& 
     }
 }
 
-void YOLO::processAndSaveImage(const cv::Mat& image, const std::string& outputFile) {
-    // Create a copy of the input image so that the original is preserved
+void YOLO::processAndSaveImage(const cv::Mat& image, const std::string& outputPath) {
     cv::Mat outputImage = image.clone();
-
-    // Run detection
     std::vector<Detection> detections = detect(outputImage);
-
-    // Draw detections and print detection info to console
     drawAndPrintDetections(outputImage, detections);
 
-    // Save the output image
-    if (!cv::imwrite(outputFile, outputImage)) {
-        std::cerr << "Failed to write output image to " << outputFile << std::endl;
+    // Generate a unique filename using a static atomic counter.
+    static std::atomic<int> file_counter{0};
+    int counter = file_counter.fetch_add(1);
+
+    std::string uniqueOutputPath;
+    // Find the position of the last dot and the last path separator
+    size_t dotPos = outputPath.find_last_of('.');
+    size_t sepPos = outputPath.find_last_of("/\\");  // supports both UNIX and Windows paths
+
+    // If a dot exists after the last separator, assume it's a file extension.
+    if (dotPos != std::string::npos && (sepPos == std::string::npos || dotPos > sepPos)) {
+        uniqueOutputPath = outputPath.substr(0, dotPos) + "_" + std::to_string(counter) +
+                           outputPath.substr(dotPos);
     } else {
-        std::cout << "Output saved to " << outputFile << std::endl;
+        // No extension found; default to appending counter and .jpg extension.
+        uniqueOutputPath = outputPath + "_" + std::to_string(counter) + ".jpg";
+    }
+
+    if (!cv::imwrite(uniqueOutputPath, outputImage)) {
+        std::cerr << "Failed to write output image to " << uniqueOutputPath << std::endl;
+    } else {
+        std::cout << "Output saved to " << uniqueOutputPath << std::endl;
     }
 }

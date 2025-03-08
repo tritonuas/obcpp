@@ -32,7 +32,9 @@ int main() {
     }
 
     // Construct the pipeline with the desired YOLO model
-    PipelineParams params("../models/yolo11x.onnx");
+    PipelineParams params("../models/yolo11x.onnx",
+                          "../tests/integration/output/output_aggregator.jpg", false);
+
     Pipeline pipeline(params);
 
     // Build the aggregator by transferring ownership of the pipeline

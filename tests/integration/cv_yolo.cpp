@@ -6,7 +6,7 @@ int main(int argc, char** argv) {
     // Default file paths and parameters
     std::string modelPath = "../models/yolo11x.onnx";
     std::string imagePath = "../tests/integration/images/image3.jpg";
-    std::string outputFile = "../tests/integration/output/output_yolo.jpg";
+    std::string outputPath = "../tests/integration/output/output_yolo.jpg";
     float confThreshold = 0.05f;
 
     if (argc > 1) {
@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
         confThreshold = std::stof(argv[3]);
     }
     if (argc > 4) {
-        outputFile = argv[4];
+        outputPath = argv[4];
     }
 
     // Load an image using OpenCV
@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
 
     // Create the YOLO object and process the image
     YOLO yolo(modelPath, confThreshold, 640, 640);
-    yolo.processAndSaveImage(image, outputFile);
+    yolo.processAndSaveImage(image, outputPath);
 
     return 0;
 }
