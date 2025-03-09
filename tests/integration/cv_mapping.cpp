@@ -25,7 +25,6 @@ int main() {
 
         // 1. Simulate receiving Batch 1 images
         // Clear out the live_images_dir if you want to start fresh
-        // (Alternatively, you can let it remain if there's something from a prior run.)
         for (const auto& entry : fs::directory_iterator(live_images_dir)) {
             fs::remove_all(entry.path());
         }
@@ -44,8 +43,9 @@ int main() {
         const int max_dim = 3000;
 
         std::cout << "==> Processing Batch 1...\n";
+        // Note: the new last argument 'preprocess' defaults to true.
         mapper.firstPass(live_images_dir.string(), output_dir.string(), chunk_size, chunk_overlap,
-                         scan_mode, max_dim);
+                         scan_mode, max_dim, true);
 
         // 3. Simulate time passing, and receiving Batch 2 images
         // Copy Batch 2 images into "images/"
@@ -59,11 +59,11 @@ int main() {
         // 4. Process the second batch with the same mapper instance
         std::cout << "==> Processing Batch 2...\n";
         mapper.firstPass(live_images_dir.string(), output_dir.string(), chunk_size, chunk_overlap,
-                         scan_mode, max_dim);
+                         scan_mode, max_dim, true);
 
-        // 5. Finally, call secondPass to merge all chunk images in output/
+        // 5. Finally, call secondPass to merge all chunk images in the timestamped run folder
         std::cout << "==> Merging all partial chunk images into final...\n";
-        mapper.secondPass(output_dir.string(), scan_mode, max_dim);
+        mapper.secondPass(output_dir.string(), scan_mode, max_dim, true);
 
         std::cout << "Integration test completed.\n";
     } catch (const std::exception& e) {
