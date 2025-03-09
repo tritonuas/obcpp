@@ -665,7 +665,6 @@ MissionPath generateAirdropApproach(std::shared_ptr<MissionState> state, const G
         instead of trying to formulate our own path.
     */
 
-    /*
     double start_angle = 90 - mav->heading_deg();
     XYZCoord start_xyz = state->getCartesianConverter().value().toXYZ(start_gps);
     RRTPoint start_rrt(start_xyz, start_angle);
@@ -673,8 +672,8 @@ MissionPath generateAirdropApproach(std::shared_ptr<MissionState> state, const G
     // pathing
     XYZCoord goal_xyz = state->getCartesianConverter().value().toXYZ(goal);
     AirdropApproachPathing airdrop_planner(start_rrt, goal_xyz, mav->wind(),
-                                           state->mission_params.getFlightBoundary(),
-                                           state->config, {});
+                                           state->mission_params.getFlightBoundary(), state->config,
+                                           {});
     std::vector<XYZCoord> xyz_path = airdrop_planner.run();
 
     // try to fly to the third waypoint in the path
@@ -682,16 +681,13 @@ MissionPath generateAirdropApproach(std::shared_ptr<MissionState> state, const G
     // [TODO]-done out of laziness, forgot if the path includes starting location
     xyz_path.erase(xyz_path.begin());
     xyz_path.erase(xyz_path.begin());
-    */
 
     std::vector<GPSCoord> gps_path;
     // XYZCoord pt = state->getCartesianConverter().value().toXYZ(goal);
 
-    /*
     for (const XYZCoord &wpt : xyz_path) {
         gps_path.push_back(state->getCartesianConverter().value().toLatLng(wpt));
     }
-    */
 
     // there is I think an off by one error on the timing of the airdrop if there
     // is only one coordinate (mav command) in this mission
@@ -699,11 +695,11 @@ MissionPath generateAirdropApproach(std::shared_ptr<MissionState> state, const G
     // for it to reach the singular and final waypoint).
     // So in the hours before competition 2024 instead of fixing this I came across
     // this wonderful solution which was revealed to me in a dream.
-    gps_path.push_back(goal);
-    gps_path.push_back(goal);
-    gps_path.push_back(goal);
-    gps_path.push_back(goal);
-    gps_path.push_back(goal);
+    // gps_path.push_back(goal);
+    // gps_path.push_back(goal);
+    // gps_path.push_back(goal);
+    // gps_path.push_back(goal);
+    // gps_path.push_back(goal);
 
-    return MissionPath(MissionPath::Type::HOVER, gps_path, 5);
+    return MissionPath(MissionPath::Type::FORWARD, gps_path);
 }
