@@ -3,9 +3,11 @@
 
 #include <onnxruntime_cxx_api.h>
 
-#include <opencv2/opencv.hpp>
 #include <string>
 #include <vector>
+
+#include <opencv2/opencv.hpp>
+
 
 /// Simple struct to store a detection result
 struct Detection {

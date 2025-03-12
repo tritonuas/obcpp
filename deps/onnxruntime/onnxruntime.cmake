@@ -7,6 +7,17 @@ function(target_add_onnxruntime target_name)
         DOWNLOAD_EXTRACT_TIMESTAMP true
     )
     FetchContent_MakeAvailable(onnxruntime)
+
+    # After FetchContent_MakeAvailable(onnxruntime)
+    if(EXISTS "${onnxruntime_SOURCE_DIR}/include/onnxruntime_cxx_api.h")
+    execute_process(
+        COMMAND sed -i "210s|^|//|" "${onnxruntime_SOURCE_DIR}/include/onnxruntime_cxx_api.h"
+    )
+    execute_process(
+        COMMAND sed -i "351s|^|//|" "${onnxruntime_SOURCE_DIR}/include/onnxruntime_cxx_api.h"
+    )
+    endif()
+
     
     # Add the include directory for the headers.
     target_include_directories(${target_name} PUBLIC 

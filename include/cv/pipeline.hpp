@@ -3,10 +3,11 @@
 
 #include <cmath>
 #include <memory>
-#include <opencv2/opencv.hpp>
 #include <string>
 #include <utility>
 #include <vector>
+
+#include <opencv2/opencv.hpp>
 
 #include "camera/interface.hpp"
 #include "cv/localization.hpp"
