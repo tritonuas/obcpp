@@ -14,7 +14,7 @@ Pipeline::Pipeline(const PipelineParams& p)
 PipelineResults Pipeline::run(const ImageData& imageData) {
     LOG_F(INFO, "Running pipeline on an image");
 
-    // Preprocess the image if enabled; otherwise, use the original image.
+    // Preprocess the image if enabled; otherwise, use the original.
     cv::Mat processedImage = imageData.DATA;
     if (do_preprocess) {
         processedImage = preprocessor.cropRight(imageData.DATA);
@@ -23,15 +23,16 @@ PipelineResults Pipeline::run(const ImageData& imageData) {
     // 1) YOLO DETECTION using the (possibly preprocessed) image
     std::vector<Detection> yoloResults = this->yoloDetector->detect(processedImage);
 
-    // If YOLO finds no potential targets, end early.
+    // If YOLO finds no potential targets, we can return early (still saving out the final image).
     if (yoloResults.empty()) {
         LOG_F(INFO, "No YOLO detections, terminating...");
+
         if (!outputPath.empty()) {
-            // Generate a unique filename using a static atomic counter.
             static std::atomic<int> file_counter{0};
             int i = file_counter.fetch_add(1);
+
+            // Build a unique filename
             std::string uniqueOutputPath;
-            // Find last dot and separator to check for file extension
             size_t dotPos = outputPath.find_last_of('.');
             size_t sepPos = outputPath.find_last_of("/\\");
             if (dotPos != std::string::npos && (sepPos == std::string::npos || dotPos > sepPos)) {
@@ -40,49 +41,61 @@ PipelineResults Pipeline::run(const ImageData& imageData) {
             } else {
                 uniqueOutputPath = outputPath + "_" + std::to_string(i) + ".jpg";
             }
+
             if (!cv::imwrite(uniqueOutputPath, processedImage)) {
                 LOG_F(ERROR, "Failed to write image to %s", uniqueOutputPath.c_str());
             } else {
                 LOG_F(INFO, "Output image saved to %s", uniqueOutputPath.c_str());
             }
         }
+
+        // Return the processed image (with no detections)
         ImageData processedData = imageData;
         processedData.DATA = processedImage;
         return PipelineResults(processedData, {});
     }
 
-    // 2) CONSTRUCT DETECTED TARGETS & LOCALIZE
+    // 2) BUILD DETECTED TARGETS & LOCALIZE
     std::vector<DetectedTarget> detectedTargets;
     detectedTargets.reserve(yoloResults.size());
+
     for (const auto& det : yoloResults) {
+        // Fill bounding box
         Bbox box;
         box.x1 = static_cast<int>(det.x1);
         box.y1 = static_cast<int>(det.y1);
         box.x2 = static_cast<int>(det.x2);
         box.y2 = static_cast<int>(det.y2);
 
-        CroppedTarget target;
-        target.bbox = box;
-        target.croppedImage = crop(processedImage, box);
-        target.isMannikin = (det.class_id == 1);
+        // If you want to keep cropping code, you can call:
+        // cv::Mat cropped = crop(processedImage, box);
 
+        // Localize
         GPSCoord targetPosition;
         if (imageData.TELEMETRY.has_value()) {
             targetPosition = this->ecefLocalizer.localize(imageData.TELEMETRY.value(), box);
         }
-        detectedTargets.push_back(
-            DetectedTarget{targetPosition, static_cast<BottleDropIndex>(det.class_id),
-                           (det.confidence > 0.f) ? 1.0 / det.confidence : 9999.0, target});
+
+        // Populate your DetectedTarget
+        DetectedTarget detected;
+        detected.bbox = box;
+        detected.coord = targetPosition;
+        detected.likely_bottle = static_cast<BottleDropIndex>(det.class_id);
+        detected.match_distance = (det.confidence > 0.f) ? (1.0 / det.confidence) : 9999.0;
+
+        detectedTargets.push_back(detected);
     }
 
-    // Draw detections on the image
+    // 3) DRAW DETECTIONS ON THE IMAGE
+    //    (this modifies processedImage in-place)
     this->yoloDetector->drawAndPrintDetections(processedImage, yoloResults);
 
-    // Save the output image if an output path is provided using a unique name
+    // Save the annotated image if an output path is specified
     if (!outputPath.empty()) {
         static std::atomic<int> file_counter{0};
         int i = file_counter.fetch_add(1);
         std::string uniqueOutputPath;
+
         size_t dotPos = outputPath.find_last_of('.');
         size_t sepPos = outputPath.find_last_of("/\\");
         if (dotPos != std::string::npos && (sepPos == std::string::npos || dotPos > sepPos)) {
@@ -91,6 +104,7 @@ PipelineResults Pipeline::run(const ImageData& imageData) {
         } else {
             uniqueOutputPath = outputPath + "_" + std::to_string(i) + ".jpg";
         }
+
         if (!cv::imwrite(uniqueOutputPath, processedImage)) {
             LOG_F(ERROR, "Failed to write image to %s", uniqueOutputPath.c_str());
         } else {
@@ -99,7 +113,13 @@ PipelineResults Pipeline::run(const ImageData& imageData) {
     }
 
     LOG_F(INFO, "Finished Pipeline on an image");
+
+    // Wrap up the final annotated image to return
     ImageData processedData = imageData;
     processedData.DATA = processedImage;
+
+    // Return a PipelineResults that includes:
+    //  1) The final big image with bounding boxes drawn
+    //  2) The bounding boxes + localized GPS coords
     return PipelineResults(processedData, detectedTargets);
 }

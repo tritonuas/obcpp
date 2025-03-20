@@ -39,18 +39,25 @@ void CVAggregator::worker(ImageData image, int thread_num) {
     LOG_F(INFO, "New CVAggregator worker #%d spawned.", thread_num);
 
     while (true) {
-        // Run the pipeline
+        // 1) Run the pipeline
         auto pipeline_results = this->pipeline.run(image);
 
-        // Accumulate the detected targets
+        // 2) For each detection, store an AggregatedItem
         {
             Lock lock(this->mut);
-            this->results->detected_targets.insert(this->results->detected_targets.end(),
-                                                   pipeline_results.targets.begin(),
-                                                   pipeline_results.targets.end());
+            for (auto& det : pipeline_results.targets) {
+                AggregatedItem item;
+                // We replicate the big image for each detection
+                // (Alternatively, you could store each big image only once if desired)
+                item.bigImage = pipeline_results.imageData.DATA.clone();
+                item.bbox = det.bbox;
+                item.coord = det.coord;
+
+                this->results->items.push_back(std::move(item));
+            }
         }
 
-        // If no more queued images, we're done
+        // 3) If no more queued images, we're done
         {
             Lock lock(this->mut);
             if (this->overflow_queue.empty()) {
@@ -62,7 +69,7 @@ void CVAggregator::worker(ImageData image, int thread_num) {
         }
     }
 
-    // Mark ourselves as finished
+    // 4) Mark ourselves as finished
     {
         Lock lock(this->mut);
         LOG_F(INFO, "CVAggregator worker #%d terminating. Active threads: %d -> %d", thread_num,

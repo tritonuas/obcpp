@@ -15,9 +15,16 @@
 #include "utilities/constants.hpp"
 #include "utilities/lockptr.hpp"
 
+// NEW: small struct to store the big image, bounding box, and coords
+struct AggregatedItem {
+    cv::Mat bigImage;  // Annotated image from the pipeline
+    Bbox bbox;         // The detection bounding box
+    GPSCoord coord;    // Localized GPS coordinate
+};
+
 struct CVResults {
-    // All detected targets collected from any pipeline run
-    std::vector<DetectedTarget> detected_targets;
+    // We now store a list of AggregatedItems instead of just DetectedTarget
+    std::vector<AggregatedItem> items;
 };
 
 class CVAggregator {

@@ -329,73 +329,73 @@ DEF_GCS_HANDLE(Post, takeoff, autonomous) {
     LOG_RESPONSE(INFO, "Set status of WaitForTakeoff Tick to autonomous", OK);
 }
 
-DEF_GCS_HANDLE(Post, targets, validate) {
-    LOG_REQUEST("POST", "/targets/validate");
-    auto lock_ptr = state->getTickLockPtr<CVLoiterTick>();
+// DEF_GCS_HANDLE(Post, targets, validate) {
+//     LOG_REQUEST("POST", "/targets/validate");
+//     auto lock_ptr = state->getTickLockPtr<CVLoiterTick>();
 
-    if (!lock_ptr.has_value()) {
-        LOG_RESPONSE(WARNING, "Not currently in CVLoiter Tick", BAD_REQUEST);
-        return;
-    }
+//     if (!lock_ptr.has_value()) {
+//         LOG_RESPONSE(WARNING, "Not currently in CVLoiter Tick", BAD_REQUEST);
+//         return;
+//     }
 
-    lock_ptr->data->setStatus(CVLoiterTick::Status::Validated);
-    LOG_RESPONSE(INFO, "Set status of CVLoiter Tick to validated", OK);
-}
+//     lock_ptr->data->setStatus(CVLoiterTick::Status::Validated);
+//     LOG_RESPONSE(INFO, "Set status of CVLoiter Tick to validated", OK);
+// }
 
-DEF_GCS_HANDLE(Post, targets, reject) {
-    LOG_REQUEST("POST", "/targets/reject");
-    auto lock_ptr = state->getTickLockPtr<CVLoiterTick>();
+// DEF_GCS_HANDLE(Post, targets, reject) {
+//     LOG_REQUEST("POST", "/targets/reject");
+//     auto lock_ptr = state->getTickLockPtr<CVLoiterTick>();
 
-    if (!lock_ptr.has_value()) {
-        LOG_RESPONSE(WARNING, "Not currently in CVLoiter Tick", BAD_REQUEST);
-        return;
-    }
+//     if (!lock_ptr.has_value()) {
+//         LOG_RESPONSE(WARNING, "Not currently in CVLoiter Tick", BAD_REQUEST);
+//         return;
+//     }
 
-    lock_ptr->data->setStatus(CVLoiterTick::Status::Rejected);
-    LOG_RESPONSE(INFO, "Set status of CVLoiter Tick to rejected", OK);
-}
+//     lock_ptr->data->setStatus(CVLoiterTick::Status::Rejected);
+//     LOG_RESPONSE(INFO, "Set status of CVLoiter Tick to rejected", OK);
+// }
 
-DEF_GCS_HANDLE(Get, targets, all) {
-    LOG_REQUEST("GET", "/targets/all");
+// DEF_GCS_HANDLE(Get, targets, all) {
+//     LOG_REQUEST("GET", "/targets/all");
 
-    if (state->getCV() == nullptr) {
-        LOG_RESPONSE(ERROR, "CV not connected yet", BAD_REQUEST);
-        return;
-    }
+//     if (state->getCV() == nullptr) {
+//         LOG_RESPONSE(ERROR, "CV not connected yet", BAD_REQUEST);
+//         return;
+//     }
 
-    LockPtr<CVResults> results = state->getCV()->getResults();
+//     LockPtr<CVResults> results = state->getCV()->getResults();
 
-    // Convert to protobuf serialization
-    std::vector<IdentifiedTarget> out_data;
+//     // Convert to protobuf serialization
+//     std::vector<IdentifiedTarget> out_data;
 
-    int id = 0;  // id of the target is the index in the detected_targets vector
-    // See layout of Identified target proto here:
-    // https://github.com/tritonuas/protos/blob/master/obc.proto
-    for (auto& target : results.data->detected_targets) {
-        IdentifiedTarget out;
-        out.set_id(id);
-        out.set_picture(cvMatToBase64(target.crop.croppedImage));
-        out.set_ismannikin(target.crop.isMannikin);
+//     int id = 0;  // id of the target is the index in the detected_targets vector
+//     // See layout of Identified target proto here:
+//     // https://github.com/tritonuas/protos/blob/master/obc.proto
+//     for (auto& target : results.data->detected_targets) {
+//         IdentifiedTarget out;
+//         out.set_id(id);
+//         out.set_picture(cvMatToBase64(target.crop.croppedImage));
+//         out.set_ismannikin(target.crop.isMannikin);
 
-        GPSCoord* coord = new GPSCoord;
-        coord->set_altitude(target.coord.altitude());
-        coord->set_longitude(target.coord.longitude());
-        coord->set_latitude(target.coord.latitude());
-        out.set_allocated_coordinate(coord);  // will be freed in destructor
+//         GPSCoord* coord = new GPSCoord;
+//         coord->set_altitude(target.coord.altitude());
+//         coord->set_longitude(target.coord.longitude());
+//         coord->set_latitude(target.coord.latitude());
+//         out.set_allocated_coordinate(coord);  // will be freed in destructor
 
-        out_data.push_back(std::move(out));
+//         out_data.push_back(std::move(out));
 
-        // not setting target info because that doesn't really make sense with the current context
-        // of the matching algorithm, since the algorithm is matching cropped targets to the
-        // expected not-stolen generated images, so it isn't really classifying targets with a
-        // specific alphanumeric, color, etc...
+//        // not setting target info because that doesn't really make sense with the current context
+//         // of the matching algorithm, since the algorithm is matching cropped targets to the
+//         // expected not-stolen generated images, so it isn't really classifying targets with a
+//         // specific alphanumeric, color, etc...
 
-        id++;
-    }
+//         id++;
+//     }
 
-    std::string out_data_json = messagesToJson(out_data.begin(), out_data.end());
-    LOG_RESPONSE(INFO, "Got serialized target data", OK, out_data_json.c_str(), mime::json);
-}
+//     std::string out_data_json = messagesToJson(out_data.begin(), out_data.end());
+//     LOG_RESPONSE(INFO, "Got serialized target data", OK, out_data_json.c_str(), mime::json);
+// }
 
 // DEF_GCS_HANDLE(Get, targets, matched) {
 //     try {
@@ -560,33 +560,33 @@ DEF_GCS_HANDLE(Post, kill, kill, kill) {
     }
 }
 
-DEF_GCS_HANDLE(Get, oh, shit) {
-    LOG_REQUEST("GET", "/oh/shit");
+// DEF_GCS_HANDLE(Get, oh, shit) {
+//     LOG_REQUEST("GET", "/oh/shit");
 
-    if (state->getCV() == nullptr) {
-        LOG_RESPONSE(ERROR, "No CV yet :(", BAD_REQUEST);
-        return;
-    }
+//     if (state->getCV() == nullptr) {
+//         LOG_RESPONSE(ERROR, "No CV yet :(", BAD_REQUEST);
+//         return;
+//     }
 
-    GPSCoord center;
-    center.set_latitude(38.31440741337194);
-    center.set_longitude(-76.54460728168489);
-    center.set_altitude(0);
+//     GPSCoord center;
+//     center.set_latitude(38.31440741337194);
+//     center.set_longitude(-76.54460728168489);
+//     center.set_altitude(0);
 
-    LockPtr<CVResults> results = state->getCV()->getResults();
+//     LockPtr<CVResults> results = state->getCV()->getResults();
 
-    for (int i = 1; i <= 5; i++) {
-        CroppedTarget crop;
-        crop.isMannikin = false;
-        crop.croppedImage = cv::Mat(cv::Size(20, 20), CV_8UC3, cv::Scalar(255));
+//     for (int i = 1; i <= 5; i++) {
+//         CroppedTarget crop;
+//         crop.isMannikin = false;
+//         crop.croppedImage = cv::Mat(cv::Size(20, 20), CV_8UC3, cv::Scalar(255));
 
-        DetectedTarget target(center, static_cast<BottleDropIndex>(i), 100.0, crop);
-        target.coord = center;
-        target.likely_bottle = static_cast<BottleDropIndex>(i);
-        target.crop = crop;
+//         DetectedTarget target(center, static_cast<BottleDropIndex>(i), 100.0, crop);
+//         target.coord = center;
+//         target.likely_bottle = static_cast<BottleDropIndex>(i);
+//         target.crop = crop;
 
-        results.data->detected_targets.push_back(target);
-    }
+//         results.data->detected_targets.push_back(target);
+//     }
 
-    LOG_RESPONSE(INFO, "Oh shit", OK);
-}
+//     LOG_RESPONSE(INFO, "Oh shit", OK);
+// }

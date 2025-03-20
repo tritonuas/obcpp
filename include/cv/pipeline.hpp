@@ -19,9 +19,12 @@
 // Processed image holds all predictions made concerning a given image.
 struct PipelineResults {
     PipelineResults(ImageData imageData, std::vector<DetectedTarget> targets)
-        : imageData{imageData}, targets{targets} {}
+        : imageData(std::move(imageData)), targets(std::move(targets)) {}
 
+    // This holds the final annotated image in imageData.DATA
     ImageData imageData;
+
+    // This is the list of YOLO + localized detections
     std::vector<DetectedTarget> targets;
 };
 

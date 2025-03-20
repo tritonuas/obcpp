@@ -55,20 +55,7 @@ int main() {
         aggregator.runPipeline(imageData);
     }
 
-    // Optional: To simulate a heavier load, you could submit each image multiple times
-    // for (int i = 0; i < 3; i++) {
-    //     for (const auto& imagePath : imagePaths) {
-    //         cv::Mat image = cv::imread(imagePath);
-    //         if (image.empty()) {
-    //             std::cerr << "Could not open image: " << imagePath << std::endl;
-    //             continue;
-    //         }
-    //         ImageData imageData(image, 0, mockTelemetry);
-    //         aggregator.runPipeline(imageData);
-    //     }
-    // }
-
-    // Allow time for all worker threads to process the images
+    // Let the worker threads finish
     std::this_thread::sleep_for(std::chrono::seconds(5));
 
     // Retrieve the aggregated results in a thread-safe manner
@@ -79,15 +66,16 @@ int main() {
         return 1;
     }
 
-    // Print out the total number of detections and details for each detection
-    std::cout << "Total detections after aggregator finished: "
-              << resultsPtr->detected_targets.size() << std::endl;
+    // Print out the total number of aggregated detections
+    std::cout << "Total aggregator detections: " << resultsPtr->items.size() << std::endl;
 
-    for (size_t i = 0; i < resultsPtr->detected_targets.size(); ++i) {
-        const auto& det = resultsPtr->detected_targets[i];
-        std::cout << "Detection #" << i << " bottle=" << static_cast<int>(det.likely_bottle)
-                  << " dist=" << det.match_distance << " lat=" << det.coord.latitude()
-                  << " lon=" << det.coord.longitude() << std::endl;
+    // For each detection, show bounding box
+    for (size_t i = 0; i < resultsPtr->items.size(); ++i) {
+        const auto& item = resultsPtr->items[i];
+        std::cout << "Aggregated Detection #" << i << "  BBox=[" << item.bbox.x1 << ","
+                  << item.bbox.y1 << "," << item.bbox.x2 << "," << item.bbox.y2 << "]"
+                  << "  Lat=" << item.coord.latitude() << "  Lon=" << item.coord.longitude()
+                  << std::endl;
     }
 
     return 0;

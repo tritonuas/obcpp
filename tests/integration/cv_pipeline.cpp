@@ -66,9 +66,9 @@ int main(int argc, char** argv) {
               "Target #%ld: class_id=%d, match_distance=%.2f, "
               "bbox=[%d %d %d %d], lat=%.5f, lon=%.5f",
               i,
-              static_cast<int>(t.likely_bottle),  // stored YOLO class_id
-              t.match_distance, t.crop.bbox.x1, t.crop.bbox.y1, t.crop.bbox.x2, t.crop.bbox.y2,
-              t.coord.latitude(), t.coord.longitude());
+              static_cast<int>(t.likely_bottle),  // YOLO class index
+              t.match_distance, t.bbox.x1, t.bbox.y1, t.bbox.x2, t.bbox.y2, t.coord.latitude(),
+              t.coord.longitude());
     }
 
     return 0;
