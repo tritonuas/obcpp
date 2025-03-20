@@ -355,47 +355,58 @@ DEF_GCS_HANDLE(Post, takeoff, autonomous) {
 //     LOG_RESPONSE(INFO, "Set status of CVLoiter Tick to rejected", OK);
 // }
 
-// DEF_GCS_HANDLE(Get, targets, all) {
-//     LOG_REQUEST("GET", "/targets/all");
+DEF_GCS_HANDLE(Get, targets, all) {
+    LOG_REQUEST("GET", "/targets/all");
 
-//     if (state->getCV() == nullptr) {
-//         LOG_RESPONSE(ERROR, "CV not connected yet", BAD_REQUEST);
-//         return;
-//     }
+    // 1) Check if aggregator exists
+    if (state->getCV() == nullptr) {
+        LOG_RESPONSE(ERROR, "CV not connected yet", BAD_REQUEST);
+        return;
+    }
 
-//     LockPtr<CVResults> results = state->getCV()->getResults();
+    // 2) Lock the aggregator’s results
+    LockPtr<CVResults> results = state->getCV()->getResults();
+    if (!results.data) {
+        LOG_RESPONSE(ERROR, "No aggregator results found", BAD_REQUEST);
+        return;
+    }
 
-//     // Convert to protobuf serialization
-//     std::vector<IdentifiedTarget> out_data;
+    // 3) Prepare a vector of IdentifiedTarget for JSON serialization
+    std::vector<IdentifiedTarget> out_data;
+    out_data.reserve(results.data->items.size());
 
-//     int id = 0;  // id of the target is the index in the detected_targets vector
-//     // See layout of Identified target proto here:
-//     // https://github.com/tritonuas/protos/blob/master/obc.proto
-//     for (auto& target : results.data->detected_targets) {
-//         IdentifiedTarget out;
-//         out.set_id(id);
-//         out.set_picture(cvMatToBase64(target.crop.croppedImage));
-//         out.set_ismannikin(target.crop.isMannikin);
+    int id = 0;
+    for (const auto& item : results.data->items) {
+        IdentifiedTarget out;
+        out.set_id(id);
 
-//         GPSCoord* coord = new GPSCoord;
-//         coord->set_altitude(target.coord.altitude());
-//         coord->set_longitude(target.coord.longitude());
-//         coord->set_latitude(target.coord.latitude());
-//         out.set_allocated_coordinate(coord);  // will be freed in destructor
+        // A) Set the big image (already annotated) in base64
+        //    cvMatToBase64 is your helper function that encodes as base64
+        out.set_picture(cvMatToBase64(item.bigImage));
 
-//         out_data.push_back(std::move(out));
+        // B) If you only have one coordinate per item, add exactly one
+        auto coord = out.add_coordinate();
+        coord->set_latitude(item.coord.latitude());
+        coord->set_longitude(item.coord.longitude());
+        coord->set_altitude(item.coord.altitude());
 
-//        // not setting target info because that doesn't really make sense with the current context
-//         // of the matching algorithm, since the algorithm is matching cropped targets to the
-//         // expected not-stolen generated images, so it isn't really classifying targets with a
-//         // specific alphanumeric, color, etc...
+        // C) Store bounding box pixel coords
+        out.set_x1(item.bbox.x1);
+        out.set_y1(item.bbox.y1);
+        out.set_x2(item.bbox.x2);
+        out.set_y2(item.bbox.y2);
 
-//         id++;
-//     }
+        out_data.push_back(std::move(out));
+        ++id;
+    }
 
-//     std::string out_data_json = messagesToJson(out_data.begin(), out_data.end());
-//     LOG_RESPONSE(INFO, "Got serialized target data", OK, out_data_json.c_str(), mime::json);
-// }
+    // 4) Convert the vector of IdentifiedTarget to JSON
+    std::string out_data_json = messagesToJson(out_data.begin(), out_data.end());
+
+    // 5) Return the JSON response
+    LOG_RESPONSE(INFO, "Got serialized target data with bounding boxes & images", OK,
+                 out_data_json.c_str(), mime::json);
+}
 
 // DEF_GCS_HANDLE(Get, targets, matched) {
 //     try {
