@@ -355,58 +355,58 @@ DEF_GCS_HANDLE(Post, takeoff, autonomous) {
 //     LOG_RESPONSE(INFO, "Set status of CVLoiter Tick to rejected", OK);
 // }
 
-DEF_GCS_HANDLE(Get, targets, all) {
-    LOG_REQUEST("GET", "/targets/all");
+// Updated, but need to update corresponding protos file
+// DEF_GCS_HANDLE(Get, targets, all) {
+//     LOG_REQUEST("GET", "/targets/all");
 
-    // 1) Check if aggregator exists
-    if (state->getCV() == nullptr) {
-        LOG_RESPONSE(ERROR, "CV not connected yet", BAD_REQUEST);
-        return;
-    }
+//     auto aggregator = state->getCV();
+//     if (!aggregator) {
+//         LOG_RESPONSE(ERROR, "CV not connected yet", BAD_REQUEST);
+//         return;
+//     }
 
-    // 2) Lock the aggregator’s results
-    LockPtr<CVResults> results = state->getCV()->getResults();
-    if (!results.data) {
-        LOG_RESPONSE(ERROR, "No aggregator results found", BAD_REQUEST);
-        return;
-    }
+//     // 1) Lock aggregator & pop all new runs
+//     std::vector<AggregatedRun> new_runs = aggregator->popAllRuns();
+//     if (new_runs.empty()) {
+//         // No new data
+//         LOG_RESPONSE(INFO, "No new runs found", OK, "[]", mime::json);
+//         return;
+//     }
 
-    // 3) Prepare a vector of IdentifiedTarget for JSON serialization
-    std::vector<IdentifiedTarget> out_data;
-    out_data.reserve(results.data->items.size());
+//     // 2) Convert each run to your proto
+//     std::vector<IdentifiedTarget> out_data;
+//     int id_counter = 0;
+//     for (const auto& run : new_runs) {
+//         // Convert the big annotated image to base64 once
+//         std::string b64 = cvMatToBase64(run.annotatedImage);
 
-    int id = 0;
-    for (const auto& item : results.data->items) {
-        IdentifiedTarget out;
-        out.set_id(id);
+//         // If run has N detections, we create N IdentifiedTarget messages
+//         for (size_t i = 0; i < run.bboxes.size(); i++) {
+//             IdentifiedTarget target;
+//             target.set_id(id_counter++);
+//             target.set_picture(b64);  // same annotated image for all detections in this run
 
-        // A) Set the big image (already annotated) in base64
-        //    cvMatToBase64 is your helper function that encodes as base64
-        out.set_picture(cvMatToBase64(item.bigImage));
+//             // If your proto has repeated coords:
+//             auto c = target.add_coordinate();
+//             c->set_latitude(run.coords[i].latitude());
+//             c->set_longitude(run.coords[i].longitude());
+//             c->set_altitude(run.coords[i].altitude());
 
-        // B) If you only have one coordinate per item, add exactly one
-        auto coord = out.add_coordinate();
-        coord->set_latitude(item.coord.latitude());
-        coord->set_longitude(item.coord.longitude());
-        coord->set_altitude(item.coord.altitude());
+//             // If your proto has bounding box fields
+//             target.set_x1(run.bboxes[i].x1);
+//             target.set_y1(run.bboxes[i].y1);
+//             target.set_x2(run.bboxes[i].x2);
+//             target.set_y2(run.bboxes[i].y2);
 
-        // C) Store bounding box pixel coords
-        out.set_x1(item.bbox.x1);
-        out.set_y1(item.bbox.y1);
-        out.set_x2(item.bbox.x2);
-        out.set_y2(item.bbox.y2);
+//             // push to out_data
+//             out_data.push_back(std::move(target));
+//         }
+//     }
 
-        out_data.push_back(std::move(out));
-        ++id;
-    }
-
-    // 4) Convert the vector of IdentifiedTarget to JSON
-    std::string out_data_json = messagesToJson(out_data.begin(), out_data.end());
-
-    // 5) Return the JSON response
-    LOG_RESPONSE(INFO, "Got serialized target data with bounding boxes & images", OK,
-                 out_data_json.c_str(), mime::json);
-}
+//     // 3) Serialize out_data to JSON
+//     std::string out_data_json = messagesToJson(out_data.begin(), out_data.end());
+//     LOG_RESPONSE(INFO, "Returning newly aggregated runs", OK, out_data_json.c_str(), mime::json);
+// }
 
 // DEF_GCS_HANDLE(Get, targets, matched) {
 //     try {

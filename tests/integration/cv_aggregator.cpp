@@ -33,7 +33,8 @@ int main() {
 
     // Construct the pipeline with the desired YOLO model
     PipelineParams params("../models/yolo11x.onnx",
-                          "../tests/integration/output/output_aggregator.jpg", false);
+                          "../tests/integration/output/output_aggregator.jpg",
+                          false);  // do_preprocess=false
 
     Pipeline pipeline(params);
 
@@ -66,16 +67,25 @@ int main() {
         return 1;
     }
 
-    // Print out the total number of aggregated detections
-    std::cout << "Total aggregator detections: " << resultsPtr->items.size() << std::endl;
+    // Count total detections across all runs
+    size_t totalDetections = 0;
+    for (const auto& run : resultsPtr->runs) {
+        totalDetections += run.bboxes.size();
+    }
 
-    // For each detection, show bounding box
-    for (size_t i = 0; i < resultsPtr->items.size(); ++i) {
-        const auto& item = resultsPtr->items[i];
-        std::cout << "Aggregated Detection #" << i << "  BBox=[" << item.bbox.x1 << ","
-                  << item.bbox.y1 << "," << item.bbox.x2 << "," << item.bbox.y2 << "]"
-                  << "  Lat=" << item.coord.latitude() << "  Lon=" << item.coord.longitude()
-                  << std::endl;
+    // Print out bounding box info for each run
+    for (size_t runIdx = 0; runIdx < resultsPtr->runs.size(); ++runIdx) {
+        const auto& run = resultsPtr->runs[runIdx];
+        std::cout << "=== AggregatedRun #" << runIdx << " ===" << std::endl;
+
+        for (size_t detIdx = 0; detIdx < run.bboxes.size(); ++detIdx) {
+            const auto& bbox = run.bboxes[detIdx];
+            const auto& coord = run.coords[detIdx];
+
+            std::cout << "  Detection #" << detIdx << "  BBox=[" << bbox.x1 << "," << bbox.y1 << ","
+                      << bbox.x2 << "," << bbox.y2 << "]"
+                      << "  Lat=" << coord.latitude() << "  Lon=" << coord.longitude() << std::endl;
+        }
     }
 
     return 0;

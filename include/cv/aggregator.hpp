@@ -1,6 +1,7 @@
 #ifndef INCLUDE_CV_AGGREGATOR_HPP_
 #define INCLUDE_CV_AGGREGATOR_HPP_
 
+#include <atomic>
 #include <cmath>
 #include <functional>
 #include <future>
@@ -15,16 +16,15 @@
 #include "utilities/constants.hpp"
 #include "utilities/lockptr.hpp"
 
-// NEW: small struct to store the big image, bounding box, and coords
-struct AggregatedItem {
-    cv::Mat bigImage;  // Annotated image from the pipeline
-    Bbox bbox;         // The detection bounding box
-    GPSCoord coord;    // Localized GPS coordinate
+struct AggregatedRun {
+    int run_id;                    // Unique integer ID for this pipeline run
+    cv::Mat annotatedImage;        // The "big image" with bounding boxes drawn
+    std::vector<Bbox> bboxes;      // All bounding boxes in that image
+    std::vector<GPSCoord> coords;  // Matching lat-longs for each bounding box
 };
 
 struct CVResults {
-    // We now store a list of AggregatedItems instead of just DetectedTarget
-    std::vector<AggregatedItem> items;
+    std::vector<AggregatedRun> runs;  // Each pipeline invocation => 1 run
 };
 
 class CVAggregator {
@@ -37,6 +37,9 @@ class CVAggregator {
 
     // Lockable pointer to retrieve aggregator results
     LockPtr<CVResults> getResults();
+
+    // For the endpoint to reset the current list of structs
+    std::vector<AggregatedRun> popAllRuns();
 
  private:
     void worker(ImageData image, int thread_num);

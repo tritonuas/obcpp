@@ -34,6 +34,8 @@ void CVAggregator::runPipeline(const ImageData& image) {
     worker_thread.detach();  // We don’t need to join in the caller
 }
 
+static std::atomic<int> global_run_id{0};
+
 void CVAggregator::worker(ImageData image, int thread_num) {
     loguru::set_thread_name(("cv worker " + std::to_string(thread_num)).c_str());
     LOG_F(INFO, "New CVAggregator worker #%d spawned.", thread_num);
@@ -42,28 +44,29 @@ void CVAggregator::worker(ImageData image, int thread_num) {
         // 1) Run the pipeline
         auto pipeline_results = this->pipeline.run(image);
 
-        // 2) For each detection, store an AggregatedItem
-        {
-            Lock lock(this->mut);
-            for (auto& det : pipeline_results.targets) {
-                AggregatedItem item;
-                // We replicate the big image for each detection
-                // (Alternatively, you could store each big image only once if desired)
-                item.bigImage = pipeline_results.imageData.DATA.clone();
-                item.bbox = det.bbox;
-                item.coord = det.coord;
+        // 2) Build ONE run for all detections in that pipeline output
+        AggregatedRun run;
+        run.run_id = global_run_id.fetch_add(1);
+        run.annotatedImage = pipeline_results.imageData.DATA.clone();
+        run.bboxes.reserve(pipeline_results.targets.size());
+        run.coords.reserve(pipeline_results.targets.size());
 
-                this->results->items.push_back(std::move(item));
-            }
+        for (auto& det : pipeline_results.targets) {
+            run.bboxes.push_back(det.bbox);
+            run.coords.push_back(det.coord);
         }
 
-        // 3) If no more queued images, we're done
+        {
+            Lock lock(this->mut);
+            this->results->runs.push_back(std::move(run));
+        }
+
+        // 3) If no more queued images, break
         {
             Lock lock(this->mut);
             if (this->overflow_queue.empty()) {
                 break;
             }
-            // Otherwise, pop the next image and loop again
             image = std::move(this->overflow_queue.front());
             this->overflow_queue.pop();
         }
@@ -76,4 +79,14 @@ void CVAggregator::worker(ImageData image, int thread_num) {
               this->num_worker_threads, this->num_worker_threads - 1);
         --this->num_worker_threads;
     }
+}
+
+// Empty list (for endpoint)
+std::vector<AggregatedRun> CVAggregator::popAllRuns() {
+    Lock lock(this->mut);
+    // Move out everything
+    std::vector<AggregatedRun> out = std::move(this->results->runs);
+    // Now results->runs is empty
+    this->results->runs.clear();
+    return out;
 }
