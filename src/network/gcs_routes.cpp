@@ -373,38 +373,54 @@ DEF_GCS_HANDLE(Post, takeoff, autonomous) {
 //         return;
 //     }
 
-//     // 2) Convert each run to your proto
+//     // 2) Convert each AggregatedRun into ONE IdentifiedTarget proto
 //     std::vector<IdentifiedTarget> out_data;
-//     int id_counter = 0;
+//     out_data.reserve(new_runs.size());  // Reserve space for efficiency
+
 //     for (const auto& run : new_runs) {
-//         // Convert the big annotated image to base64 once
+//         // Create ONE IdentifiedTarget message per AggregatedRun
+//         IdentifiedTarget target;
+
+//         // Set the run ID
+//         target.set_run_id(run.run_id);
+
+//         // Convert the annotated image to base64 and set it (once per run)
 //         std::string b64 = cvMatToBase64(run.annotatedImage);
+//         target.set_picture(b64);
 
-//         // If run has N detections, we create N IdentifiedTarget messages
-//         for (size_t i = 0; i < run.bboxes.size(); i++) {
-//             IdentifiedTarget target;
-//             target.set_id(id_counter++);
-//             target.set_picture(b64);  // same annotated image for all detections in this run
-
-//             // If your proto has repeated coords:
-//             auto c = target.add_coordinate();
-//             c->set_latitude(run.coords[i].latitude());
-//             c->set_longitude(run.coords[i].longitude());
-//             c->set_altitude(run.coords[i].altitude());
-
-//             // If your proto has bounding box fields
-//             target.set_x1(run.bboxes[i].x1);
-//             target.set_y1(run.bboxes[i].y1);
-//             target.set_x2(run.bboxes[i].x2);
-//             target.set_y2(run.bboxes[i].y2);
-
-//             // push to out_data
-//             out_data.push_back(std::move(target));
+//         // Ensure coords and bboxes vectors are the same size (should be guaranteed by Aggregator
+//         // logic)
+//         if (run.coords.size() != run.bboxes.size()) {
+//             LOG_F(ERROR,
+//                   "Mismatch between coordinates (%ld) and bboxes (%ld) count in run_id %d. "
+//                   "Skipping this run.",
+//                   run.coords.size(), run.bboxes.size(), run.run_id);
+//             continue;  // Skip this problematic run
 //         }
-//     }
 
-//     // 3) Serialize out_data to JSON
-//     std::string out_data_json = messagesToJson(out_data.begin(), out_data.end());
+//         // Add all coordinates and bounding boxes from this run
+//         for (size_t i = 0; i < run.bboxes.size(); ++i) {
+//             // Add coordinate
+//             GPSCoord* proto_coord = target.add_coordinates();  // Use the plural field name
+//             proto_coord->set_latitude(run.coords[i].latitude());
+//             proto_coord->set_longitude(run.coords[i].longitude());
+//             proto_coord->set_altitude(run.coords[i].altitude());
+
+//             // Add bounding box
+//             BboxProto* proto_bbox = target.add_bboxes();  // Use the plural field name
+//             proto_bbox->set_x1(run.bboxes[i].x1);
+//             proto_bbox->set_y1(run.bboxes[i].y1);
+//             proto_bbox->set_x2(run.bboxes[i].x2);
+//             proto_bbox->set_y2(run.bboxes[i].y2);
+//         }
+
+//         // Add the completed IdentifiedTarget (representing the whole run) to the output list
+//         out_data.push_back(std::move(target));
+//     }  // End loop over AggregatedRuns
+
+//     // 3) Serialize the vector of IdentifiedTarget messages to JSON
+//     // Ensure messagesToJson can handle a vector or use iterators correctly
+//     std::string out_data_json = messagesToJson(out_data);  // Assuming messagesToJson takes a vector
 //     LOG_RESPONSE(INFO, "Returning newly aggregated runs", OK, out_data_json.c_str(), mime::json);
 // }
 
