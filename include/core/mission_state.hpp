@@ -103,8 +103,10 @@ class MissionState {
     std::shared_ptr<CameraInterface> getCamera();
     void setCamera(std::shared_ptr<CameraInterface> camera);
 
-    MissionParameters mission_params;  // has its own mutex
+    bool getIsGrounded() const;
+    void setIsGrounded(bool isGrounded);
 
+    MissionParameters mission_params;  // has its own mutex
 
     OBCConfig config;
 
@@ -137,7 +139,7 @@ class MissionState {
     // Gives an index into cv_detected_targets, and specifies that that bottle is matched
     // with the detected_target specified by the index
     std::array<size_t, NUM_AIRDROP_BOTTLES> cv_matches;
-
+    bool isGrounded;
 
     void _setTick(Tick* newTick);  // does not acquire the tick_mut
 };
