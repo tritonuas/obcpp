@@ -213,6 +213,62 @@ TEST(CVLocalization, DistanceAccuracy) {
         },
 
         {
+            // coordinate 9 (40.459N, 50.459E)
+            // coordinate 10 (40.46N, 50.46E)
+            // esitmitated distance from https://www.omnicalculator.com/other/latitude-longitude-distance is 139.72 m
+
+            "Coordinates of Distance 5",
+            40.459,
+            50.459,
+            40.46,
+            50.46,
+
+            139.72,
+        },
+
+        {
+            // coordinate 11 (50.1123N, 45.1234E)
+            // coordinate 12 (50.11235N, 45.1234E)
+            // esitmitated distance from https://www.omnicalculator.com/other/latitude-longitude-distance is 5.56 m
+
+            "Coordinates of Distance 6",
+            50.1123,
+            45.1234,
+            50.11235,
+            45.1234,
+
+            5.56,
+        },
+
+        {
+            // coordinate 13 (5.123N, 2.345E)
+            // coordinate 14 (5.122N, 2.345E)
+            // esitmitated distance from https://www.omnicalculator.com/other/latitude-longitude-distance is 111.2 m
+
+            "Coordinates of Distance 7",
+            5.123,
+            2.345,
+            5.122,
+            2.345,
+
+            111.2,
+        },
+
+        {
+            // coordinate 15 (5.123N, 2.345E)
+            // coordinate 16 (5.1231N, 2.3452E)
+            // esitmitated distance from https://www.omnicalculator.com/other/latitude-longitude-distance is 24.785 m
+
+            "Coordinates of Distance 8",
+            5.123,
+            2.345,
+            5.1231,
+            2.3452,
+
+            24.785,
+        },
+
+        {
             // DUMMY TEST (the same coordinate)
             "DUMMY TEST",
             20,
