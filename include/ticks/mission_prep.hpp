@@ -11,7 +11,7 @@
 #include "cv/pipeline.hpp"
 #include "cv/aggregator.hpp"
 
-#define NUMBOTTLES 5
+#define NUMAIRDROPS 4
 
 /*
  * Checks every second whether or not a valid mission has been uploaded.
@@ -27,10 +27,10 @@ class MissionPrepTick : public Tick {
 
     Tick* tick() override;
  private:
-    std::vector<std::pair<cv::Mat, BottleDropIndex>>
-        generateReferenceImages(std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives);
+    std::vector<std::pair<cv::Mat, AirdropIndex>>
+        generateReferenceImages(std::array<Airdrop, NUMAIRDROPS> competitionObjectives);
 
-    std::string getNotStolenRoute(const Bottle& target);
+    std::string getNotStolenRoute(const Airdrop& target);
 };
 
 #endif  // INCLUDE_TICKS_MISSION_PREP_HPP_

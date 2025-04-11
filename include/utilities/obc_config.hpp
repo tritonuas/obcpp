@@ -92,7 +92,7 @@ CONFIG_VARIANT_MAPPING_T(Enum) MAPPINGS = {{"guided", Enum::GUIDED}, {"unguided"
 
 struct AirdropApproachConfig {
     AirdropDropMethod::Enum drop_method;
-    std::unordered_set<int> bottle_ids;
+    std::unordered_set<int> airdrop_ids;
     double drop_angle_rad;
     double drop_altitude_m;
     double guided_drop_distance_m;

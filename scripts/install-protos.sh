@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# This overrides protos and always pull from main.
+# Manually go to the protos folder and checkout to the desired branch
+# Then cd to build and run the last line
+
 # This script will be run from inside the build directory because it is executed from 
 # CMake, which we run from inside the build directory
 if [ "${GITHUB_ACTIONS}" != "true" ]; then

@@ -51,50 +51,50 @@ int main(int argc, char** argv) {
         std::this_thread::sleep_for(100ms);
     }
 
-    // airdrop.send(makeLatLngPacket(SEND_LATLNG, UDP2_A, OBC_NULL, 32.123, 76.321, 100));
-    // airdrop.send(makeLatLngPacket(SEND_LATLNG, UDP2_A, OBC_NULL, 32.123, 76.321, 100));
-    // airdrop.send(makeLatLngPacket(SEND_LATLNG, UDP2_A, OBC_NULL, 32.123, 76.321, 100));
-    // airdrop.send(makeLatLngPacket(SEND_LATLNG, UDP2_A, OBC_NULL, 32.123, 76.321, 100));
-    // std::this_thread::sleep_for(3s);
-    // LOG_F(INFO, "Checking for ack latlng...");
-    // while (true) {
-    //     auto packet = airdrop.receive(); 
-    //     if (!packet) {
-    //         break;
-    //     }
-    //     uint8_t bottle, state;
-    //     parseID(packet->id, &bottle, &state);
-    //     LOG_F(INFO, "rec ack latlng? %d %d %d", static_cast<int>(packet->header), static_cast<int>(bottle), static_cast<int>(state));
-    // }
-    // LOG_F(INFO, "Done with checking for ack latlng");
-    // airdrop.send(makeArmPacket(ARM, UDP2_A, OBC_NULL, 105));
-    // airdrop.send(makeArmPacket(ARM, UDP2_A, OBC_NULL, 105));
-    // airdrop.send(makeArmPacket(ARM, UDP2_A, OBC_NULL, 105));
-    // airdrop.send(makeArmPacket(ARM, UDP2_A, OBC_NULL, 105));
-    // std::this_thread::sleep_for(3s);
-    // while (true) {
-    //     auto packet = airdrop.receive(); 
-    //     if (!packet) {
-    //         break;
-    //     }
-    //     uint8_t bottle, state;
-    //     parseID(packet->id, &bottle, &state);
-    //     LOG_F(INFO, "recv ack arm? %d %d %d", static_cast<int>(packet->header), static_cast<int>(bottle), static_cast<int>(state));
-    // }
-    // airdrop.send(makeArmPacket(DISARM, UDP2_A, OBC_NULL, 100));
-    // airdrop.send(makeArmPacket(DISARM, UDP2_A, OBC_NULL, 100));
-    // airdrop.send(makeArmPacket(DISARM, UDP2_A, OBC_NULL, 100));
-    // airdrop.send(makeArmPacket(DISARM, UDP2_A, OBC_NULL, 100));
-    // std::this_thread::sleep_for(3s);
-    // while (true) {
-    //     auto packet = airdrop.receive(); 
-    //     if (!packet) {
-    //         break;
-    //     }
-    //     uint8_t bottle, state;
-    //     parseID(packet->id, &bottle, &state);
-    //     LOG_F(INFO, "recv ack disarm? %d %d %d", static_cast<int>(packet->header), static_cast<int>(bottle), static_cast<int>(state));
-    // }
+    airdrop.send(makeLatLngPacket(SEND_LATLNG, UDP2_A, OBC_NULL, 32.123, 76.321, 100));
+    airdrop.send(makeLatLngPacket(SEND_LATLNG, UDP2_A, OBC_NULL, 32.123, 76.321, 100));
+    airdrop.send(makeLatLngPacket(SEND_LATLNG, UDP2_A, OBC_NULL, 32.123, 76.321, 100));
+    airdrop.send(makeLatLngPacket(SEND_LATLNG, UDP2_A, OBC_NULL, 32.123, 76.321, 100));
+    std::this_thread::sleep_for(3s);
+    LOG_F(INFO, "Checking for ack latlng...");
+    while (true) {
+        auto packet = airdrop.receive(); 
+        if (!packet) {
+            break;
+        }
+        uint8_t airdrop, state;
+        parseID(packet->id, &airdrop, &state);
+        LOG_F(INFO, "rec ack latlng? %d %d %d", static_cast<int>(packet->header), static_cast<int>(bottle), static_cast<int>(state));
+    }
+    LOG_F(INFO, "Done with checking for ack latlng");
+    airdrop.send(makeArmPacket(ARM, UDP2_A, OBC_NULL, 105));
+    airdrop.send(makeArmPacket(ARM, UDP2_A, OBC_NULL, 105));
+    airdrop.send(makeArmPacket(ARM, UDP2_A, OBC_NULL, 105));
+    airdrop.send(makeArmPacket(ARM, UDP2_A, OBC_NULL, 105));
+    std::this_thread::sleep_for(3s);
+    while (true) {
+        auto packet = airdrop.receive(); 
+        if (!packet) {
+            break;
+        }
+        uint8_t airdrop, state;
+        parseID(packet->id, &airdrop, &state);
+        LOG_F(INFO, "recv ack arm? %d %d %d", static_cast<int>(packet->header), static_cast<int>(bottle), static_cast<int>(state));
+    }
+    airdrop.send(makeArmPacket(DISARM, UDP2_A, OBC_NULL, 100));
+    airdrop.send(makeArmPacket(DISARM, UDP2_A, OBC_NULL, 100));
+    airdrop.send(makeArmPacket(DISARM, UDP2_A, OBC_NULL, 100));
+    airdrop.send(makeArmPacket(DISARM, UDP2_A, OBC_NULL, 100));
+    std::this_thread::sleep_for(3s);
+    while (true) {
+        auto packet = airdrop.receive(); 
+        if (!packet) {
+            break;
+        }
+        uint8_t airdrop, state;
+        parseID(packet->id, &airdrop, &state);
+        LOG_F(INFO, "recv ack disarm? %d %d %d", static_cast<int>(packet->header), static_cast<int>(bottle), static_cast<int>(state));
+    }
 
     while (true) {
         std::cout << "stop\n";

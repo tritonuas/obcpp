@@ -66,13 +66,11 @@ void GCSServer::_bindHandlers() {
     BIND_HANDLER(Post, dodropnow);
 
     BIND_HANDLER(Post, targets, locations);
-    BIND_HANDLER(Post, targets, reject);
-    BIND_HANDLER(Post, targets, validate);
+    // BIND_HANDLER(Post, targets, reject);
+    // BIND_HANDLER(Post, targets, validate);
     BIND_HANDLER(Get, targets, all);
-    // BIND_HANDLER(Get, targets, matched);
-    // BIND_HANDLER(Post, targets, matched);
 
     BIND_HANDLER(Post, kill, kill, kill);
 
-    BIND_HANDLER(Get, oh, shit);
+    // BIND_HANDLER(Get, oh, shit);
 }

@@ -80,7 +80,7 @@ PipelineResults Pipeline::run(const ImageData& imageData) {
         DetectedTarget detected;
         detected.bbox = box;
         detected.coord = targetPosition;
-        detected.likely_bottle = static_cast<BottleDropIndex>(det.class_id);
+        detected.likely_airdrop = static_cast<AirdropIndex>(det.class_id);
         detected.match_distance = (det.confidence > 0.f) ? (1.0 / det.confidence) : 9999.0;
 
         detectedTargets.push_back(detected);

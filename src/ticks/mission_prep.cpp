@@ -20,15 +20,15 @@ Tick* MissionPrepTick::tick() {
     if (this->state->mission_params.getCachedMission().has_value()) {
         LOG_F(INFO, "Valid mission configuration detected");
 
-        std::array<Bottle, NUM_AIRDROP_BOTTLES> bottles_to_drop;
+        std::array<Airdrop, NUM_AIRDROPS> airdrops_to_drop;
 
         // Get the airdrop bottles from the mission parameters
         // and copy into an std::array of the same size. Annoying conversion because
         // mission parameters and cv aggregator expect them in different data
         // structures. Could fix by making them both take a vector / both take an
         // array of size NUM_AIRDROP_BOTTLES
-        std::copy_n(state->mission_params.getAirdropBottles().begin(), NUM_AIRDROP_BOTTLES,
-                    bottles_to_drop.begin());
+        std::copy_n(state->mission_params.getAirdrops().begin(), NUM_AIRDROPS,
+                    airdrops_to_drop.begin());
 
         std::string yolo_model_dir = this->state->config.cv.yolo_model_dir;
 
@@ -45,23 +45,24 @@ Tick* MissionPrepTick::tick() {
     }
 }
 
-std::vector<std::pair<cv::Mat, BottleDropIndex>> MissionPrepTick::generateReferenceImages(
-    std::array<Bottle, NUM_AIRDROP_BOTTLES> competitionObjectives) {
-    std::vector<std::pair<cv::Mat, BottleDropIndex>> ref_imgs;
+std::vector<std::pair<cv::Mat, AirdropIndex>> MissionPrepTick::generateReferenceImages(
+    std::array<Airdrop, NUM_AIRDROPS> competitionObjectives) {
+    std::vector<std::pair<cv::Mat, AirdropIndex>> ref_imgs;
 
-    int curr_bottle_idx = BottleDropIndex::Undefined;
-    for (const auto& bottle : competitionObjectives) {
-        curr_bottle_idx++;
+    // Default is Kaz cuz we don't have Undefined anymore
+    int curr_airdrop_idx = AirdropIndex::Kaz;
+    for (const auto& airdrop : competitionObjectives) {
+        curr_airdrop_idx++;
 
         // don't generate reference images for mannikin since matching model doesn't
         // match mannikins (handled by saliency)
-        if (bottle.ismannikin()) {
-            continue;
-        }
+        // if (bottle.ismannikin()) {
+        //     continue;
+        // }
 
         httplib::Client client(this->state->config.cv.not_stolen_addr,
                                this->state->config.cv.not_stolen_port);
-        auto res = client.Get(this->getNotStolenRoute(bottle));
+        auto res = client.Get(this->getNotStolenRoute(airdrop));
         // connection failed
         if (!res) {
             LOG_F(ERROR, "Failed to send request to not-stolen at %s:%u. Reason: %s",
@@ -78,19 +79,12 @@ std::vector<std::pair<cv::Mat, BottleDropIndex>> MissionPrepTick::generateRefere
         cv::Mat data_mat(vectordata, true);
         cv::Mat ref_img(cv::imdecode(data_mat, 1));  // put 0 if you want greyscale
 
-        ref_imgs.push_back({ref_img, (BottleDropIndex)curr_bottle_idx});
+        ref_imgs.push_back({ref_img, (AirdropIndex)curr_airdrop_idx});
     }
     return ref_imgs;
 }
 
-std::string MissionPrepTick::getNotStolenRoute(const Bottle& target) {
-    std::string char_type = target.alphanumeric();
-    std::string char_color = ODLCColorToString(target.alphanumericcolor());
+std::string MissionPrepTick::getNotStolenRoute(const Airdrop& target) {
 
-    std::string shape_type = ODLCShapeToString(target.shape());
-    std::string shape_color = ODLCColorToString(target.shapecolor());
-
-    return std::string("/generate?shape_type=") + shape_type + std::string("&shape_color=") +
-           shape_color + std::string("&char_type=") + char_type + std::string("&char_color=") +
-           char_color;
+    return std::string("/generate");
 }

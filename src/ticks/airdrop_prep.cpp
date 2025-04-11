@@ -17,53 +17,55 @@ AirdropPrepTick::AirdropPrepTick(std::shared_ptr<MissionState> state)
 
 std::chrono::milliseconds AirdropPrepTick::getWait() const { return AIRDROP_PREP_TICK_WAIT; }
 
-// NEED TO UPDATE LOGIC PROBABLY
+Tick* AirdropPrepTick::tick() {
+    return nullptr;
+}
 // Tick* AirdropPrepTick::tick() {
-//     BottleDropIndex next_bottle = BottleDropIndex::A;
+//     AirdropIndex next_airdrop = AirdropIndex::Kaz;
 
-//     auto dropped_bottles = state->getDroppedBottles();
+//     auto dropped_airdrops = state->getDroppedAirdrops();
 
-//     if (dropped_bottles.size() >= NUM_AIRDROP_BOTTLES) {
+//     if (dropped_airdrops.size() >= NUM_AIRDROPS) {
 //         return new ManualLandingTick(state);
 //     }
 
 //     LockPtr<CVResults> results = state->getCV()->getResults();
 
-//     for (int i = BottleDropIndex::A; i <= BottleDropIndex::E; i++) {
-//         if (dropped_bottles.contains(static_cast<BottleDropIndex>(i))) {
+//     for (int i = AirdropIndex::Kaz; i <= AirdropIndex::Daniel; i++) {
+//         if (dropped_airdrops.contains(static_cast<AirdropIndex>(i))) {
 //             continue;
 //         }
 
-//         next_bottle = static_cast<BottleDropIndex>(i);
+//         next_airdrop = static_cast<AirdropIndex>(i);
 
-//         if (!results.data->matches.at(next_bottle).has_value()) {
+//         if (!results.data->matches.at(next_airdrop).has_value()) {
 //             LOG_F(INFO, "Skipping bottle %d because we didn't match it",
 //                   static_cast<int>(next_bottle));
-//             state->markBottleAsDropped(next_bottle);
+//             state->markAirdropAsDropped(next_bottle);
 //             continue;
 //         }
 
 //         break;
 //     }
-//     state->markBottleAsDropped(next_bottle);
+//     state->markAirdropAsDropped(next_airdrop);
 
 //     // The or condition here shouldn't be met because above we check for value
 //     // before setting next_bottle.
 //     // But just in case we default to whatever location target 0 was found at.
 //     auto target =
-//         results.data->detected_targets.at(results.data->matches.at(next_bottle).value_or(0));
+//         results.data->detected_targets.at(results.data->matches.at(next_airdrop).value_or(0));
 //     // IMPORTANT: need to set the altitude of the target coord to the config value so it doesn't
 //     // try and nosedive into the ground...
 //     target.coord.set_altitude(state->config.pathing.approach.drop_altitude_m);
 
-//     LOG_F(INFO, "Routing to airdrop target %d at (%f, %f) alt %f", static_cast<int>(next_bottle),
+//     LOG_F(INFO, "Routing to airdrop target %d at (%f, %f) alt %f", static_cast<int>(next_airdrop),
 //           target.coord.latitude(), target.coord.longitude(), target.coord.altitude());
 
 //     state->setAirdropPath(generateAirdropApproach(state, target.coord));
 
 //     LOG_F(INFO, "Generated approach path");
 
-//     state->next_bottle_to_drop = static_cast<bottle_t>(next_bottle);
+//     state->next_airdrop_to_drop = static_cast<airdrop_t>(next_airdrop);
 
 //     // If we ever switch to use the actual guided part of the protocol probably want
 //     // to uncomment these out and change where currently we are sending the do drop now command
@@ -73,7 +75,7 @@ std::chrono::milliseconds AirdropPrepTick::getWait() const { return AIRDROP_PREP
 
 //     // state->getAirdrop()->send(makeArmPacket(
 //     //     ARM, static_cast<bottle_t>(next_bottle), OBC_NULL,
-//     state->getMav()->altitude_agl_m()));
+//     // state->getMav()->altitude_agl_m()));
 
 //     return new MavUploadTick(this->state, new AirdropApproachTick(this->state),
 //                              state->getAirdropPath(), false);

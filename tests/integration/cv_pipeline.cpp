@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
               "Target #%ld: class_id=%d, match_distance=%.2f, "
               "bbox=[%d %d %d %d], lat=%.5f, lon=%.5f",
               i,
-              static_cast<int>(t.likely_bottle),  // YOLO class index
+              static_cast<int>(t.likely_airdrop),  // YOLO class index
               t.match_distance, t.bbox.x1, t.bbox.y1, t.bbox.x2, t.bbox.y2, t.coord.latitude(),
               t.coord.longitude());
     }

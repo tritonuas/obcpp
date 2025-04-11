@@ -20,7 +20,7 @@ class Bbox {
 struct DetectedTarget {
     Bbox bbox;       // The bounding box in pixel coords
     GPSCoord coord;  // The localized GPS coordinate
-    BottleDropIndex likely_bottle;
+    AirdropIndex likely_airdrop;
     double match_distance;  // Inverse confidence or other distance metric
 };
 

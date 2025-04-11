@@ -50,7 +50,7 @@ const uint16_t WIND_COV = 231;
 
 const int DEFAULT_GCS_PORT = 5010;
 
-const int NUM_AIRDROP_BOTTLES = 5;
+const int NUM_AIRDROPS = 4;
 
 const char MISSION_CONFIG_PATH[] = "./mission-config.json";
 const double TAKEOFF_ALTITUDE_M = 30.0;

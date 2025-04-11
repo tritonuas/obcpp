@@ -99,14 +99,14 @@ MissionPath MissionState::getAirdropPath() {
     return this->airdrop_path;
 }
 
-void MissionState::markBottleAsDropped(BottleDropIndex bottle) {
-    Lock lock(this->dropped_bottles_mut);
-    this->dropped_bottles.insert(bottle);
+void MissionState::markAirdropAsDropped(AirdropIndex airdrop) {
+    Lock lock(this->dropped_airdrops_mut);
+    this->dropped_airdrops.insert(airdrop);
 }
 
-std::unordered_set<BottleDropIndex> MissionState::getDroppedBottles() {
-    Lock lock(this->dropped_bottles_mut);
-    return this->dropped_bottles;
+std::unordered_set<AirdropIndex> MissionState::getDroppedAirdrops() {
+    Lock lock(this->dropped_airdrops_mut);
+    return this->dropped_airdrops;
 }
 
 std::shared_ptr<MavlinkClient> MissionState::getMav() {
