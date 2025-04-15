@@ -4,8 +4,7 @@
 #include "camera_data.hpp"
 
 // https://www.codeproject.com/Articles/1264257/Socket-Programming-in-Cplusplus-using-boost-asio-T
-using namespace boost::asio;
-using ip::tcp;
+namespace asio = boost::asio;
 
 // OBC-side socket.
 // Sends requests to take pics to camera, sends it back up to 
@@ -17,7 +16,7 @@ public:
      * Params:
      *   - port (int)  - which port to occupy
      */
-    explicit ObcCameraServer(int port);
+    explicit ObcCameraServer(std::string ip, int port, asio::io_context& io_context_);
     ~ObcCameraServer();
 
     /*
@@ -26,7 +25,7 @@ public:
      *   - IP (string) - regular ip
      *   - port (int)  - port
      */
-    bool connect(std::string ip, int port);
+    bool connect();
 
     /*
      * Sends command to take and return pic
@@ -46,8 +45,9 @@ public:
 
 private:
     // ig?
-    string ip;
+    std::string ip;
     int port;
     std::pair<int, int> camera_res; // used for reconstruction
-    asio::tcp::socket socket;
+    asio::ip::tcp::socket socket_;
+    asio::ip::tcp::acceptor acceptor_;
 };
