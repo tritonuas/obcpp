@@ -11,9 +11,11 @@
 #include "utilities/rng.hpp"
 
 Environment::Environment(const Polygon& valid_region, const Polygon& airdrop_zone,
-                         const std::vector<XYZCoord>& goals, const std::vector<Polygon>& obstacles)
+                         const Polygon& mapping_region, const std::vector<XYZCoord>& goals,
+                         const std::vector<Polygon>& obstacles)
     : valid_region(valid_region),
       airdrop_zone(airdrop_zone),
+      mapping_region(mapping_region),
       goals(goals),
       goals_found(0),
       bounds(findBounds(valid_region)),
@@ -116,18 +118,28 @@ const XYZCoord& Environment::getGoal() const { return goals[goals_found]; }
 
 const XYZCoord& Environment::getGoal(int index) const { return goals[index]; }
 
-XYZCoord Environment::getRandomPoint() const {
+XYZCoord Environment::getRandomPoint(bool use_mapping_region = false) const {
     // TODO - use some heuristic to more efficiently generate direction
     // vector (and make it toggleable)
+    std::pair<std::pair<double, double>, std::pair<double, double>> polygon_bounds = bounds;
+    if (use_mapping_region) {
+        polygon_bounds = findBounds(mapping_region);
+    }
 
     for (int i = 0; i < TRIES_FOR_RANDOM_POINT; i++) {
         // generates a random point in the rectangle contianing the valid region
-        XYZCoord generated_point = {random(bounds.first.first, bounds.first.second),
-                                    random(bounds.second.first, bounds.second.second), 0};
+        XYZCoord generated_point = {
+            random(polygon_bounds.first.first, polygon_bounds.first.second),
+            random(polygon_bounds.second.first, polygon_bounds.second.second), 0};
 
-        if (isPointInBounds(generated_point)) {
-            // print out the random point
-            return generated_point;
+        if (use_mapping_region) {
+            if (isPointInPolygon(mapping_region, generated_point)) {
+                return generated_point;
+            }
+        } else {
+            if (isPointInBounds(generated_point)) {
+                return generated_point;
+            }
         }
     }
 
@@ -352,6 +364,85 @@ std::vector<XYZCoord> Environment::findIntersections(const Polygon& polygon,
     }
 
     return intersections;
+}
+
+std::vector<XYZCoord> Environment::findIntersectionsWithPolygon(const Polygon& polygon,
+                                                                const XYZCoord& start_point,
+                                                                const XYZCoord& end_point) const {
+    // for loop through each edge of the polygon
+    // for each edge, find the intersection point with the line segment
+    // if an intersection point is found, add it to the list of intersection
+    // points
+    std::vector<XYZCoord> intersections;
+    for (int i = 0; i < polygon.size(); ++i) {
+        XYZCoord p1 = polygon[i];
+        XYZCoord p2 = polygon[(i + 1) % polygon.size()];
+        if (intersect(start_point, end_point, p1, p2)) {
+            // finds the intersection point
+            double x1 = start_point.x, y1 = start_point.y;
+            double x2 = end_point.x, y2 = end_point.y;
+            double x3 = p1.x, y3 = p1.y;
+            double x4 = p2.x, y4 = p2.y;
+
+            double a1 = y2 - y1;
+            double b1 = x1 - x2;
+            double c1 = a1 * x1 + b1 * y1;
+
+            double a2 = y4 - y3;
+            double b2 = x3 - x4;
+            double c2 = a2 * x3 + b2 * y3;
+
+            double det = a1 * b2 - a2 * b1;
+
+            double x = (b2 * c1 - b1 * c2) / det;
+            double y = (a1 * c2 - a2 * c1) / det;
+            if (std::find(intersections.begin(), intersections.end(), XYZCoord(x, y, 0)) ==
+                intersections.end()) {
+                intersections.push_back(XYZCoord(x, y, 0));
+            }
+        }
+    }
+
+    return intersections;
+}
+
+std::pair<double, double> Environment::estimateAreaCoveredAndPathLength(
+    const std::vector<XYZCoord>& new_goals) const {
+    double area_covered = 0.0;
+    double path_length = 0.0;
+
+    for (int i = 0; i < new_goals.size(); ++i) {
+        XYZCoord start_point = new_goals[i];
+        XYZCoord end_point = new_goals[(i + 1) % new_goals.size()];
+        path_length += start_point.distanceTo(end_point);
+        // Calculates area covered by adding the part of the line segment that is in bounds
+        // Caulcate the intersections and whether the start and end points are in bounds in order to
+        // find the sections of the line that is in bounds
+        if (!doesLineIntersectPolygon(start_point, end_point, mapping_region)) {
+            area_covered += start_point.distanceTo(end_point) * SEARCH_RADIUS * 2;
+        } else {
+            std::vector<XYZCoord> intersections =
+                findIntersectionsWithPolygon(mapping_region, start_point, end_point);
+            bool start_in_bounds = isPointInPolygon(mapping_region, start_point);
+            bool end_in_bounds = isPointInPolygon(mapping_region, end_point);
+
+            if (start_in_bounds) {
+                area_covered += start_point.distanceTo(intersections[0]) * SEARCH_RADIUS;
+                intersections.erase(intersections.begin());
+            }
+
+            if (end_in_bounds) {
+                area_covered += end_point.distanceTo(intersections.back()) * SEARCH_RADIUS;
+                intersections.pop_back();
+            }
+
+            for (int i = 0; i < intersections.size(); i += 2) {
+                area_covered += intersections[i].distanceTo(intersections[i + 1]) * SEARCH_RADIUS;
+            }
+        }
+    }
+
+    return {area_covered, path_length};
 }
 
 Polygon Environment::scale(double scale, const Polygon& source_polygon) const {

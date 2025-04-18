@@ -46,7 +46,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${INCLUDE_DIRECTORY} ${GEN_PR
 target_link_libraries(${PROJECT_NAME} PRIVATE obcpp_lib)
 target_add_protobuf(${PROJECT_NAME})
 target_add_torch(${PROJECT_NAME})
-# target_add_arena(${PROJECT_NAME}) # Tyler: currently broken, so we had to comment this out
 target_add_torchvision(${PROJECT_NAME})
 target_add_matplot(${PROJECT_NAME})
 target_add_json(${PROJECT_NAME})

@@ -2,10 +2,10 @@
 
 #include <mavsdk/mavsdk.h>
 #include <mavsdk/plugins/action/action.h>
-#include <mavsdk/plugins/param/param.h>
 #include <mavsdk/plugins/geofence/geofence.h>
 #include <mavsdk/plugins/mavlink_passthrough/mavlink_passthrough.h>
 #include <mavsdk/plugins/mission_raw/mission_raw.h>
+#include <mavsdk/plugins/param/param.h>
 #include <mavsdk/plugins/telemetry/telemetry.h>
 
 #include <atomic>
@@ -80,8 +80,7 @@ MavlinkClient::MavlinkClient(OBCConfig config)
             // require a recompile to change the typing of a specific parameter if you
             // get it wrong.
             auto result = mavsdk::Param::Result::Unknown;
-            if (param == "FS_LONG_TIMEOUT" ||
-                param == "AFS_RC_FAIL_TIME" ||
+            if (param == "FS_LONG_TIMEOUT" || param == "AFS_RC_FAIL_TIME" ||
                 param == "FS_SHORT_TIMEOUT") {
                 result = this->param->set_param_float(param, val);
             } else {
@@ -175,22 +174,16 @@ MavlinkClient::MavlinkClient(OBCConfig config)
     });
 
     this->passthrough->subscribe_message(WIND_COV, [this](const mavlink_message_t& message) {
-        // auto payload = message.payload64;
+        auto payload = message.payload64;
         // LOG_F(INFO, "UNIX TIME: %lu", payload[0]);
 
         /*
             NOT TESTED - don't actually know where the data is in thie uint64_t[]
             TODO - test on actual pixhawk to make sure that the data makes sense
         */
-
-        // this->data.wind.x = payload[1];
-        // this->data.wind.y = payload[2];
-        // this->data.wind.z = payload[3];
-
-        // can try and implement this for real if we need actual wind data
-        this->data.wind.x = 0;
-        this->data.wind.y = 0;
-        this->data.wind.z = 0;
+        this->data.wind.x = (payload[1] >> 56) & 0xFF;
+        this->data.wind.y = (payload[1] >> 48) & 0xFF;
+        this->data.wind.z = (payload[1] >> 40) & 0xFF;
     });
     // this->telemetry->subscribe_attitude_euler(
     //     [this](mavsdk::Telemetry::EulerAngle attitude) {
@@ -205,8 +198,7 @@ MavlinkClient::MavlinkClient(OBCConfig config)
 }
 
 bool MavlinkClient::uploadMissionUntilSuccess(std::shared_ptr<MissionState> state,
-                                              bool upload_geofence,
-                                              const MissionPath& path) const {
+                                              bool upload_geofence, const MissionPath& path) const {
     if (upload_geofence) {
         if (!this->uploadGeofenceUntilSuccess(state)) {
             return false;
@@ -281,7 +273,6 @@ bool MavlinkClient::uploadGeofenceUntilSuccess(std::shared_ptr<MissionState> sta
 bool MavlinkClient::uploadWaypointsUntilSuccess(std::shared_ptr<MissionState> state,
                                                 const MissionPath& waypoints) const {
     LOG_SCOPE_F(INFO, "Uploading waypoints");
-
 
     while (true) {
         LOG_F(INFO, "Sending waypoint information...");
@@ -379,9 +370,7 @@ mavsdk::Telemetry::FlightMode MavlinkClient::flight_mode() {
     return this->data.flight_mode;
 }
 
-int32_t MavlinkClient::curr_waypoint() const {
-    return this->mission->mission_progress().current;
-}
+int32_t MavlinkClient::curr_waypoint() const { return this->mission->mission_progress().current; }
 
 bool MavlinkClient::isMissionFinished() {
     // Boolean representing if mission is finished

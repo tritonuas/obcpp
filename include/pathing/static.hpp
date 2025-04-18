@@ -13,9 +13,9 @@
 #include "core/mission_state.hpp"
 #include "pathing/dubins.hpp"
 #include "pathing/environment.hpp"
+#include "pathing/mission_path.hpp"
 #include "pathing/plotting.hpp"
 #include "pathing/tree.hpp"
-#include "pathing/mission_path.hpp"
 #include "udp_squared/internal/enum.h"
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
@@ -235,10 +235,10 @@ class ForwardCoveragePathing {
 /**
  * Class that performs coverage pathing over a given search area, given that the plane has
  * hovering capabilities and that we want to be taking pictures while hovering over the zone.
- * 
+ *
  * This outputs a series of XYZ Coordinates which represent a points at which the plane
  * should hover and take a picture.
- * 
+ *
  * Assumptions:
  * - The drop zone has 4 points which form a rectangle larger than the vision of the camera
  */
@@ -285,7 +285,15 @@ MissionPath generateInitialPath(std::shared_ptr<MissionState> state);
 
 MissionPath generateSearchPath(std::shared_ptr<MissionState> state);
 
-MissionPath generateAirdropApproach(std::shared_ptr<MissionState> state,
-                                              const GPSCoord &goal);
+MissionPath generateAirdropApproach(std::shared_ptr<MissionState> state, const GPSCoord &goal);
+
+std::pair<double, double> estimateAreaCoveredAndPathLength(const std::vector<XYZCoord> &goals,
+                                                           const Environment &airspace);
+
+std::vector<std::vector<XYZCoord>> generateGoalListDeviations(const std::vector<XYZCoord> &goals,
+                                                              XYZCoord deviation_point);
+
+std::vector<std::vector<XYZCoord>> generateRankedNewGoalsList(const std::vector<XYZCoord> &goals,
+                                                              const Environment &airspace);
 
 #endif  // INCLUDE_PATHING_STATIC_HPP_

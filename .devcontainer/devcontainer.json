@@ -1,6 +1,6 @@
 // See this page for reference of options: https://containers.dev/implementors/json_reference
 {
-	"name": "x86",
+	"name": "obcpp:x86",
 	"image": "ghcr.io/tritonuas/obcpp:x86",
 	// enable when need to connect over USB to pixhawk
 	// also: need to run obcpp with sudo or add tuas user to dialout group with
@@ -23,9 +23,7 @@
 				"terminal.integrated.defaultProfile.linux": "bash"
 			},
 			"extensions": [
-				"shd101wyy.markdown-preview-enhanced",
 				"ms-vscode.cpptools",
-				"nick-dimeglio.family-guy-funny-moments",
 				"twxs.cmake",
 				"me-dutour-mathieu.vscode-github-actions"
 			]
