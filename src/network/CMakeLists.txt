@@ -5,6 +5,8 @@ set(COMMON_FILES
     gcs_routes.cpp
     gcs.cpp
     mavlink.cpp
+    sync_client.cpp
+    sync_server.cpp
 )
 
 set(FILES
@@ -32,6 +34,7 @@ add_library(${LIB_NAME} STATIC
 
 target_link_libraries(${LIB_NAME} PRIVATE
     ${LIB_DEPS}
+    Boost::serialization
 )
 
 set_unity_for_target(${LIB_NAME})
@@ -58,6 +61,7 @@ add_library(${LIB_NAME} STATIC ${PROJECT_SOURCE_DIR}/build/gen_protos/protos/obc
 
 target_link_libraries(${LIB_NAME} PRIVATE
     ${LIB_DEPS}
+    Boost::serialization
 )
 
 set_unity_for_target(${LIB_NAME})
