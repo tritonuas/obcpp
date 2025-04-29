@@ -29,6 +29,7 @@ class MissionParameters {
 
     Polygon getFlightBoundary();
     Polygon getAirdropBoundary();
+    Polygon getMappingBoundary();
     Polyline getWaypoints();
     std::vector<Bottle> getAirdropBottles();
 
@@ -50,6 +51,7 @@ class MissionParameters {
 
     Polygon flightBoundary;
     Polygon airdropBoundary;
+    Polygon mappingBoundary;
     Polyline waypoints;
     std::vector<Bottle> bottles;
 

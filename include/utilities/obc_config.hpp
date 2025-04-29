@@ -1,12 +1,13 @@
 #ifndef INCLUDE_UTILITIES_OBC_CONFIG_HPP_
 #define INCLUDE_UTILITIES_OBC_CONFIG_HPP_
 
-#include <variant>
-#include <string>
-#include <utility>
-#include <unordered_set>
-#include <unordered_map>
 #include <initializer_list>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <variant>
+
 #include "udp_squared/internal/enum.h"
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
@@ -42,15 +43,14 @@ struct CVConfig {
 };
 
 namespace PointFetchMethod {
-    enum class Enum {
-        NONE,    // check RRT against every node (path optimal, but incredibly slow)
-        RANDOM,  // check ~k randomly sampled nodes from the tree.
-        NEAREST  // check ~$p$ nodes closest to the sampled node (best performance/time ratio from
-                // rudimentary testing)
-    };
-    CONFIG_VARIANT_MAPPING_T(Enum) MAPPINGS = {
-        {"none", Enum::NONE}, {"random", Enum::RANDOM}, {"nearest", Enum::NEAREST}
-    };
+enum class Enum {
+    NONE,    // check RRT against every node (path optimal, but incredibly slow)
+    RANDOM,  // check ~k randomly sampled nodes from the tree.
+    NEAREST  // check ~$p$ nodes closest to the sampled node (best performance/time ratio from
+             // rudimentary testing)
+};
+CONFIG_VARIANT_MAPPING_T(Enum)
+MAPPINGS = {{"none", Enum::NONE}, {"random", Enum::RANDOM}, {"nearest", Enum::NEAREST}};
 };  // namespace PointFetchMethod
 
 struct DubinsConfig {
@@ -65,16 +65,12 @@ struct RRTConfig {
     PointFetchMethod::Enum point_fetch_method;
     bool allowed_to_skip_waypoints;  // if true, will skip waypoints if it can not connect after 1
                                      // RRT iteration
+    bool generate_deviations;        // if true, will generate deviations for the path
 };
 
 namespace AirdropCoverageMethod {
-    enum class Enum {
-        HOVER,
-        FORWARD
-    };
-    CONFIG_VARIANT_MAPPING_T(Enum) MAPPINGS = {
-        {"hover", Enum::HOVER}, {"forward", Enum::FORWARD}
-    };
+enum class Enum { HOVER, FORWARD };
+CONFIG_VARIANT_MAPPING_T(Enum) MAPPINGS = {{"hover", Enum::HOVER}, {"forward", Enum::FORWARD}};
 };  // namespace AirdropCoverageMethod
 
 struct AirdropCoverageConfig {
@@ -93,14 +89,9 @@ struct AirdropCoverageConfig {
 };
 
 namespace AirdropDropMethod {
-    enum class Enum {
-        GUIDED,
-        UNGUIDED
-    };
-    CONFIG_VARIANT_MAPPING_T(Enum) MAPPINGS = {
-        {"guided", Enum::GUIDED}, {"unguided", Enum::UNGUIDED}
-    };
-};
+enum class Enum { GUIDED, UNGUIDED };
+CONFIG_VARIANT_MAPPING_T(Enum) MAPPINGS = {{"guided", Enum::GUIDED}, {"unguided", Enum::UNGUIDED}};
+};  // namespace AirdropDropMethod
 
 struct AirdropApproachConfig {
     AirdropDropMethod::Enum drop_method;

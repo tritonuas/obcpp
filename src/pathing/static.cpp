@@ -545,11 +545,11 @@ std::vector<std::vector<XYZCoord>> generateGoalListDeviations(const std::vector<
 }
 
 std::vector<std::vector<XYZCoord>> generateRankedNewGoalsList(const std::vector<XYZCoord> &goals,
-                                                              const Environment &airspace) {
+                                                              const Environment &mapping_bounds) {
     // generate deviation points randomly in the mapping region
     std::vector<XYZCoord> deviation_points;
     for (int i = 0; i < 200; i++) {
-        deviation_points.push_back(airspace.getRandomPoint(true));
+        deviation_points.push_back(mapping_bounds.getRandomPoint(true));
         printf("Deviation point: %f, %f\n", deviation_points.back().x, deviation_points.back().y);
     }
 
@@ -565,7 +565,7 @@ std::vector<std::vector<XYZCoord>> generateRankedNewGoalsList(const std::vector<
     // run each goal list and get the area covered and the length of the path
     std::vector<std::pair<double, double>> area_length_pairs;
     for (const std::vector<XYZCoord> &new_goals : new_goals_list) {
-        area_length_pairs.push_back(airspace.estimateAreaCoveredAndPathLength(new_goals));
+        area_length_pairs.push_back(mapping_bounds.estimateAreaCoveredAndPathLength(new_goals));
     }
 
     // rank the new goal lists by the area covered and the length of the path
@@ -607,9 +607,10 @@ MissionPath generateInitialPath(std::shared_ptr<MissionState> state) {
     }
 
     // update goals here
-    // create a dummy environment
-    Environment airspace(state->mission_params.getFlightBoundary(), {}, {}, goals, {});
-    goals = generateRankedNewGoalsList(goals, airspace)[0];
+    if (state->config.pathing.rrt.use_deviation) {
+        Environment mapping_bounds(state->mission_params.getMappingBoundary(), {}, {}, goals, {});
+        goals = generateRankedNewGoalsList(goals, mapping_bounds)[0];
+    }
 
     double init_angle =
         std::atan2(goals.front().y - state->mission_params.getWaypoints().front().y,

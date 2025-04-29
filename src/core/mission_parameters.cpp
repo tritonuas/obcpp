@@ -1,18 +1,18 @@
+#include "core/mission_parameters.hpp"
+
 #include <cctype>
 #include <iostream>
-#include <shared_mutex>
 #include <mutex>
+#include <optional>
+#include <shared_mutex>
 #include <tuple>
 #include <unordered_map>
-#include <optional>
 
-#include "core/mission_parameters.hpp"
+#include "pathing/cartesian.hpp"
+#include "protos/obc.pb.h"
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
 #include "utilities/locks.hpp"
-#include "pathing/cartesian.hpp"
-
-#include "protos/obc.pb.h"
 
 // TODO: Log out mission config after it has been set
 
@@ -53,6 +53,12 @@ Polygon MissionParameters::getAirdropBoundary() {
     return this->airdropBoundary;
 }
 
+Polygon MissionParameters::getMappingBoundary() {
+    ReadLock lock(this->mut);
+
+    return this->mappingBoundary;
+}
+
 Polyline MissionParameters::getWaypoints() {
     ReadLock lock(this->mut);
 
@@ -68,8 +74,8 @@ std::vector<Bottle> MissionParameters::getAirdropBottles() {
 std::tuple<Polygon, Polygon, Polyline, std::vector<Bottle>> MissionParameters::getConfig() {
     ReadLock lock(this->mut);
 
-    return std::make_tuple(
-        this->flightBoundary, this->airdropBoundary, this->waypoints, this->bottles);
+    return std::make_tuple(this->flightBoundary, this->airdropBoundary, this->mappingBoundary,
+                           this->waypoints, this->bottles);
 }
 
 void MissionParameters::_setBottle(Bottle bottle) {
@@ -82,10 +88,8 @@ void MissionParameters::_setBottle(Bottle bottle) {
     }
 }
 
-
 std::optional<std::string> MissionParameters::setMission(
-    Mission mission, CartesianConverter<GPSProtoVec> cconverter
-) {
+    Mission mission, CartesianConverter<GPSProtoVec> cconverter) {
     WriteLock lock(this->mut);
 
     std::string err;
@@ -100,6 +104,11 @@ std::optional<std::string> MissionParameters::setMission(
     if (mission.airdropboundary().size() < 3) {
         err += "Airdrop boundary must have at least 3 coordinates.";
     }
+
+    if (mission.mappingboundary().size() < 3) {
+        err += "Mapping boundary must have at least 3 coordinates.";
+    }
+
     if (!err.empty()) {
         return err;
     }
@@ -107,6 +116,7 @@ std::optional<std::string> MissionParameters::setMission(
     this->cached_mission = mission;
     this->flightBoundary = cconverter.toXYZ(mission.flightboundary());
     this->airdropBoundary = cconverter.toXYZ(mission.airdropboundary());
+    this->mappingBoundary = cconverter.toXYZ(mission.mappingboundary());
     this->waypoints = cconverter.toXYZ(mission.waypoints());
     for (auto bottle : mission.bottleassignments()) {
         this->_setBottle(bottle);
