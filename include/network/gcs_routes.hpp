@@ -174,7 +174,7 @@ DEF_GCS_HANDLE(Get, targets, all);
  * ---
  * manual override for mappings between targets
  */
-// DEF_GCS_HANDLE(Post, targets, matched);
+DEF_GCS_HANDLE(Post, targets, matched);
 
 /**
  * POST /kill/kill/kill

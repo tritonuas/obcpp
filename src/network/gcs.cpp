@@ -2,27 +2,25 @@
 
 #include <httplib.h>
 
-#include <memory>
 #include <cstdint>
 #include <functional>
 #include <iostream>
+#include <memory>
 #include <string>
 
 #include "core/mission_parameters.hpp"
 #include "core/mission_state.hpp"
-#include "ticks/tick.hpp"
-#include "ticks/path_gen.hpp"
-#include "utilities/locks.hpp"
-#include "utilities/serialize.hpp"
-#include "utilities/logging.hpp"
-#include "protos/obc.pb.h"
-#include "pathing/cartesian.hpp"
 #include "network/gcs_routes.hpp"
-
+#include "pathing/cartesian.hpp"
+#include "protos/obc.pb.h"
+#include "ticks/path_gen.hpp"
+#include "ticks/tick.hpp"
+#include "utilities/locks.hpp"
+#include "utilities/logging.hpp"
+#include "utilities/serialize.hpp"
 
 GCSServer::GCSServer(uint16_t port, std::shared_ptr<MissionState> state)
-    :port{port}, state{state}
-{
+    : port{port}, state{state} {
     if (port < 1024) {
         LOG_F(ERROR, "Ports 0-1023 are reserved. Using port %d as a fallback...", DEFAULT_GCS_PORT);
         port = DEFAULT_GCS_PORT;
@@ -66,9 +64,8 @@ void GCSServer::_bindHandlers() {
     BIND_HANDLER(Post, dodropnow);
 
     BIND_HANDLER(Post, targets, locations);
-    // BIND_HANDLER(Post, targets, reject);
-    // BIND_HANDLER(Post, targets, validate);
     BIND_HANDLER(Get, targets, all);
+    BIND_HANDLER(Post, targets, matched);
 
     BIND_HANDLER(Post, kill, kill, kill);
 
