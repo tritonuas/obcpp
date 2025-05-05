@@ -13,6 +13,7 @@ set(FILES
     mav_upload.cpp
     path_gen.cpp
     path_validate.cpp
+    refueling.cpp
     takeoff.cpp
     active_takeoff.cpp
     wait_for_takeoff.cpp

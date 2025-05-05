@@ -23,7 +23,7 @@ Tick* AirdropPrepTick::tick() {
     auto dropped_bottles = state->getDroppedBottles();
 
     if (dropped_bottles.size() >= NUM_AIRDROP_BOTTLES) {
-        return new ManualLandingTick(state);
+        return new ManualLandingTick(state, nullptr);
     }
 
     LockPtr<CVResults> results = state->getCV()->getResults();
@@ -51,6 +51,7 @@ Tick* AirdropPrepTick::tick() {
     // But just in case we default to whatever location target 0 was found at.
     auto target = results.data->detected_targets.at(
         results.data->matches.at(next_bottle).value_or(0));
+        
     // IMPORTANT: need to set the altitude of the target coord to the config value so it doesn't
     // try and nosedive into the ground...
     target.coord.set_altitude(state->config.pathing.approach.drop_altitude_m);

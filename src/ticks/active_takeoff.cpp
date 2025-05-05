@@ -9,6 +9,8 @@
 #include "ticks/mav_upload.hpp"
 #include "ticks/mission_prep.hpp"
 #include "ticks/fly_search.hpp"
+#include "ticks/manual_landing.hpp"
+#include "ticks/refueling.hpp"
 
 ActiveTakeoffTick::ActiveTakeoffTick(std::shared_ptr<MissionState> state):
     Tick(state, TickID::ActiveTakeoff) {}
@@ -50,7 +52,9 @@ Tick* ActiveTakeoffTick::tick() {
     // NOTE: keep in sync with manual takeoff tick
     // transitions to flying waypoints tick, such that when the flying waypoints
     // tick is done it transitions to uploading the coverage path
-    return new FlyWaypointsTick(this->state, new MavUploadTick(
-        this->state, new FlySearchTick(this->state),
-        state->getCoveragePath(), false));
+    return new FlyWaypointsTick(this->state, new ManualLandingTick(state, new RefuelingTick(state)));
+
+    // return new FlyWaypointsTick(this->state, new MavUploadTick(
+    //     this->state, new FlySearchTick(this->state),
+    //     state->getCoveragePath(), false));
 }

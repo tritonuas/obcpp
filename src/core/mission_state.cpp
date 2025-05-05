@@ -142,9 +142,9 @@ void MissionState::setCamera(std::shared_ptr<CameraInterface> camera) {
 }
 
 bool MissionState::getIsGrounded() const {
-    return this->is_grounded;
+    return this->isGrounded;
 }
 
-void MissionState::setIsGrounded(bool is_grounded) {
-    this->is_grounded = is_grounded;
+void MissionState::setIsGrounded(bool isGrounded) {
+    this->isGrounded= isGrounded;
 }
