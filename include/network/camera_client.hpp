@@ -1,3 +1,6 @@
+#ifndef INCLUDE_NETWORK_CAMERA_CLIENT_HPP_
+#define INCLUDE_NETWORK_CAMERA_CLIENT_HPP_
+
 #include <iostream>
 #include <boost/array.hpp>
 #include <boost/asio.hpp>
@@ -39,7 +42,9 @@ class CameraClient {
     private:
 
         // ig?
-        string ip;
-        int port;
-        asio::tcp::socket socket;
+        // string ip;
+        // int port;
+        // asio::tcp::socket socket;
 };
+
+#endif

@@ -1,11 +1,11 @@
+#ifndef INCLUDE_NETWORK_CAMERA_DATA_HPP_
+#define INCLUDE_NETWORK_CAMERA_DATA_HPP_
+
 #include <iostream>
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
-
-#ifndef CAMERA_DATA_H
-#define CAMERA_DATA_H
 
 struct ImageData_t
 {

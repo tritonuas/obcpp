@@ -1,3 +1,6 @@
+#ifndef INCLUDE_NETWORK_SERIALIZE_HPP_
+#define INCLUDE_NETWORK_SERIALIZE_HPP_
+
 #include <boost/asio.hpp>
 
 /*
@@ -21,3 +24,5 @@ namespace serialh {
         ia >> *response;
     }
 }
+
+#endif

@@ -1,8 +1,8 @@
 #include <iostream>
 #include <boost/array.hpp>
 #include <boost/asio.hpp>
-#include "camera_data.hpp"
-#include "camera_server.hpp"
+#include "include/network/camera_data.hpp"
+#include "include/network/camera_server.hpp"
 
 // https://www.codeproject.com/Articles/1264257/Socket-Programming-in-Cplusplus-using-boost-asio-T
 namespace asio = boost::asio;

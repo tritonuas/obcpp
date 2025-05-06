@@ -10,6 +10,6 @@ using ip::tcp;
 
 tcp::socket socket;
 
-CameraSocket::CameraSocket() {
+// CameraSocket::CameraSocket() {
 
-}
+// }

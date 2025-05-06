@@ -5,8 +5,7 @@ set(COMMON_FILES
     gcs_routes.cpp
     gcs.cpp
     mavlink.cpp
-    sync_client.cpp
-    sync_server.cpp
+    client.cpp
 )
 
 set(FILES
@@ -75,6 +74,8 @@ target_add_httplib(${LIB_NAME})
 target_add_mavsdk(${LIB_NAME})
 target_add_matplot(${LIB_NAME})
 target_add_loguru(${LIB_NAME})
+target_add_boost(${LIB_NAME})
+
 
 target_include_directories(${LIB_NAME} PRIVATE ${ImageMagick_INCLUDE_DIRS})
 target_link_libraries(${LIB_NAME} PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})

@@ -1,3 +1,6 @@
+#ifndef INCLUDE_NETWORK_CAMERA_SERVER_HPP_
+#define INCLUDE_NETWORK_CAMERA_SERVER_HPP_
+
 #include <iostream>
 #include <boost/array.hpp>
 #include <boost/asio.hpp>
@@ -51,3 +54,5 @@ private:
     asio::ip::tcp::socket socket_;
     asio::ip::tcp::acceptor acceptor_;
 };
+
+#endif

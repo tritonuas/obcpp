@@ -1,3 +1,6 @@
+#ifndef INCLUDE_NETWORK_SYNC_SERVER_HPP__
+#define INCLUDE_NETWORK_SYNC_SERVER_HPP__
+
 #include <iostream>
 #include <boost/asio.hpp>
 #include "camera_data.hpp"
@@ -112,3 +115,5 @@ class Server {
         boost::system::error_code getWriteError();
 
 };
+
+#endif

@@ -39,35 +39,10 @@ void saveImageTelemetryToFile(const ImageTelemetry& telemetry,
   std::ofstream telemetry_file(filepath);
   if (!telemetry_file.is_open()) {
     LOG_F(ERROR, "Failed to save telemetry json to %s", filepath.string().c_str());
+    // std::cout << "Failed to save telemetry json to " << filepath.string().c_str() << '\n';
     return;
   }
   telemetry_file << to_string(telemetry_json);
-}
-
-std::optional<ImageTelemetry> queryMavlinkImageTelemetry(
-  std::shared_ptr<MavlinkClient> mavlinkClient) {
-  if (mavlinkClient == nullptr) {
-    return {};
-  }
-
-  auto [lat_deg, lon_deg] = mavlinkClient->latlng_deg();
-  double altitude_agl_m = mavlinkClient->altitude_agl_m();
-  double airspeed_m_s = mavlinkClient->airspeed_m_s();
-  double heading_deg = mavlinkClient->heading_deg();
-  double yaw_deg = mavlinkClient->yaw_deg();
-  double pitch_deg = mavlinkClient->pitch_deg();
-  double roll_deg = mavlinkClient->roll_deg();
-
-  return ImageTelemetry {
-    .latitude_deg = lat_deg,
-    .longitude_deg = lon_deg,
-    .altitude_agl_m = altitude_agl_m,
-    .airspeed_m_s = airspeed_m_s,
-    .heading_deg = heading_deg,
-    .yaw_deg = yaw_deg,
-    .pitch_deg = pitch_deg,
-    .roll_deg = roll_deg
-  };
 }
 
 bool ImageData::saveToFile(std::string directory) const {
@@ -83,6 +58,7 @@ bool ImageData::saveToFile(std::string directory) const {
         }
     } catch (std::exception& e) {
         LOG_F(ERROR, "Failed to save image and telemetry to file");
+        // std::cout << "Failed to save image and telemetry to file" << '\n';
         return false;
     }
 

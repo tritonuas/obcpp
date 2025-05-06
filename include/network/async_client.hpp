@@ -1,10 +1,10 @@
+#ifndef INCLUDE_NETWORK_ASYNC_CLIENT_HPP_
+#define INCLUDE_NETWORK_ASYNC_CLIENT_HPP_
+
 #include <iostream>
 #include <boost/asio.hpp>
 #include <opencv2/opencv.hpp>
 #include "camera_data.hpp"
-
-#ifndef CLIENT_H
-#define CLIENT_H
 
 namespace asio = boost::asio;
 
