@@ -3,10 +3,10 @@
 
 #include <filesystem>
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <optional>
 #include <string>
 #include <vector>
-#include <nlohmann/json.hpp>
 
 #include "core/mission_state.hpp"
 #include "network/gcs_macros.hpp"
@@ -22,7 +22,7 @@
 #include "utilities/serialize.hpp"
 
 extern "C" {
-    #include "udp_squared/protocol.h"
+#include "udp_squared/protocol.h"
 }
 
 using namespace std::chrono_literals;  // NOLINT
@@ -54,7 +54,7 @@ DEF_GCS_HANDLE(Get, connections) {
         lost_airdrop_conns.push_back({AirdropIndex::Kimi, 99999ms});
         lost_airdrop_conns.push_back({AirdropIndex::Chris, 99999ms});
         lost_airdrop_conns.push_back({AirdropIndex::Daniel, 99999ms});
-        } else {
+    } else {
         lost_airdrop_conns = state->getAirdrop()->getLostConnections(3s);
     }
 
@@ -168,8 +168,8 @@ DEF_GCS_HANDLE(Post, targets, locations) {
 
         float drop_lat = airdrop_target.coordinate().latitude();
         float drop_lng = airdrop_target.coordinate().longitude();
-        state->getAirdrop()->send(
-            makeLatLngPacket(SEND_LATLNG, airdrop, TARGET_ACQUIRED, drop_lat, drop_lng, curr_alt_m));
+        state->getAirdrop()->send(makeLatLngPacket(SEND_LATLNG, airdrop, TARGET_ACQUIRED, drop_lat,
+                                                   drop_lng, curr_alt_m));
     }
     LOG_RESPONSE(INFO, "Uploaded airdrop targets coordinates", OK);
 }
@@ -401,138 +401,19 @@ DEF_GCS_HANDLE(Get, targets, all) {
 DEF_GCS_HANDLE(Post, targets, matched) {
     LOG_REQUEST("POST", "/targets/matched");
 
-    std::shared_ptr<AirdropClient> airdrop_client = state->getAirdrop();
-    if (airdrop_client == nullptr) {
-        LOG_RESPONSE(ERROR, "Airdrop system not connected", BAD_REQUEST);  // 503 Service Unavailable
+    if (state->getCV() == nullptr) {
+        LOG_RESPONSE(ERROR, "CV not init yet", BAD_REQUEST);
         return;
     }
 
-    std::shared_ptr<MavlinkClient> mav_client = state->getMav();
-    if (mav_client == nullptr) {
-        LOG_RESPONSE(ERROR, "Mavlink not connected, cannot get altitude if needed",
-                     BAD_REQUEST);  // 503 Service Unavailable
-        return;
-    }
-    // float curr_alt_m = mav_client->altitude_msl_m(); // Optional altitude fetch
+    json j = json::parse(request.body);
 
-    std::vector<AirdropTarget> matched_targets;
-    try {
-        nlohmann::json json_body = nlohmann::json::parse(request.body);
+    LockPtr<MatchedResults> matched_results = state->getCV()->getMatchedResults();
 
-        if (!json_body.is_array()) {
-            // Use integer 400 for Bad Request
-            LOG_RESPONSE(ERROR, "Request body must be a JSON array", BAD_REQUEST);
-            return;
-        }
+    LOG_S(INFO) << j;
 
-        // Optional: Check size json_body.size() == 4 ...
-
-        for (const auto& item : json_body) {
-            AirdropTarget target;
-            std::string item_str = item.dump();
-            google::protobuf::util::Status status =
-                google::protobuf::util::JsonStringToMessage(item_str, &target);
-            if (!status.ok()) {
-                LOG_F(ERROR, "Failed to parse JSON item to AirdropTarget proto: %s. Item: %s",
-                      status.ToString().c_str(), item_str.c_str());
-                // Use integer 400 for Bad Request
-                LOG_RESPONSE(ERROR, "Invalid format for item in JSON array", BAD_REQUEST);
-                return;
-            }
-            matched_targets.push_back(target);
-        }
-    } catch (const nlohmann::json::parse_error& e) {
-        LOG_F(ERROR, "Failed to parse JSON request body: %s", e.what());
-        LOG_RESPONSE(ERROR, "Invalid JSON format in request body", BAD_REQUEST);
-        return;
-    } catch (const std::exception& e) {
-        LOG_F(ERROR, "Error processing request body: %s", e.what());
-        LOG_RESPONSE(ERROR, "Error processing request body", INTERNAL_SERVER_ERROR);
-        return;
-    }
-
-    LOG_F(INFO, "Received %ld matched targets to process.", matched_targets.size());
-    bool all_sent_ok = true;
-    for (const auto& target : matched_targets) {
-        // Variable for the UDP Airdrop ID (UDP2_A, etc.)
-        airdrop_t udp_airdrop_id;  // Type defined in udp_squared/internal/enum.h
-
-        switch (target.index()) {  // The Protobuf enum index
-            case AirdropIndex::Kaz:
-                udp_airdrop_id = UDP2_A;
-                break;
-            case AirdropIndex::Kimi:
-                udp_airdrop_id = UDP2_B;
-                break;
-            case AirdropIndex::Chris:
-                udp_airdrop_id = UDP2_C;
-                break;
-            case AirdropIndex::Daniel:
-                udp_airdrop_id = UDP2_D;
-                break;
-            default:
-                LOG_F(WARNING, "Received unknown or unsupported AirdropIndex: %d", target.index());
-                all_sent_ok = false;
-                continue;  // Skip this target
-        }
-
-        if (!target.has_coordinate()) {
-            LOG_F(WARNING, "AirdropTarget for index %d is missing coordinate data. Skipping.",
-                  target.index());
-            all_sent_ok = false;
-            continue;
-        }
-
-        float drop_lat = static_cast<float>(target.coordinate().latitude());
-        float drop_lng = static_cast<float>(target.coordinate().longitude());
-        // Ensure altitude is handled correctly (needs uint32_t for makeLatLngPacket)
-        // Using altitude from proto directly here. Cast carefully.
-        uint32_t drop_alt = static_cast<uint32_t>(target.coordinate().altitude());
-        // OR if using current aircraft altitude:
-        // uint32_t drop_alt = static_cast<uint32_t>(mav_client->altitude_msl_m()); // Example
-
-        // Set the desired payload state for the packet
-        payload_state_t state_for_packet =
-            TARGET_ACQUIRED;  // Type defined in udp_squared/internal/enum.h
-
-        // The header for the packet type we want to send
-        header_t header_for_packet = SEND_LATLNG;  // Type defined in udp_squared/internal/enum.h
-
-        LOG_F(
-            INFO,
-            "Sending location for ProtoIdx %d (UDP_ID: %d, State: %d): Lat=%.6f, Lng=%.6f, Alt=%u",
-            target.index(), udp_airdrop_id, state_for_packet, drop_lat, drop_lng, drop_alt);
-
-        try {
-            // Call makeLatLngPacket with the correct arguments based on helper.h
-            // Ensure drop_alt is uint32_t as required by the function
-            packet_t packet_to_send =
-                makeLatLngPacket(header_for_packet,  // header_t (SEND_LATLNG)
-                                 udp_airdrop_id,     // airdrop_t (UDP2_A, etc.)
-                                 state_for_packet,   // payload_state_t (TARGET_ACQUIRED)
-                                 drop_lat,           // float
-                                 drop_lng,           // float
-                                 drop_alt            // uint32_t
-);
-
-            // Send the constructed packet using the AirdropClient
-            airdrop_client->send(packet_to_send);
-
-        } catch (const std::exception& e) {
-            LOG_F(ERROR, "Failed to send UDP packet for AirdropIndex %d: %s", target.index(),
-                  e.what());
-            all_sent_ok = false;
-        }
-    }
-
-    if (all_sent_ok && !matched_targets.empty()) {
-        // Use integer 200 for OK
-        LOG_RESPONSE(INFO, "Successfully processed and sent matched target locations", OK);
-    } else if (matched_targets.empty()) {
-        // Use integer 200 OK (or 400 Bad Request if empty is truly an error)
-        LOG_RESPONSE(WARNING, "Received empty or invalid list of matched targets", OK);
-    } else {
-        LOG_RESPONSE(ERROR, "Errors occurred while processing matched targets. Check logs.", INTERNAL_SERVER_ERROR);
+    for (auto& [key, val] : j.items()) {
+        LOG_S(INFO) << "key: " << ", val: " << val;
     }
 }
 

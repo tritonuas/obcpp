@@ -16,6 +16,10 @@ LockPtr<CVResults> CVAggregator::getResults() {
     return LockPtr<CVResults>(this->results, &this->mut);
 }
 
+LockPtr<MatchedResults> CVAggregator::getMatchedResults() {
+    return LockPtr<MatchedResults>(this->matched_results, &this->mut);
+}
+
 void CVAggregator::runPipeline(const ImageData& image) {
     Lock lock(this->mut);
 

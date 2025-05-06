@@ -167,7 +167,7 @@ DEF_GCS_HANDLE(Get, targets, all);
  * ---
  * get the current mappings between identified targets and bottles
  */
-// DEF_GCS_HANDLE(Get, targets, matched);
+DEF_GCS_HANDLE(Get, targets, matched);
 
 /**
  * POST /targets/matched

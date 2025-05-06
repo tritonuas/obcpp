@@ -133,6 +133,7 @@ class MissionState {
     std::shared_ptr<CameraInterface> camera;
 
     std::mutex cv_mut;
+    // Represents a single detected target used in pipeline
     std::vector<DetectedTarget> cv_detected_targets;
     // Gives an index into cv_detected_targets, and specifies that that bottle is matched
     // with the detected_target specified by the index

@@ -13,6 +13,7 @@
 
 #include "cv/pipeline.hpp"
 #include "cv/utilities.hpp"
+#include "protos/obc.pb.h"
 #include "utilities/constants.hpp"
 #include "utilities/lockptr.hpp"
 
@@ -27,6 +28,10 @@ struct CVResults {
     std::vector<AggregatedRun> runs;  // Each pipeline invocation => 1 run
 };
 
+struct MatchedResults {
+    std::unordered_map<AirdropIndex, AirdropTarget> matched_airdrop;
+};
+
 class CVAggregator {
  public:
     explicit CVAggregator(Pipeline&& p);
@@ -37,6 +42,9 @@ class CVAggregator {
 
     // Lockable pointer to retrieve aggregator results
     LockPtr<CVResults> getResults();
+
+    // Lockable pointer to retrieve matched results (after manual match)
+    LockPtr<MatchedResults> getMatchedResults();
 
     // For the endpoint to reset the current list of structs
     std::vector<AggregatedRun> popAllRuns();
@@ -54,6 +62,9 @@ class CVAggregator {
 
     // Shared aggregator results
     std::shared_ptr<CVResults> results;
+
+    // Shared matched results
+    std::shared_ptr<MatchedResults> matched_results;
 };
 
 #endif  // INCLUDE_CV_AGGREGATOR_HPP_
