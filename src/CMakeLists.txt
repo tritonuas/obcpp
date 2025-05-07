@@ -45,7 +45,6 @@ add_executable(${PROJECT_NAME} main.cpp)
 target_include_directories(${PROJECT_NAME} PRIVATE ${INCLUDE_DIRECTORY} ${GEN_PROTOS_DIRECTORY})
 target_link_libraries(${PROJECT_NAME} PRIVATE 
     obcpp_lib
-    Boost::serialization
 )
 target_add_protobuf(${PROJECT_NAME})
 target_add_torch(${PROJECT_NAME})

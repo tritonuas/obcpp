@@ -296,7 +296,6 @@ target_link_libraries(camera_mock PRIVATE -Wl,--copy-dt-needed-entries ${ImageMa
 add_executable(sync_client_mock "sync_client_mock.cpp")
 target_link_libraries(sync_client_mock PRIVATE 
     obcpp_lib
-    Boost::serialization
 )
 target_include_directories(sync_client_mock PRIVATE ${INCLUDE_DIRECTORY})
 target_add_boost(sync_client_mock)
@@ -315,7 +314,6 @@ target_link_libraries(sync_client_mock PRIVATE -Wl,--copy-dt-needed-entries ${Im
 add_executable(sync_server_mock "sync_server_mock.cpp")
 target_link_libraries(sync_server_mock PRIVATE 
     obcpp_lib
-    Boost::serialization
 )
 target_include_directories(sync_server_mock PRIVATE ${INCLUDE_DIRECTORY})
 target_add_boost(sync_server_mock)
