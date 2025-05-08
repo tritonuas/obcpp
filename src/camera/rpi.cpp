@@ -24,25 +24,19 @@ const uint32_t IMG_HEIGHT = 1520;
 const uint32_t BUFFER_SIZE = IMG_WIDTH * IMG_HEIGHT * 3 / 2;
 
 
-RPICamera::RPICamera(asio::io_context* io_context_) : CameraInterface(config), client(io_context_, SERVER_IP, SERVER_PORT) {
+RPICamera::RPICamera(CameraConfig config, asio::io_context* io_context_) : CameraInterface(config), client(io_context_, SERVER_IP, SERVER_PORT) {
 // TODO: do we need this? not sure how we're configuring the camera if that's being done on Daniel's side
 
 }
 
-// RPICamera::RPICamera(asio::io_context* io_context_) : client(io_context_, SERVER_IP, SERVER_PORT) {
-//     // // TODO: do we need this? not sure how we're configuring the camera if that's being done on Daniel's side
-    
-// }
-
 // TODO
 void RPICamera::connect() {
-    if (this->isConnected == true) {
+    if (this->connected == true) {
         return;
     }
 	
-	while (!isConnected) {
-		// this->isConnected = this->client->connect();
-        this->isConnected = client.connect();
+	while (!this->connected) {
+        this->connected = client.connect();
 	}
 
 	// TODO: switch to LOG_F?
@@ -52,7 +46,11 @@ void RPICamera::connect() {
 	client.send(START_REQUEST);
 }
 
-std::optional<ImageData> RPICamera::takePicture(const std::chrono::milliseconds& timeout) {
+RPICamera::~RPICamera() {
+
+}
+
+std::optional<ImageData> RPICamera::takePicture(const std::chrono::milliseconds& timeout, std::shared_ptr<MavlinkClient> mavlinkClient) {
 	
 	// client sends a request to take a pictures
 	client.send(PICTURE_REQUEST);
@@ -88,7 +86,35 @@ std::optional<cv::Mat> RPICamera::imgConvert(std::vector<std::uint8_t> buf) {
     cv::Mat yuv420_img(IMG_HEIGHT * 3 / 2, IMG_WIDTH, CV_8UC1, buf.data());
 
     cv::Mat bgr_img(IMG_HEIGHT, IMG_WIDTH, CV_8UC3);
-    cv::cvtColor(yuv420_img, bgr_img, cv::COLOR_YUV420p2BGR); // TODO: not sure if this is the right color space
+    cv::cvtColor(yuv420_img, bgr_img, cv::COLOR_YUV2BGR_I420); // TODO: not sure if this is the right color space
 
     return bgr_img;
+}
+
+void RPICamera::startTakingPictures(const std::chrono::milliseconds& timeout, std::shared_ptr<MavlinkClient> mavlinkClient) {
+
+}
+
+void RPICamera::stopTakingPictures() {
+
+}
+
+void RPICamera::ping() {
+
+}
+
+void RPICamera::readImage() {
+
+}
+
+void RPICamera::readTelemetry() {
+
+}
+
+void RPICamera::startStreaming() {
+
+}
+
+bool RPICamera::isConnected() {
+    return true;
 }

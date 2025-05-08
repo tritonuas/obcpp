@@ -37,35 +37,48 @@ class RPICamera : public CameraInterface {
 		Client client;
         asio::io_context io_context_;
 
+        std::atomic_bool connected;
+
 		std::deque<ImageData> imageQueue; // TODO: unsure if we actually need this if we're just gonna directly save images to disk
 
 		// lock for obc client?
 		// lock for imageQueue?	
 
-        std::atomic_bool isConnected;
-
-		// TODO: do we need these?
-		// const std::chrono::milliseconds connectionTimeout = 1000ms;
-		// const std::chrono::milliseconds connectionRetry = 500ms;
-		// const std::chrono::milliseconds takePictureTimeout = 1000ms;
-
+        /**
+         * Converts the image taken from the camera to a suitable format for the CV pipeline
+         */
 		std::optional<cv::Mat> imgConvert(std::vector<std::uint8_t> imgbuf);
+
+        /**
+         * Reads in the image data when taking a picture
+         */
+        void readImage();
+
+        /**
+         * Reads in the telemetry data when taking a picture
+         */
+        void readTelemetry();
 
 	public:
     
 		explicit RPICamera(CameraConfig config, asio::io_context* io_context_);
-        // explicit RPICamera(asio::io_context* io_context_);
 
 		// TODO: destructor?
-		// ~RPICamera();
+		~RPICamera();
 	
 		void connect() override;
-		// bool isConnected() override;
+		bool isConnected() override;
 
-		std::optional<ImageData> takePicture(const std::chrono::milliseconds& timeout) override; // TODO: mavlink
+		std::optional<ImageData> takePicture(const std::chrono::milliseconds& timeout, std::shared_ptr<MavlinkClient> mavlinkClient) override;
+
+        void startTakingPictures(const std::chrono::milliseconds& interval,
+            std::shared_ptr<MavlinkClient> mavlinkClient) override;
+        void stopTakingPictures() override;
+
+        void startStreaming() override;
         
         // TODO: unsure how to implement
-        // void ping();
+        void ping();
 };
 
 #endif

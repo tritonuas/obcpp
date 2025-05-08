@@ -62,19 +62,19 @@ void MockCamera::stopTakingPictures() {
     this->captureThread.join();
 }
 
-std::optional<ImageData> MockCamera::getLatestImage() {
-    ReadLock lock(this->imageQueueLock);
-    ImageData lastImage = this->imageQueue.front();
-    this->imageQueue.pop_front();
-    return lastImage;
-}
+// std::optional<ImageData> MockCamera::getLatestImage() {
+//     ReadLock lock(this->imageQueueLock);
+//     ImageData lastImage = this->imageQueue.front();
+//     this->imageQueue.pop_front();
+//     return lastImage;
+// }
 
-std::deque<ImageData> MockCamera::getAllImages() {
-    ReadLock lock(this->imageQueueLock);
-    std::deque<ImageData> outputQueue = this->imageQueue;
-    this->imageQueue = std::deque<ImageData>();
-    return outputQueue;
-}
+// std::deque<ImageData> MockCamera::getAllImages() {
+//     ReadLock lock(this->imageQueueLock);
+//     std::deque<ImageData> outputQueue = this->imageQueue;
+//     this->imageQueue = std::deque<ImageData>();
+//     return outputQueue;
+// }
 
 void MockCamera::captureEvery(const std::chrono::milliseconds& interval,
     std::shared_ptr<MavlinkClient> mavlinkClient) {

@@ -31,6 +31,15 @@ struct ImageTelemetry {
     double roll_deg;
 };
 
+/**
+ * Given a shared ptr to a mavlink client, query it for the telemetry
+ * information needed for ImageTelemetry and the CV pipeline.
+ * 
+ * If nullptr is passed for mavlinkClient, nullopt is returned 
+*/
+std::optional<ImageTelemetry> queryMavlinkImageTelemetry(
+    std::shared_ptr<MavlinkClient> mavlinkClient);
+
 struct ImageData {
     cv::Mat DATA;
     uint64_t TIMESTAMP;
@@ -56,13 +65,21 @@ class CameraInterface {
        CameraConfig config;
    
     public:
-       explicit CameraInterface(const CameraConfig& config);
-    // explicit CameraInterface();
-       virtual ~CameraInterface() = default;
+        explicit CameraInterface(const CameraConfig& config);
+        // explicit CameraInterface();
+        virtual ~CameraInterface() = default;
    
-       virtual void connect() = 0;
+        virtual void connect() = 0;
+        virtual bool isConnected() = 0;
 
-       virtual std::optional<ImageData> takePicture(const std::chrono::milliseconds& timeout) = 0;
+        virtual void startTakingPictures(const std::chrono::milliseconds& interval,
+        std::shared_ptr<MavlinkClient> mavlinkClient) = 0;
+
+        virtual void stopTakingPictures() = 0;
+
+        virtual void startStreaming() = 0;
+
+        virtual std::optional<ImageData> takePicture(const std::chrono::milliseconds& timeout, std::shared_ptr<MavlinkClient> mavlinkClient) = 0;
    };
 
 #endif  // INCLUDE_CAMERA_INTERFACE_HPP_
