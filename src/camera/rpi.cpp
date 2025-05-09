@@ -26,7 +26,7 @@ const uint32_t IMG_SIZE = 4668440;
 
 
 RPICamera::RPICamera(CameraConfig config, asio::io_context* io_context_) : CameraInterface(config), client(io_context_, SERVER_IP, SERVER_PORT) {
-
+    this->connected = false;
 }
 
 void RPICamera::connect() {
@@ -37,12 +37,6 @@ void RPICamera::connect() {
 	while (!this->connected) {
         this->connected = client.connect();
 	}
-
-    std::string log = "Connected to: " + client.getIP() + " on port: " + std::to_string(client.getPort());
-    LOG_F(INFO, log.c_str());
-
-	// TODO: switch to LOG_F?
-	// std::cout << "Connected to: " << client.getIP() << " on port: " << client.getPort() << '\n';
 	
     // tells the camera to start the camera thread
 	client.send(START_REQUEST);
