@@ -79,7 +79,7 @@ class CameraInterface {
 
         virtual void startStreaming() = 0;
 
-        virtual std::optional<ImageData> takePicture(const std::chrono::milliseconds& timeout, std::shared_ptr<MavlinkClient> mavlinkClient) = 0;
+        virtual std::optional<ImageData> takePicture(const std::chrono::milliseconds& timeout, std::shared_ptr<MavlinkClient> mavlinkClient) = 0; 
    };
 
 #endif  // INCLUDE_CAMERA_INTERFACE_HPP_

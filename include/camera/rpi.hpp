@@ -28,7 +28,7 @@ namespace asio = boost::asio;
 // const std::string SERVER_IP = "127.0.0.1";
 // const int SERVER_PORT = 5000;
 const std::uint8_t START_REQUEST = 's';
-const std::uint8_t PICTURE_REQUEST = 'p';
+const std::uint8_t PICTURE_REQUEST = 'I';
 const std::uint8_t END_REQUEST = 'e';
 const std::uint8_t LOCK_REQUEST = 'l';
 

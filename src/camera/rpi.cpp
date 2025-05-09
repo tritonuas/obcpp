@@ -38,8 +38,11 @@ void RPICamera::connect() {
         this->connected = client.connect();
 	}
 
+    std::string log = "Connected to: " + client.getIP() + " on port: " + std::to_string(client.getPort());
+    LOG_F(INFO, log.c_str());
+
 	// TODO: switch to LOG_F?
-	std::cout << "Connected to: " << client.getIP() << " on port: " << client.getPort() << '\n';
+	// std::cout << "Connected to: " << client.getIP() << " on port: " << client.getPort() << '\n';
 	
     // tells the camera to start the camera thread
 	client.send(START_REQUEST);
