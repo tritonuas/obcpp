@@ -5,9 +5,7 @@
 #include <boost/asio.hpp>
 #include <opencv2/opencv.hpp>
 #include "camera_data.hpp"
-
-// #include <iostream>
-// #include <boost/asio.hpp>
+#include "rpi_connection.hpp"
 
 namespace asio = boost::asio;
 
@@ -37,10 +35,14 @@ class Client {
         void send(std::uint8_t request);
 
         /**
-         * 
+         * Reads in the header and fills a Header struct
          */
-        // TODO: not sure what the return type should be, std::vector<std::uint8_t> ?
-        std::vector<std::uint8_t> recv(const int bufSize);
+        Header recvHeader();
+
+        /**
+         * Reads the actual data specified by the header
+         */
+        std::vector<std::uint8_t> recvBody(const int bufSize);
 
         std::string getIP();
 

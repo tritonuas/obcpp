@@ -23,8 +23,8 @@ using namespace std::chrono_literals; // NOLINT
 
 namespace asio = boost::asio;
 
-const std::string SERVER_IP = "192.168.68.1";
-const int SERVER_PORT = 25565;
+// const std::string SERVER_IP = "192.168.68.1";
+// const int SERVER_PORT = 25565;
 // const std::string SERVER_IP = "127.0.0.1";
 // const int SERVER_PORT = 5000;
 const std::uint8_t START_REQUEST = 's';
@@ -52,12 +52,14 @@ class RPICamera : public CameraInterface {
         /**
          * Reads in the image data when taking a picture
          */
-        void readImage();
+        std::vector<std::uint8_t> readImage();
 
         /**
          * Reads in the telemetry data when taking a picture
          */
-        void readTelemetry();
+        std::optional<ImageTelemetry> readTelemetry();
+
+        std::vector<std::uint8_t> readPacket();
 
 	public:
     
