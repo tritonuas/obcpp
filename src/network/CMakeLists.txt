@@ -6,6 +6,7 @@ set(COMMON_FILES
     gcs.cpp
     mavlink.cpp
     client.cpp
+    mock_server.cpp
 )
 
 set(FILES

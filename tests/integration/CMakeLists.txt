@@ -328,6 +328,7 @@ target_add_matplot(sync_server_mock)
 target_add_loguru(sync_server_mock)
 target_include_directories(sync_server_mock PRIVATE ${ImageMagick_INCLUDE_DIRS})
 target_link_libraries(sync_server_mock PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
+
 # cuda_check
 add_executable(cuda_check ${SOURCES} cuda_check.cpp)
 target_add_torch(cuda_check)
