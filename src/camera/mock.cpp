@@ -13,6 +13,7 @@
 #include "utilities/locks.hpp"
 #include "utilities/rng.hpp"
 #include "utilities/common.hpp"
+#include <loguru.hpp>
 
 
 MockCamera::MockCamera(CameraConfig config) : CameraInterface(config) {
@@ -30,6 +31,8 @@ MockCamera::MockCamera(CameraConfig config) : CameraInterface(config) {
                     0,
                     telemetry);
                 this->mock_images.push_back(img_data);
+            } else {
+                LOG_F(ERROR, "IMG DIRECTORY IS EMPTY | RIP CAT");
             }
         });
 }
@@ -99,6 +102,7 @@ void MockCamera::captureEvery(const std::chrono::milliseconds& interval,
 
 std::optional<ImageData> MockCamera::takePicture(const std::chrono::milliseconds& timeout,
         std::shared_ptr<MavlinkClient> mavlinkClient) {
+    LOG_F(ERROR, "try take picture");
     int random_idx = randomInt(0, this->mock_images.size()-1);
 
     ImageData img_data = this->mock_images.at(random_idx);
@@ -115,6 +119,9 @@ std::optional<ImageData> MockCamera::takePicture(const std::chrono::milliseconds
         .TELEMETRY = img_data.TELEMETRY,
     };
 
+
+
+    LOG_F(ERROR, "take picture yay");
     return imageData;
 }
 
