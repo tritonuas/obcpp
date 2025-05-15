@@ -4,7 +4,6 @@
 #include <iostream>
 #include <boost/asio.hpp>
 #include <opencv2/opencv.hpp>
-#include "camera_data.hpp"
 #include "rpi_connection.hpp"
 
 namespace asio = boost::asio;
@@ -32,21 +31,19 @@ class Client {
          * 
          */
         // TODO: so send is supposed to send a char but im unsure what the type should be uchar, uint8_t, etc.
-        void send(std::uint8_t request);
+        bool send(std::uint8_t request);
 
         /**
          * Reads in the header and fills a Header struct
          */
+        // std::optional<Header>
         Header recvHeader();
 
         /**
          * Reads the actual data specified by the header
          */
+        // std::optional<std::vector<std::uint8_t>>
         std::vector<std::uint8_t> recvBody(const int bufSize);
-
-        std::string getIP();
-
-        int getPort();
 
 };
 

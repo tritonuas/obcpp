@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <boost/asio.hpp>
-#include "network/mock_server.hpp"
+#include "network/tcp_server.hpp"
 
 namespace asio = boost::asio;
 
@@ -18,5 +18,5 @@ int main() {
         server.start();
     //}
 
-    return EXIT_SUCCESS;
+   return 0;
 }

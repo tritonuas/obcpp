@@ -1,5 +1,5 @@
-#ifndef INCLUDE_NETWORK_SERVER_HPP_
-#define INCLUDE_NETWORK_SERVER_HPP_
+#ifndef INCLUDE_NETWORK_TCP_SERVER_HPP_
+#define INCLUDE_NETWORK_TCP_SERVER_HPP_
 
 #include <iostream>
 #include <boost/asio.hpp>
@@ -34,4 +34,4 @@ class Server {
         void shutdown();
 };
 
-#endif  // INCLUDE_NETWORK_SERVER_HPP_
+#endif 

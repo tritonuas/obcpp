@@ -19,7 +19,7 @@ using json = nlohmann::json;
 using namespace std::chrono_literals; // NOLINT
 
 #include "interface.hpp"
-#include "network/client.hpp"
+#include "network/udp_client.hpp"
 
 namespace asio = boost::asio;
 
@@ -34,7 +34,7 @@ const std::uint8_t LOCK_REQUEST = 'l';
 
 class RPICamera : public CameraInterface {
 	private:
-		Client client;
+		UDPClient client;
         asio::io_context io_context_;
 
         std::atomic_bool connected;

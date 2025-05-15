@@ -1,5 +1,5 @@
 #include <loguru.hpp>
-#include "network/client.hpp"
+#include "network/tcp_client.hpp"
 
 
 Client::Client(asio::io_context* io_context_, std::string ip, int port) : socket_(*io_context_) {
@@ -26,7 +26,7 @@ bool Client::connect() {
     return true;
 }
 
-void Client::send(std::uint8_t request) {
+bool Client::send(std::uint8_t request) {
     boost::system::error_code ec;
 
     LOG_F(INFO, std::string("Sending request" + static_cast<char>(request)).c_str());
@@ -36,10 +36,11 @@ void Client::send(std::uint8_t request) {
     if (ec) {
         // TODO: what do we do if we fail to send a request? keep retrying or drop that request?
         LOG_F(INFO, std::string("Failed to send request: " + ec.message()).c_str());
+        return false;
     }
 
     LOG_F(INFO, std::string("Bytes sent: " + bytesSent).c_str());
-
+    return true;
 }
 
 Header Client::recvHeader() {
@@ -77,12 +78,4 @@ std::vector<std::uint8_t> Client::recvBody(const int bufSize) {
     LOG_F(INFO, std::string("Bytes read (body): " + bytesRead).c_str());
     
     return recvbuf;
-}
-
-std::string Client::getIP() {
-    return this->ip;
-}
-
-int Client::getPort() {
-    return this->port;
 }
