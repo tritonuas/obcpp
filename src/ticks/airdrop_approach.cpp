@@ -13,7 +13,8 @@ AirdropApproachTick::AirdropApproachTick(std::shared_ptr<MissionState> state)
     :Tick(state, TickID::AirdropApproach) {}
 
 void AirdropApproachTick::init() {
-    state->getMav()->startMission();
+    LOG_F(INFO, "start mission airdrop");
+    this->state->getMav()->startMission();
 }
 
 std::chrono::milliseconds AirdropApproachTick::getWait() const {
@@ -24,9 +25,9 @@ Tick* AirdropApproachTick::tick() {
     if (state->getMav()->isAtFinalWaypoint()) {
         if (state->next_airdrop_to_drop.has_value()) {
             LOG_F(INFO, "Dropping airdrop %d", state->next_airdrop_to_drop.value());
-            state->getAirdrop()->send(makeDropNowPacket(state->next_airdrop_to_drop.value()));
-            state->getAirdrop()->send(makeDropNowPacket(state->next_airdrop_to_drop.value()));
-            state->getAirdrop()->send(makeDropNowPacket(state->next_airdrop_to_drop.value()));
+            // state->getAirdrop()->send(makeDropNowPacket(state->next_airdrop_to_drop.value()));
+            // state->getAirdrop()->send(makeDropNowPacket(state->next_airdrop_to_drop.value()));
+            // state->getAirdrop()->send(makeDropNowPacket(state->next_airdrop_to_drop.value()));
         } else {
             LOG_F(ERROR, "Cannot drop bottle because no bottle to drop");
         }
