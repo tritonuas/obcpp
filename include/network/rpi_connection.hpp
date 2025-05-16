@@ -3,6 +3,10 @@
 
 #include <iostream>
 
+const uint32_t IMG_WIDTH = 2028;
+const uint32_t IMG_HEIGHT = 1520;
+const uint32_t BUFFER_SIZE = IMG_WIDTH * IMG_HEIGHT * 3 / 2;
+
 const std::string SERVER_IP = "192.168.68.1";
 const int SERVER_PORT = 25565;
 const int headerSize = 12;

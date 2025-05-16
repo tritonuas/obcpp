@@ -6,8 +6,9 @@ set(COMMON_FILES
     gcs.cpp
     mavlink.cpp
     tcp_client.cpp
-    tcp_mock_server.cpp
+    tcp_server.cpp
     udp_client.cpp
+    udp_server.cpp
 )
 
 set(FILES

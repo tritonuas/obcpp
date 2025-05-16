@@ -44,11 +44,12 @@ bool UDPClient::send(std::uint8_t request) {
 // receive an image back from the server
 Header UDPClient::recvHeader() {
     boost::system::error_code ec;
-    asio::ip::udp::endpoint endpoint_(asio::ip::udp::endpoint(asio::ip::make_address(this->ip), this->port));
+    // asio::ip::udp::endpoint endpoint_(asio::ip::udp::endpoint(asio::ip::make_address(this->ip), this->port));
+    asio::ip::udp::endpoint sender_endpoint;
 
     Header header;
 
-    int bytesRead = this->socket_.receive_from(asio::buffer(&header, sizeof(Header)), endpoint_, 0, ec);
+    int bytesRead = this->socket_.receive_from(asio::buffer(&header, sizeof(Header)), sender_endpoint, 0, ec);
 
     if (ec) {
         std::cout << ("Failed to read header: %s", ec.message()) << '\n';
@@ -62,13 +63,14 @@ Header UDPClient::recvHeader() {
 
 std::vector<std::uint8_t> UDPClient::recvBody(const int bufSize) {
     boost::system::error_code ec;
-    asio::ip::udp::endpoint endpoint_(asio::ip::udp::endpoint(asio::ip::make_address(this->ip), this->port));
+    // asio::ip::udp::endpoint endpoint_(asio::ip::udp::endpoint(asio::ip::make_address(this->ip), this->port));
+    asio::ip::udp::endpoint sender_endpoint;
 
     std::cout << ("Reading in bufSize (body): %d", bufSize) << '\n';
 
     std::vector<std::uint8_t> buf(bufSize);
 
-    int bytesRead = this->socket_.receive_from(asio::buffer(buf), endpoint_, 0, ec);
+    int bytesRead = this->socket_.receive_from(asio::buffer(buf), sender_endpoint, 0, ec);
 
     if (ec) {
         std::cout << ("Failed to send body: %s", ec.message()) << '\n';

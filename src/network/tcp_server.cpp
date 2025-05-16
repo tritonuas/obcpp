@@ -1,9 +1,5 @@
 #include "network/tcp_server.hpp"
 
-const uint32_t IMG_WIDTH = 2028;
-const uint32_t IMG_HEIGHT = 1520;
-const uint32_t BUFFER_SIZE = IMG_WIDTH * IMG_HEIGHT * 3 / 2;
-
 Server::Server(asio::io_context* io_context_, std::string ip, int port) : socket_(*io_context_), acceptor_(*io_context_, asio::ip::tcp::endpoint(asio::ip::make_address(ip), port))  {
     this->ip = ip;
     this->port = port;

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <boost/asio.hpp>
 #include <opencv2/opencv.hpp>
+#include "network/rpi_connection.hpp"
 
 namespace asio = boost::asio;
 
@@ -20,13 +21,13 @@ class UDPServer {
     public:
         UDPServer(asio::io_context* io_context_, std::string ip, int port);
 
-        void start();
+        bool start();
 
-        void send();
+        void send(asio::ip::udp::endpoint & endpoint);
 
         void recv();
 
-        void handleRequest(char request);
+        void handleRequest(char request, asio::ip::udp::endpoint & endpoint);
 
         void shutdown();
 };

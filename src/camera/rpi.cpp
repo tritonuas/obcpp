@@ -19,9 +19,9 @@
 
 #include "camera/rpi.hpp"
 
-const uint32_t IMG_WIDTH = 2028;
-const uint32_t IMG_HEIGHT = 1520;
-const uint32_t IMG_BUFFER = IMG_WIDTH * IMG_HEIGHT * 3 / 2; // normal image size
+// const uint32_t IMG_WIDTH = 2028;
+// const uint32_t IMG_HEIGHT = 1520;
+// const uint32_t IMG_BUFFER = IMG_WIDTH * IMG_HEIGHT * 3 / 2; // normal image size
 const uint32_t IMG_SIZE = 4668440;
 
 
