@@ -61,6 +61,7 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
     SET_CONFIG_OPT(pathing, rrt, iterations_per_waypoint);
     SET_CONFIG_OPT(pathing, rrt, rewire_radius);
     SET_CONFIG_OPT(pathing, rrt, optimize);
+    SET_CONFIG_OPT(pathing, rrt, generate_deviations);
 
     SET_CONFIG_OPT_VARIANT(PointFetchMethod, pathing, rrt, point_fetch_method);
 

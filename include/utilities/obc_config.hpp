@@ -63,6 +63,7 @@ struct RRTConfig {
     PointFetchMethod::Enum point_fetch_method;
     bool allowed_to_skip_waypoints;  // if true, will skip waypoints if it can not connect after 1
                                      // RRT iteration
+    bool generate_deviations;
 };
 
 namespace AirdropCoverageMethod {
