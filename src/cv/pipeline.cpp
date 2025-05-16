@@ -73,8 +73,10 @@ PipelineResults Pipeline::run(const ImageData& imageData) {
         // Localize
         GPSCoord targetPosition;
         if (imageData.TELEMETRY.has_value()) {
-            targetPosition = this->ecefLocalizer.localize(imageData.TELEMETRY.value(), box);
+            targetPosition = this->gsdLocalizer.localize(imageData.TELEMETRY.value(), box);
+            std::cout << "pipeline: " << targetPosition.latitude() << " " << targetPosition.longitude();
         }
+
 
         // Populate your DetectedTarget
         DetectedTarget detected;

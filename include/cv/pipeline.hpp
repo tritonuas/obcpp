@@ -49,7 +49,7 @@ class Pipeline {
 
  private:
     std::unique_ptr<YOLO> yoloDetector;
-    ECEFLocalization ecefLocalizer;
+    // ECEFLocalization ecefLocalizer;
     GSDLocalization gsdLocalizer;
     bool do_preprocess;       // Flag to enable/disable preprocessing
     Preprocess preprocessor;  // Preprocess utility instance

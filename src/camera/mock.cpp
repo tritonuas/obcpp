@@ -102,7 +102,6 @@ void MockCamera::captureEvery(const std::chrono::milliseconds& interval,
 
 std::optional<ImageData> MockCamera::takePicture(const std::chrono::milliseconds& timeout,
         std::shared_ptr<MavlinkClient> mavlinkClient) {
-    LOG_F(ERROR, "try take picture");
     int random_idx = randomInt(0, this->mock_images.size()-1);
 
     ImageData img_data = this->mock_images.at(random_idx);
@@ -110,6 +109,7 @@ std::optional<ImageData> MockCamera::takePicture(const std::chrono::milliseconds
 
     // if we can't find corresonding telemtry json, just query mavlink
     if (!img_data.TELEMETRY.has_value()) {
+        LOG_F(ERROR, "no image json value");
         img_data.TELEMETRY = queryMavlinkImageTelemetry(mavlinkClient);
     }
 
@@ -119,9 +119,6 @@ std::optional<ImageData> MockCamera::takePicture(const std::chrono::milliseconds
         .TELEMETRY = img_data.TELEMETRY,
     };
 
-
-
-    LOG_F(ERROR, "take picture yay");
     return imageData;
 }
 
