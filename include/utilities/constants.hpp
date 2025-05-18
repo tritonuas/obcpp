@@ -77,6 +77,7 @@ const std::chrono::milliseconds AUTO_LANDING_TICK_WAIT = std::chrono::millisecon
 const std::chrono::milliseconds MISSION_DONE_TICK_WAIT = std::chrono::milliseconds(100);
 const std::chrono::milliseconds ACTIVE_TAKEOFF_TICK_WAIT = std::chrono::milliseconds(100);
 const std::chrono::milliseconds WAIT_FOR_TAKEOFF_TICK_WAIT = std::chrono::milliseconds(100);
+const std::chrono::milliseconds REFUELING_TICK_WAIT = std::chrono::milliseconds(10000);
 
 const double EARTH_RADIUS_METERS = 6378137.0;
 
