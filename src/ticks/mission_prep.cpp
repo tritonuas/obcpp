@@ -85,6 +85,5 @@ std::vector<std::pair<cv::Mat, AirdropIndex>> MissionPrepTick::generateReference
 }
 
 std::string MissionPrepTick::getNotStolenRoute(const Airdrop& target) {
-
     return std::string("/generate");
 }

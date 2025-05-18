@@ -56,7 +56,6 @@ std::optional<ImageTelemetry> queryMavlinkImageTelemetry(
   double heading_deg = mavlinkClient->heading_deg();
   double yaw_deg = mavlinkClient->yaw_deg();
   double pitch_deg = mavlinkClient->pitch_deg();
-  
   double roll_deg = mavlinkClient->roll_deg();
 
   std::cout << "lat_deg" << lat_deg << std::endl;
