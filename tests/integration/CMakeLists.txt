@@ -311,6 +311,24 @@ target_add_loguru(tcp_client_mock)
 target_include_directories(tcp_client_mock PRIVATE ${ImageMagick_INCLUDE_DIRS})
 target_link_libraries(tcp_client_mock PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
+add_executable(udp_client_mock "udp_client_mock.cpp")
+target_link_libraries(udp_client_mock PRIVATE 
+    obcpp_lib
+)
+target_include_directories(udp_client_mock PRIVATE ${INCLUDE_DIRECTORY})
+target_add_boost(udp_client_mock)
+target_add_protobuf(udp_client_mock)
+target_add_torch(udp_client_mock)
+target_add_torchvision(udp_client_mock)
+target_add_json(udp_client_mock)
+target_add_opencv(udp_client_mock)
+target_add_httplib(udp_client_mock)
+target_add_mavsdk(udp_client_mock)
+target_add_matplot(udp_client_mock)
+target_add_loguru(udp_client_mock)
+target_include_directories(udp_client_mock PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(udp_client_mock PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
+
 add_executable(tcp_server_mock "tcp_server_mock.cpp")
 target_link_libraries(tcp_server_mock PRIVATE 
     obcpp_lib

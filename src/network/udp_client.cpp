@@ -13,31 +13,31 @@ bool UDPClient::connect() {
     this->socket_.open(asio::ip::udp::v4(), ec);
 
     if (ec) {
-        std::cout << "Failed to connect" << '\n';
+        LOG_F(ERROR, "Failed to connect");
         return false;
     }
 
-    std::cout << ("Connected to %s on port %d", this->ip, this->port) << '\n';
+    LOG_F(INFO, "Connected to %s on port %d", this->ip.c_str(), this->port);
 
     return true;
 }
-
 
 // send a request to the server
 bool UDPClient::send(std::uint8_t request) {
     boost::system::error_code ec;
     asio::ip::udp::endpoint endpoint_(asio::ip::udp::endpoint(asio::ip::make_address(this->ip), this->port));
 
-    std::cout << ("Sending request %c", request) << '\n';
+    LOG_F(INFO, "Sending request %c", request);
 
     int bytesSent = this->socket_.send_to(asio::buffer(&request, sizeof(request)), endpoint_, 0, ec);
 
     if (ec) {
-        std::cout << ("Failed to send request: %s", ec.message()) << '\n';
+        LOG_F(ERROR, "Failed to send request: %s", ec.message().c_str());
         return false;
     }
 
-    std::cout << ("Sent %d bytes", bytesSent);
+    LOG_F(INFO, "Sent %d bytes", bytesSent);
+
     return true;
 }
 
@@ -52,11 +52,11 @@ Header UDPClient::recvHeader() {
     int bytesRead = this->socket_.receive_from(asio::buffer(&header, sizeof(Header)), sender_endpoint, 0, ec);
 
     if (ec) {
-        std::cout << ("Failed to read header: %s", ec.message()) << '\n';
+        LOG_F(ERROR, "Failed to read header: %s", ec.message().c_str());
         return {};
     }
 
-    std::cout << ("Bytes read (header): %d", bytesRead) << '\n';
+    LOG_F(INFO, "Bytes read (header): %d", bytesRead);
 
     return header;
 }
@@ -66,18 +66,18 @@ std::vector<std::uint8_t> UDPClient::recvBody(const int bufSize) {
     // asio::ip::udp::endpoint endpoint_(asio::ip::udp::endpoint(asio::ip::make_address(this->ip), this->port));
     asio::ip::udp::endpoint sender_endpoint;
 
-    std::cout << ("Reading in bufSize (body): %d", bufSize) << '\n';
+    LOG_F(INFO, "Reading in bufSize (body): %d", bufSize);
 
     std::vector<std::uint8_t> buf(bufSize);
 
     int bytesRead = this->socket_.receive_from(asio::buffer(buf), sender_endpoint, 0, ec);
 
     if (ec) {
-        std::cout << ("Failed to send body: %s", ec.message()) << '\n';
+        LOG_F(ERROR, "Failed to send body: %s", ec.message().c_str());
         return {};
     }
 
-    std::cout << ("Bytes read: %d", bytesRead) << '\n';
+    LOG_F(INFO, "Bytes read: %d", bytesRead);
 
     return buf;
 }
