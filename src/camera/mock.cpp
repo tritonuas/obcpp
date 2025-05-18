@@ -13,7 +13,6 @@
 #include "utilities/locks.hpp"
 #include "utilities/rng.hpp"
 #include "utilities/common.hpp"
-#include <loguru.hpp>
 
 
 MockCamera::MockCamera(CameraConfig config) : CameraInterface(config) {

@@ -1,12 +1,12 @@
 #include <google/protobuf/util/json_util.h>
 #include <httplib.h>
 
-#include <filesystem>
-#include <memory>
-#include <nlohmann/json.hpp>
 #include <optional>
 #include <string>
 #include <vector>
+#include <filesystem>
+#include <memory>
+#include <nlohmann/json.hpp>
 
 #include "core/mission_state.hpp"
 #include "network/gcs_macros.hpp"
@@ -417,14 +417,15 @@ DEF_GCS_HANDLE(Post, targets, matched) {
     if (matched_results.data == nullptr) {
         LOG_S(ERROR) << "lockptr is null";
     }
-    
-    AirdropTarget returned_matched_result; 
+
+    AirdropTarget returned_matched_result;
 
     for (const auto& instance : j_root) {
         LOG_S(INFO) << returned_matched_result.index();
         google::protobuf::util::JsonStringToMessage(instance.dump(), &returned_matched_result);
         LOG_S(WARNING) << returned_matched_result.index();
-        matched_results.data->matched_airdrop[returned_matched_result.index()] = returned_matched_result;
+        matched_results.data->matched_airdrop[returned_matched_result.index()]
+        = returned_matched_result;
         LOG_S(ERROR) << returned_matched_result.index();
     }
 

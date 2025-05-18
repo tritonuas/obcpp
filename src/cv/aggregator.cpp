@@ -10,15 +10,15 @@ CVAggregator::CVAggregator(Pipeline&& p) : pipeline(std::move(p)) {
     this->results = std::make_shared<CVResults>();
     this->matched_results = std::make_shared<MatchedResults>();
 
-    AirdropTarget dummy; // Create one dummy template
+    AirdropTarget dummy;  // Create one dummy template
 
     // Configure the coordinate part of the dummy
-    GPSCoord* coord_in_dummy = dummy.mutable_coordinate(); // Let dummy own its coordinate
+    GPSCoord* coord_in_dummy = dummy.mutable_coordinate();  // Let dummy own its coordinate
     coord_in_dummy->set_altitude(0.0);
     coord_in_dummy->set_latitude(0.0);
     coord_in_dummy->set_longitude(0.0);
 
-    dummy.set_object(ODLCObjects::Undefined); // Set common properties once
+    dummy.set_object(ODLCObjects::Undefined);  // Set common properties once
 
     // Now assign copies, each with its specific index
     dummy.set_index(AirdropIndex::Kaz);

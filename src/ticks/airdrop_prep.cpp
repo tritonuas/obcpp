@@ -57,14 +57,15 @@ Tick* AirdropPrepTick::tick() {
     // IMPORTANT: need to set the altitude of the target coord to the config value so it doesn't
     // try and nosedive into the ground...
     target.mutable_coordinate()->set_altitude(state->config.pathing.approach.drop_altitude_m);
-    
+
     // Use for testing cuz testing images don't have proper GPS coordinates attached to them
     // Uncomment the following two lines for sitl testing
     // target.mutable_coordinate()->set_latitude(38.31584541086285);
     // target.mutable_coordinate()->set_longitude(-76.55316855169548);
 
     LOG_F(INFO, "Routing to airdrop target %d at (%f, %f) alt %f", static_cast<int>(next_airdrop),
-          target.coordinate().latitude(), target.coordinate().longitude(), target.coordinate().altitude());
+          target.coordinate().latitude(), target.coordinate().longitude(),
+          target.coordinate().altitude());
 
     state->setAirdropPath(generateAirdropApproach(state, target.coordinate()));
 
