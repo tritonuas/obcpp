@@ -3,7 +3,7 @@ set(BINARY ${CMAKE_PROJECT_NAME}_tests)
 file(GLOB_RECURSE TEST_SOURCES LIST_DIRECTORIES false *.hpp *.h *.cpp *.c)
 
 add_executable(${BINARY} ${TEST_SOURCES})# ${PROJECT_SOURCE_DIR}/build/gen_protos/protos/obc.pb.cc)
-target_link_libraries(${BINARY} PRIVATE obcpp_lib_mock) 
+target_link_libraries(${BINARY} PRIVATE obcpp_lib_mock obcpp_cv) 
 
 set(INCLUDE_DIRECTORY ${PROJECT_SOURCE_DIR}/include)
 set(GEN_PROTOS_DIRECTORY ${PROJECT_SOURCE_DIR}/build/gen_protos)
