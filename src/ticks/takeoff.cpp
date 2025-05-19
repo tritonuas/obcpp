@@ -22,6 +22,8 @@ Tick* TakeoffTick::tick() {
         // NOTE: keep in sync with active_takeoff tick
         // transitions to flying waypoints tick, such that when the flying waypoints
         // tick is done it transitions to uploading the coverage path
+
+        // This is MANUAL Takeoff (idk why its named so confusing)
         return new FlyWaypointsTick(this->state, new MavUploadTick(
             this->state, new FlySearchTick(this->state),
             state->getCoveragePath(), false));
