@@ -2,10 +2,10 @@
 
 #include <mavsdk/mavsdk.h>
 #include <mavsdk/plugins/action/action.h>
-#include <mavsdk/plugins/param/param.h>
 #include <mavsdk/plugins/geofence/geofence.h>
 #include <mavsdk/plugins/mavlink_passthrough/mavlink_passthrough.h>
 #include <mavsdk/plugins/mission_raw/mission_raw.h>
+#include <mavsdk/plugins/param/param.h>
 #include <mavsdk/plugins/telemetry/telemetry.h>
 
 #include <atomic>
@@ -80,8 +80,7 @@ MavlinkClient::MavlinkClient(OBCConfig config)
             // require a recompile to change the typing of a specific parameter if you
             // get it wrong.
             auto result = mavsdk::Param::Result::Unknown;
-            if (param == "FS_LONG_TIMEOUT" ||
-                param == "AFS_RC_FAIL_TIME" ||
+            if (param == "FS_LONG_TIMEOUT" || param == "AFS_RC_FAIL_TIME" ||
                 param == "FS_SHORT_TIMEOUT") {
                 result = this->param->set_param_float(param, val);
             } else {
@@ -204,9 +203,35 @@ MavlinkClient::MavlinkClient(OBCConfig config)
     //     });
 }
 
+// Implement the triggerRelay method
+bool MavlinkClient::triggerRelay(int relay_number, bool state) {
+    if (!this->passthrough) {
+        LOG_F(ERROR, "MavlinkPassthrough interface not available");
+        return false;
+    }
+
+    // Command for DO_SET_RELAY (command ID 181)
+    mavsdk::MavlinkPassthrough::CommandLong command{};
+    command.command = 181;                              // MAV_CMD_DO_SET_RELAY
+    command.param1 = static_cast<float>(relay_number);  // Relay instance (0-based)
+    command.param2 = state ? 1.0f : 0.0f;               // 1=on, 0=off
+
+    LOG_F(INFO, "Sending DO_SET_RELAY command to trigger relay %d (state: %s)", relay_number,
+          state ? "ON" : "OFF");
+
+    auto result = this->passthrough->send_command_long(command);
+
+    if (result == mavsdk::MavlinkPassthrough::Result::Success) {
+        LOG_F(INFO, "Successfully sent relay command");
+        return true;
+    } else {
+        LOG_F(ERROR, "Failed to send relay command: %d", static_cast<int>(result));
+        return false;
+    }
+}
+
 bool MavlinkClient::uploadMissionUntilSuccess(std::shared_ptr<MissionState> state,
-                                              bool upload_geofence,
-                                              const MissionPath& path) const {
+                                              bool upload_geofence, const MissionPath& path) const {
     if (upload_geofence) {
         if (!this->uploadGeofenceUntilSuccess(state)) {
             return false;
@@ -281,7 +306,6 @@ bool MavlinkClient::uploadGeofenceUntilSuccess(std::shared_ptr<MissionState> sta
 bool MavlinkClient::uploadWaypointsUntilSuccess(std::shared_ptr<MissionState> state,
                                                 const MissionPath& waypoints) const {
     LOG_SCOPE_F(INFO, "Uploading waypoints");
-
 
     while (true) {
         LOG_F(INFO, "Sending waypoint information...");
@@ -379,9 +403,7 @@ mavsdk::Telemetry::FlightMode MavlinkClient::flight_mode() {
     return this->data.flight_mode;
 }
 
-int32_t MavlinkClient::curr_waypoint() const {
-    return this->mission->mission_progress().current;
-}
+int32_t MavlinkClient::curr_waypoint() const { return this->mission->mission_progress().current; }
 
 bool MavlinkClient::isMissionFinished() {
     // Boolean representing if mission is finished

@@ -6,8 +6,8 @@
 #include <mavsdk/plugins/geofence/geofence.h>
 #include <mavsdk/plugins/mavlink_passthrough/mavlink_passthrough.h>
 #include <mavsdk/plugins/mission_raw/mission_raw.h>
-#include <mavsdk/plugins/telemetry/telemetry.h>
 #include <mavsdk/plugins/param/param.h>
+#include <mavsdk/plugins/telemetry/telemetry.h>
 
 #include <chrono>
 #include <cmath>
@@ -20,9 +20,9 @@
 #include <utility>
 #include <vector>
 
+#include "pathing/mission_path.hpp"
 #include "protos/obc.pb.h"
 #include "utilities/datatypes.hpp"
-#include "pathing/mission_path.hpp"
 #include "utilities/obc_config.hpp"
 
 class MissionState;
@@ -34,7 +34,7 @@ class MavlinkClient {
      * @param link link to the MAVLink connection ip port -> [protocol]://[ip]:[port]
      * example:
      *   MavlinkClient("tcp://192.168.65.254:5762")
-     */ 
+     */
     explicit MavlinkClient(OBCConfig config);
 
     /*
@@ -56,12 +56,12 @@ class MavlinkClient {
      * of the state, or if the initial path is empty, which will make it return false. This
      * should never happen due to how the state machine is set up, but it is there just in case.
      */
-    bool uploadMissionUntilSuccess(std::shared_ptr<MissionState> state,
-        bool upload_geofence, const MissionPath& waypoints) const;
+    bool uploadMissionUntilSuccess(std::shared_ptr<MissionState> state, bool upload_geofence,
+                                   const MissionPath& waypoints) const;
 
     bool uploadGeofenceUntilSuccess(std::shared_ptr<MissionState> state) const;
     bool uploadWaypointsUntilSuccess(std::shared_ptr<MissionState> state,
-        const MissionPath& waypoints) const;
+                                     const MissionPath& waypoints) const;
 
     std::pair<double, double> latlng_deg();
     double altitude_agl_m();
@@ -81,6 +81,14 @@ class MavlinkClient {
     mavsdk::Telemetry::RcStatus get_conn_status();
     bool armAndHover(std::shared_ptr<MissionState> state);
     bool startMission();
+
+    /*
+     * Triggers a relay on the ArduPilot
+     * @param relay_number The relay number to trigger (0-based, so RELAY2 = 1)
+     * @param state True to turn on, false to turn off
+     * @return True if successful, false otherwise
+     */
+    bool triggerRelay(int relay_number, bool state);
 
     void KILL_THE_PLANE_DO_NOT_CALL_THIS_ACCIDENTALLY();
 
