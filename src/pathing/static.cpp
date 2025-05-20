@@ -453,7 +453,7 @@ std::vector<XYZCoord> HoverCoveragePathing::run() {
 
     XYZCoord top_left = this->drop_zone.at(3);
     XYZCoord top_right = this->drop_zone.at(2);
-    XYZCoord bottom_left = this->drop_zone.at(0);
+    XYZCoord bottom_left = this->drop_zone.at(0);       
     XYZCoord bottom_right = this->drop_zone.at(1);
 
     std::vector<XYZCoord> hover_points;
@@ -636,15 +636,19 @@ MissionPath generateInitialPath(std::shared_ptr<MissionState> state) {
 MissionPath generateSearchPath(std::shared_ptr<MissionState> state) {
     if (state->config.pathing.coverage.method == AirdropCoverageMethod::Enum::FORWARD) {
         LOG_F(FATAL, "Forward search path not fully integrated yet.");
+
+        // ForwardCoveragePathing pathing(); <--- TODO chris plz
+
         return MissionPath(MissionPath::Type::FORWARD, {});
     } else {  // hover
         HoverCoveragePathing pathing(state);
 
+        std::vector<XYZCoord> path = pathing.run();
         std::vector<GPSCoord> gps_coords;
-        for (const auto &coord : pathing.run()) {
+
+        for (const auto &coord : path) {
             gps_coords.push_back(state->getCartesianConverter()->toLatLng(coord));
         }
-
         return MissionPath(MissionPath::Type::HOVER, gps_coords,
                            state->config.pathing.coverage.hover.hover_time_s);
     }
