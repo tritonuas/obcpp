@@ -1,5 +1,7 @@
 #include "ticks/airdrop_approach.hpp"
 
+#include <mavsdk/plugins/mavlink_passthrough/mavlink_passthrough.h>
+
 #include <chrono>
 #include <memory>
 #include <thread>
@@ -11,8 +13,6 @@
 #include "ticks/mav_upload.hpp"
 #include "utilities/constants.hpp"
 
-// Add this to use MAVLink directly
-#include <mavsdk/plugins/mavlink_passthrough/mavlink_passthrough.h>
 
 AirdropApproachTick::AirdropApproachTick(std::shared_ptr<MissionState> state)
     : Tick(state, TickID::AirdropApproach) {}
