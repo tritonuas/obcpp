@@ -451,10 +451,13 @@ std::vector<XYZCoord> HoverCoveragePathing::run() {
               this->drop_zone.size());
     }
 
-    XYZCoord top_left = this->drop_zone.at(3);
-    XYZCoord top_right = this->drop_zone.at(2);
+    
+    // Input Coordinates MUST BE in this order
     XYZCoord bottom_left = this->drop_zone.at(0);       
     XYZCoord bottom_right = this->drop_zone.at(1);
+    XYZCoord top_right = this->drop_zone.at(2);
+    XYZCoord top_left = this->drop_zone.at(3);
+
 
     std::vector<XYZCoord> hover_points;
 
