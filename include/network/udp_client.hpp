@@ -25,7 +25,7 @@ class UDPClient {
 
         Header recvHeader();
 
-        std::vector<std::uint8_t> recvBody(const int bufSize);
+        std::vector<std::uint8_t> recvBody(const int mem_size, const int total_chunks);
 };
 
 #endif

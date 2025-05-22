@@ -61,23 +61,51 @@ Header UDPClient::recvHeader() {
     return header;
 }
 
-std::vector<std::uint8_t> UDPClient::recvBody(const int bufSize) {
+std::vector<std::uint8_t> UDPClient::recvBody(const int mem_size, const int total_chunks) {
     boost::system::error_code ec;
     // asio::ip::udp::endpoint endpoint_(asio::ip::udp::endpoint(asio::ip::make_address(this->ip), this->port));
     asio::ip::udp::endpoint sender_endpoint;
+
+    const int bufSize = mem_size * total_chunks;
+    int totalBytesRead = 0;
 
     LOG_F(INFO, "Reading in bufSize (body): %d", bufSize);
 
     std::vector<std::uint8_t> buf(bufSize);
 
-    int bytesRead = this->socket_.receive_from(asio::buffer(buf), sender_endpoint, 0, ec);
+    int totalChunks = 0;
+
+    for (int i = 0; i < total_chunks; i++) {
+        char chunk_buf[CHUNK_SIZE + sizeof(uint32_t)];
+
+        int bytesRead = this->socket_.receive_from(asio::buffer(chunk_buf), sender_endpoint, 0, ec);
+        
+        int chunk_idx = ntohl(*reinterpret_cast<uint32_t*>(chunk_buf));
+        int data_size = bytesRead - sizeof(uint32_t);
+        int offset = chunk_idx * CHUNK_SIZE;
+
+        // copy into buffer
+        memcpy(buf.data() + offset, chunk_buf + sizeof(uint32_t), data_size);
+
+        totalBytesRead += data_size;
+        totalChunks += 1;
+        
+        // LOG_F(INFO, "Chunk: %d, Total bytes read: %d, Total chunks: %d", chunk_idx, totalBytesRead, totalChunks);
+    }
 
     if (ec) {
         LOG_F(ERROR, "Failed to send body: %s", ec.message().c_str());
         return {};
     }
 
-    LOG_F(INFO, "Bytes read: %d", bytesRead);
+    if (totalBytesRead != bufSize) {
+        LOG_F(ERROR, "Total bytes read: %d, Expected bytes: %d", totalBytesRead, bufSize);
+        return {}; // TODO: not sure what to return here, incomplete read
+    }
+
+    LOG_F(INFO, "Bytes read: %d", totalBytesRead);
+
+    LOG_F(INFO, "Buffer size: %lu", buf.size());
 
     return buf;
 }

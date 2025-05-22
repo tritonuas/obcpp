@@ -101,17 +101,20 @@ void RPICamera::ping() {
 std::vector<std::uint8_t> RPICamera::readImage() {
     // 3 separate reads for 3 separate files
 
-    std::vector<std::uint8_t> imgbuf;
+    // std::vector<std::uint8_t> imgbuf;
 
-    for (int i = 0; i < 3; i++) {
-        std::vector<std::uint8_t> packet = readPacket();
+    // for (int i = 0; i < 3; i++) {
+    //     std::vector<std::uint8_t> packet = readPacket();
 
-        // have to concatenate the packets since there are 3 "image files"
-        imgbuf.reserve(imgbuf.size() + packet.size());
-        imgbuf.insert(imgbuf.end(), packet.begin(), packet.end());
-    }
+    //     // have to concatenate the packets since there are 3 "image files"
+    //     imgbuf.reserve(imgbuf.size() + packet.size());
+    //     imgbuf.insert(imgbuf.end(), packet.begin(), packet.end());
+    // }
 
-    return imgbuf;
+    std::vector<std::uint8_t> packet = readPacket();
+
+    return packet;
+    // return imgbuf;
 }
 
 std::optional<ImageTelemetry> RPICamera::readTelemetry() {
@@ -133,15 +136,17 @@ std::vector<std::uint8_t> RPICamera::readPacket() {
     header.mem_size = ntohl(header.mem_size);
     header.total_chunks = ntohl(header.total_chunks);
 
+    LOG_F(INFO, "mem_size: %d, total_chunks: %d", header.mem_size, header.total_chunks);
+
     // check the magic number, sort of like a checksum ig
     if (header.magic != EXPECTED_MAGIC) {
         // TODO: how do we even handle this, after we read the corrupted header we don't even know how many bytes to throw away to read the next header
     }
 
-    packet = client.recvBody(header.mem_size * header.total_chunks);
-
-    // TODO: idek if we have to do ntoh for the buffer
+    packet = client.recvBody(header.mem_size, header.total_chunks);
     
+    io_context_.run();
+
     return packet;
 }
 
