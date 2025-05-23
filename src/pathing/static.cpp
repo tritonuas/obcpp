@@ -451,13 +451,11 @@ std::vector<XYZCoord> HoverCoveragePathing::run() {
               this->drop_zone.size());
     }
 
-    
     // Input Coordinates MUST BE in this order
-    XYZCoord bottom_left = this->drop_zone.at(0);       
+    XYZCoord bottom_left = this->drop_zone.at(0);
     XYZCoord bottom_right = this->drop_zone.at(1);
     XYZCoord top_right = this->drop_zone.at(2);
     XYZCoord top_left = this->drop_zone.at(3);
-
 
     std::vector<XYZCoord> hover_points;
 
@@ -641,12 +639,13 @@ MissionPath generateSearchPath(std::shared_ptr<MissionState> state) {
     if (state->config.pathing.coverage.method == AirdropCoverageMethod::Enum::FORWARD) {
         LOG_F(FATAL, "Forward search path not fully integrated yet.");
 
-        // TODO, change the starting point to be something closer to loiter 
+        RRTPoint start(state->mission_params.getWaypoints().front(), 0);
+
+        // TODO, change the starting point to be something closer to loiter
         // region
-        ForwardCoveragePathing pathing(
-            state->mission_params.getWaypoints().front(), SEARCH_RADIUS,
-            state->mission_params.getFlightBoundary(), state->mission_params.getAirdropBoundary(),
-            state->config);
+        ForwardCoveragePathing pathing(start, SEARCH_RADIUS,
+                                       state->mission_params.getFlightBoundary(),
+                                       state->mission_params.getAirdropBoundary(), state->config);
 
         for (const auto &coord : pathing.run()) {
             gps_coords.push_back(state->getCartesianConverter()->toLatLng(coord));
