@@ -644,7 +644,7 @@ MissionPath generateSearchPath(std::shared_ptr<MissionState> state) {
         // TODO, change the starting point to be something closer to loiter 
         // region
         ForwardCoveragePathing pathing(
-            state->mission_params.getWaypoints().front(), state->config.pathing.coverage.scan_radius,
+            state->mission_params.getWaypoints().front(), SEARCH_RADIUS,
             state->mission_params.getFlightBoundary(), state->mission_params.getAirdropBoundary(),
             state->config);
 

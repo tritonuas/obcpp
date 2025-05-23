@@ -86,6 +86,7 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
     SET_CONFIG_OPT(pathing, approach, drop_altitude_m);
     SET_CONFIG_OPT(pathing, approach, guided_drop_distance_m);
     SET_CONFIG_OPT(pathing, approach, unguided_drop_distance_m);
+    SET_CONFIG_OPT(pathing, approach, payload_size);
 
     SET_CONFIG_OPT(pathing, dubins, turning_radius);
     SET_CONFIG_OPT(pathing, dubins, point_separation);

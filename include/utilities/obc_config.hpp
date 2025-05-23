@@ -98,6 +98,7 @@ struct AirdropApproachConfig {
     double drop_altitude_m;
     double guided_drop_distance_m;
     double unguided_drop_distance_m;
+    int payload_size;
 };
 
 struct PathingConfig {

@@ -38,7 +38,7 @@ Tick* AirdropApproachTick::tick() {
     if (state->getMav()->isMissionFinished()) {
         if (state->getDroppedAirdrops().size() >= NUM_AIRDROPS) {
             return new ManualLandingTick(state, nullptr);
-        } else if (state->getDroppedAirdrops().size() == 2) {
+        } else if (state->getDroppedAirdrops().size() % state->config.pathing.approach.payload_size == 0) {
             return new ManualLandingTick(state, new RefuelingTick(state));
         } else {
             return new MavUploadTick(state, new FlyWaypointsTick(state,
