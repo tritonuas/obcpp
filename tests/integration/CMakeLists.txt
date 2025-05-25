@@ -347,6 +347,24 @@ target_add_loguru(tcp_server_mock)
 target_include_directories(tcp_server_mock PRIVATE ${ImageMagick_INCLUDE_DIRS})
 target_link_libraries(tcp_server_mock PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
+add_executable(udp_server_mock "udp_server_mock.cpp")
+target_link_libraries(udp_server_mock PRIVATE 
+    obcpp_lib
+)
+target_include_directories(udp_server_mock PRIVATE ${INCLUDE_DIRECTORY})
+target_add_boost(udp_server_mock)
+target_add_protobuf(udp_server_mock)
+target_add_torch(udp_server_mock)
+target_add_torchvision(udp_server_mock)
+target_add_json(udp_server_mock)
+target_add_opencv(udp_server_mock)
+target_add_httplib(udp_server_mock)
+target_add_mavsdk(udp_server_mock)
+target_add_matplot(udp_server_mock)
+target_add_loguru(udp_server_mock)
+target_include_directories(udp_server_mock PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(udp_server_mock PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
+
 # cuda_check
 add_executable(cuda_check ${SOURCES} cuda_check.cpp)
 target_add_torch(cuda_check)
