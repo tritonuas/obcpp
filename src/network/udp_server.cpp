@@ -1,7 +1,9 @@
+#include <filesystem>
 #include "network/udp_server.hpp"
 
 cv::Mat UDPServer::createBGR() {
-    cv::Mat image = cv::imread("blurb.jpeg");
+    std::cout << std::filesystem::current_path() << '\n';
+    cv::Mat image = cv::imread("/workspaces/obcpp/tests/integration/images/blurb.jpeg");
     if (image.empty()) {
         std::cerr << "Failed to load image. Check path: blurb.jpeg\n";
         exit(1);  // or return a default image
@@ -11,8 +13,9 @@ cv::Mat UDPServer::createBGR() {
 }
 
 cv::Mat UDPServer::createYUV() {
+    std::cout << std::filesystem::current_path() << '\n';
     // read in an image
-    cv::Mat image = cv::imread("blurb.jpeg");
+    cv::Mat image = cv::imread("/workspaces/obcpp/tests/integration/images/blurb.jpeg");
 
     // convert into yuv420
     cv::Mat yuv_img(IMG_HEIGHT * 3 / 2, IMG_WIDTH, CV_8UC1); 

@@ -11,7 +11,7 @@ const uint32_t BUFFER_SIZE = IMG_WIDTH * IMG_HEIGHT * 3 / 2;
 // const int SERVER_PORT = 25565;
 
 // local testing only
-const std::string SERVER_IP = "172.28.114.172";
+const std::string SERVER_IP = "0.0.0.0";
 const int SERVER_PORT = 5000;
 
 const int headerSize = 12;

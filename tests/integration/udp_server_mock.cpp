@@ -5,8 +5,8 @@
 
 namespace asio = boost::asio;
 
-const std::string SERVER_IP = "127.0.0.1";
-const int SERVER_PORT = 5000; 
+const std::string IP = "0.0.0.0";
+const int PORT = 5000; 
 
 int main() {
     asio::io_context io_context_;
