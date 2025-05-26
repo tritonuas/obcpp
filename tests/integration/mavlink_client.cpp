@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
 
     LOG_S(INFO) << "Attempting to connect at " << argv[1];
     
-    MavlinkClient mav(argv[1]);
+    MavlinkClient mav(OBCConfig(argc, argv));
 
     while (true) {
         LOG_S(INFO) << "Groundspeed: " << mav.groundspeed_m_s();
