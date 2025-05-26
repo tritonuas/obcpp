@@ -3,11 +3,15 @@
 
 /*
  * Test mavsdk connection to an endpoint 
- * bin/mavsdk [connection_link]
- * connection_link -> [protocol]://[ip]:[port]
- * example: 
- *   bin/mavlink_client tcp://127.0.0.1:5760
- *   bin/mavlink_client serial:///dev/ttyACM0
+ * bin/mavsdk [config]
+ * example config:
+ * ```
+ *  "network": {
+ *      "mavlink": {
+ *          "connect": "serial:///dev/ttyACM0",
+ *         OR
+ *          "connect": "tcp://localhost:14552",
+ * ```
  *  
  *  Note: if you are trying to test connection with serial from inside the dev container,
  *  you have to follow these steps:
@@ -22,12 +26,12 @@
  */ 
 int main(int argc, char *argv[]) {
 
-    if (argc != 2) {
-        LOG_F(ERROR, "Expected use: bin/mavsdk [connection]");
+    if (argc != 5) {
+        LOG_F(ERROR, "Expected use: bin/mavsdk [config]");
         return 1;
     }
 
-    LOG_S(INFO) << "Attempting to connect at " << argv[1];
+    // LOG_S(INFO) << "Attempting to connect at " << argv[1];
     
     MavlinkClient mav(OBCConfig(argc, argv));
 
