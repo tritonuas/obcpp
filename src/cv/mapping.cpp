@@ -258,6 +258,92 @@ void Mapping::secondPass(const std::string& run_subdir, cv::Stitcher::Mode mode,
 }
 
 // -----------------------------------------------------------------------------
+// directStitch()
+// -----------------------------------------------------------------------------
+void Mapping::directStitch(const std::string& input_path, const std::string& output_path,
+                           cv::Stitcher::Mode mode, int max_dim, bool preprocess) {
+    // 1. Scan directory for image filenames
+    std::vector<std::string> all_filenames;
+    for (const auto& entry : fs::directory_iterator(input_path)) {
+        if (!entry.is_regular_file()) continue;
+        auto ext = entry.path().extension().string();
+        std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+        if (ext == ".jpg" || ext == ".jpeg" || ext == ".png") {
+            all_filenames.push_back(entry.path().string());
+        }
+    }
+
+    // 2. Sort them for consistent processing
+    std::sort(all_filenames.begin(), all_filenames.end());
+
+    if (all_filenames.empty()) {
+        std::cerr << "No images found in " << input_path << ". Nothing to stitch.\n";
+        return;
+    }
+
+    std::cout << "Found " << all_filenames.size() << " images to stitch.\n";
+
+    // 3. Load and preprocess all images
+    std::vector<cv::Mat> all_images;
+    all_images.reserve(all_filenames.size());
+    Preprocess preprocessor;
+
+    for (const auto& filename : all_filenames) {
+        cv::Mat img = cv::imread(filename);
+        if (!img.empty()) {
+            if (preprocess) {
+                // Apply custom preprocessing before further processing
+                img = preprocessor.cropRight(img);
+                img = readAndResize(img, max_dim);
+            } else {
+                img = readAndResize(img, max_dim);
+            }
+            all_images.push_back(img);
+        } else {
+            std::cerr << "Warning: Failed to load image: " << filename << "\n";
+        }
+    }
+
+    if (all_images.empty()) {
+        std::cerr << "No valid images loaded. Cannot stitch.\n";
+        return;
+    }
+
+    std::cout << "Loaded " << all_images.size() << " images. Starting stitching...\n";
+
+    // 4. Stitch all images at once
+    auto [status, stitched] =
+        globalStitch(all_images, mode, max_dim, false);  // preprocess=false since already done
+
+    // 5. Save result
+    if (status == cv::Stitcher::OK && !stitched.empty()) {
+        // Create output directory if it doesn't exist
+        fs::path output_file_path(output_path);
+        fs::path output_dir = output_file_path.parent_path();
+        if (!output_dir.empty() && !fs::exists(output_dir)) {
+            fs::create_directories(output_dir);
+        }
+
+        // If output_path is a directory, create a filename
+        std::string final_output_path = output_path;
+        if (fs::is_directory(output_path) || output_path.back() == '/') {
+            final_output_path = output_path + "/direct_stitch_" + currentDateTimeStr() + ".jpg";
+        }
+
+        if (cv::imwrite(final_output_path, stitched)) {
+            std::cout << "Direct stitch result saved to: " << final_output_path << "\n";
+        } else {
+            std::cerr << "Failed to save stitched image to " << final_output_path << "\n";
+        }
+    } else {
+        std::cerr << "Direct stitching failed. Status = " << static_cast<int>(status) << "\n";
+    }
+
+    // 6. Free memory
+    all_images.clear();
+}
+
+// -----------------------------------------------------------------------------
 // reset()
 // -----------------------------------------------------------------------------
 void Mapping::reset() {
