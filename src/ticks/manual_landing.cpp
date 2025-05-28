@@ -36,8 +36,8 @@ Tick* ManualLandingTick::tick() {
         const int max_dim = 3000;
 
         std::cout << "First pass stitching..." << std::endl;
-        mapper.firstPass(base_dir.string(), output_dir.string(), chunk_size, chunk_overlap, scan_mode,
-                        max_dim, true);
+        mapper.firstPass(base_dir.string(), output_dir.string(), chunk_size,
+        chunk_overlap, scan_mode, max_dim, true);
 
         std::cout << "Second pass stitching..." << std::endl;
         mapper.secondPass(output_dir.string(), scan_mode, max_dim, true);
