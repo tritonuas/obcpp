@@ -52,8 +52,7 @@ Tick* ActiveTakeoffTick::tick() {
     // transitions to flying waypoints tick, such that when the flying waypoints
     // tick is done it transitions to uploading the coverage path
 
-    // This is jank as hell so make it config based plz
-    if (state->getDroppedAirdrops().size() == this->state->config.pathing.approach.payload_size) {
+    if (state->getDroppedAirdrops().size() >= this->state->config.takeoff.payload_size) {
         return new FlyWaypointsTick(this->state, new AirdropPrepTick(this->state));
         // return new AirdropPrepTick(this->state);
     } else {

@@ -86,7 +86,6 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
     SET_CONFIG_OPT(pathing, approach, drop_altitude_m);
     SET_CONFIG_OPT(pathing, approach, guided_drop_distance_m);
     SET_CONFIG_OPT(pathing, approach, unguided_drop_distance_m);
-    SET_CONFIG_OPT(pathing, approach, payload_size);
 
     SET_CONFIG_OPT(pathing, dubins, turning_radius);
     SET_CONFIG_OPT(pathing, dubins, point_separation);
@@ -97,6 +96,7 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
     SET_CONFIG_OPT(camera, mock, images_dir);
 
     SET_CONFIG_OPT(takeoff, altitude_m);
+    SET_CONFIG_OPT(takeoff, payload_size);
 
     std::string common_params_path = params_dir / "common.json";
     std::ifstream common_params_stream(common_params_path);
