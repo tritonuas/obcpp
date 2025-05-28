@@ -64,10 +64,12 @@ std::vector<Airdrop> MissionParameters::getAirdrops() {
     return this->airdrops;
 }
 
-std::tuple<Polygon, Polygon, Polygon, Polyline, std::vector<Airdrop>> MissionParameters::getConfig() {
+std::tuple<Polygon, Polygon, Polygon, Polyline, std::vector<Airdrop>>
+MissionParameters::getConfig() {
     ReadLock lock(this->mut);
 
-    return std::make_tuple(this->flightBoundary, this->airdropBoundary, this->mappingBoundary, this->waypoints,
+    return std::make_tuple(this->flightBoundary, this->airdropBoundary,
+                           this->mappingBoundary, this->waypoints,
                            this->airdrops);
 }
 
