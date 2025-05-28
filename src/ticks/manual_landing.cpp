@@ -13,5 +13,11 @@ std::chrono::milliseconds ManualLandingTick::getWait() const {
 }
 
 Tick* ManualLandingTick::tick() {
-    return next_tick;
+    
+    // TODO: Test this in mock testflight
+    if (!state.get()->getMav()->isArmed()) {
+        return next_tick;
+    }
+
+    return nullptr;
 }

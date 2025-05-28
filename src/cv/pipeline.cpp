@@ -74,9 +74,6 @@ PipelineResults Pipeline::run(const ImageData& imageData) {
         GPSCoord targetPosition;
         if (imageData.TELEMETRY.has_value()) {
             targetPosition = this->gsdLocalizer.localize(imageData.TELEMETRY.value(), box);
-            std::cout << "pipeline: " <<
-            targetPosition.latitude() << " "
-            << targetPosition.longitude();
         }
 
 
