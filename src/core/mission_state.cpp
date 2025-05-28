@@ -140,3 +140,11 @@ std::shared_ptr<CameraInterface> MissionState::getCamera() {
 void MissionState::setCamera(std::shared_ptr<CameraInterface> camera) {
     this->camera = camera;
 }
+
+bool MissionState::getMappingIsDone() {
+    return this->mappingIsDone;
+}
+
+void MissionState::setMappingIsDone(bool isDone) {
+    this->mappingIsDone = isDone;
+}

@@ -104,6 +104,10 @@ class MissionState {
     std::shared_ptr<CameraInterface> getCamera();
     void setCamera(std::shared_ptr<CameraInterface> camera);
 
+    // Getters and setters for mapping status.
+    bool getMappingIsDone();
+    void setMappingIsDone(bool isDone);
+
     MissionParameters mission_params;  // has its own mutex
 
     OBCConfig config;
@@ -138,6 +142,8 @@ class MissionState {
     // Gives an index into cv_detected_targets, and specifies that that bottle is matched
     // with the detected_target specified by the index
     std::array<size_t, NUM_AIRDROPS> cv_matches;
+
+    bool mappingIsDone;
 
     void _setTick(Tick* newTick);  // does not acquire the tick_mut
 };
