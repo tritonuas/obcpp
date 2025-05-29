@@ -5,6 +5,7 @@
 
 #include "ticks/ids.hpp"
 #include "utilities/constants.hpp"
+#include "ticks/airdrop_prep.hpp"
 #include "ticks/fly_waypoints.hpp"
 #include "ticks/mav_upload.hpp"
 #include "ticks/mission_prep.hpp"
@@ -50,7 +51,13 @@ Tick* ActiveTakeoffTick::tick() {
     // NOTE: keep in sync with manual takeoff tick
     // transitions to flying waypoints tick, such that when the flying waypoints
     // tick is done it transitions to uploading the coverage path
-    return new FlyWaypointsTick(this->state, new MavUploadTick(
-        this->state, new FlySearchTick(this->state),
-        state->getCoveragePath(), false));
+
+    if (state->getDroppedAirdrops().size() >= this->state->config.takeoff.payload_size) {
+        return new FlyWaypointsTick(this->state, new AirdropPrepTick(this->state));
+        // return new AirdropPrepTick(this->state);
+    } else {
+        return new FlyWaypointsTick(this->state, new MavUploadTick(
+            this->state, new FlySearchTick(this->state),
+            state->getCoveragePath(), false));
+    }
 }

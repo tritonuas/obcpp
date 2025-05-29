@@ -23,7 +23,7 @@ Tick* AirdropPrepTick::tick() {
     auto dropped_airdrops = state->getDroppedAirdrops();
 
     if (dropped_airdrops.size() >= NUM_AIRDROPS) {
-        return new ManualLandingTick(state);
+        return new ManualLandingTick(state, nullptr);
     }
 
     LockPtr<MatchedResults> results = state->getCV()->getMatchedResults();

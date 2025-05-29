@@ -19,6 +19,7 @@ enum class TickID {
     MissionDone,
     ActiveTakeoff,
     WaitForTakeoff,
+    Refueling,
 };
 
 #define _SET_TICK_ID_MAPPING(id) \
@@ -41,6 +42,7 @@ constexpr const char* TICK_ID_TO_STR(TickID id) {
         _SET_TICK_ID_MAPPING(MissionDone);
         _SET_TICK_ID_MAPPING(ActiveTakeoff);
         _SET_TICK_ID_MAPPING(WaitForTakeoff);
+        _SET_TICK_ID_MAPPING(Refueling);
         default: return "Unknown TickID";
     }
 }

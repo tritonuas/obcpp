@@ -16,6 +16,7 @@ set(FILES
     takeoff.cpp
     active_takeoff.cpp
     wait_for_takeoff.cpp
+    refueling.cpp
 )
 
 set(LIB_DEPS
