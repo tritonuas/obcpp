@@ -451,6 +451,49 @@ DEF_GCS_HANDLE(Post, kill, kill, kill) {
     }
 }
 
+DEF_GCS_HANDLE(Post, camera, startstream) {
+    LOG_REQUEST("POST", "/camera/startstream");
+
+    std::shared_ptr<CameraInterface> cam = state->getCamera();
+    uint32_t interval = request.body;
+
+    if (!cam->isConnected()) {
+        cam->connect();
+    }
+
+    cam->startStreaming();
+    cam->startTakingPictures(interval, state->getMav());
+
+    LOG_RESPONSE(INFO, "Started Camera Stream", OK);
+}
+
+DEF_GCS_HANDLE(Post, camera, endstream) {
+    LOG_REQUEST("POST", "/camera/endstream");
+
+    std::shared_ptr<CameraInterface> cam = state->getCamera();
+
+    if (!cam->isConnected()) {
+        cam->connect();
+    }
+
+    cam->stopTakingPictures();
+
+    std::deque<ImageData> images;
+    images = cam->getAllImages();
+    for (const ImageData& image : images) {
+        std::filesystem::path save_dir = config.camera.save_dir;
+        std::filesystem::path img_filepath = save_dir / (std::to_string(image.TIMESTAMP) + std::string(".jpg"));
+        std::filesystem::path json_filepath = save_dir / (std::to_string(image.TIMESTAMP) + std::string(".json"));
+        saveImageToFile(image.DATA, img_filepath);
+        if (image.TELEMETRY.has_value()) {
+            saveImageTelemetryToFile(image.TELEMETRY.value(), json_filepath);
+        } 
+        LOG_F(INFO, "Saving image %s", img_filepath.string().c_str());
+    }
+
+    LOG_RESPONSE(INFO, "Ended Camera Stream", OK);
+}
+
 // DEF_GCS_HANDLE(Get, oh, shit) {
 //     LOG_REQUEST("GET", "/oh/shit");
 
