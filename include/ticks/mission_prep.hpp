@@ -11,8 +11,6 @@
 #include "cv/pipeline.hpp"
 #include "cv/aggregator.hpp"
 
-#define NUMAIRDROPS 4
-
 /*
  * Checks every second whether or not a valid mission has been uploaded.
  * Transitions to PathGenTick once it has been generated.
@@ -28,7 +26,7 @@ class MissionPrepTick : public Tick {
     Tick* tick() override;
  private:
     std::vector<std::pair<cv::Mat, AirdropIndex>>
-        generateReferenceImages(std::array<Airdrop, NUMAIRDROPS> competitionObjectives);
+        generateReferenceImages(std::array<Airdrop, NUM_AIRDROPS> competitionObjectives);
 
     std::string getNotStolenRoute(const Airdrop& target);
 };

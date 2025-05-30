@@ -40,10 +40,12 @@ Tick* CVLoiterTick::tick() {
 
     // Check status of the CV Results
     if (status == Status::Validated) {
+        /*
         const std::array<AirdropIndex, NUM_AIRDROPS> ALL_AIRDROPS = {
             AirdropIndex::Kaz, AirdropIndex::Kimi, AirdropIndex::Chris,
             AirdropIndex::Daniel
         };
+        */
 
         LockPtr<CVResults> results = state->getCV()->getResults();
 
