@@ -15,12 +15,11 @@ std::chrono::milliseconds ManualLandingTick::getWait() const { return MANUAL_LAN
 
 Tick* ManualLandingTick::tick() {
     if (state->getMappingIsDone() == false) {
-        // Current does a two pass at the end
+        // Currently does a two pass at the end
         // Probably should update for next year to optimize it.
 
         cv::Stitcher::Mode scan_mode = cv::Stitcher::SCANS;
         // Direct stitching of all images in the mapping folder
-        // This bypasses the two-pass chunking system and stitches all images at once
 
         fs::path base_dir = "../images/mapping";
         fs::path output_dir = base_dir / "output";
