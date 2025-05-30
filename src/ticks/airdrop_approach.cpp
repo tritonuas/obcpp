@@ -27,7 +27,7 @@ std::chrono::milliseconds AirdropApproachTick::getWait() const {
 }
 
 // Helper function to trigger the airdrop mechanism
-void triggerAirdrop(std::shared_ptr<MavlinkClient> mav, airdrop_t airdrop_index) {
+bool triggerAirdrop(std::shared_ptr<MavlinkClient> mav, airdrop_t airdrop_index) {
     LOG_F(INFO, "Triggering airdrop mechanism for airdrop %d", static_cast<int>(airdrop_index));
 
     // Use the new triggerRelay method to activate RELAY2 (relay index 1)
@@ -51,6 +51,8 @@ void triggerAirdrop(std::shared_ptr<MavlinkClient> mav, airdrop_t airdrop_index)
     } else {
         LOG_F(ERROR, "Failed to activate RELAY2 for airdrop");
     }
+
+    return success;
 }
 
 Tick* AirdropApproachTick::tick() {

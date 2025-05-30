@@ -290,10 +290,13 @@ DEF_GCS_HANDLE(Post, dodropnow) {
     AirdropIndex next_airdrop = static_cast<AirdropIndex>(2);
     next_airdrop_to_drop = static_cast<airdrop_t>(next_airdrop);
 
+    // std::string message;
     // drop
-    triggerAirdrop(state->getMav() , next_airdrop_to_drop.value());
-
-    LOG_RESPONSE(INFO, "Dropped bottle", OK);
+    if(triggerAirdrop(state->getMav() , next_airdrop_to_drop.value())) {
+        LOG_RESPONSE(INFO, "Dropped Bottle Successfully", OK);
+    } else {
+        LOG_RESPONSE(INFO, "Failed to drop bottle", OK);
+    }
 }
 
 DEF_GCS_HANDLE(Post, takeoff, manual) {

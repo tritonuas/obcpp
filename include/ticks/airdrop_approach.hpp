@@ -22,6 +22,6 @@ class AirdropApproachTick : public Tick {
     Tick* tick() override;
 };
 
-void triggerAirdrop(std::shared_ptr<MavlinkClient> mav, airdrop_t airdrop_index);
+bool triggerAirdrop(std::shared_ptr<MavlinkClient> mav, airdrop_t airdrop_index);
 
 #endif  // INCLUDE_TICKS_AIRDROP_APPROACH_HPP_
