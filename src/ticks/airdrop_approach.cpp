@@ -8,6 +8,8 @@
 #include "ticks/airdrop_prep.hpp"
 #include "ticks/manual_landing.hpp"
 #include "utilities/constants.hpp"
+#include "ticks/refueling.hpp"
+#include "ticks/wait_for_takeoff.hpp"
 
 AirdropApproachTick::AirdropApproachTick(std::shared_ptr<MissionState> state)
     :Tick(state, TickID::AirdropApproach) {}
@@ -35,7 +37,9 @@ Tick* AirdropApproachTick::tick() {
 
     if (state->getMav()->isMissionFinished()) {
         if (state->getDroppedAirdrops().size() >= NUM_AIRDROPS) {
-            return new ManualLandingTick(state);
+            return new ManualLandingTick(state, nullptr);
+        } else if (state->getDroppedAirdrops().size() % state->config.takeoff.payload_size == 0) {
+            return new ManualLandingTick(state, new RefuelingTick(state));
         } else {
             return new MavUploadTick(state, new FlyWaypointsTick(state,
                 new AirdropPrepTick(state)), state->getInitPath(), false);
