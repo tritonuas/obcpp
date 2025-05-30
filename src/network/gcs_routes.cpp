@@ -457,16 +457,16 @@ DEF_GCS_HANDLE(Post, camera, startstream) {
     std::shared_ptr<CameraInterface> cam = state->getCamera();
     // const string
     uint32_t interval;
-    unsigned long parsed_ul = std::stoul(request.body);
+    unsigned long parsed_ul = std::stoul(request.body); // NOLINT
     interval = static_cast<uint32_t>(parsed_ul);
     std::chrono::milliseconds chrono_interval(interval);
 
     if (!cam->isConnected()) {
         LOG_F(INFO, "Camera not connected. Attempting to connect...");
-        cam->connect(); 
+        cam->connect();
         if (!cam->isConnected()) {
             LOG_F(ERROR, "Failed to connect to the camera after connection attempt.");
-            LOG_RESPONSE(ERROR, "Failed to connect to camera", NOT_FOUND); 
+            LOG_RESPONSE(ERROR, "Failed to connect to camera", NOT_FOUND);
             return;
         }
         LOG_F(INFO, "Camera connected successfully.");
@@ -485,10 +485,10 @@ DEF_GCS_HANDLE(Post, camera, endstream) {
 
     if (!cam->isConnected()) {
         LOG_F(INFO, "Camera not connected. Attempting to connect...");
-        cam->connect(); 
+        cam->connect();
         if (!cam->isConnected()) {
             LOG_F(ERROR, "Failed to connect to the camera after connection attempt.");
-            LOG_RESPONSE(ERROR, "Failed to connect to camera", NOT_FOUND); 
+            LOG_RESPONSE(ERROR, "Failed to connect to camera", NOT_FOUND);
             return;
         }
         LOG_F(INFO, "Camera connected successfully.");
@@ -500,12 +500,14 @@ DEF_GCS_HANDLE(Post, camera, endstream) {
     images = cam->getAllImages();
     for (const ImageData& image : images) {
         std::filesystem::path save_dir = state->config.camera.save_dir;
-        std::filesystem::path img_filepath = save_dir / (std::to_string(image.TIMESTAMP) + std::string(".jpg"));
-        std::filesystem::path json_filepath = save_dir / (std::to_string(image.TIMESTAMP) + std::string(".json"));
+        std::filesystem::path img_filepath = save_dir / (std::to_string(image.TIMESTAMP)
+        + std::string(".jpg"));
+        std::filesystem::path json_filepath = save_dir / (std::to_string(image.TIMESTAMP)
+        + std::string(".json"));
         saveImageToFile(image.DATA, img_filepath);
         if (image.TELEMETRY.has_value()) {
             saveImageTelemetryToFile(image.TELEMETRY.value(), json_filepath);
-        } 
+        }
         LOG_F(INFO, "Saving image %s", img_filepath.string().c_str());
     }
 
