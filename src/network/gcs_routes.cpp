@@ -292,7 +292,7 @@ DEF_GCS_HANDLE(Post, dodropnow) {
 
     // std::string message;
     // drop
-    if(triggerAirdrop(state->getMav() , next_airdrop_to_drop.value())) {
+    if (triggerAirdrop(state->getMav() , next_airdrop_to_drop.value())) {
         LOG_RESPONSE(INFO, "Dropped Bottle Successfully", OK);
     } else {
         LOG_RESPONSE(INFO, "Failed to drop bottle", OK);
