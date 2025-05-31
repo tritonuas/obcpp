@@ -215,7 +215,7 @@ bool MavlinkClient::triggerRelay(int relay_number, bool state) {
     mavsdk::MavlinkPassthrough::CommandLong command{};
     command.command = 181;                              // MAV_CMD_DO_SET_RELAY
     command.param1 = static_cast<float>(relay_number);  // Relay instance (0-based)
-    command.param2 = state ? 1.0f : 0.0f;               // 1=on, 0=off
+    command.param2 = state ? 0.0f : 1.0f;               // 1=on, 0=off
 
     LOG_F(INFO, "Sending DO_SET_RELAY command to trigger relay %d (state: %s)", relay_number,
           state ? "ON" : "OFF");
