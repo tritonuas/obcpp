@@ -451,6 +451,69 @@ DEF_GCS_HANDLE(Post, kill, kill, kill) {
     }
 }
 
+DEF_GCS_HANDLE(Post, camera, startstream) {
+    LOG_REQUEST("POST", "/camera/startstream");
+
+    std::shared_ptr<CameraInterface> cam = state->getCamera();
+    // const string
+    uint32_t interval;
+    unsigned long parsed_ul = std::stoul(request.body); // NOLINT
+    interval = static_cast<uint32_t>(parsed_ul);
+    std::chrono::milliseconds chrono_interval(interval);
+
+    if (!cam->isConnected()) {
+        LOG_F(INFO, "Camera not connected. Attempting to connect...");
+        cam->connect();
+        if (!cam->isConnected()) {
+            LOG_F(ERROR, "Failed to connect to the camera after connection attempt.");
+            LOG_RESPONSE(ERROR, "Failed to connect to camera", NOT_FOUND);
+            return;
+        }
+        LOG_F(INFO, "Camera connected successfully.");
+    }
+
+    cam->startStreaming();
+    cam->startTakingPictures(chrono_interval, state->getMav());
+
+    LOG_RESPONSE(INFO, "Started Camera Stream", OK);
+}
+
+DEF_GCS_HANDLE(Post, camera, endstream) {
+    LOG_REQUEST("POST", "/camera/endstream");
+
+    std::shared_ptr<CameraInterface> cam = state->getCamera();
+
+    if (!cam->isConnected()) {
+        LOG_F(INFO, "Camera not connected. Attempting to connect...");
+        cam->connect();
+        if (!cam->isConnected()) {
+            LOG_F(ERROR, "Failed to connect to the camera after connection attempt.");
+            LOG_RESPONSE(ERROR, "Failed to connect to camera", NOT_FOUND);
+            return;
+        }
+        LOG_F(INFO, "Camera connected successfully.");
+    }
+
+    cam->stopTakingPictures();
+
+    std::deque<ImageData> images;
+    images = cam->getAllImages();
+    for (const ImageData& image : images) {
+        std::filesystem::path save_dir = state->config.camera.save_dir;
+        std::filesystem::path img_filepath = save_dir / (std::to_string(image.TIMESTAMP)
+        + std::string(".jpg"));
+        std::filesystem::path json_filepath = save_dir / (std::to_string(image.TIMESTAMP)
+        + std::string(".json"));
+        saveImageToFile(image.DATA, img_filepath);
+        if (image.TELEMETRY.has_value()) {
+            saveImageTelemetryToFile(image.TELEMETRY.value(), json_filepath);
+        }
+        LOG_F(INFO, "Saving image %s", img_filepath.string().c_str());
+    }
+
+    LOG_RESPONSE(INFO, "Ended Camera Stream", OK);
+}
+
 // DEF_GCS_HANDLE(Get, oh, shit) {
 //     LOG_REQUEST("GET", "/oh/shit");
 

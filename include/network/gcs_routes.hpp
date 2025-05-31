@@ -185,6 +185,23 @@ DEF_GCS_HANDLE(Post, targets, matched);
  */
 DEF_GCS_HANDLE(Post, kill, kill, kill);
 
+/**
+ * POST /camera/startstream
+ * ---
+ * Testing function to start the stream at a specific interval
+ * Expects a uint32 integer in the POST body as the interval to call startTakingPictures()
+ * 
+ */
+DEF_GCS_HANDLE(Post, camera, startstream);
+
+/**
+ * POST /camera/endstream
+ * ---
+ * Testing function to end the stream. 
+ * Takes the pictures in the camera queue and stores it in the config file path
+ */
+DEF_GCS_HANDLE(Post, camera, endstream);
+
 DEF_GCS_HANDLE(Get, oh, shit);
 
 #endif  // INCLUDE_NETWORK_GCS_ROUTES_HPP_
