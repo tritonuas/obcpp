@@ -7,7 +7,7 @@
  * 
  * DROP IT LIKE ITS HOT is the test for airdrop signal. For the 2025 
  * competition, our airdrop mechanism is a electro-pelectro-permanent
- * magnet that is triggered by the pixhawk. Therefore, we send a singal to the
+ * magnet that is triggered by the pixhawk. Therefore, we send a signal to the
  * Pixhawk to drop the payload.
  * 
  * This is to test if the signal is sent successfully (we should set up the 
