@@ -16,7 +16,7 @@ function(target_add_onnxruntime target_name)
         onnxruntime
         URL      ${ONNX_URL}
         URL_HASH ${ONNX_HASH}
-        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+        DOWNLOAD_EXTRACT_TIMESTAMP FALSE
     )
     FetchContent_MakeAvailable(onnxruntime)
 

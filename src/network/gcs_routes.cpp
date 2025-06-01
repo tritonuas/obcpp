@@ -10,8 +10,10 @@
 
 #include "core/mission_state.hpp"
 #include "network/gcs_macros.hpp"
+#include "network/mavlink.hpp"
 #include "pathing/mission_path.hpp"
 #include "protos/obc.pb.h"
+#include "ticks/airdrop_approach.hpp"
 #include "ticks/cv_loiter.hpp"
 #include "ticks/path_gen.hpp"
 #include "ticks/path_validate.hpp"
@@ -276,34 +278,25 @@ DEF_GCS_HANDLE(Get, camera, capture) {
 
 DEF_GCS_HANDLE(Post, dodropnow) {
     LOG_REQUEST("POST", "/dodropnow");
+    LOG_F(INFO, "Received signal to drop current bottle ");
 
-    AirdropSwap airdrop_proto;
-    google::protobuf::util::JsonStringToMessage(request.body, &airdrop_proto);
+    if (state->getMav() == nullptr) {
+        LOG_RESPONSE(ERROR, "Mavlink not connected", BAD_REQUEST);
+        return;
+    }
 
-    airdrop_t airdrop;
-    if (airdrop_proto.index() == AirdropIndex::Kaz) {
-        airdrop = UDP2_A;
-    } else if (airdrop_proto.index() == AirdropIndex::Kimi) {
-        airdrop = UDP2_B;
-    } else if (airdrop_proto.index() == AirdropIndex::Chris) {
-        airdrop = UDP2_C;
-    } else if (airdrop_proto.index() == AirdropIndex::Daniel) {
-        airdrop = UDP2_D;
+    // Copied from the integration test
+    std::optional<airdrop_t> next_airdrop_to_drop;
+    AirdropIndex next_airdrop = static_cast<AirdropIndex>(2);
+    next_airdrop_to_drop = static_cast<airdrop_t>(next_airdrop);
+
+    // std::string message;
+    // drop
+    if (triggerAirdrop(state->getMav() , next_airdrop_to_drop.value())) {
+        LOG_RESPONSE(INFO, "Dropped Bottle Successfully", OK);
     } else {
-        LOG_RESPONSE(ERROR, "Invalid bottle index", BAD_REQUEST);
-        return;
+        LOG_RESPONSE(INFO, "Failed to drop bottle", INTERNAL_SERVER_ERROR);
     }
-
-    LOG_F(INFO, "Received signal to drop bottle %d", airdrop);
-
-    if (state->getAirdrop() == nullptr) {
-        LOG_RESPONSE(ERROR, "Airdrop not connected", BAD_REQUEST);
-        return;
-    }
-
-    state->getAirdrop()->send(makeDropNowPacket(airdrop));
-
-    LOG_RESPONSE(INFO, "Dropped bottle", OK);
 }
 
 DEF_GCS_HANDLE(Post, takeoff, manual) {
