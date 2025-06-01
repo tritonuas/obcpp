@@ -295,7 +295,7 @@ DEF_GCS_HANDLE(Post, dodropnow) {
     if (triggerAirdrop(state->getMav() , next_airdrop_to_drop.value())) {
         LOG_RESPONSE(INFO, "Dropped Bottle Successfully", OK);
     } else {
-        LOG_RESPONSE(INFO, "Failed to drop bottle", OK);
+        LOG_RESPONSE(INFO, "Failed to drop bottle", INTERNAL_SERVER_ERROR);
     }
 }
 
