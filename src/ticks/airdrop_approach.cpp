@@ -65,9 +65,15 @@ Tick* AirdropApproachTick::tick() {
             // Trigger the airdrop servo/relay
             triggerAirdrop(state->getMav(), state->next_airdrop_to_drop.value());
 
+            // markAirdropAsDropped() has already been called in airdrop_prep, so don't update here
+            // Lowkey kinda bad design but I didn't write this so don't blame me
+            // If you want to uncomment the following lines to test if this shit works, make sure
+            // to comment the ones in airdrop_prep
+
             // Convert airdrop_t to AirdropIndex when calling markAirdropAsDropped
-            state->markAirdropAsDropped(
-                static_cast<AirdropIndex>(state->next_airdrop_to_drop.value() - 1));
+            // state->markAirdropAsDropped(
+                // static_cast<AirdropIndex>(state->next_airdrop_to_drop.value() - 1));
+
         } else {
             LOG_F(ERROR, "Cannot drop bottle because no bottle to drop");
         }

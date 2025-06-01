@@ -31,7 +31,7 @@
         },
         "coverage": {
             "altitude_m": 30.0,
-            "camera_vision_m": 5.0,
+            "camera_vision_m": 20.0,
             "method": "hover",
             "hover": {
                 "pictures_per_stop": 1,
