@@ -31,6 +31,7 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
                            libopencv-dev \
                            # Need these to install Python 3.11 from pyenv
                            python3-pip \
+                           python3-setuptools \
                            libssl-dev \
                            zlib1g-dev \
                            libbz2-dev \
@@ -81,9 +82,6 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
 # https://docs.opencv.org/4.x/d7/d9f/tutorial_linux_install.html
 # cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev
 # python-dev python-numpy libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libjasper-dev libdc1394-22-dev
-
-
-RUN apt-get update && apt-get install -y git
 
 # pull pre-built libtorch
 ARG LIBTORCH_VERSION=2.1.0
@@ -156,14 +154,6 @@ RUN git clone --depth 1 https://github.com/mavlink/MAVSDK.git --branch v2.9.1 --
     && git submodule update --init --recursive \
     && cmake -DCMAKE_BUILD_TYPE=Release -Bbuild/default -H. \
     && cmake --build build/default -j2 --target install
-
-RUN apt-get update && apt-get install -y \
-    python3-pip \
-    python3-setuptools \
-    ninja-build \
-    git \
-    curl \
-    build-essential
 
 # Upgrade Meson to a compatible version (>= 0.63)
 RUN pip3 install --upgrade meson

@@ -24,12 +24,14 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
                            git \
                            wget \
                            ccache \
+                           curl \
                            vim \
                            curl \
                            unzip \
                            protobuf-compiler \
                            # Need these to install Python 3.11 from pyenv
                            python3-pip \
+                           python3-setuptools \
                            libssl-dev \
                            libjpeg-dev \
                            zlib1g-dev \
@@ -85,6 +87,18 @@ RUN wget "https://github.com/pytorch/vision/archive/refs/tags/v${TORCHVISION_VER
 
 RUN pip3 install gdown
 ENV PATH="${PATH}:${HOME}/.local/bin"
+
+
+# Upgrade Meson to a compatible version (>= 0.63)
+RUN pip3 install --upgrade meson
+RUN pip3 install jinja2 ply
+
+# install libcamera from source
+RUN 
+RUN git clone https://git.libcamera.org/libcamera/libcamera.git \
+    && cd libcamera \
+    && meson setup build \
+    && ninja -C build install
 
 WORKDIR /obcpp
 COPY . .
