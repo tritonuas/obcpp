@@ -82,11 +82,15 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
 # cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev
 # python-dev python-numpy libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libjasper-dev libdc1394-22-dev
 
+
+RUN apt-get update && apt-get install -y git
+
 # pull pre-built libtorch
 ARG LIBTORCH_VERSION=2.1.0
 ARG LIBTORCH_INSTALL_DIR=/libtorch-tmp
 WORKDIR ${LIBTORCH_INSTALL_DIR}
 RUN git clone -b main --recurse-submodule https://github.com/pytorch/pytorch.git
+#RUN git clone https://github.com/pytorch/pytorch.git
 RUN mkdir pytorch-build
 RUN cd pytorch-build
 RUN USE_CUDA=0 \
@@ -143,7 +147,7 @@ RUN wget "https://github.com/pytorch/vision/archive/refs/tags/v${TORCHVISION_VER
     && mkdir -p "${TORCHVISION_INSTALL_DIR}/vision-${TORCHVISION_VERSION}/build" \
     && cd "${TORCHVISION_INSTALL_DIR}/vision-${TORCHVISION_VERSION}/build" \
     && cmake -DWITH_CUDA=off -D_GLIBCXX_USE_CXX11_ABI=1 -DCMAKE_BUILD_TYPE=Release .. \
-    && make -j2 \
+    && make -j4 \
     && make install
 
 # install MAVSDK from source
@@ -152,6 +156,25 @@ RUN git clone --depth 1 https://github.com/mavlink/MAVSDK.git --branch v2.9.1 --
     && git submodule update --init --recursive \
     && cmake -DCMAKE_BUILD_TYPE=Release -Bbuild/default -H. \
     && cmake --build build/default -j2 --target install
+
+RUN apt-get update && apt-get install -y \
+    python3-pip \
+    python3-setuptools \
+    ninja-build \
+    git \
+    curl \
+    build-essential
+
+# Upgrade Meson to a compatible version (>= 0.63)
+RUN pip3 install --upgrade meson
+RUN pip3 install jinja2 ply
+
+# install libcamera from source
+RUN 
+RUN git clone https://git.libcamera.org/libcamera/libcamera.git \
+    && cd libcamera \
+    && meson setup build \
+    && ninja -C build install
 
 RUN pip3 install gdown
 ENV PATH="${PATH}:${HOME}/.local/bin"
