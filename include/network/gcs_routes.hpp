@@ -204,4 +204,6 @@ DEF_GCS_HANDLE(Post, camera, endstream);
 
 DEF_GCS_HANDLE(Get, oh, shit);
 
+DEF_GCS_HANDLE(Get, tickstate);
+
 #endif  // INCLUDE_NETWORK_GCS_ROUTES_HPP_

@@ -1,12 +1,12 @@
 #include <google/protobuf/util/json_util.h>
 #include <httplib.h>
 
-#include <optional>
-#include <string>
-#include <vector>
 #include <filesystem>
 #include <memory>
 #include <nlohmann/json.hpp>
+#include <optional>
+#include <string>
+#include <vector>
 
 #include "core/mission_state.hpp"
 #include "network/gcs_macros.hpp"
@@ -505,6 +505,15 @@ DEF_GCS_HANDLE(Post, camera, endstream) {
     }
 
     LOG_RESPONSE(INFO, "Ended Camera Stream", OK);
+}
+
+DEF_GCS_HANDLE(Get, tickstate) {
+    LOG_REQUEST("GET", "/tickstate");
+
+    TickID tickID = state->getTickID();
+    std::string tick_state = TICK_ID_TO_STR(tickID);
+
+    LOG_RESPONSE(INFO, "Returning tick state", OK, tick_state, mime::plaintext);
 }
 
 // DEF_GCS_HANDLE(Get, oh, shit) {
