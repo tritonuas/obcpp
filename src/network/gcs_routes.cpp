@@ -3,10 +3,11 @@
 
 #include <filesystem>
 #include <memory>
-#include <nlohmann/json.hpp>
 #include <optional>
 #include <string>
 #include <vector>
+
+#include <nlohmann/json.hpp>
 
 #include "core/mission_state.hpp"
 #include "network/gcs_macros.hpp"
@@ -508,12 +509,15 @@ DEF_GCS_HANDLE(Post, camera, endstream) {
 }
 
 DEF_GCS_HANDLE(Get, tickstate) {
-    LOG_REQUEST("GET", "/tickstate");
+    // Not using the macros here so that it doesn't scream at you every 1 second
+    // LOG_REQUEST("GET", "/tickstate");
 
     TickID tickID = state->getTickID();
     std::string tick_state = TICK_ID_TO_STR(tickID);
 
-    LOG_RESPONSE(INFO, "Returning tick state", OK, tick_state, mime::plaintext);
+    // LOG_RESPONSE(INFO, "Returning tick state", OK, tick_state, mime::plaintext);
+    response.set_content(tick_state, mime::plaintext);
+    response.status = OK;
 }
 
 // DEF_GCS_HANDLE(Get, oh, shit) {
