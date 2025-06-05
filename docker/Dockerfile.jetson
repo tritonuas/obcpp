@@ -48,7 +48,8 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
                            libmagick++-dev \
                            # needed for pytorch 
                            libopenblas-dev \
-                           ninja-build
+                           ninja-build \
+                           libopencv-dev
 
 RUN pip3 install typing-extensions PyYAML cpplint
 
