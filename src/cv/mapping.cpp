@@ -11,9 +11,11 @@
 #include <string>
 #include <vector>
 
+
 #include "cv/preprocess.hpp"  // include the Preprocess header
 #include "opencv2/opencv.hpp"
 #include "opencv2/stitching.hpp"
+#include "utilities/logging.hpp"
 
 namespace fs = std::filesystem;
 
@@ -101,8 +103,8 @@ void Mapping::processChunk(const std::vector<cv::Mat>& chunk_images, const std::
     if (chunk_images.empty()) return;
 
     chunk_counter++;
-    std::cout << "\nProcessing chunk #" << chunk_counter << " with " << chunk_images.size()
-              << " images.\n";
+    LOG_S(INFO) << "Processing chunk #" << chunk_counter << " with " << chunk_images.size()
+                            << "images.\n";
 
     // Stitch the chunk using the (now ignored) preprocess flag
     auto [status, stitched] = globalStitch(chunk_images, mode, max_dim, preprocess);
@@ -113,9 +115,9 @@ void Mapping::processChunk(const std::vector<cv::Mat>& chunk_images, const std::
 
     if (status == cv::Stitcher::OK && !stitched.empty()) {
         if (cv::imwrite(chunk_filename, stitched)) {
-            std::cout << "Saved chunk result to: " << chunk_filename << "\n";
+            LOG_S(INFO) << "Saved chunk result to: " << chunk_filename << "\n";
         } else {
-            std::cerr << "Failed to save chunk result to disk. This chunk will be lost.\n";
+            LOG_F(ERROR, "Failed to save chunk result to disk. This chunk will be lost.\n");
         }
     } else {
         std::cerr << "Chunk stitching failed, status = " << static_cast<int>(status)
@@ -134,9 +136,9 @@ void Mapping::firstPass(const std::string& input_path, const std::string& run_su
         current_run_folder = run_subdir + "/" + currentDateTimeStr();
         try {
             fs::create_directories(current_run_folder);
-            std::cout << "Created run folder: " << current_run_folder << "\n";
+            LOG_S(INFO) << "Created run folder: " << current_run_folder << "\n";
         } catch (const fs::filesystem_error& e) {
-            std::cerr << "Error creating run folder: " << e.what() << "\n";
+            LOG_S(ERROR) << "Error creating run folder: " << e.what() << "\n";
             throw;
         }
     }
@@ -157,7 +159,7 @@ void Mapping::firstPass(const std::string& input_path, const std::string& run_su
 
     // 3. Skip already processed images
     if (static_cast<int>(all_filenames.size()) <= processed_image_count) {
-        std::cout << "No new images found to process.\n";
+        LOG_F(INFO, "No new images found to process.\n");
         return;
     }
 
@@ -178,10 +180,10 @@ void Mapping::firstPass(const std::string& input_path, const std::string& run_su
             }
             images.push_back(img);
         } else {
-            std::cerr << "Warning: Failed to load image: " << filename << "\n";
+            LOG_S(WARNING) << "Warning: Failed to load image: " << filename << "\n";
         }
     }
-    std::cout << "Loaded and preprocessed " << images.size() << " new images.\n";
+    LOG_S(INFO) << "Loaded and preprocessed " << images.size() << " new images.\n";
 
     // 5. Chunk the preprocessed images
     auto chunks = chunkListWithOverlap(static_cast<int>(images.size()), chunk_size, overlap);
@@ -221,7 +223,8 @@ void Mapping::secondPass(const std::string& run_subdir, cv::Stitcher::Mode mode,
     }
 
     if (chunk_files.empty()) {
-        std::cerr << "No chunk images found in " << folder_to_scan << ". Nothing to stitch.\n";
+        LOG_S(WARNING) << "No chunk images found in " << folder_to_scan
+            << ". Nothing to stitch.\n";
         return;
     }
 
@@ -233,11 +236,11 @@ void Mapping::secondPass(const std::string& run_subdir, cv::Stitcher::Mode mode,
         if (!cimg.empty()) {
             chunk_images.push_back(cimg);
         } else {
-            std::cerr << "Warning: could not load chunk image: " << cfile << "\n";
+            LOG_S(WARNING) << "Warning: could not load chunk image: " << cfile << "\n";
         }
     }
 
-    std::cout << "Loaded " << chunk_images.size() << " chunk images from " << folder_to_scan
+    LOG_S(INFO) << "Loaded " << chunk_images.size() << " chunk images from " << folder_to_scan
               << ". Attempting final stitch...\n";
 
     // Stitch without additional preprocessing (images are already preprocessed)
@@ -246,12 +249,12 @@ void Mapping::secondPass(const std::string& run_subdir, cv::Stitcher::Mode mode,
     if (status == cv::Stitcher::OK && !final_stitched.empty()) {
         std::string final_name = folder_to_scan + "/final_" + currentDateTimeStr() + ".jpg";
         if (cv::imwrite(final_name, final_stitched)) {
-            std::cout << "Final image saved to: " << final_name << "\n";
+            LOG_S(INFO) << "Final image saved to: " << final_name << "\n";
         } else {
-            std::cerr << "Failed to save final image to " << final_name << "\n";
+            LOG_S(WARNING) << "Failed to save final image to " << final_name << "\n";
         }
     } else {
-        std::cerr << "Final stitching failed. Status = " << static_cast<int>(status) << "\n";
+        LOG_S(WARNING) << "Final stitching failed. Status = " << static_cast<int>(status) << "\n";
     }
 
     chunk_images.clear();
@@ -273,15 +276,16 @@ void Mapping::directStitch(const std::string& input_path, const std::string& out
         }
     }
 
-    // 2. Sort them for consistent processing
+    // 2. Sort them for consistent processing (assuming image filenames are timestamped)
+    // Mapping works better when the images are sequential
     std::sort(all_filenames.begin(), all_filenames.end());
 
     if (all_filenames.empty()) {
-        std::cerr << "No images found in " << input_path << ". Nothing to stitch.\n";
+        LOG_S(WARNING) << "No images found in " << input_path << ". Nothing to stitch.\n";
         return;
     }
 
-    std::cout << "Found " << all_filenames.size() << " images to stitch.\n";
+    LOG_S(INFO) << "Found " << all_filenames.size() << " images to stitch.\n";
 
     // 3. Load and preprocess all images
     std::vector<cv::Mat> all_images;
@@ -293,23 +297,22 @@ void Mapping::directStitch(const std::string& input_path, const std::string& out
         if (!img.empty()) {
             if (preprocess) {
                 // Apply custom preprocessing before further processing
+                // Removes the 20px green bar from Daniel's camera processing
                 img = preprocessor.cropRight(img);
-                img = readAndResize(img, max_dim);
-            } else {
-                img = readAndResize(img, max_dim);
             }
+            img = readAndResize(img, max_dim);
             all_images.push_back(img);
         } else {
-            std::cerr << "Warning: Failed to load image: " << filename << "\n";
+            LOG_S(WARNING) << "Warning: Failed to load image: " << filename << "\n";
         }
     }
 
     if (all_images.empty()) {
-        std::cerr << "No valid images loaded. Cannot stitch.\n";
+        LOG_S(WARNING) << "No valid images loaded. Cannot stitch.\n";
         return;
     }
 
-    std::cout << "Loaded " << all_images.size() << " images. Starting stitching...\n";
+    LOG_S(INFO) << "Loaded " << all_images.size() << " images. Starting stitching...\n";
 
     // 4. Stitch all images at once
     auto [status, stitched] =
@@ -331,12 +334,12 @@ void Mapping::directStitch(const std::string& input_path, const std::string& out
         }
 
         if (cv::imwrite(final_output_path, stitched)) {
-            std::cout << "Direct stitch result saved to: " << final_output_path << "\n";
+            LOG_S(INFO) << "Direct stitch result saved to: " << final_output_path << "\n";
         } else {
-            std::cerr << "Failed to save stitched image to " << final_output_path << "\n";
+            LOG_S(WARNING) << "Failed to save stitched image to " << final_output_path << "\n";
         }
     } else {
-        std::cerr << "Direct stitching failed. Status = " << static_cast<int>(status) << "\n";
+        LOG_S(ERROR) << "Direct stitching failed. Status = " << static_cast<int>(status) << "\n";
     }
 
     // 6. Free memory
@@ -352,5 +355,5 @@ void Mapping::reset() {
     processed_image_count = 0;
     chunk_counter = 0;
     current_run_folder.clear();
-    std::cout << "Mapping state has been reset.\n";
+    LOG_F(INFO, "Mapping state has been reset.\n");
 }

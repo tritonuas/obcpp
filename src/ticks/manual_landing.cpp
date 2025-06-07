@@ -30,20 +30,21 @@ Tick* ManualLandingTick::tick() {
                 fs::create_directories(output_dir);
             }
 
+            // TODO: Change this to be a config setting later
             Mapping mapper;
             const int chunk_size = 5;
             const int chunk_overlap = 2;
             const int max_dim = 3000;
 
-            std::cout << "First pass stitching..." << std::endl;
+            LOG_F(INFO, "First pass stitching...");
             mapper.firstPass(base_dir.string(), output_dir.string(), chunk_size,
             chunk_overlap, scan_mode, max_dim, true);
 
-            std::cout << "Second pass stitching..." << std::endl;
+            LOG_F(INFO, "Second pass stitching...");
             mapper.secondPass(output_dir.string(), scan_mode, max_dim, true);
             state->setMappingIsDone(true);
 
-            std::cout << "Mapping complete." << std::endl;
+            LOG_F(INFO, "Mapping complete.");
         }
     } else {
         // TODO: Test this in mock testflight
