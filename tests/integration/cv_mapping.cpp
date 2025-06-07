@@ -70,5 +70,92 @@ int main() {
         std::cerr << "Exception in incremental integration test: " << e.what() << "\n";
         return 1;
     }
+
+    // =========================================================================
+    // Test 2: Direct Stitch Integration Test
+    // =========================================================================
+    std::cout << "\n" << std::string(60, '=') << "\n";
+    std::cout << "Starting Direct Stitch Integration Test\n";
+    std::cout << std::string(60, '=') << "\n";
+
+    try {
+        // Set up paths for direct stitch test
+        fs::path base_dir = "../tests/integration/mapping";
+        fs::path batch1_dir = base_dir / "batch1";
+        fs::path batch2_dir = base_dir / "batch2";
+        fs::path direct_test_dir = base_dir / "direct_test_images";
+        fs::path direct_output_dir = base_dir / "direct_output";
+
+        // Create test directories
+        if (!fs::exists(direct_test_dir)) {
+            fs::create_directories(direct_test_dir);
+        }
+        if (!fs::exists(direct_output_dir)) {
+            fs::create_directories(direct_output_dir);
+        }
+
+        // Clear the direct test directory
+        for (const auto& entry : fs::directory_iterator(direct_test_dir)) {
+            fs::remove_all(entry.path());
+        }
+
+        // Copy ALL images from both batches into the direct test directory
+        std::cout << "Copying images from batch1 and batch2 to direct test directory...\n";
+        int image_count = 0;
+
+        // Copy from batch1
+        if (fs::exists(batch1_dir)) {
+            for (const auto& entry : fs::directory_iterator(batch1_dir)) {
+                if (entry.is_regular_file()) {
+                    fs::copy_file(entry.path(), direct_test_dir / entry.path().filename(),
+                                  fs::copy_options::overwrite_existing);
+                    image_count++;
+                }
+            }
+        }
+
+        // Copy from batch2
+        if (fs::exists(batch2_dir)) {
+            for (const auto& entry : fs::directory_iterator(batch2_dir)) {
+                if (entry.is_regular_file()) {
+                    fs::copy_file(entry.path(), direct_test_dir / entry.path().filename(),
+                                  fs::copy_options::overwrite_existing);
+                    image_count++;
+                }
+            }
+        }
+
+        std::cout << "Copied " << image_count << " images for direct stitching test.\n";
+
+        if (image_count == 0) {
+            std::cout << "No images found in batch directories. Creating a simple test...\n";
+            std::cout << "Please add some test images to batch1/ or batch2/ directories.\n";
+        } else {
+            // Test the direct stitch method
+            Mapping direct_mapper;
+            const int max_dim = 3000;
+
+            std::cout << "==> Testing directStitch with preprocessing enabled...\n";
+            direct_mapper.directStitch(direct_test_dir.string(), direct_output_dir.string(),
+                                       scan_mode, max_dim, true);
+
+            std::cout << "==> Testing directStitch with preprocessing disabled...\n";
+            direct_mapper.directStitch(direct_test_dir.string(),
+                                       (direct_output_dir / "no_preprocess.jpg").string(),
+                                       scan_mode, max_dim, false);
+
+            std::cout << "Direct stitch integration test completed.\n";
+            std::cout << "Check the following directory for results: " << direct_output_dir << "\n";
+        }
+
+    } catch (const std::exception& e) {
+        std::cerr << "Exception in direct stitch integration test: " << e.what() << "\n";
+        return 1;
+    }
+
+    std::cout << "\n" << std::string(60, '=') << "\n";
+    std::cout << "All integration tests completed successfully!\n";
+    std::cout << std::string(60, '=') << "\n";
+
     return 0;
 }

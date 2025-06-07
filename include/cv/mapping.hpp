@@ -46,6 +46,11 @@ class Mapping {
     // This clears the counters but does NOT delete your saved chunk images on disk.
     void reset();
 
+    // Direct stitch: loads all images from input_path and stitches them into a single panorama
+    // Saves the result to output_path. This bypasses the two-pass chunking system.
+    void directStitch(const std::string& input_path, const std::string& output_path,
+                      cv::Stitcher::Mode mode, int max_dim, bool preprocess = true);
+
  private:
     // Helper: read & optionally downscale an image so its largest dimension <= max_dim
     static cv::Mat readAndResize(const cv::Mat& input, int max_dim);
