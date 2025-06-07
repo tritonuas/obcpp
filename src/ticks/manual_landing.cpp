@@ -51,6 +51,9 @@ Tick* ManualLandingTick::tick() {
         if (!state.get()->getMav()->isArmed()) {
             return next_tick;
         }
+        
+        // Comment the above if and uncomment the below line when testing sitl
+        // return next_tick;
     }
 
     return nullptr;

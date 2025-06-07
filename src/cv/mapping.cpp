@@ -104,7 +104,7 @@ void Mapping::processChunk(const std::vector<cv::Mat>& chunk_images, const std::
 
     chunk_counter++;
     LOG_S(INFO) << "Processing chunk #" << chunk_counter << " with " << chunk_images.size()
-                            << "images.\n";
+                            << " images.\n";
 
     // Stitch the chunk using the (now ignored) preprocess flag
     auto [status, stitched] = globalStitch(chunk_images, mode, max_dim, preprocess);

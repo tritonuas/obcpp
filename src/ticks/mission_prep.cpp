@@ -39,6 +39,7 @@ Tick* MissionPrepTick::tick() {
         this->state->setCV(
             std::make_shared<CVAggregator>(Pipeline(PipelineParams(yolo_model_dir))));
 
+        this->state->setMappingIsDone(false);
         return new PathGenTick(this->state);
     } else {
         return nullptr;
