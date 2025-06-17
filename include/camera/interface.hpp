@@ -17,6 +17,8 @@
 #include "utilities/datatypes.hpp"
 #include "utilities/obc_config.hpp"
 
+#include "libcamera/
+
 using json = nlohmann::json;
 using Mat = cv::Mat;
 
@@ -66,7 +68,139 @@ class CameraInterface {
     CameraConfig config;
 
  public:
-    explicit CameraInterface(const CameraConfig& config);
+    explicit CameraInterface(const CameraConfig& config) {
+        //Make and start the camera manager
+        std::unique_ptr<CameraManager> cm = std::make_unique<CameraManager>();
+        cm->start();
+
+        //Get the camera
+        if (cm->cameras().empty()) {
+            std::cout << "No cameras were identified on the system."
+                << std::endl;
+            cm->stop();
+            return;
+        }
+
+                std::unique_ptr<CameraConfiguration> config =
+            camera->generateConfiguration( { StreamRole::Raw } );
+
+        /*
+         * Config the stream
+         */
+        StreamConfiguration &streamConfig = config->at(0);
+        streamConfig.size = { 2028, 1520 };
+        std::cout << "Default Raw configuration is: "
+            << streamConfig.toString() << std::endl;
+        streamConfig.bufferCount = BUFFER_COUNT;
+
+        streamConfig.pixelFormat = streamConfig.pixelFormat.fromString("YUV420");
+
+        std::cout << "pixelFormat" << streamConfig.pixelFormat.toString();
+
+                /*
+         * Validating a CameraConfiguration -before- applying it will adjust it
+         * to a valid configuration which is as close as possible to the one
+         * requested.
+         */
+        config->validate();
+        std::cout << "Validated viewfinder configuration is: "
+            << streamConfig.toString() << std::endl;
+
+        /*
+         * Once we have a validated configuration, we can apply it to the
+         * Camera.
+         */
+        camera->configure(config.get());
+
+        //Allocate the buffers
+        FrameBufferAllocator *allocator = new FrameBufferAllocator(camera);
+        for (StreamConfiguration &cfg : *config) {
+            int ret = allocator->allocate(cfg.stream());
+            if (ret < 0) {
+                std::cerr << "Can't allocate buffers" << std::endl;
+                return;
+                //return EXIT_FAILURE;
+            }
+
+            size_t allocated = allocator->buffers(cfg.stream()).size();
+            std::cout << "Allocated " << allocated << " buffers for stream" << std::endl;
+        }
+
+        //Make the requests
+        Stream *stream = streamConfig.stream();
+        const std::vector<std::unique_ptr<FrameBuffer>> &buffers = allocator->buffers(stream);
+        for (unsigned int i = 0; i < buffers.size(); ++i) {
+            std::unique_ptr<Request> request = camera->createRequest();
+            if (!request)
+            {
+                std::cerr << "Can't create request" << std::endl;
+                return;
+
+            }
+
+            const std::unique_ptr<FrameBuffer> &buffer = buffers[i];
+            int ret = request->addBuffer(stream, buffer.get());
+            if (ret < 0)
+            {
+                std::cerr << "Can't set buffer for request"
+                    << std::endl;
+                return;
+            }
+
+            /*
+             * Controls can be added to a request on a per frame basis.
+             */
+            //ControlList &controls = request->controls();
+            //controls.set(controls::AnalogueGain, 0.5);
+
+            requests.push_back(std::move(request));
+        }
+
+        //Make the camera call this function every time a request is complete
+        camera->requestCompleted.connect(requestComplete);
+
+                /*
+         * --------------------------------------------------------------------
+         * Start Capture
+         *
+         * For each delivered frame, the Slot connected to the
+         * Camera::requestCompleted Signal is called.
+         */
+        camera->start();
+        for (std::unique_ptr<Request> &request : requests) {
+
+            std::cout << std::endl
+                << "Added Request: " << request->toString() << std::endl;
+            camera->queueRequest(request.get());
+        }
+
+        /*
+         * Run an EventLoop
+         */
+        loop.timeout(TIMEOUT_SEC);
+        //int ret = loop.exec();
+        std::thread cameraThread(&EventLoop::exec, &loop);
+        std::vector<std::unique_ptr<Request>> requests;
+        //cameraThread.detach();
+        cameraThread.join();
+
+        /*
+         * Clean Up
+         */
+        camera->stop();
+        allocator->free(stream);
+        delete allocator;
+        camera->release();
+        camera.reset();
+        cm->stop();
+
+    }
+
+
+
+
+
+    }
     virtual ~CameraInterface() = default;
 
     virtual void connect() = 0;
