@@ -13,7 +13,8 @@
         }
     },
     "takeoff": {
-        "altitude_m": 60.0
+        "altitude_m": 60.0,
+	"payload_size": 2
     },
     "pathing": {
         "dubins": {
@@ -25,8 +26,9 @@
             "rewire_radius": 256.0,
             "optimize": true,
             "point_fetch_method": "nearest", 
-            "allowed_to_skip_waypoints": false
-        },
+            "allowed_to_skip_waypoints": false,
+            "generate_deviations": false
+	},
         "coverage": {
             "altitude_m": 30.0,
             "camera_vision_m": 6.0,
@@ -56,7 +58,7 @@
     },
     "camera": {
         "_comment": "See CameraConfig struct in datatypes.hpp for detailed explanations",
-        "type": "lucid",
+        "type": "mock",
         "save_dir": "/obcpp/images/",
         "save_images_to_file": true,
         "mock": {
