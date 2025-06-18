@@ -9,6 +9,7 @@
 #include <deque>
 
 #include <nlohmann/json.hpp>
+#include <opencv2/opencv.hpp>
 
 #include "camera/interface.hpp"
 #include "network/mavlink.hpp"
@@ -66,6 +67,7 @@ class PiCamera : public CameraInterface {
 
         std::atomic_bool isTakingPictures;
 
+	cv::VideoCapture cap;
             
         std::deque<ImageData> imageQueue;
         std::shared_mutex imageQueueLock;
