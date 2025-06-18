@@ -29,7 +29,38 @@ void PiCamera::connect() {
 
 }
 
-PiCamera::~PiCamera(){
+PiCamera::~PiCamera() {
+
+}
+
+bool PiCamera::isConnected() {
+
+}
+
+void PiCamera::startTakingPictures(const std::chrono::milliseconds& interval, 
+    std::shared_ptr<MavlinkClient> mavlinkClient) {
+
+}
+void PiCamera::stopTakingPictures(){
+
+}
+std::optional<ImageData> PiCamera::getLatestImage() {
+    
+}
+
+std::deque<ImageData> PiCamera::getAllImages() {
+    
+}
+
+std::optional<ImageData> PiCamera::takePicture(const std::chrono::milliseconds& timeout,
+std::shared_ptr<MavlinkClient> mavlinkClient) {
+}
+
+void PiCamera::startStreaming() {
+    
+}
+void PiCamera::captureEvery(const std::chrono::milliseconds& interval, 
+    std::shared_ptr<MavlinkClient> mavlinkClient) {
 
 }
 

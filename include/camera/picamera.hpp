@@ -64,3 +64,5 @@ class PiCamera : public CameraInterface {
         void captureEvery(const std::chrono::milliseconds& interval,
             std::shared_ptr<MavlinkClient> mavlinkClient);            
 };
+
+#endif
