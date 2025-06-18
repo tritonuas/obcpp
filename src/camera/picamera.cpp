@@ -55,7 +55,7 @@ PiCamera::PiCamera(CameraConfig config) :
     cap(get_gstreamer_pipeline(1920, 1080, 30), cv::CAP_GSTREAMER) 
 {
     if (!this->cap.isOpened()) {
-        LOG_F(ERROR, "FATAL: Could not open picamera");
+        LOG_F(FATAL, "FATAL: Could not open picamera");
     } else {
         LOG_F(INFO, "PiCamera opened successfully.");
     }
