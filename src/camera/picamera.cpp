@@ -20,6 +20,21 @@
 
 using json = nlohmann::json;
 
+
+// struct CameraConfig {
+//     // either "mock" or "lucid"
+//     std::string type;
+//     // directory to save images to
+//     std::string save_dir;
+//     // whether or not to save to save_dir
+//     bool save_images_to_file;
+//     struct {
+//         // directory to randomly pick images from
+//         // for the mock camera
+//         std::string images_dir;
+//     } mock;
+// };
+
 PiCamera::PiCamera(CameraConfig config) : 
     CameraInterface(config){
 
@@ -39,28 +54,85 @@ bool PiCamera::isConnected() {
 
 void PiCamera::startTakingPictures(const std::chrono::milliseconds& interval, 
     std::shared_ptr<MavlinkClient> mavlinkClient) {
-
+    this->isTakingPictures = true;
+    try {
+        this->captureThread = std::thread(&PiCamera::captureEvery, this, interval, mavlinkClient);
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+    }
 }
+
 void PiCamera::stopTakingPictures(){
+    if (!this->isTakingPictures) {
+        return;
+    }
 
+    this->isTakingPictures = false;
+
+    this->captureThread.join();
 }
+
 std::optional<ImageData> PiCamera::getLatestImage() {
-    
+    ReadLock lock(this->imageQueueLock);
+    ImageData lastImage = this->imageQueue.front();
+    this->imageQueue.pop_front();
+    return lastImage;
 }
 
 std::deque<ImageData> PiCamera::getAllImages() {
-    
+    ReadLock lock(this->imageQueueLock);
+    std::deque<ImageData> outputQueue = this->imageQueue;
+    this->imageQueue = std::deque<ImageData>();
+    return outputQueue;
 }
 
 std::optional<ImageData> PiCamera::takePicture(const std::chrono::milliseconds& timeout,
 std::shared_ptr<MavlinkClient> mavlinkClient) {
+    ImageData img_data;
+
+    // Implement query logic
+
+    uint64_t timestamp = getUnixTime_s().count();
+
+    // if we can't find corresonding telemtry json, just query mavlink
+    if (!img_data.TELEMETRY.has_value()) {
+        LOG_F(ERROR, "no image json value");
+        img_data.TELEMETRY = queryMavlinkImageTelemetry(mavlinkClient);
+    }
+
+    ImageData imageData {
+        .DATA = img_data.DATA,
+        .TIMESTAMP = timestamp,
+        .TELEMETRY = img_data.TELEMETRY,
+    };
+
+    return imageData;
 }
 
 void PiCamera::startStreaming() {
     
 }
+
+
 void PiCamera::captureEvery(const std::chrono::milliseconds& interval, 
     std::shared_ptr<MavlinkClient> mavlinkClient) {
+    
+    loguru::set_thread_name("picamera");
 
+    while (this->isTakingPictures) {
+        LOG_F(INFO, "Taking picture with picam.");
+        auto imageData = this->takePicture(interval, mavlinkClient);
+
+        if (!imageData.has_value()) {
+            LOG_F(WARNING, "Failed to take picture with picam");
+            continue;
+        }
+
+        WriteLock lock(this->imageQueueLock);
+        this->imageQueue.push_back(imageData.value());
+        lock.unlock();
+
+        std::this_thread::sleep_for(interval);
+    }
 }
 

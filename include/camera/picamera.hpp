@@ -62,7 +62,15 @@ class PiCamera : public CameraInterface {
         * taking another image
         */
         void captureEvery(const std::chrono::milliseconds& interval,
-            std::shared_ptr<MavlinkClient> mavlinkClient);            
+            std::shared_ptr<MavlinkClient> mavlinkClient);   
+
+        std::atomic_bool isTakingPictures;
+
+            
+        std::deque<ImageData> imageQueue;
+        std::shared_mutex imageQueueLock;
+
+        std::thread captureThread;
 };
 
 #endif
