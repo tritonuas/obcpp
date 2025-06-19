@@ -74,5 +74,6 @@ void GCSServer::_bindHandlers() {
 
     BIND_HANDLER(Get, tickstate);
 
+    BIND_HANDLER(Post, camera, runpipeline);
     // BIND_HANDLER(Get, oh, shit);
 }

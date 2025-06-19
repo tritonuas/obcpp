@@ -520,6 +520,47 @@ DEF_GCS_HANDLE(Get, tickstate) {
     response.status = OK;
 }
 
+DEF_GCS_HANDLE(Post, camera, runpipeline) {
+    LOG_REQUEST("POST", "/camera/runpipeline");
+
+    std::shared_ptr<CameraInterface> cam = state->getCamera();
+
+    std::string yolo_model_dir = state->config.cv.yolo_model_dir;
+    LOG_F(INFO, "Instantiating CV Aggregator with the following models:");
+    LOG_F(INFO, "Yolo Model: %s", yolo_model_dir.c_str());
+
+    // Make a CVAggregator instance and set it in the state
+    state->setCV(
+        std::make_shared<CVAggregator>(Pipeline(PipelineParams(yolo_model_dir))));
+
+    if (!cam->isConnected()) {
+        LOG_F(INFO, "Camera not connected. Attempting to connect...");
+        cam->connect();
+        if (!cam->isConnected()) {
+            LOG_F(ERROR, "Failed to connect to the camera after connection attempt.");
+            LOG_RESPONSE(ERROR, "Failed to connect to camera", NOT_FOUND);
+            return;
+        }
+        LOG_F(INFO, "Camera connected successfully.");
+    }
+
+    cam->startStreaming();
+
+    for (int i = 0; i < state->config.pathing.coverage.hover.pictures_per_stop; i++) {
+        auto photo = state->getCamera()->takePicture(500ms, state->getMav());
+        if (state->config.camera.save_images_to_file) {
+            photo->saveToFile(state->config.camera.save_dir);
+        }
+
+        if (photo.has_value()) {
+            // Run the pipeline on the photo
+            state->getCV()->runPipeline(photo.value());
+        }
+    }
+
+    LOG_RESPONSE(INFO, "Successfully ran camera Stream", OK);
+}
+
 // DEF_GCS_HANDLE(Get, oh, shit) {
 //     LOG_REQUEST("GET", "/oh/shit");
 
