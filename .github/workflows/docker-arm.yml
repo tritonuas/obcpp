@@ -80,4 +80,5 @@ jobs:
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.TAG }} 
           labels: ${{ steps.meta.outputs.labels }}
-
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
