@@ -1,10 +1,10 @@
 {
     "logging": {
-        "dir": "/workspaces/obcpp/logs"
+        "dir": "/obcpp/logs"
     },
     "network": {
         "mavlink": {
-            "connect": "serial:///dev/ttyACM0",
+            "connect": "serial:///dev/ttyTHS1",
             "log_params": false,
             "telem_poll_rate": 1.0
         },
@@ -18,7 +18,7 @@
     },
     "pathing": {
         "dubins": {
-            "turning_radius": 30.0,
+            "turning_radius": 5.0,
             "point_separation": 20.0
         },
         "rrt": {
@@ -58,7 +58,7 @@
     },
     "camera": {
         "_comment": "See CameraConfig struct in datatypes.hpp for detailed explanations",
-        "type": "mock",
+        "type": "picamera",
         "save_dir": "/obcpp/images/",
         "save_images_to_file": true,
         "mock": {
