@@ -204,6 +204,8 @@ add_custom_target(dev_protos
           git checkout feat/protoupdate &&
           cd ${CMAKE_BINARY_DIR} &&
           protoc -I=../protos --cpp_out=./gen_protos/protos ../protos/obc.proto &&
-          ninja obcpp
+          git config --global --add safe.directory /obcpp/protos &&
+          git config --global --add safe.directory /obcpp/include/udp_squared &&
+          ninja obcpp 
   USES_TERMINAL
 )
