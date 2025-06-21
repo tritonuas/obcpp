@@ -42,5 +42,8 @@ run-jetson-cuda-check:
 # Note that to re-run cmake inside the container you'll need the really long CMake command
 # in the Dockerfile.jetson.
 jetson-develop:
-	cd .. && docker run -it --net=host --runtime=nvidia --platform=linux/arm64 --volume=./:/obcpp --device=/dev/ttyTHS1 ghcr.io/tritonuas/obcpp:jetson /bin/bash
-	# cd .. && docker run -it --net=host --runtime=nvidia --platform=linux/arm64 --volume=./:/obcpp ghcr.io/tritonuas/obcpp:jetson /bin/bash
+	# cd .. && docker run -it --net=host --runtime=nvidia --platform=linux/arm64 --volume=./:/obcpp --device=/dev/ttyTHS1 ghcr.io/tritonuas/obcpp:jetson /bin/bash
+	cd .. && docker run -it --net=host --runtime=nvidia --platform=linux/arm64 --volume=./:/obcpp ghcr.io/tritonuas/obcpp:jetson /bin/bash
+
+jetson-laptop-develop:
+	cd .. && docker run -it --net=host --platform=linux/arm64 --volume=./:/obcpp ghcr.io/tritonuas/obcpp:jetson /bin/bash
