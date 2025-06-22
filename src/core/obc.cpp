@@ -39,7 +39,11 @@ OBC::OBC(OBCConfig config) {
         this->state->setCamera(std::make_shared<MockCamera>(this->state->config.camera));
     } else if (this->state->config.camera.type == "picamera") {
         this->state->setCamera(std::make_shared<PiCamera>(this->state->config.camera));
-    }else if (this->state->config.camera.type == "lucid") {
+    } else if (this->state->config.camera.type == "picamera-1080p") {
+        this->state->setCamera(std::make_shared<PiCamera>(this->state->config.camera, 1920, 1080, 60));
+    } else if (this->state->config.camera.type == "picamera-4k") {
+        this->state->setCamera(std::make_shared<PiCamera>(this->state->config.camera, 4956, 3040, 30));
+    } else if (this->state->config.camera.type == "lucid") {
         LOG_F(FATAL, "ATTEMPTING TO CONNECT TO LUCID CAMERA: LUCID CAMERA NO LONGER EXISTS");
     } else {
         // default to mock if it's neither "mock" or "lucid"

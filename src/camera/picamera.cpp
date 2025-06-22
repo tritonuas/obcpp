@@ -50,9 +50,9 @@ std::string get_gstreamer_pipeline(int width, int height, int framerate) {
 }
 
 
-PiCamera::PiCamera(CameraConfig config) : 
+PiCamera::PiCamera(CameraConfig config, int width, int height, int framerate) : 
     CameraInterface(config),
-    cap(get_gstreamer_pipeline(1920, 1080, 30), cv::CAP_GSTREAMER) 
+    cap(get_gstreamer_pipeline(width, height, framerate), cv::CAP_GSTREAMER) 
 {
     if (!this->cap.isOpened()) {
         LOG_F(FATAL, "FATAL: Could not open picamera");

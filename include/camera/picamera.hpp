@@ -16,7 +16,7 @@
 
 class PiCamera : public CameraInterface {
     public: 
-        explicit PiCamera(CameraConfig config);
+        explicit PiCamera(CameraConfig config, int width=1920, int height=1080, int framerate=30);
         ~PiCamera();
 
         void connect() override;
