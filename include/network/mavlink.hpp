@@ -78,6 +78,8 @@ class MavlinkClient {
     int32_t curr_waypoint() const;
     bool isMissionFinished();
     bool isAtFinalWaypoint();
+    bool setMissionItem(int item);
+    size_t totalWaypoints();
     mavsdk::Telemetry::RcStatus get_conn_status();
     bool armAndHover(std::shared_ptr<MissionState> state);
     bool startMission();

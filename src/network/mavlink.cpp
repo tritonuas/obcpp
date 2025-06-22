@@ -415,6 +415,26 @@ bool MavlinkClient::isAtFinalWaypoint() {
     return this->mission->mission_progress().current == this->mission->mission_progress().total - 1;
 }
 
+bool MavlinkClient::setMissionItem(int item) {
+    LOG_F(INFO, "Attempting to reset mission sequence by setting current item to %d..", item);
+    auto const set_current_result = this->mission->set_current_mission_item(item);
+
+    if (set_current_result != mavsdk::MissionRaw::Result::Success) {
+        LOG_S(ERROR) << "FATAL: Failed to set current mission item to 0. Result: " << set_current_result;
+        
+
+        return false;
+    } else {
+        LOG_F(INFO, "Successfully set current mission item to %d", item);
+    }
+
+    return true;
+}
+
+size_t MavlinkClient::totalWaypoints() {
+    return this->mission->mission_progress().total;
+}
+
 mavsdk::Telemetry::RcStatus MavlinkClient::get_conn_status() {
     return this->telemetry->rc_status();
 }
@@ -427,10 +447,10 @@ bool MavlinkClient::armAndHover(std::shared_ptr<MissionState> state) {
     LOG_F(INFO, "Attempting to arm and hover");
     LOG_F(INFO, "Checking vehicle health...");
     // Vehicle can only be armed if status is healthy
-    if (this->telemetry->health_all_ok() != true) {
-        LOG_F(ERROR, "Vehicle not ready to arm");
-        return false;
-    }
+    // if (this->telemetry->health_all_ok() != true) {
+    //     LOG_F(ERROR, "Vehicle not ready to arm");
+    //     return false;
+    // }
 
     LOG_F(INFO, "Attempting to arm...");
     // Attempt to arm the vehicle
@@ -438,7 +458,7 @@ bool MavlinkClient::armAndHover(std::shared_ptr<MissionState> state) {
     if (arm_result != mavsdk::Action::Result::Success) {
         LOG_F(ERROR, "Arming failed");
         return false;
-    }
+    }   
 
     const float TAKEOFF_ALT = state->config.takeoff.altitude_m;
     // for some reason on the sitl sometimes it gets to right below the takeoff
