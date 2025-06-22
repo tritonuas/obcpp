@@ -63,6 +63,7 @@ Tick* FlySearchTick::tick() {
             LOG_F(INFO, "Taking a picture!!!");
 	    auto photo = this->state->getCamera()->takePicture(500ms, this->state->getMav());
             if (state->config.camera.save_images_to_file) {
+                LOG_F(INFO, "Saving image");
                 photo->saveToFile(state->config.camera.save_dir);
             }
 
