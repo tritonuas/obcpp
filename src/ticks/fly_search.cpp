@@ -27,11 +27,17 @@ void FlySearchTick::init() {
     this->airdrop_boundary = this->state->mission_params.getAirdropBoundary();
     this->last_photo_time = getUnixTime_ms();
 
-    if (!this->state->getMav()->setMissionItem(0)) {
+    // note: I didn't get around to testing if 1 would be a better value than 0 to see if the mission start can be forced.
+    if (!this->state->getMav()->setMissionItem(1)) {
         LOG_F(ERROR, "Failed to reset Mission");
     }
 
     this->mission_started = this->state->getMav()->startMission();
+
+    // I have another one here because idk how startmIssion behaves exactly
+    if (!this->state->getMav()->setMissionItem(1)) {
+        LOG_F(ERROR, "Failed to reset Mission");
+    }
 
     LOG_F(INFO, "Total Waypoint #: %d", this->state->getMav()->totalWaypoints());
 }
