@@ -202,6 +202,8 @@ DEF_GCS_HANDLE(Post, camera, startstream);
  */
 DEF_GCS_HANDLE(Post, camera, endstream);
 
+DEF_GCS_HANDLE(Post, rtl);
+
 DEF_GCS_HANDLE(Get, oh, shit);
 
 DEF_GCS_HANDLE(Get, tickstate);

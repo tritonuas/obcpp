@@ -94,6 +94,9 @@ class MavlinkClient {
 
     void KILL_THE_PLANE_DO_NOT_CALL_THIS_ACCIDENTALLY();
 
+    // rtl
+    void rtl();
+
  private:
     mavsdk::Mavsdk mavsdk;
     std::shared_ptr<mavsdk::System> system;

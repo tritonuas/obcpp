@@ -72,6 +72,8 @@ void GCSServer::_bindHandlers() {
     BIND_HANDLER(Post, camera, startstream);
     BIND_HANDLER(Post, camera, endstream);
 
+    BIND_HANDLER(Post, rtl);
+
     BIND_HANDLER(Get, tickstate);
 
     BIND_HANDLER(Post, camera, runpipeline);

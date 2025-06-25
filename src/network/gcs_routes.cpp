@@ -561,6 +561,12 @@ DEF_GCS_HANDLE(Post, camera, runpipeline) {
     LOG_RESPONSE(INFO, "Successfully ran camera Stream", OK);
 }
 
+DEF_GCS_HANDLE(Post, rtl) {
+   LOG_F(INFO, "RTL invoked");
+
+    state->getMav()->rtl();
+}
+
 // DEF_GCS_HANDLE(Get, oh, shit) {
 //     LOG_REQUEST("GET", "/oh/shit");
 

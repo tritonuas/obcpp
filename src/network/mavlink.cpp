@@ -514,3 +514,7 @@ void MavlinkClient::KILL_THE_PLANE_DO_NOT_CALL_THIS_ACCIDENTALLY() {
     auto result = this->param->set_param_int("AFS_TERMINATE", 1);
     LOG_S(ERROR) << "KILL RESULT: " << result;
 }
+
+void MavlinkClient::rtl() {
+    this->action->return_to_launch();
+}
