@@ -389,7 +389,8 @@ DEF_GCS_HANDLE(Get, targets, all) {
     // 3) Serialize the vector of IdentifiedTarget messages to JSON
     // Ensure messagesToJson can handle a vector or use iterators correctly
     std::string out_data_json = messagesToJson(out_data.begin(), out_data.end());
-    LOG_RESPONSE(INFO, "Returning newly aggregated runs", OK, out_data_json.c_str(), mime::json);
+    response.set_content(out_data_json.c_str(), mime::json);
+    response.status = OK;
 }
 
 // *** NEW Handler for POST /targets/matched ***
