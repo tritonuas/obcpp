@@ -257,8 +257,36 @@ DEF_GCS_HANDLE(Get, camera, capture) {
 
     std::optional<ImageTelemetry> telemetry = image->TELEMETRY;
 
+    // START COMPRESSION
+    // Compress the image before converting to base64
+    std::vector<uchar> compressed_data;
+    std::vector<int> compression_params;
+    compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
+    compression_params.push_back(85); // Quality: 0-100, 85 is a good balance for transmission
+    
+    cv::Mat compressed_image;
+    if (cv::imencode(".jpg", image->DATA, compressed_data, compression_params)) {
+        // Create compressed Mat from encoded data
+        compressed_image = cv::imdecode(compressed_data, cv::IMREAD_COLOR);
+        
+        if (!compressed_image.empty()) {
+            LOG_F(INFO, "Compressed manual capture image from %d bytes to %d bytes (%.1f%% compression)", 
+                  image->DATA.total() * image->DATA.elemSize(), 
+                  compressed_data.size(), 
+                  (1.0 - (double)compressed_data.size() / (image->DATA.total() * image->DATA.elemSize())) * 100.0);
+        } else {
+            LOG_F(WARNING, "Failed to decode compressed manual capture image, using original");
+            compressed_image = image->DATA;
+        }
+    } else {
+        LOG_F(WARNING, "Failed to compress manual capture image, using original");
+        compressed_image = image->DATA;
+    }
+
     ManualImage manual_image;
-    manual_image.set_img_b64(cvMatToBase64(image->DATA));
+    manual_image.set_img_b64(cvMatToBase64(compressed_image));
+    // END COMPRESSION
+
     manual_image.set_timestamp(image->TIMESTAMP);
     if (telemetry.has_value()) {
         manual_image.set_lat_deg(telemetry->latitude_deg);

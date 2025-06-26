@@ -625,6 +625,10 @@ MissionPath generateInitialPath(std::shared_ptr<MissionState> state) {
     rrt.run();
 
     std::vector<XYZCoord> path = rrt.getPointsToGoal();
+    
+    // Add the first waypoint to the start of the path
+    path.insert(path.begin(), state->mission_params.getWaypoints().front());
+    
     std::vector<GPSCoord> output_coords;
 
     for (const XYZCoord &wpt : path) {
