@@ -1,19 +1,2 @@
 {
-    // Allow a waypoint to be considered "Hit" if the copter is within 7m
-    "WPNAV_RADIUS": 700,           // 7m in centimeters (Copter units)
-
-    // General Failsafe settings
-    "FS_GCS_ENABLE": 1,            // Enables GCS failsafe
-    "FS_GCS_TIMEOUT": 180.0,       // 180 seconds until long failsafe triggers
-    "FS_GCS_ACTION": 2,            // RTL after long failsafe (1 = LAND, 2 = RTL)
-
-    // Short failsafe settings
-    "FS_SHORT_ACTN": 0,            // Continue auto mission
-    "FS_SHORT_TIMEOUT": 1.0,       // Short failsafe after 1 second
-    "FS_LONG_TIMEOUT": 30.0,       // Long failsafe after 30 seconds
-    "FS_LONG_ACTN": 2,             // RTL after long failsafe
-
-    // Autokill after 300 seconds of RC loss
-    "FS_EKF_ACTION": 3,            // Kill motors
-    "FS_EKF_TIMEOUT": 300.0        // Autokill after 300 seconds
 }
