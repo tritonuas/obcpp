@@ -61,15 +61,12 @@ Tick* FlySearchTick::tick() {
     // if we were doing forward pathing would probably want to make it
     // take photos at an interval but only when over the zone
     auto curr_waypoint = this->state->getMav()->curr_waypoint();
-    LOG_F(INFO, "Current Waypoint: %d", curr_waypoint);
 
     if (this->curr_mission_item != curr_waypoint) {
 	LOG_F(INFO, "FlySearch Area reached (%d, %d)", this->curr_mission_item, curr_waypoint);
     	for (int i = 0; i < this->state->config.pathing.coverage.hover.pictures_per_stop; i++) {
-            LOG_F(INFO, "Taking a picture!!!");
 	    auto photo = this->state->getCamera()->takePicture(500ms, this->state->getMav());
             if (state->config.camera.save_images_to_file) {
-                LOG_F(INFO, "Saving image");
                 photo->saveToFile(state->config.camera.save_dir);
             }
 
