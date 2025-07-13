@@ -588,6 +588,12 @@ std::vector<std::vector<XYZCoord>> generateRankedNewGoalsList(const std::vector<
     return ranked_goals;
 }
 
+/* TODO - doesn't match compeition spec 
+   
+    1. First waypoint is not home
+    2. we omit the first waypoint (FATAL) - this means we never tell the computer to hit it
+    3. We don't know where home location is - we rely on geofencing to not fly out of bounds
+*/
 MissionPath generateInitialPath(std::shared_ptr<MissionState> state) {
     // first waypoint is start
 
@@ -601,36 +607,32 @@ MissionPath generateInitialPath(std::shared_ptr<MissionState> state) {
 
     std::vector<XYZCoord> goals;
 
-    // Copy elements (reference) from the second element to the last element of source into
+    // Copy elements from the second element to the last element of source into
     // destination all other methods of copying over crash???
-    for (int i = 0; i < state->mission_params.getWaypoints().size(); i++) {
+    for (int i = 1; i < state->mission_params.getWaypoints().size(); i++) {
         goals.emplace_back(state->mission_params.getWaypoints()[i]);
     }
 
-    // // update goals here
-    // if (state->config.pathing.rrt.generate_deviations) {
-    //     Environment mapping_bounds(state->mission_params.getMappingBoundary(), {}, {}, goals, {});
-    //     goals = generateRankedNewGoalsList(goals, mapping_bounds)[0];
-    // }
+    // update goals here
+    if (state->config.pathing.rrt.generate_deviations) {
+        Environment mapping_bounds(state->mission_params.getMappingBoundary(), {}, {}, goals, {});
+        goals = generateRankedNewGoalsList(goals, mapping_bounds)[0];
+    }
 
-    // double init_angle =
-    //     std::atan2(goals.front().y - state->mission_params.getWaypoints().front().y,
-    //                goals.front().x - state->mission_params.getWaypoints().front().x);
-    // RRTPoint start(state->mission_params.getWaypoints().front(), init_angle);
-    // start.coord.z = state->config.takeoff.altitude_m;
+    double init_angle =
+        std::atan2(goals.front().y - state->mission_params.getWaypoints().front().y,
+                   goals.front().x - state->mission_params.getWaypoints().front().x);
+    RRTPoint start(state->mission_params.getWaypoints().front(), init_angle);
+    start.coord.z = state->config.takeoff.altitude_m;
 
-    // RRT rrt(start, goals, SEARCH_RADIUS, state->mission_params.getFlightBoundary(), state->config,
-    //         {}, {});
+    RRT rrt(start, goals, SEARCH_RADIUS, state->mission_params.getFlightBoundary(), state->config,
+            {}, {});
 
-    // rrt.run();
+    rrt.run();
 
-    // std::vector<XYZCoord> path = rrt.getPointsToGoal();
-    
-    // // Add the first waypoint to the start of the path
-    // path.insert(path.begin(), state->mission_params.getWaypoints().front());
+    std::vector<XYZCoord> path = rrt.getPointsToGoal();
     
     std::vector<GPSCoord> output_coords;
-
     for (const XYZCoord &wpt : goals) {
         output_coords.push_back(state->getCartesianConverter()->toLatLng(wpt));
     }
