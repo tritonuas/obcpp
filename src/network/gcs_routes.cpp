@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+
 #include <nlohmann/json.hpp>
 
 #include "core/mission_state.hpp"
@@ -262,18 +263,20 @@ DEF_GCS_HANDLE(Get, camera, capture) {
     std::vector<uchar> compressed_data;
     std::vector<int> compression_params;
     compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
-    compression_params.push_back(85); // Quality: 0-100, 85 is a good balance for transmission
-    
+    compression_params.push_back(85);  // Quality: 0-100, 85 is a good balance for transmission
+
     cv::Mat compressed_image;
     if (cv::imencode(".jpg", image->DATA, compressed_data, compression_params)) {
         // Create compressed Mat from encoded data
         compressed_image = cv::imdecode(compressed_data, cv::IMREAD_COLOR);
-        
+
         if (!compressed_image.empty()) {
-            LOG_F(INFO, "Compressed manual capture image from %d bytes to %d bytes (%.1f%% compression)", 
-                  image->DATA.total() * image->DATA.elemSize(), 
-                  compressed_data.size(), 
-                  (1.0 - (double)compressed_data.size() / (image->DATA.total() * image->DATA.elemSize())) * 100.0);
+            LOG_F(INFO,
+                  "Compressed manual capture image from %d bytes to %d bytes (%.1f%% compression)",
+                  image->DATA.total() * image->DATA.elemSize(), compressed_data.size(),
+                  (1.0 - static_cast<double>(compressed_data.size()) /
+                             (image->DATA.total() * image->DATA.elemSize())) *
+                      100.0);
         } else {
             LOG_F(WARNING, "Failed to decode compressed manual capture image, using original");
             compressed_image = image->DATA;
@@ -321,7 +324,7 @@ DEF_GCS_HANDLE(Post, dodropnow) {
 
     // std::string message;
     // drop
-    if (triggerAirdrop(state->getMav() , next_airdrop_to_drop.value())) {
+    if (triggerAirdrop(state->getMav(), next_airdrop_to_drop.value())) {
         LOG_RESPONSE(INFO, "Dropped Bottle Successfully", OK);
     } else {
         LOG_RESPONSE(INFO, "Failed to drop bottle", INTERNAL_SERVER_ERROR);
@@ -386,18 +389,21 @@ DEF_GCS_HANDLE(Get, targets, all) {
         std::vector<uchar> compressed_data;
         std::vector<int> compression_params;
         compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
-        compression_params.push_back(85); // Quality: 0-100, 85 is a good balance for transmission
-        
+        compression_params.push_back(85);
+        // Quality: 0-100, 85 is a good balance for transmission
+
         cv::Mat compressed_image;
         if (cv::imencode(".jpg", run.annotatedImage, compressed_data, compression_params)) {
             // Create compressed Mat from encoded data
             compressed_image = cv::imdecode(compressed_data, cv::IMREAD_COLOR);
-            
+
             if (!compressed_image.empty()) {
-                LOG_F(INFO, "Compressed image from %d bytes to %d bytes (%.1f%% compression)", 
-                      run.annotatedImage.total() * run.annotatedImage.elemSize(), 
-                      compressed_data.size(), 
-                      (1.0 - (double)compressed_data.size() / (run.annotatedImage.total() * run.annotatedImage.elemSize())) * 100.0);
+                LOG_F(INFO, "Compressed image from %d bytes to %d bytes (%.1f%% compression)",
+                      run.annotatedImage.total() * run.annotatedImage.elemSize(),
+                      compressed_data.size(),
+                      (1.0 - static_cast<double>(compressed_data.size()) /
+                                 (run.annotatedImage.total() * run.annotatedImage.elemSize())) *
+                          100.0);
             } else {
                 LOG_F(WARNING, "Failed to decode compressed image, using original");
                 compressed_image = run.annotatedImage;
@@ -462,7 +468,6 @@ DEF_GCS_HANDLE(Post, targets, matched) {
 
     nlohmann::json j_root = nlohmann::json::parse(request.body);
 
-
     LOG_S(INFO) << j_root;
 
     LockPtr<MatchedResults> matched_results = state->getCV()->getMatchedResults();
@@ -477,11 +482,10 @@ DEF_GCS_HANDLE(Post, targets, matched) {
         LOG_S(INFO) << returned_matched_result.index();
         google::protobuf::util::JsonStringToMessage(instance.dump(), &returned_matched_result);
         LOG_S(WARNING) << returned_matched_result.index();
-        matched_results.data->matched_airdrop[returned_matched_result.index()]
-        = returned_matched_result;
+        matched_results.data->matched_airdrop[returned_matched_result.index()] =
+            returned_matched_result;
         LOG_S(ERROR) << returned_matched_result.index();
     }
-
 
     auto lock_ptr = state->getTickLockPtr<CVLoiterTick>();
     if (!lock_ptr.has_value()) {
@@ -510,7 +514,7 @@ DEF_GCS_HANDLE(Post, camera, startstream) {
     std::shared_ptr<CameraInterface> cam = state->getCamera();
     // const string
     uint32_t interval;
-    unsigned long parsed_ul = std::stoul(request.body); // NOLINT
+    unsigned long parsed_ul = std::stoul(request.body);  // NOLINT
     interval = static_cast<uint32_t>(parsed_ul);
     std::chrono::milliseconds chrono_interval(interval);
 
@@ -553,10 +557,10 @@ DEF_GCS_HANDLE(Post, camera, endstream) {
     images = cam->getAllImages();
     for (const ImageData& image : images) {
         std::filesystem::path save_dir = state->config.camera.save_dir;
-        std::filesystem::path img_filepath = save_dir / (std::to_string(image.TIMESTAMP)
-        + std::string(".jpg"));
-        std::filesystem::path json_filepath = save_dir / (std::to_string(image.TIMESTAMP)
-        + std::string(".json"));
+        std::filesystem::path img_filepath =
+            save_dir / (std::to_string(image.TIMESTAMP) + std::string(".jpg"));
+        std::filesystem::path json_filepath =
+            save_dir / (std::to_string(image.TIMESTAMP) + std::string(".json"));
         saveImageToFile(image.DATA, img_filepath);
         if (image.TELEMETRY.has_value()) {
             saveImageTelemetryToFile(image.TELEMETRY.value(), json_filepath);
@@ -589,8 +593,7 @@ DEF_GCS_HANDLE(Post, camera, runpipeline) {
     LOG_F(INFO, "Yolo Model: %s", yolo_model_dir.c_str());
 
     // Make a CVAggregator instance and set it in the state
-    state->setCV(
-        std::make_shared<CVAggregator>(Pipeline(PipelineParams(yolo_model_dir))));
+    state->setCV(std::make_shared<CVAggregator>(Pipeline(PipelineParams(yolo_model_dir))));
 
     if (!cam->isConnected()) {
         LOG_F(INFO, "Camera not connected. Attempting to connect...");

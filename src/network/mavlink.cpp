@@ -420,8 +420,9 @@ bool MavlinkClient::setMissionItem(int item) {
     auto const set_current_result = this->mission->set_current_mission_item(item);
 
     if (set_current_result != mavsdk::MissionRaw::Result::Success) {
-        LOG_S(ERROR) << "FATAL: Failed to set current mission item to 0. Result: " << set_current_result;
-        
+        LOG_S(ERROR) << "FATAL: Failed to set current mission item to 0. Result: "
+            << set_current_result;
+
 
         return false;
     } else {
@@ -458,7 +459,7 @@ bool MavlinkClient::armAndHover(std::shared_ptr<MissionState> state) {
     if (arm_result != mavsdk::Action::Result::Success) {
         LOG_F(ERROR, "Arming failed");
         return false;
-    }   
+    }
 
     const float TAKEOFF_ALT = state->config.takeoff.altitude_m;
     // for some reason on the sitl sometimes it gets to right below the takeoff
