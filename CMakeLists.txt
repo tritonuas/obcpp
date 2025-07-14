@@ -61,6 +61,7 @@ set(LOGURU_WITH_STREAMS TRUE)
 set(FETCHCONTENT_QUIET FALSE)
 set(DEPS_DIRECTORY ${PROJECT_SOURCE_DIR}/deps)
 
+include(${DEPS_DIRECTORY}/onnxruntime/onnxruntime.cmake)
 include(${DEPS_DIRECTORY}/torch/torch.cmake)
 include(${DEPS_DIRECTORY}/torchvision/torchvision.cmake)
 include(${DEPS_DIRECTORY}/json/json.cmake)
@@ -193,3 +194,18 @@ else()
     message(FATAL_ERROR "cpplint executable not found. Check the README for steps to install it on your system")
 endif()
 # =============================
+
+add_custom_target(dev_protos
+  COMMAND cd ${CMAKE_BINARY_DIR} &&
+          cmake .. &&
+          cd ${CMAKE_SOURCE_DIR}/include/udp_squared &&
+          git checkout feat/udp_update &&
+          cd ${CMAKE_SOURCE_DIR}/protos &&
+          git checkout feat/protoupdate &&
+          cd ${CMAKE_BINARY_DIR} &&
+          protoc -I=../protos --cpp_out=./gen_protos/protos ../protos/obc.proto &&
+          git config --global --add safe.directory /obcpp/protos &&
+          git config --global --add safe.directory /obcpp/include/udp_squared &&
+          ninja obcpp 
+  USES_TERMINAL
+)

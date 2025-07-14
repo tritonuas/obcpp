@@ -11,11 +11,14 @@
  */
 class ManualLandingTick : public Tick {
  public:
-    explicit ManualLandingTick(std::shared_ptr<MissionState> state);
+    explicit ManualLandingTick(std::shared_ptr<MissionState> state, Tick* next_tick);
 
     std::chrono::milliseconds getWait() const override;
 
     Tick* tick() override;
+
+ private:
+    Tick* next_tick;
 };
 
 #endif  // INCLUDE_TICKS_MANUAL_LANDING_HPP_

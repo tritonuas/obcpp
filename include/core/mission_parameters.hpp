@@ -9,8 +9,9 @@
 #include <unordered_map>
 #include <vector>
 
+// Make sure Airdrop type is known before it's used
 #include "pathing/cartesian.hpp"
-#include "protos/obc.pb.h"
+#include "protos/obc.pb.h"  // Include for Airdrop definition
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
 
@@ -29,16 +30,20 @@ class MissionParameters {
 
     Polygon getFlightBoundary();
     Polygon getAirdropBoundary();
+    Polygon getMappingBoundary();
     Polyline getWaypoints();
-    std::vector<Bottle> getAirdropBottles();
+    // CHANGE: Return type is now std::vector<Airdrop>
+    std::vector<Airdrop> getAirdrops();
 
     // Getters for multiple values
     // Use when need to get multiple values
     // Important to use this instead of the singular getters
     // to avoid race conditions
-    std::tuple<Polygon, Polygon, Polyline, std::vector<Bottle>> getConfig();
+    // CHANGE: Tuple element type is now std::vector<Airdrop>
+    std::tuple<Polygon, Polygon, Polygon, Polyline, std::vector<Airdrop>> getConfig();
 
     // returns error string to be displayed back to the user
+    // Ensure CartesianConverter<GPSProtoVec> template parameter matches usage
     std::optional<std::string> setMission(Mission, CartesianConverter<GPSProtoVec>);
 
     void saveToFile(std::string filename);
@@ -50,13 +55,16 @@ class MissionParameters {
 
     Polygon flightBoundary;
     Polygon airdropBoundary;
+    Polygon mappingBoundary;
     Polyline waypoints;
-    std::vector<Bottle> bottles;
+    // CHANGE: Member variable type is now std::vector<Airdrop>
+    std::vector<Airdrop> airdrops;
 
     std::optional<Mission> cached_mission{};
 
     // internal function which doesn't apply the mutex
-    void _setBottle(Bottle bottle);
+    // CHANGE: Renamed function and changed parameter type to const Airdrop&
+    void _setAirdrop(const Airdrop& airdrop);
 };
 
 #endif  // INCLUDE_CORE_MISSION_PARAMETERS_HPP_

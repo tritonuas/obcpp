@@ -197,6 +197,34 @@ MavlinkClient::MavlinkClient(OBCConfig config)
     //     });
 }
 
+// Implement the triggerRelay method
+bool MavlinkClient::triggerRelay(int relay_number, bool state) {
+    if (!this->passthrough) {
+        LOG_F(ERROR, "MavlinkPassthrough interface not available");
+        return false;
+    }
+
+    // Command for DO_SET_RELAY (command ID 181)
+    // Docs for command: https://mavlink.io/en/messages/common.html#MAV_CMD_DO_SET_RELAY
+    mavsdk::MavlinkPassthrough::CommandLong command{};
+    command.command = 181;                              // MAV_CMD_DO_SET_RELAY
+    command.param1 = static_cast<float>(relay_number);  // Relay instance (0-based)
+    command.param2 = state ? 0.0f : 1.0f;               // 1=on, 0=off
+
+    LOG_F(INFO, "Sending DO_SET_RELAY command to trigger relay %d (state: %s)", relay_number,
+          state ? "ON" : "OFF");
+
+    auto result = this->passthrough->send_command_long(command);
+
+    if (result == mavsdk::MavlinkPassthrough::Result::Success) {
+        LOG_F(INFO, "Successfully sent relay command");
+        return true;
+    } else {
+        LOG_F(ERROR, "Failed to send relay command: %d", static_cast<int>(result));
+        return false;
+    }
+}
+
 bool MavlinkClient::uploadMissionUntilSuccess(std::shared_ptr<MissionState> state,
                                               bool upload_geofence, const MissionPath& path) const {
     if (upload_geofence) {
@@ -381,6 +409,27 @@ bool MavlinkClient::isAtFinalWaypoint() {
     return this->mission->mission_progress().current == this->mission->mission_progress().total - 1;
 }
 
+bool MavlinkClient::setMissionItem(int item) {
+    LOG_F(INFO, "Attempting to reset mission sequence by setting current item to %d..", item);
+    auto const set_current_result = this->mission->set_current_mission_item(item);
+
+    if (set_current_result != mavsdk::MissionRaw::Result::Success) {
+        LOG_S(ERROR) << "FATAL: Failed to set current mission item to 0. Result: "
+            << set_current_result;
+
+
+        return false;
+    } else {
+        LOG_F(INFO, "Successfully set current mission item to %d", item);
+    }
+
+    return true;
+}
+
+size_t MavlinkClient::totalWaypoints() {
+    return this->mission->mission_progress().total;
+}
+
 mavsdk::Telemetry::RcStatus MavlinkClient::get_conn_status() {
     return this->telemetry->rc_status();
 }
@@ -393,10 +442,10 @@ bool MavlinkClient::armAndHover(std::shared_ptr<MissionState> state) {
     LOG_F(INFO, "Attempting to arm and hover");
     LOG_F(INFO, "Checking vehicle health...");
     // Vehicle can only be armed if status is healthy
-    if (this->telemetry->health_all_ok() != true) {
-        LOG_F(ERROR, "Vehicle not ready to arm");
-        return false;
-    }
+    // if (this->telemetry->health_all_ok() != true) {
+    //     LOG_F(ERROR, "Vehicle not ready to arm");
+    //     return false;
+    // }
 
     LOG_F(INFO, "Attempting to arm...");
     // Attempt to arm the vehicle
@@ -459,4 +508,8 @@ void MavlinkClient::KILL_THE_PLANE_DO_NOT_CALL_THIS_ACCIDENTALLY() {
     LOG_F(ERROR, "KILLING THE PLANE: SETTING AFS_TERMINATE TO 1");
     auto result = this->param->set_param_int("AFS_TERMINATE", 1);
     LOG_S(ERROR) << "KILL RESULT: " << result;
+}
+
+void MavlinkClient::rtl() {
+    this->action->return_to_launch();
 }

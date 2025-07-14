@@ -15,8 +15,8 @@ using namespace std::chrono_literals;  // NOLINT
 AirdropClient::AirdropClient(ad_socket_t socket) {
     this->socket = socket;
     auto time = getUnixTime_ms();
-    for (int curr_bottle = UDP2_A; curr_bottle <= UDP2_E; curr_bottle++) {
-        this->last_heartbeat[curr_bottle - 1] = time;
+    for (int curr_airdrop = UDP2_A; curr_airdrop <= UDP2_D; curr_airdrop++) {
+        this->last_heartbeat[curr_airdrop - 1] = time;
     }
     this->_establishConnection();  // block until connection established
 }
@@ -48,7 +48,7 @@ void AirdropClient::_establishConnection() {
         [this, &stop]() {
             loguru::set_thread_name("airdrop reset spam");
             while (true) {
-                LOG_F(INFO, "Sending reset packets to all bottles...");
+                LOG_F(INFO, "Sending reset packets to all airdrops...");
                 send_ad_packet(this->socket, makeResetPacket(UDP2_ALL));
                 std::this_thread::sleep_for(10s);
                 if (stop) {
@@ -110,15 +110,15 @@ std::optional<packet_t> AirdropClient::receive() {
     return packet;
 }
 
-std::list<std::pair<BottleDropIndex, std::chrono::milliseconds>>
+std::list<std::pair<AirdropIndex, std::chrono::milliseconds>>
     AirdropClient::getLostConnections(std::chrono::milliseconds threshold) {
-    std::list<std::pair<BottleDropIndex, std::chrono::milliseconds>> list;
+    std::list<std::pair<AirdropIndex, std::chrono::milliseconds>> list;
     auto time = getUnixTime_ms();
 
     for (int i = 0; i < this->last_heartbeat.size(); i++) {
         auto time_since_last_heartbeat = time - this->last_heartbeat[i];
         if (time_since_last_heartbeat >= threshold) {
-            list.push_back({static_cast<BottleDropIndex>(i + 1), time_since_last_heartbeat});
+            list.push_back({static_cast<AirdropIndex>(i + 1), time_since_last_heartbeat});
         }
     }
 
@@ -163,9 +163,9 @@ packet_t AirdropClient::_receiveBlocking() {
         }
 
         // TODO: helper to go from packet -> str
-        uint8_t bottle, state;
-        parseID(packet.id, &bottle, &state);
-        VLOG_F(TRACE, "received airdrop packet: %hhu %hhu %hhu", packet.header, bottle, state);
+        uint8_t airdrop, state;
+        parseID(packet.id, &airdrop, &state);
+        VLOG_F(TRACE, "received airdrop packet: %hhu %hhu %hhu", packet.header, airdrop, state);
 
         return packet;
     }
@@ -187,10 +187,10 @@ void AirdropClient::_receiveWorker() {
         }
 
         if (packet.header == SET_MODE) {
-            uint8_t bottle, state;
-            parseID(packet.id, &bottle, &state);
+            uint8_t airdrop, state;
+            parseID(packet.id, &airdrop, &state);
             send_ad_packet(this->socket, makeModePacket(ACK_MODE,
-                static_cast<bottle_t>(bottle), OBC_NULL, *this->mode));
+                static_cast<airdrop_t>(airdrop), OBC_NULL, *this->mode));
             LOG_F(INFO, "Received extra SET_MODE, reacking");
             continue;
         }
@@ -207,20 +207,20 @@ bool AirdropClient::_parseHeartbeats(packet_t packet) {
         return false;
     }
 
-    uint8_t bottle, state;
-    parseID(packet.id, &bottle, &state);
+    uint8_t airdrop, state;
+    parseID(packet.id, &airdrop, &state);
 
-    if (bottle < UDP2_A || bottle > UDP2_E) {
-        LOG_F(ERROR, "ERROR: invalid bottle heartbeat (from bottle %d?)", bottle);
+    if (airdrop < UDP2_A || airdrop > UDP2_D) {
+        LOG_F(ERROR, "ERROR: invalid airdrop heartbeat (from airdrop %d?)", airdrop);
         return false;
     }
 
     // Valid heartbeat packet, so packet.data is within
     // [1, 5] and corresponds to a bottle index, so we can
     // subtract 1 to get the index into the lastHeartbeat array.
-    this->last_heartbeat[bottle - 1] = getUnixTime_ms();
+    this->last_heartbeat[airdrop - 1] = getUnixTime_ms();
 
-    LOG_F(INFO, "Packet heartbeat from %d", bottle);
+    LOG_F(INFO, "Packet heartbeat from %d", airdrop);
 
     return true;
 }

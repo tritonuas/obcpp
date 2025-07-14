@@ -1,112 +1,92 @@
+#include <chrono>
+#include <filesystem>
 #include <iostream>
-
-#include <opencv2/opencv.hpp>
 #include <loguru.hpp>
+#include <opencv2/opencv.hpp>
+#include <thread>
+#include <vector>
 
-#include "cv/pipeline.hpp"
 #include "cv/aggregator.hpp"
+#include "cv/pipeline.hpp"
 
-// Download these test images from one of the zips here https://drive.google.com/drive/u/1/folders/1opXBWx6bBF7J3-JSFtrhfFIkYis9qhGR
-// Or, any cropped not-stolen images will work
+namespace fs = std::filesystem;
 
-// this image should be located at a relative path to the CMake build dir
-const std::string imageTestDir = "../tests/integration/images/matching_cropped/test/";
-const std::string refImagePath0 = imageTestDir + "000000910.jpg"; // bottle 4
-const std::string refImagePath1 = imageTestDir + "000000920.jpg"; // bottle 3
-const std::string refImagePath2 = imageTestDir + "000000003.jpg"; // bottle 2
-const std::string refImagePath3 = imageTestDir + "000000004.jpg"; // bottle 1
-const std::string refImagePath4 = imageTestDir + "000000005.jpg"; // bottle 0
-
-// matching model can be downloaded from here: https://drive.google.com/drive/folders/1ciDfycNyJiLvRhJhwQZoeKH7vgV6dGHJ?usp=drive_link
-const std::string matchingModelPath = "../models/target_siamese_1.pt";
-// segmentation model can be downloaded from here: https://drive.google.com/file/d/1U2EbfJFzcjVnjTuD6ud-bIf8YOiEassf/view?usp=drive_link
-const std::string segmentationModelPath = "../models/fcn.pth";
-
-// mock telemetry data
-double latitude = 38.31568;
-double longitude = 76.55006;
-double altitude = 75;
-double airspeed = 20;
-double yaw = 100;
-double pitch = 5;
-double roll = 3;
-
-// integration test to test all stages of the CV pipeline
-// with an arbitrary image as input
 int main() {
-    cv::Mat image = cv::imread(imageTestDir + "000000008.jpg");
-    assert(!image.empty());
-    ImageTelemetry mockTelemetry(latitude, longitude, altitude, airspeed,
-        yaw, pitch, roll);
-    ImageData imageData("000000008.jpg", imageTestDir, image, mockTelemetry);
+    // Define the directory containing the test images
+    std::string imagesDirectory = "../tests/integration/aggregator/";
+    std::vector<std::string> imagePaths;
 
-    std::array<Bottle, NUM_AIRDROP_BOTTLES> bottlesToDrop;
+    // Iterate over the directory to collect all .jpg, .jpeg, and .png files
+    for (const auto& entry : fs::directory_iterator(imagesDirectory)) {
+        if (entry.is_regular_file()) {
+            std::string ext = entry.path().extension().string();
+            if (ext == ".jpg" || ext == ".jpeg" || ext == ".png") {
+                imagePaths.push_back(entry.path().string());
+            }
+        }
+    }
 
-    Bottle bottle1;
-    bottle1.set_shapecolor(ODLCColor::Red);
-    bottle1.set_shape(ODLCShape::Circle);
-    bottle1.set_alphanumericcolor(ODLCColor::Orange);
-    bottle1.set_alphanumeric("J");
-    bottlesToDrop[0] = bottle1;
+    if (imagePaths.empty()) {
+        std::cerr << "No image files found in directory: " << imagesDirectory << std::endl;
+        return 1;
+    }
 
-    Bottle bottle2;
-    bottle2.set_shapecolor(ODLCColor::Blue);
-    bottle2.set_shape(ODLCShape::Circle);
-    bottle2.set_alphanumericcolor(ODLCColor::Orange);
-    bottle2.set_alphanumeric("G");
-    bottlesToDrop[1] = bottle2;
+    // Construct the pipeline with the desired YOLO model
+    PipelineParams params("../models/yolo11x.onnx",
+                          "../tests/integration/output/output_aggregator.jpg",
+                          false);  // do_preprocess=false
 
-    Bottle bottle3;
-    bottle3.set_shapecolor(ODLCColor::Red);
-    bottle3.set_shape(ODLCShape::Circle);
-    bottle3.set_alphanumericcolor(ODLCColor::Blue);
-    bottle3.set_alphanumeric("X");
-    bottlesToDrop[2] = bottle3;
+    Pipeline pipeline(params);
 
-    Bottle bottle4;
-    bottle4.set_shapecolor(ODLCColor::Red);
-    bottle4.set_shape(ODLCShape::Circle);
-    bottle4.set_alphanumericcolor(ODLCColor::Blue);
-    bottle4.set_alphanumeric("F");
-    bottlesToDrop[3] = bottle4;
+    // Build the aggregator by transferring ownership of the pipeline
+    CVAggregator aggregator(std::move(pipeline));
 
-    Bottle bottle5;
-    bottle5.set_shapecolor(ODLCColor::Green);
-    bottle5.set_shape(ODLCShape::Circle);
-    bottle5.set_alphanumericcolor(ODLCColor::Black);
-    bottle5.set_alphanumeric("F");
-    bottlesToDrop[4] = bottle5;
+    // Create a mock telemetry object (using the same telemetry for simplicity)
+    ImageTelemetry mockTelemetry{38.31568, 76.55006, 75, 20, 100, 5, 3};
 
-    std::vector<std::pair<cv::Mat, BottleDropIndex>> referenceImages;
-    cv::Mat ref0 = cv::imread(refImagePath0);
-    referenceImages.push_back(std::make_pair(ref0, BottleDropIndex(5)));
-    cv::Mat ref1 = cv::imread(refImagePath1);
-    referenceImages.push_back(std::make_pair(ref1, BottleDropIndex(4)));
-    cv::Mat ref2 = cv::imread(refImagePath2);
-    referenceImages.push_back(std::make_pair(ref2, BottleDropIndex(3)));
-    cv::Mat ref3 = cv::imread(refImagePath3);
-    referenceImages.push_back(std::make_pair(ref3, BottleDropIndex(2)));
-    cv::Mat ref4 = cv::imread(refImagePath4);
-    referenceImages.push_back(std::make_pair(ref4, BottleDropIndex(1)));
+    // Submit each image from the directory to the aggregator concurrently
+    for (const auto& imagePath : imagePaths) {
+        cv::Mat image = cv::imread(imagePath);
+        if (image.empty()) {
+            std::cerr << "Could not open image: " << imagePath << std::endl;
+            continue;
+        }
+        // Create an ImageData instance for each image
+        ImageData imageData(image, 0, mockTelemetry);
+        aggregator.runPipeline(imageData);
+    }
 
-    Pipeline pipeline(PipelineParams(bottlesToDrop, referenceImages, matchingModelPath, segmentationModelPath));
+    // Let the worker threads finish
+    std::this_thread::sleep_for(std::chrono::seconds(5));
 
-    // Same setup as cv_pipeline unit test up until this point
+    // Retrieve the aggregated results in a thread-safe manner
+    auto lockedResults = aggregator.getResults();
+    auto resultsPtr = lockedResults.data;
+    if (!resultsPtr) {
+        std::cerr << "Error: aggregator returned null results?" << std::endl;
+        return 1;
+    }
 
-    std::cout << "about to create aggregator\n";
+    // Count total detections across all runs
+    size_t totalDetections = 0;
+    for (const auto& run : resultsPtr->runs) {
+        totalDetections += run.bboxes.size();
+    }
 
-    CVAggregator aggregator(pipeline);
+    // Print out bounding box info for each run
+    for (size_t runIdx = 0; runIdx < resultsPtr->runs.size(); ++runIdx) {
+        const auto& run = resultsPtr->runs[runIdx];
+        std::cout << "=== AggregatedRun #" << runIdx << " ===" << std::endl;
 
-    std::cout << "about to run aggregator\n";
+        for (size_t detIdx = 0; detIdx < run.bboxes.size(); ++detIdx) {
+            const auto& bbox = run.bboxes[detIdx];
+            const auto& coord = run.coords[detIdx];
 
-    aggregator.runPipeline(imageData);
-    aggregator.runPipeline(imageData);
-    aggregator.runPipeline(imageData);
-    aggregator.runPipeline(imageData);
-    aggregator.runPipeline(imageData);
-    aggregator.runPipeline(imageData);
-    aggregator.runPipeline(imageData);
-    aggregator.runPipeline(imageData);
+            std::cout << "  Detection #" << detIdx << "  BBox=[" << bbox.x1 << "," << bbox.y1 << ","
+                      << bbox.x2 << "," << bbox.y2 << "]"
+                      << "  Lat=" << coord.latitude() << "  Lon=" << coord.longitude() << std::endl;
+        }
+    }
 
-    sleep(100000);
+    return 0;
 }

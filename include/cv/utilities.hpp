@@ -1,12 +1,10 @@
 #ifndef INCLUDE_CV_UTILITIES_HPP_
 #define INCLUDE_CV_UTILITIES_HPP_
 
-#include <array>
-
 #include <opencv2/opencv.hpp>
 
-#include "utilities/constants.hpp"
 #include "protos/obc.pb.h"
+#include "utilities/constants.hpp"
 
 class Bbox {
  public:
@@ -19,22 +17,14 @@ class Bbox {
     int height();
 };
 
-struct CroppedTarget {
-    cv::Mat croppedImage;
-    Bbox bbox;
-    bool isMannikin;
-};
-
 struct DetectedTarget {
-    DetectedTarget(GPSCoord coord, BottleDropIndex index, double match_distance, CroppedTarget crop)
-        :coord{coord}, likely_bottle{index}, match_distance{match_distance}, crop{crop} {}
-
-    GPSCoord coord;
-    BottleDropIndex likely_bottle;
-    double match_distance;
-    CroppedTarget crop;
+    Bbox bbox;       // The bounding box in pixel coords
+    GPSCoord coord;  // The localized GPS coordinate
+    AirdropIndex likely_airdrop;
+    double match_distance;  // Inverse confidence or other distance metric
 };
 
-cv::Mat crop(cv::Mat original, Bbox bbox);
+// Helper function to crop out a bounding box from an image if you still need it
+cv::Mat crop(const cv::Mat& original, const Bbox& bbox);
 
 #endif  // INCLUDE_CV_UTILITIES_HPP_

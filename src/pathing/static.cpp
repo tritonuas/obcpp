@@ -451,10 +451,11 @@ std::vector<XYZCoord> HoverCoveragePathing::run() {
               this->drop_zone.size());
     }
 
-    XYZCoord top_left = this->drop_zone.at(3);
-    XYZCoord top_right = this->drop_zone.at(2);
+    // Input Coordinates MUST BE in this order
     XYZCoord bottom_left = this->drop_zone.at(0);
     XYZCoord bottom_right = this->drop_zone.at(1);
+    XYZCoord top_right = this->drop_zone.at(2);
+    XYZCoord top_left = this->drop_zone.at(3);
 
     std::vector<XYZCoord> hover_points;
 
@@ -545,11 +546,11 @@ std::vector<std::vector<XYZCoord>> generateGoalListDeviations(const std::vector<
 }
 
 std::vector<std::vector<XYZCoord>> generateRankedNewGoalsList(const std::vector<XYZCoord> &goals,
-                                                              const Environment &airspace) {
+                                                              const Environment &mapping_bounds) {
     // generate deviation points randomly in the mapping region
     std::vector<XYZCoord> deviation_points;
     for (int i = 0; i < 200; i++) {
-        deviation_points.push_back(airspace.getRandomPoint(true));
+        deviation_points.push_back(mapping_bounds.getRandomPoint(true));
         printf("Deviation point: %f, %f\n", deviation_points.back().x, deviation_points.back().y);
     }
 
@@ -565,7 +566,7 @@ std::vector<std::vector<XYZCoord>> generateRankedNewGoalsList(const std::vector<
     // run each goal list and get the area covered and the length of the path
     std::vector<std::pair<double, double>> area_length_pairs;
     for (const std::vector<XYZCoord> &new_goals : new_goals_list) {
-        area_length_pairs.push_back(airspace.estimateAreaCoveredAndPathLength(new_goals));
+        area_length_pairs.push_back(mapping_bounds.estimateAreaCoveredAndPathLength(new_goals));
     }
 
     // rank the new goal lists by the area covered and the length of the path
@@ -587,6 +588,12 @@ std::vector<std::vector<XYZCoord>> generateRankedNewGoalsList(const std::vector<
     return ranked_goals;
 }
 
+/* TODO - doesn't match compeition spec 
+   
+    1. First waypoint is not home
+    2. we omit the first waypoint (FATAL) - this means we never tell the computer to hit it
+    3. We don't know where home location is - we rely on geofencing to not fly out of bounds
+*/
 MissionPath generateInitialPath(std::shared_ptr<MissionState> state) {
     // first waypoint is start
 
@@ -600,16 +607,17 @@ MissionPath generateInitialPath(std::shared_ptr<MissionState> state) {
 
     std::vector<XYZCoord> goals;
 
-    // Copy elements (reference) from the second element to the last element of source into
+    // Copy elements from the second element to the last element of source into
     // destination all other methods of copying over crash???
     for (int i = 1; i < state->mission_params.getWaypoints().size(); i++) {
         goals.emplace_back(state->mission_params.getWaypoints()[i]);
     }
 
     // update goals here
-    // create a dummy environment
-    Environment airspace(state->mission_params.getFlightBoundary(), {}, {}, goals, {});
-    goals = generateRankedNewGoalsList(goals, airspace)[0];
+    if (state->config.pathing.rrt.generate_deviations) {
+        Environment mapping_bounds(state->mission_params.getMappingBoundary(), {}, {}, goals, {});
+        goals = generateRankedNewGoalsList(goals, mapping_bounds)[0];
+    }
 
     double init_angle =
         std::atan2(goals.front().y - state->mission_params.getWaypoints().front().y,
@@ -623,9 +631,9 @@ MissionPath generateInitialPath(std::shared_ptr<MissionState> state) {
     rrt.run();
 
     std::vector<XYZCoord> path = rrt.getPointsToGoal();
-    std::vector<GPSCoord> output_coords;
 
-    for (const XYZCoord &wpt : path) {
+    std::vector<GPSCoord> output_coords;
+    for (const XYZCoord &wpt : goals) {
         output_coords.push_back(state->getCartesianConverter()->toLatLng(wpt));
     }
 
@@ -633,17 +641,29 @@ MissionPath generateInitialPath(std::shared_ptr<MissionState> state) {
 }
 
 MissionPath generateSearchPath(std::shared_ptr<MissionState> state) {
+    std::vector<GPSCoord> gps_coords;
     if (state->config.pathing.coverage.method == AirdropCoverageMethod::Enum::FORWARD) {
         LOG_F(FATAL, "Forward search path not fully integrated yet.");
-        return MissionPath(MissionPath::Type::FORWARD, {});
-    } else {  // hover
-        HoverCoveragePathing pathing(state);
 
-        std::vector<GPSCoord> gps_coords;
+        RRTPoint start(state->mission_params.getWaypoints().front(), 0);
+
+        // TODO , change the starting point to be something closer to loiter
+        // region
+        ForwardCoveragePathing pathing(start, SEARCH_RADIUS,
+                                       state->mission_params.getFlightBoundary(),
+                                       state->mission_params.getAirdropBoundary(), state->config);
+
         for (const auto &coord : pathing.run()) {
             gps_coords.push_back(state->getCartesianConverter()->toLatLng(coord));
         }
 
+        return MissionPath(MissionPath::Type::FORWARD, {});
+    } else {  // hover
+        HoverCoveragePathing pathing(state);
+
+        for (const auto &coord : pathing.run()) {
+            gps_coords.push_back(state->getCartesianConverter()->toLatLng(coord));
+        }
         return MissionPath(MissionPath::Type::HOVER, gps_coords,
                            state->config.pathing.coverage.hover.hover_time_s);
     }

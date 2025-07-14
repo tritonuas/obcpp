@@ -65,7 +65,7 @@ TEST(PacketQueueTest, PushUntilFullThenPopUntilEmpty) {
     pqueue_init(&q);
 
     for (int i = 0; i < MAX_PACKETS; i++) {
-        packet_t p = makeResetPacket(static_cast<bottle_t>(i));
+        packet_t p = makeResetPacket(static_cast<airdrop_t>(i));
         pqueue_push(&q, p);
         ASSERT_FALSE(pqueue_empty(&q));
     }
@@ -95,13 +95,13 @@ TEST(PacketQueueTest, SimulateNormalUse) {
 
     temp = pqueue_pop(&q);
     ASSERT_EQ(temp.header, RESET);
-    uint8_t bottle, state;
-    parseID(temp.id, &bottle, &state);
-    ASSERT_EQ(bottle, UDP2_D);
+    uint8_t airdrop, state;
+    parseID(temp.id, &airdrop, &state);
+    ASSERT_EQ(airdrop, UDP2_D);
     temp = pqueue_pop(&q);
     ASSERT_EQ(temp.header, RESET);
-    parseID(temp.id, &bottle, &state);
-    ASSERT_EQ(bottle, UDP2_D);
+    parseID(temp.id, &airdrop, &state);
+    ASSERT_EQ(airdrop, UDP2_D);
 
     for (int i = BURST; i < BURST * 2; i++) {
         pqueue_push(&q, makeResetPacket(UDP2_D));
@@ -109,12 +109,12 @@ TEST(PacketQueueTest, SimulateNormalUse) {
 
     temp = pqueue_pop(&q);
     ASSERT_EQ(temp.header, RESET);
-    parseID(temp.id, &bottle, &state);
-    ASSERT_EQ(bottle, UDP2_D);
+    parseID(temp.id, &airdrop, &state);
+    ASSERT_EQ(airdrop, UDP2_D);
     temp = pqueue_pop(&q);
     ASSERT_EQ(temp.header, RESET);
-    parseID(temp.id, &bottle, &state);
-    ASSERT_EQ(bottle, UDP2_D);
+    parseID(temp.id, &airdrop, &state);
+    ASSERT_EQ(airdrop, UDP2_D);
 
     for (int i = BURST * 2; i < BURST * 3; i++) {
         pqueue_push(&q, makeResetPacket(UDP2_D));
@@ -123,8 +123,8 @@ TEST(PacketQueueTest, SimulateNormalUse) {
     for (int i = 4; i < BURST * 3; i++) {
         temp = pqueue_pop(&q);
         ASSERT_EQ(temp.header, RESET);
-        parseID(temp.id, &bottle, &state);
-        ASSERT_EQ(bottle, UDP2_D);
+        parseID(temp.id, &airdrop, &state);
+        ASSERT_EQ(airdrop, UDP2_D);
     }
 
     ASSERT_TRUE(pqueue_empty(&q));
@@ -157,7 +157,7 @@ TEST(PacketQueueTest, PopWaitMultiThreaded) {
     packet_t p = pqueue_wait_pop(&q);
 
     ASSERT_EQ(p.header, RESET);
-    uint8_t bottle, state;
-    parseID(p.id, &bottle, &state);
-    ASSERT_EQ(bottle, UDP2_C);
+    uint8_t airdrop, state;
+    parseID(p.id, &airdrop, &state);
+    ASSERT_EQ(airdrop, UDP2_C);
 }

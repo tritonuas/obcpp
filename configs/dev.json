@@ -13,7 +13,8 @@
         }
     },
     "takeoff": {
-        "altitude_m": 30.0
+        "altitude_m": 30.0,
+        "payload_size": 2
     },
     "pathing": {
         "dubins": {
@@ -25,11 +26,12 @@
             "rewire_radius": 256.0,
             "optimize": true,
             "point_fetch_method": "nearest",
-            "allowed_to_skip_waypoints": false
+            "allowed_to_skip_waypoints": false,
+            "generate_deviations": false
         },
         "coverage": {
             "altitude_m": 30.0,
-            "camera_vision_m": 5.0,
+            "camera_vision_m": 20.0,
             "method": "hover",
             "hover": {
                 "pictures_per_stop": 1,
@@ -50,9 +52,7 @@
         }
     },
     "cv": {
-        "matching_model_dir": "/workspaces/obcpp/models/target_siamese_1.pt",
-        "segmentation_model_dir": "/workspaces/obcpp/models/fcn-model_20-epochs_06-01-2023T21-16-02.pth",
-        "saliency_model_dir": "/workspaces/obcpp/models/torchscript_19.pth",
+        "yolo_model_dir": "/workspaces/obcpp/models/yolo11x.onnx",
         "not_stolen_addr": "localhost",
         "not_stolen_port": 5069
     },

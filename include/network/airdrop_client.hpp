@@ -32,7 +32,7 @@ class AirdropClient {
     // Returns list of all the payloads we have not heard from for more than
     // `threshold` seconds, and includes how many seconds it has been since
     // we last heard from them.
-    std::list<std::pair<BottleDropIndex, std::chrono::milliseconds>>
+    std::list<std::pair<AirdropIndex, std::chrono::milliseconds>>
         getLostConnections(std::chrono::milliseconds threshold);
 
     std::optional<drop_mode_t> getMode();
@@ -48,7 +48,7 @@ class AirdropClient {
     std::future<void> worker_future;
 
     // holds unix timestamp of the last heartbeat received from every payload
-    std::array<std::chrono::milliseconds, NUM_AIRDROP_BOTTLES> last_heartbeat;
+    std::array<std::chrono::milliseconds, NUM_AIRDROPS> last_heartbeat;
 
     // Get initial SET_MODE msg from payloads and set up workers
     void _establishConnection();

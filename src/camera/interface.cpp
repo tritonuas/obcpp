@@ -58,6 +58,10 @@ std::optional<ImageTelemetry> queryMavlinkImageTelemetry(
   double pitch_deg = mavlinkClient->pitch_deg();
   double roll_deg = mavlinkClient->roll_deg();
 
+  std::cout << "lat_deg" << lat_deg << std::endl;
+  std::cout << "long deg" << lon_deg << std::endl;
+  std::cout << "altitude" << altitude_agl_m << std::endl;
+
   return ImageTelemetry {
     .latitude_deg = lat_deg,
     .longitude_deg = lon_deg,
@@ -77,6 +81,8 @@ bool ImageData::saveToFile(std::string directory) const {
             save_dir / (std::to_string(this->TIMESTAMP) + std::string(".jpg"));
         std::filesystem::path json_filepath =
             save_dir / (std::to_string(this->TIMESTAMP) + std::string(".json"));
+
+        LOG_F(INFO, "Saving %s to %s", img_filepath, json_filepath);
         saveImageToFile(this->DATA, img_filepath);
         if (this->TELEMETRY.has_value()) {
             saveImageTelemetryToFile(this->TELEMETRY.value(), json_filepath);

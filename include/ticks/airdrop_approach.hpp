@@ -1,14 +1,14 @@
 #ifndef INCLUDE_TICKS_AIRDROP_APPROACH_HPP_
 #define INCLUDE_TICKS_AIRDROP_APPROACH_HPP_
 
-#include <memory>
 #include <chrono>
+#include <memory>
 
 #include "ticks/tick.hpp"
 
 /*
  * Fly to aidrop points and communicate with airdrop mechanism.
- * 
+ *
  * See https://tritonuas.github.io/wiki/software/obc/tick_architecture/ticks/airdropapproach/
  */
 class AirdropApproachTick : public Tick {
@@ -21,5 +21,7 @@ class AirdropApproachTick : public Tick {
 
     Tick* tick() override;
 };
+
+bool triggerAirdrop(std::shared_ptr<MavlinkClient> mav, airdrop_t airdrop_index);
 
 #endif  // INCLUDE_TICKS_AIRDROP_APPROACH_HPP_

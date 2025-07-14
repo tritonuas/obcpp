@@ -27,7 +27,20 @@ void FlySearchTick::init() {
     this->airdrop_boundary = this->state->mission_params.getAirdropBoundary();
     this->last_photo_time = getUnixTime_ms();
 
+    // note: I didn't get around to testing if 1 would be a better value than 0
+    // to see if the mission start can be forced.
+    if (!this->state->getMav()->setMissionItem(1)) {
+        LOG_F(ERROR, "Failed to reset Mission");
+    }
+
     this->mission_started = this->state->getMav()->startMission();
+
+    // I have another one here because idk how startmIssion behaves exactly
+    if (!this->state->getMav()->setMissionItem(1)) {
+        LOG_F(ERROR, "Failed to reset Mission");
+    }
+
+    LOG_F(INFO, "Total Waypoint #: %d", this->state->getMav()->totalWaypoints());
 }
 
 Tick* FlySearchTick::tick() {
@@ -49,9 +62,11 @@ Tick* FlySearchTick::tick() {
     // if we were doing forward pathing would probably want to make it
     // take photos at an interval but only when over the zone
     auto curr_waypoint = this->state->getMav()->curr_waypoint();
+
     if (this->curr_mission_item != curr_waypoint) {
+    LOG_F(INFO, "FlySearch Area reached (%d, %d)", this->curr_mission_item, curr_waypoint);
         for (int i = 0; i < this->state->config.pathing.coverage.hover.pictures_per_stop; i++) {
-            auto photo = this->state->getCamera()->takePicture(500ms, this->state->getMav());
+        auto photo = this->state->getCamera()->takePicture(500ms, this->state->getMav());
             if (state->config.camera.save_images_to_file) {
                 photo->saveToFile(state->config.camera.save_dir);
             }

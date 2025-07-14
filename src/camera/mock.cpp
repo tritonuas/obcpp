@@ -30,6 +30,8 @@ MockCamera::MockCamera(CameraConfig config) : CameraInterface(config) {
                     0,
                     telemetry);
                 this->mock_images.push_back(img_data);
+            } else {
+                LOG_F(ERROR, "IMG DIRECTORY IS EMPTY | RIP CAT");
             }
         });
 }
@@ -106,6 +108,7 @@ std::optional<ImageData> MockCamera::takePicture(const std::chrono::milliseconds
 
     // if we can't find corresonding telemtry json, just query mavlink
     if (!img_data.TELEMETRY.has_value()) {
+        LOG_F(ERROR, "no image json value");
         img_data.TELEMETRY = queryMavlinkImageTelemetry(mavlinkClient);
     }
 

@@ -16,7 +16,6 @@
 #include "pathing/mission_path.hpp"
 #include "pathing/plotting.hpp"
 #include "pathing/tree.hpp"
-#include "udp_squared/internal/enum.h"
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
 #include "utilities/rng.hpp"
