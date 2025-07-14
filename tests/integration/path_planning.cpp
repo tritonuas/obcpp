@@ -1,8 +1,10 @@
 #include <chrono>
 #include <cmath>
 #include <iostream>
+#include <iomanip>
 #include <memory>
 #include <nlohmann/json.hpp>
+#include <sstream>
 #include <thread>
 #include <unordered_map>
 
@@ -24,48 +26,6 @@
 
 const static char* mission_json_2020 = R"(
 {
-    "BottleAssignments": [
-        {
-            "Alphanumeric": "",
-            "AlphanumericColor": 0,
-            "Shape": 0,
-            "ShapeColor": 0,
-            "Index": 1,
-            "IsMannikin": true
-        },
-        {
-            "Alphanumeric": "",
-            "AlphanumericColor": 0,
-            "Shape": 0,
-            "ShapeColor": 0,
-            "Index": 2,
-            "IsMannikin": true
-        },
-        {
-            "Alphanumeric": "",
-            "AlphanumericColor": 0,
-            "Shape": 0,
-            "ShapeColor": 0,
-            "Index": 3,
-            "IsMannikin": true
-        },
-        {
-            "Alphanumeric": "",
-            "AlphanumericColor": 0,
-            "Shape": 0,
-            "ShapeColor": 0,
-            "Index": 4,
-            "IsMannikin": true
-        },
-        {
-            "Alphanumeric": "",
-            "AlphanumericColor": 0,
-            "Shape": 0,
-            "ShapeColor": 0,
-            "Index": 5,
-            "IsMannikin": true
-        }
-    ],
   "FlightBoundary": [
         {
           "Latitude": 38.1462694444444,
@@ -225,7 +185,17 @@ const static char* mission_json_2020 = R"(
       "Longitude": -76.4282527777778,
       "Altitude": 200.0
     }
-  ]
+  ],
+  "AirdropBoundary": [
+    { "Latitude": 0.0, "Longitude": 0.0, "Altitude": 0.0},
+    { "Latitude": 0.0, "Longitude": 0.0, "Altitude": 0.0},
+    { "Latitude": 0.0, "Longitude": 0.0, "Altitude": 0.0},
+  ],
+  "MappingBoundary": [
+    { "Latitude": 0.0, "Longitude": 0.0, "Altitude": 0.0},
+    { "Latitude": 0.0, "Longitude": 0.0, "Altitude": 0.0},
+    { "Latitude": 0.0, "Longitude": 0.0, "Altitude": 0.0},
+  ],
 })";
 
 /*
@@ -234,24 +204,27 @@ const static char* mission_json_2020 = R"(
  *    |- pathing_output
  *      |- test_final_path.jpg
  *      |- test_final_path.gif (if enabled)
- *    |- path_coordinates.txt
+ *      |- path_coordinates.txt
  *
- * This integration test runs static path finding once, and generates a plot as
- * well as returns the coordinates for the path.
+ * This integration test 
+ * 
+ * 1. runs static path finding once on the 2020 mission,
+ * 2. generates a plot,
+ * 3. records coordinates for the path.
+ * 
+ * Ideal Path Length: ~5600
  */
 int main() {
-    std::cout << "Messing with RRT*" << std::endl;
-    // First upload a mission so that we generate a path
-    // this is roughly the mission from 2020
+    std::ofstream file;
+
+    LOG_F(WARNING, "RRT Waypoint Testing");
+
+    // Upload the Mission
     DECLARE_HANDLER_PARAMS(state, req, resp);
     req.body = mission_json_2020;
     state->setTick(new MissionPrepTick(state));
 
     GCS_HANDLE(Post, mission)(state, req, resp);
-
-    // files to put path_coordinates to
-    std::ofstream file;
-    file.open("path_coordinates.txt");
 
     // infrastructure to set up all the pararmeters of the environment
     std::vector<XYZCoord> goals;
@@ -275,39 +248,40 @@ int main() {
 
     // RRT settings (manually put in)
     double search_radius = 9999;
+    LOG_F(WARNING, "RRT Stats");
+    LOG_F(INFO, "Search Radius %f", search_radius);
 
     RRT rrt = RRT(start, goals, search_radius,  
                   state->mission_params.getFlightBoundary(), state->config, obstacles, {});
-
-    std::cout << "search_radius: " << search_radius << std::endl;
 
     //run the algoritm, and time it
     auto start_time = std::chrono::high_resolution_clock::now();
     rrt.run();
     auto end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end_time - start_time;
-    std::cout << "Time to run: " << elapsed.count() << "s" << std::endl;
-    std::cout << "End Running" << std::endl;
+    LOG_F(INFO, "Time to run: %f s", elapsed.count());
 
     // get the path, put it into the file
     std::vector<XYZCoord> path = rrt.getPointsToGoal();
-    std::cout << "Path size: " << path.size() << std::endl;
-    std::cout << "Path length: " << (path.size() * state->config.pathing.dubins.point_separation) << std::endl;
+    LOG_F(INFO, "Path size: %d", path.size());
+    LOG_F(INFO, "Path length: %f", path.size() * state->config.pathing.dubins.point_separation);
+
+    // files to put path_coordinates to
+    file.open("pathing_output/path_coordinates.txt");
     for (const XYZCoord& point : path) {
-        file << point.z << std::endl;
+        std::ostringstream oss;
+        oss << std::fixed << std::setprecision(6) 
+            << std::setw(12) << point.x << ", "
+            << std::setw(12) << point.y << ", "
+            << std::setw(12) << point.z << '\n';
+        file << oss.str();
     }
+    file.close();
 
     // plot the path
-    std::cout << "Start Plotting" << std::endl;
     PathingPlot plotter("pathing_output", state->mission_params.getFlightBoundary(), obstacles[1], goals);
-
-    start_time = std::chrono::high_resolution_clock::now();
     plotter.addFinalPolyline(path);
     plotter.output("test_final_path", PathOutputType::STATIC);
-    end_time = std::chrono::high_resolution_clock::now();
-    elapsed = end_time - start_time;
 
-    std::cout << "Time to plot: " << elapsed.count() << "s" << std::endl;
-    file.close();
     return 0;
 }
