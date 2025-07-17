@@ -148,8 +148,9 @@
         }
     ],
     "MappingBoundary": [
-        { "Latitude": 38.31442311312976, "Longitude": -76.54522971451763, "Altitude": 0.0},
-        { "Latitude": 38.31421041772561, "Longitude": -76.54400246436776, "Altitude": 0.0},
-        { "Latitude": 38.3144070396263, "Longitude": -76.54394394383165, "Altitude": 0.0}
+        { "Latitude": 38.314669, "Longitude": -76.547987, "Altitude": 0.0},
+        { "Latitude": 38.315873, "Longitude": -76.547611, "Altitude": 0.0},
+        { "Latitude": 38.315208, "Longitude": -76.54384, "Altitude": 0.0},
+        { "Latitude": 38.314008, "Longitude": -76.544237, "Altitude": 0.0}
     ]
 } 

@@ -38,6 +38,7 @@
  * 1. runs static path finding once on the 2020 mission,
  * 2. generates a plot,
  * 3. records coordinates for the path.
+ * 4. Generate a gif if PahtOutType (STATIC, ANIMATED, BOTH)
  * 
  * Ideal Path Length: ~5600
  */

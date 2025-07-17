@@ -37,6 +37,7 @@
  * 1. runs airdrop approach pathing on the 2024 mission,
  * 2. generates a plot,
  * 3. records coordinates for the path.
+ * 4. Generate a gif if PahtOutType (STATIC, ANIMATED, BOTH)
  */
 int main() {
     std::ofstream file;
