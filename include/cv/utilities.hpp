@@ -13,8 +13,8 @@ class Bbox {
     int x2;
     int y2;
 
-    int width();
-    int height();
+    int width() const;
+    int height() const;
 };
 
 struct DetectedTarget {
