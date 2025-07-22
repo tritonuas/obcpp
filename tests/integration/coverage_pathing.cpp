@@ -75,7 +75,7 @@ int main() {
     LOG_F(INFO, "Search Complete");
     LOG_F(INFO, "Path size: %d", path.size());
 
-    files to put path_coordinates to
+    // files to put path_coordinates to
     file.open("pathing_output/coverage_coords.txt");
     for (const XYZCoord& point : path) {
         std::ostringstream oss;
@@ -87,7 +87,7 @@ int main() {
     }
     file.close();
 
-    plot the path
+    // plot the path
     PathingPlot plotter("pathing_output", state->mission_params.getFlightBoundary(),
                         state->mission_params.getAirdropBoundary(), {});
 
