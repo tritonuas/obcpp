@@ -185,18 +185,9 @@ add_executable(airdrop_packets "airdrop_packets.cpp")
 target_link_libraries(airdrop_packets PRIVATE obcpp_lib)
 target_include_directories(airdrop_packets PRIVATE ${INCLUDE_DIRECTORY})
 target_add_protobuf(airdrop_packets)
-target_add_torch(airdrop_packets)
-target_add_torchvision(airdrop_packets)
-target_add_json(airdrop_packets)
-target_add_opencv(airdrop_packets)
-target_add_httplib(airdrop_packets)
-target_add_mavsdk(airdrop_packets)
 target_add_matplot(airdrop_packets)
 target_add_loguru(airdrop_packets)
-target_add_onnxruntime(airdrop_packets)
 
-target_include_directories(airdrop_packets PRIVATE ${ImageMagick_INCLUDE_DIRS})
-target_link_libraries(airdrop_packets PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
 # airdrop_sockets
 # add_executable(airdrop_sockets src/network/airdrop_sockets.c tests/integration/airdrop_sockets.c)

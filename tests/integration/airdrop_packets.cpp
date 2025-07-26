@@ -11,6 +11,8 @@ extern "C" {
 
 using namespace std::chrono_literals;
 
+// TODO - figure out how to test this
+//          - may need to actually connect with a physical airdrop?
 int main(int argc, char** argv) {
     initLogging("/workspaces/obcpp/logs", true, argc, argv);
 
