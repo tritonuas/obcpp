@@ -8,7 +8,7 @@ namespace fs = std::filesystem;
 int main() {
     cv::Stitcher::Mode scan_mode = cv::Stitcher::SCANS;
     try {
-        // Set up paths based on the folder structure described above
+        // Set up paths based on the folder structure described above TODO - wtf is above??
         fs::path base_dir = "../tests/integration/mapping";
         fs::path batch1_dir = base_dir / "batch1";
         fs::path batch2_dir = base_dir / "batch2";

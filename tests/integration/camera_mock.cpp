@@ -14,8 +14,8 @@
 using namespace std::chrono_literals;
 
 int main (int argc, char *argv[]) {
-    if (argc < 2) {
-        LOG_F(ERROR, "Usage: ./bin/camera_mock [path_to_config] [optional: output_dir]");
+    if (argc < 5) {
+        LOG_F(ERROR, "Usage: ./bin/camera_mock [config_dir] [rel_config_path] [plane_name] [flight_type]");
         exit(1);
     }
     std::filesystem::path output_dir = std::filesystem::current_path();
