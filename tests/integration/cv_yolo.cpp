@@ -2,11 +2,19 @@
 
 #include "cv/yolo.hpp"
 
+/**
+ * Tests YOLO and some YOLO config settings on an imagre
+ * 
+ * arg 1 --> YoloModelPath
+ * arg 2 --> ImagePath
+ * arg 3 --> Confidence Threshold
+ * arg 4 --> OutputPath
+ */
 int main(int argc, char** argv) {
     // Default file paths and parameters
     std::string modelPath = "../models/yolo11x.onnx";
-    std::string imagePath = "../tests/integration/images/image3.jpg";
-    std::string outputPath = "../tests/integration/output/output_yolo.jpg";
+    std::string imagePath = "../tests/integration/images/image.png";
+    std::string outputPath = "../tests/integration/output/output_yolo.png";
     float confThreshold = 0.05f;
 
     if (argc > 1) {

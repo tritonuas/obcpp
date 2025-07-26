@@ -19,7 +19,7 @@ const double roll = 3;
  * arg 1 --> YoloModelPath
  * arg 2 --> ImagePath
  * arg 3 --> OutputPath
- * arg 3 --> enable preprocessing ("true" or "false") - default true
+ * arg 4 --> enable preprocessing ("true" or "false") - default true
  */
 int main(int argc, char** argv) {
     std::string yoloModelPath = "../models/yolo11x.onnx";
