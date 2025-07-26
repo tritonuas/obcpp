@@ -21,253 +21,77 @@
 #include "utilities/http.hpp"
 
 #include "handler_params.hpp"
-
-const static char* mission_json_2024 = R"(
-{
-    "BottleAssignments": [
-        {
-            "Alphanumeric": "",
-            "AlphanumericColor": 0,
-            "Shape": 0,
-            "ShapeColor": 0,
-            "Index": 1,
-            "IsMannikin": true
-        },
-        {
-            "Alphanumeric": "",
-            "AlphanumericColor": 0,
-            "Shape": 0,
-            "ShapeColor": 0,
-            "Index": 2,
-            "IsMannikin": true
-        },
-        {
-            "Alphanumeric": "",
-            "AlphanumericColor": 0,
-            "Shape": 0,
-            "ShapeColor": 0,
-            "Index": 3,
-            "IsMannikin": true
-        },
-        {
-            "Alphanumeric": "",
-            "AlphanumericColor": 0,
-            "Shape": 0,
-            "ShapeColor": 0,
-            "Index": 4,
-            "IsMannikin": true
-        },
-        {
-            "Alphanumeric": "",
-            "AlphanumericColor": 0,
-            "Shape": 0,
-            "ShapeColor": 0,
-            "Index": 5,
-            "IsMannikin": true
-        }
-    ],
-    "FlightBoundary": [
-        {
-            "Latitude": 38.31729702009844,
-            "Longitude": -76.55617670782419
-        },
-        {
-            "Latitude": 38.31594832826572,
-            "Longitude": -76.55657341657302
-        },
-        {
-            "Latitude": 38.31546739500083,
-            "Longitude": -76.55376201277696
-        },
-        {
-            "Latitude": 38.31470980862425,
-            "Longitude": -76.54936361414539
-        },
-        {
-            "Latitude": 38.31424154692598,
-            "Longitude": -76.54662761646904
-        },
-        {
-            "Latitude": 38.31369801280048,
-            "Longitude": -76.54342380058223
-        },
-        {
-            "Latitude": 38.31331079191371,
-            "Longitude": -76.54109648475954
-        },
-        {
-            "Latitude": 38.31529941346197,
-            "Longitude": -76.54052104837133
-        },
-        {
-            "Latitude": 38.31587643291039,
-            "Longitude": -76.54361305817427
-        },
-        {
-            "Latitude": 38.31861642463319,
-            "Longitude": -76.54538594175376
-        },
-        {
-            "Latitude": 38.31862683616554,
-            "Longitude": -76.55206138505936
-        },
-        {
-            "Latitude": 38.31703471119464,
-            "Longitude": -76.55244787859773
-        },
-        {
-            "Latitude": 38.31674255749409,
-            "Longitude": -76.55294546866578
-        },
-        {
-            "Latitude": 38.31729702009844,
-            "Longitude": -76.55617670782419
-        }
-    ],
-    "AirdropBoundary": [
-        {
-            "Latitude": 38.31442311312976,
-            "Longitude": -76.54522971451763
-        },
-        {
-            "Latitude": 38.31421041772561,
-            "Longitude": -76.54400246436776
-        },
-        {
-            "Latitude": 38.3144070396263,
-            "Longitude": -76.54394394383165
-        },
-        {
-            "Latitude": 38.31461622313521,
-            "Longitude": -76.5451699318695
-        },
-        {
-            "Latitude": 38.31442311312976,
-            "Longitude": -76.54522971451763
-        }
-    ],
-    "Waypoints": [
-        {
-            "Latitude": 38.31729702009844,
-            "Longitude": -76.55617670782419,
-            "Altitude": 200
-        },
-        {
-            "Latitude": 38.1461944444444,
-            "Longitude": -76.4237138888889,
-            "Altitude": 300
-        },
-        {
-            "Latitude": 38.1438972222222,
-            "Longitude": -76.42255,
-            "Altitude": 400
-        },
-        {
-            "Latitude": 38.1417722222222,
-            "Longitude": -76.4251083333333,
-            "Altitude": 400
-        },
-        {
-            "Latitude": 38.14535,
-            "Longitude": -76.428675,
-            "Altitude": 300
-        },
-        {
-            "Latitude": 38.1508972222222,
-            "Longitude": -76.4292972222222,
-            "Altitude": 300
-        },
-        {
-            "Latitude": 38.1514944444444,
-            "Longitude": -76.4313833333333,
-            "Altitude": 300
-        },
-        {
-            "Latitude": 38.1505333333333,
-            "Longitude": -76.434175,
-            "Altitude": 300
-        },
-        {
-            "Latitude": 38.1479472222222,
-            "Longitude": -76.4316055555556,
-            "Altitude": 200
-        },
-        {
-            "Latitude": 38.1443333333333,
-            "Longitude": -76.4322888888889,
-            "Altitude": 200
-        },
-        {
-            "Latitude": 38.1433166666667,
-            "Longitude": -76.4337111111111,
-            "Altitude": 300
-        },
-        {
-            "Latitude": 38.1410944444444,
-            "Longitude": -76.4321555555556,
-            "Altitude": 400
-        },
-        {
-            "Latitude": 38.1415777777778,
-            "Longitude": -76.4252472222222,
-            "Altitude": 400
-        },
-        {
-            "Latitude": 38.1446083333333,
-            "Longitude": -76.4282527777778,
-            "Altitude": 200
-        }
-    ]
-})";
+#include <fstream>
+#include <sstream>
 
 /*
  * FILE OUTPUT LOCATIONS
- *  |-- build
- *      |-- pathing_output
- *          |-- test_airdrop_approach.jpg
- *          |-- test_airdrop_approach.gif (if enabled)
- *      |-- approach_coords.txt
+ *  |- build
+ *    |- pathing_output
+ *      |- test_airdrop_approach.jpg
+ *      |- test_airdrop_approach.gif (if enabled)
+ *      |- approach_coords.txt
  *
- *  This rough integration test is to test the airdrop search pathing algorithm
+ * This integration test 
+ * 
+ * 1. runs airdrop approach pathing on the 2024 mission,
+ * 2. generates a plot,
+ * 3. records coordinates for the path.
+ * 4. Generate a gif if PahtOutType (STATIC, ANIMATED, BOTH)
  */
 int main() {
-    std::cout << "Messing with Airdrop Approach Pathing" << std::endl;
+    std::ofstream file;
 
-    // First upload a mission so that we generate a path
-    // this is roughly the mission from 2020
+    LOG_F(WARNING, "Airdrop Approach Pathing Testing");
+
+    // Read mission data from JSON file
+    std::ifstream mission_file("../tests/integration/util/mission_data_2024.json");
+    if (!mission_file.is_open()) {
+        LOG_F(ERROR, "Failed to open mission_data_2024.json");
+        return 1;
+    }
+    
+    std::stringstream buffer;
+    buffer << mission_file.rdbuf();
+    std::string mission_json_2024 = buffer.str();
+    mission_file.close();
+
+    // Upload the Mission
     DECLARE_HANDLER_PARAMS(state, req, resp);
     req.body = mission_json_2024;
     state->setTick(new MissionPrepTick(state));
 
     GCS_HANDLE(Post, mission)(state, req, resp);
 
-    // files to put path_coordinates to
-    std::ofstream file;
-    file.open("approach_coords.txt");
 
     RRTPoint start = RRTPoint(state->mission_params.getWaypoints()[0], 0);
+    XYZCoord target = XYZCoord(313.131212, -187.781235, 0);
+    XYZCoord wind = XYZCoord(0, 0, 0);
 
-    AirdropApproachPathing approach(RRTPoint(XYZCoord(-500, 100, 0), 0),
-                             XYZCoord(313.131212, -187.781235, 0), RRTPoint(XYZCoord(0, 0, 0), 0),
+    AirdropApproachPathing approach(start, target, wind,
                              state->mission_params.getFlightBoundary(), state->config);
 
-    Environment env(state->mission_params.getFlightBoundary(),
-                    state->mission_params.getAirdropBoundary(), {}, {});
-
+    LOG_F(WARNING, "Running Approach");
     std::vector<XYZCoord> path = approach.run();
-    std::cout << "Path Length: " << path.size() << std::endl;
+    LOG_F(INFO, "Path size: %d", path.size());
 
-    for (const XYZCoord& coord : path) {
-        file << coord.z << std::endl;
+    // files to put path_coordinates to
+    file.open("pathing_output/approach_coords.txt");
+    for (const XYZCoord& point : path) {
+        std::ostringstream oss;
+        oss << std::fixed << std::setprecision(6) 
+            << std::setw(12) << point.x << ", "
+            << std::setw(12) << point.y << ", "
+            << std::setw(12) << point.z << '\n';
+        file << oss.str();
     }
+    file.close();
 
     // plot the path
-    std::cout << "Start Plotting" << std::endl;
     PathingPlot plotter("pathing_output", state->mission_params.getFlightBoundary(),
                         state->mission_params.getAirdropBoundary(), {});
 
     plotter.addFinalPolyline(path);
     plotter.output("test_airdrop_approach", PathOutputType::STATIC);
-    file.close();
     return 0;
 }

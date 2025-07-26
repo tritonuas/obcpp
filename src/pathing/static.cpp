@@ -294,7 +294,8 @@ ForwardCoveragePathing::ForwardCoveragePathing(const RRTPoint &start, double sca
       config(config.pathing.coverage) {}
 
 std::vector<XYZCoord> ForwardCoveragePathing::run() const {
-    return config.forward.optimize ? coverageOptimal() : coverageDefault();
+    return coverageDefault();
+    // return config.forward.optimize ? coverageOptimal() : coverageDefault();
 }
 
 std::vector<XYZCoord> ForwardCoveragePathing::coverageDefault() const {
