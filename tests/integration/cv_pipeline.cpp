@@ -13,10 +13,18 @@ const double yaw = 100;
 const double pitch = 5;
 const double roll = 3;
 
+/**
+ * Runs a single instance of the pipeline
+ * 
+ * arg 1 --> YoloModelPath
+ * arg 2 --> ImagePath
+ * arg 3 --> OutputPath
+ * arg 3 --> enable preprocessing ("true" or "false") - default true
+ */
 int main(int argc, char** argv) {
     std::string yoloModelPath = "../models/yolo11x.onnx";
-    std::string imagePath = "../tests/integration/images/image3.jpg";
-    std::string outputPath = "../tests/integration/output/output_pipeline.jpg";
+    std::string imagePath = "../tests/integration/images/image.png";
+    std::string outputPath = "../tests/integration/output/output_pipeline.png";
 
     bool do_preprocess = true;  // Default: perform preprocessing
 

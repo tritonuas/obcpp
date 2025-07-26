@@ -82,12 +82,7 @@ target_add_mavsdk(cv_aggregator)
 add_executable(cv_preprocess ${SOURCES} "cv_preprocess.cpp")
 target_link_libraries(cv_preprocess PRIVATE obcpp_lib)
 target_include_directories(cv_preprocess PRIVATE ${INCLUDE_DIRECTORY})
-target_add_opencv(cv_preprocess) 
 target_add_matplot(cv_preprocess)
-target_add_json(cv_preprocess)
-target_add_loguru(cv_preprocess)
-target_include_directories(cv_preprocess PRIVATE ${ImageMagick_INCLUDE_DIRS})
-target_link_libraries(cv_preprocess PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
 # cv_mapping
 add_executable(cv_mapping ${SOURCES} "cv_mapping.cpp")
@@ -180,11 +175,9 @@ target_add_protobuf(airdrop_packets)
 target_add_matplot(airdrop_packets)
 target_add_loguru(airdrop_packets)
 
-
 # airdrop_sockets
 # add_executable(airdrop_sockets src/network/airdrop_sockets.c tests/integration/airdrop_sockets.c)
 # target_include_directories(airdrop_sockets PRIVATE ${INCLUDE_DIRECTORY})
-
 
 add_executable(camera_mock "camera_mock.cpp")
 target_link_libraries(camera_mock PRIVATE obcpp_lib)
