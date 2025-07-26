@@ -30,7 +30,7 @@ MockCamera::MockCamera(CameraConfig config) : CameraInterface(config) {
                     0,
                     telemetry);
                 this->mock_images.push_back(img_data);
-            } 
+            }
         });
 }
 

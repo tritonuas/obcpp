@@ -1,3 +1,23 @@
+# LIST OF ALL TARGETS
+# add_executable(EXECUTABLE_NAME "SRC_FILE_WITH_MAIN.cpp")
+# target_link_libraries(EXECUTABLE_NAME PRIVATE obcpp_lib)
+# target_include_directories(EXECUTABLE_NAME PRIVATE ${INCLUDE_DIRECTORY} ${GEN_PROTOS_DIRECTORY})
+# target_add_torch(EXECUTABLE_NAME)
+# target_add_json(EXECUTABLE_NAME)
+# target_add_opencv(EXECUTABLE_NAME) 
+# target_add_httplib(EXECUTABLE_NAME)
+# target_add_mavsdk(EXECUTABLE_NAME)
+# target_add_matplot(EXECUTABLE_NAME)
+# target_add_protobuf(EXECUTABLE_NAME)
+# target_add_loguru(EXECUTABLE_NAME)
+# target_add_onnxruntime(EXECUTABLE_NAME)
+# # for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
+# # target_add_imagemagick(path_plotting)
+# target_include_directories(EXECUTABLE_NAME PRIVATE ${ImageMagick_INCLUDE_DIRS})
+# target_link_libraries(EXECUTABLE_NAME PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
+
+
+
 # playground
 add_executable(playground "playground.cpp")
 target_link_libraries(playground PRIVATE obcpp_lib)
@@ -66,19 +86,8 @@ add_executable(cv_aggregator ${SOURCES} "cv_aggregator.cpp")
 target_link_libraries(cv_aggregator PRIVATE obcpp_lib)
 target_add_json(cv_aggregator)
 target_add_matplot(cv_aggregator)
-target_add_opencv(cv_aggregator)
 target_add_loguru(cv_aggregator)
-target_add_httplib(cv_aggregator)
-target_add_protobuf(cv_aggregator)
-target_add_torch(cv_aggregator)
-target_add_torchvision(cv_aggregator)
 target_add_mavsdk(cv_aggregator)
-target_add_loguru(cv_aggregator)
-target_add_onnxruntime(cv_aggregator)
-# for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
-# target_add_imagemagick(path_plotting)
-target_include_directories(cv_aggregator PRIVATE ${ImageMagick_INCLUDE_DIRS})
-target_link_libraries(cv_aggregator PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
 # cv_preprocess
 add_executable(cv_preprocess ${SOURCES} "cv_preprocess.cpp")
