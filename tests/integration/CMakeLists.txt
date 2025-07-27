@@ -36,13 +36,6 @@ target_add_onnxruntime(playground)
 target_include_directories(playground PRIVATE ${ImageMagick_INCLUDE_DIRS})
 target_link_libraries(playground PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
-# load_torchvision_model
-add_executable(load_torchvision_model  "load_torchvision_model.cpp")
-target_link_libraries(load_torchvision_model PRIVATE obcpp_lib)
-target_add_torch(load_torchvision_model)
-target_add_torchvision(load_torchvision_model)
-target_add_loguru(load_torchvision_model)
-
 # mavlink-client
 add_executable(mavlink_client "mavlink_client.cpp")
 target_link_libraries(mavlink_client PRIVATE obcpp_lib)
