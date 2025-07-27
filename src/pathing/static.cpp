@@ -552,7 +552,6 @@ std::vector<std::vector<XYZCoord>> generateRankedNewGoalsList(const std::vector<
     std::vector<XYZCoord> deviation_points;
     for (int i = 0; i < 200; i++) {
         deviation_points.push_back(mapping_bounds.getRandomPoint(true));
-        printf("Deviation point: %f, %f\n", deviation_points.back().x, deviation_points.back().y);
     }
 
     // each deviation point can be inserted between any two goals
