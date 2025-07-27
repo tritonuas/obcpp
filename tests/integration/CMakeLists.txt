@@ -40,20 +40,9 @@ target_link_libraries(playground PRIVATE -Wl,--copy-dt-needed-entries ${ImageMag
 add_executable(mavlink_client "mavlink_client.cpp")
 target_link_libraries(mavlink_client PRIVATE obcpp_lib)
 target_include_directories(mavlink_client PRIVATE ${INCLUDE_DIRECTORY})
-target_add_protobuf(mavlink_client)
-target_add_torch(mavlink_client)
-target_add_torchvision(mavlink_client)
-target_add_json(mavlink_client)
-target_add_opencv(mavlink_client)
-target_add_httplib(mavlink_client)
 target_add_mavsdk(mavlink_client)
 target_add_matplot(mavlink_client)
 target_add_loguru(mavlink_client)
-target_add_onnxruntime(mavlink_client)
-# for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
-# target_add_imagemagick(path_plotting)
-target_include_directories(mavlink_client PRIVATE ${ImageMagick_INCLUDE_DIRS})
-target_link_libraries(mavlink_client PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
 # cv_pipeline 
 add_executable(cv_pipeline "cv_pipeline.cpp")
