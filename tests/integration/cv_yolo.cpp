@@ -3,7 +3,7 @@
 #include "cv/yolo.hpp"
 
 /**
- * Tests YOLO and some YOLO config settings on an imagre
+ * Tests YOLO and some YOLO config settings on an image
  * 
  * arg 1 --> YoloModelPath
  * arg 2 --> ImagePath
