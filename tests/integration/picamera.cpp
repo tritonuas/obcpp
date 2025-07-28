@@ -46,5 +46,4 @@ int main (int argc, char *argv[]) {
         } 
         LOG_F(INFO, "Saving piaam image to %s", img_filepath.string().c_str());
     }
-
 }

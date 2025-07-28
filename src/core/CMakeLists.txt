@@ -9,7 +9,6 @@ set(FILES
 set(LIB_DEPS
     obcpp_camera
     obcpp_cv
-    obcpp_network
     obcpp_pathing
     obcpp_protos
     obcpp_ticks

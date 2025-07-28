@@ -17,10 +17,10 @@ add_subdirectory(utilities)
 add_library(obcpp_lib INTERFACE)
 target_link_libraries(obcpp_lib INTERFACE
     obcpp_protos
+    obcpp_network
     obcpp_camera
     obcpp_core
     obcpp_cv
-    obcpp_network
     obcpp_pathing
     obcpp_ticks
     obcpp_utilities
