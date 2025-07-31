@@ -62,7 +62,7 @@
         "save_dir": "/workspaces/obcpp/images/",
         "save_images_to_file": false,
         "mock": {
-            "images_dir": "/workspaces/obcpp/tests/integration/images/saliency/"
+            "images_dir": "/workspaces/obcpp/images/mock/"
         },
         "lucid": {
             "sensor_shutter_mode": "Rolling",

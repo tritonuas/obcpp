@@ -30,8 +30,6 @@ MockCamera::MockCamera(CameraConfig config) : CameraInterface(config) {
                     0,
                     telemetry);
                 this->mock_images.push_back(img_data);
-            } else {
-                LOG_F(ERROR, "IMG DIRECTORY IS EMPTY | RIP CAT");
             }
         });
 }

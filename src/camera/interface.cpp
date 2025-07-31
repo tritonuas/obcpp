@@ -7,6 +7,7 @@
 #include "nlohmann/json.hpp"
 #include <loguru.hpp>
 
+#include "network/mavlink.hpp"  // imported here but not in the header due to circular dependency
 #include "utilities/base64.hpp"
 
 using json = nlohmann::json;

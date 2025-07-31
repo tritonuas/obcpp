@@ -12,6 +12,8 @@
         exit(1); \
     }
 
+// TODO - figure out how to test this
+
 /*
  * Use:
  *   1 ./airdrop_sockets client 

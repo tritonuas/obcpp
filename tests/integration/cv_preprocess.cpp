@@ -3,9 +3,16 @@
 
 #include "cv/preprocess.hpp"
 
+/**
+ * Removes green bar from the right hand side of the image
+ * 
+ * arg 1 --> input image path
+ * arg 2 --> output image path
+ */
+
 int main(int argc, char* argv[]) {
     // Set default file paths.
-    std::string input_image_path = "../tests/integration/images/output_0819.png";
+    std::string input_image_path = "../tests/integration/images/original.png";
     std::string output_image_path = "../tests/integration/output/preprocess_output.png";
 
     // Allow file paths to be overridden by command-line arguments.

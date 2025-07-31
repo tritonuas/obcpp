@@ -19,11 +19,10 @@ set(MOCK_FILES
 )
 
 set(LIB_DEPS
-    obcpp_protos
-    obcpp_utilities
-    obcpp_ticks
     obcpp_core
     obcpp_pathing
+    obcpp_protos
+    obcpp_utilities
 )
 
 add_library(${LIB_NAME} STATIC

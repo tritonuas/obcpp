@@ -17,7 +17,7 @@
 */
 int main(int argc, char* argv[]) {
     if (argc != 5) {
-        LOG_F(ERROR, "Expected use: bin/mavsdk [config]");
+        LOG_F(ERROR, "Expected use: bin/drop_it_like_its_hot [config]");
         return 1;
     }
 
