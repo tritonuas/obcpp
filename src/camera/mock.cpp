@@ -24,9 +24,7 @@ MockCamera::MockCamera(CameraConfig config) : CameraInterface(config)
 
     cli.set_read_timeout(10);
 
-    uint32_t image_count = 10;
-
-    for (int i = 0; i < image_count; i++)
+    for (int i = 0; i < config.mock.num_images; i++)
     {
         auto res = cli.Get("/generate?format=json");
 
