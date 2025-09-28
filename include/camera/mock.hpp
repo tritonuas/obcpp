@@ -63,10 +63,7 @@ class MockCamera : public CameraInterface {
 
     std::thread captureThread;
 
-    // Get telemetry from JSON file adjacent to given image file.
-    // Ex: given path to "0003.jpg", telemetry will be looked for in
-    // "0003.json"
-    std::optional<ImageTelemetry> getTelemetryFromJsonFile(std::filesystem::path img_path);
+    std::optional<ImageTelemetry> getTelemetryFromJsonResponse(std::string server_response);
 };
 
 #endif  // INCLUDE_CAMERA_MOCK_HPP_

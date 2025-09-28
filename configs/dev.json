@@ -59,10 +59,10 @@
     "camera": {
         "_comment": "See CameraConfig struct in datatypes.hpp for detailed explanations",
         "type": "mock",
-        "save_dir": "/workspaces/obcpp/images/",
-        "save_images_to_file": false,
+        "save_dir": "/workspaces/obcpp/images/mock",
+        "save_images_to_file": true,
         "mock": {
-            "images_dir": "/workspaces/obcpp/images/mock/"
+            "not_stolen_port": 5069
         },
         "lucid": {
             "sensor_shutter_mode": "Rolling",

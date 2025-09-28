@@ -116,9 +116,9 @@ struct CameraConfig {
     // whether or not to save to save_dir
     bool save_images_to_file;
     struct {
-        // directory to randomly pick images from
+        // port to query images from
         // for the mock camera
-        std::string images_dir;
+        int not_stolen_port;
     } mock;
 };
 
