@@ -1,11 +1,12 @@
 #include "camera/mock.hpp"
 
+#include <httplib.h>
+
 #include <chrono>
 #include <thread>
 #include <optional>
 #include <deque>
 #include <filesystem>
-#include <httplib.h>
 
 #include <loguru.hpp>
 #include "nlohmann/json.hpp"
@@ -17,19 +18,16 @@
 #include "utilities/base64.hpp"
 
 
-MockCamera::MockCamera(CameraConfig config) : CameraInterface(config)
-{
+MockCamera::MockCamera(CameraConfig config) : CameraInterface(config) {
     LOG_F(INFO, "Grabbing images from port " + config.mock.not_stolen_port);
     httplib::Client cli("localhost", config.mock.not_stolen_port);
 
     cli.set_read_timeout(10);
 
-    for (int i = 0; i < config.mock.num_images; i++)
-    {
+    for (int i = 0; i < config.mock.num_images; i++) {
         auto res = cli.Get("/generate?format=json");
 
-        if (!res || res->status != 200)
-        {
+        if (!res || res->status != 200) {
             LOG_F(ERROR, "Failed to query server for images");
             continue;
         }
@@ -41,12 +39,11 @@ MockCamera::MockCamera(CameraConfig config) : CameraInterface(config)
 
         cv::Mat img = cv::imdecode(data, cv::IMREAD_COLOR);
 
-        if (img.data == NULL)
-        {
+        if (img.data == NULL) {
             LOG_F(ERROR, "Failed to decode image from server response");
             continue;
-        } 
-        
+        }
+
         ImageTelemetry telemetry = this->getTelemetryFromJsonResponse(res->body).value();
 
         ImageData img_data(
@@ -60,8 +57,7 @@ MockCamera::MockCamera(CameraConfig config) : CameraInterface(config)
     cli.stop();
 }
 
-MockCamera::~MockCamera()
-{
+MockCamera::~MockCamera() {
     this->stopTakingPictures();
 }
 
@@ -70,23 +66,18 @@ void MockCamera::connect() { return; }
 bool MockCamera::isConnected() { return true; }
 
 void MockCamera::startTakingPictures(const std::chrono::milliseconds &interval,
-                                     std::shared_ptr<MavlinkClient> mavlinkClient)
-{
+                                     std::shared_ptr<MavlinkClient> mavlinkClient) {
     this->isTakingPictures = true;
-    try
-    {
+    try {
         this->captureThread = std::thread(&MockCamera::captureEvery, this, interval, mavlinkClient);
     }
-    catch (const std::exception &e)
-    {
+    catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
     }
 }
 
-void MockCamera::stopTakingPictures()
-{
-    if (!this->isTakingPictures)
-    {
+void MockCamera::stopTakingPictures() {
+    if (!this->isTakingPictures) {
         return;
     }
 
@@ -95,16 +86,14 @@ void MockCamera::stopTakingPictures()
     this->captureThread.join();
 }
 
-std::optional<ImageData> MockCamera::getLatestImage()
-{
+std::optional<ImageData> MockCamera::getLatestImage() {
     ReadLock lock(this->imageQueueLock);
     ImageData lastImage = this->imageQueue.front();
     this->imageQueue.pop_front();
     return lastImage;
 }
 
-std::deque<ImageData> MockCamera::getAllImages()
-{
+std::deque<ImageData> MockCamera::getAllImages() {
     ReadLock lock(this->imageQueueLock);
     std::deque<ImageData> outputQueue = this->imageQueue;
     this->imageQueue = std::deque<ImageData>();
@@ -112,17 +101,14 @@ std::deque<ImageData> MockCamera::getAllImages()
 }
 
 void MockCamera::captureEvery(const std::chrono::milliseconds &interval,
-                              std::shared_ptr<MavlinkClient> mavlinkClient)
-{
+                              std::shared_ptr<MavlinkClient> mavlinkClient) {
     loguru::set_thread_name("mock camera");
-    while (this->isTakingPictures)
-    {
+    while (this->isTakingPictures) {
         LOG_F(INFO, "Taking picture with mock camera. Using images from port %d",
               this->config.mock.not_stolen_port);
         auto imageData = this->takePicture(interval, mavlinkClient);
 
-        if (!imageData.has_value())
-        {
+        if (!imageData.has_value()) {
             LOG_F(WARNING, "Failed to take picture with mock camera");
             continue;
         }
@@ -136,16 +122,14 @@ void MockCamera::captureEvery(const std::chrono::milliseconds &interval,
 }
 
 std::optional<ImageData> MockCamera::takePicture(const std::chrono::milliseconds &timeout,
-                                                 std::shared_ptr<MavlinkClient> mavlinkClient)
-{
+                                                 std::shared_ptr<MavlinkClient> mavlinkClient) {
     int random_idx = randomInt(0, this->mock_images.size() - 1);
 
     ImageData img_data = this->mock_images.at(random_idx);
     uint64_t timestamp = getUnixTime_s().count();
 
     // if we can't find corresonding telemtry json, just query mavlink
-    if (!img_data.TELEMETRY.has_value())
-    {
+    if (!img_data.TELEMETRY.has_value()) {
         LOG_F(ERROR, "no image json value");
         img_data.TELEMETRY = queryMavlinkImageTelemetry(mavlinkClient);
     }
@@ -161,9 +145,8 @@ std::optional<ImageData> MockCamera::takePicture(const std::chrono::milliseconds
 
 void MockCamera::startStreaming() {}
 
-std::optional<ImageTelemetry> MockCamera::getTelemetryFromJsonResponse(std::string server_response)
-{
-    nlohmann::json json = nlohmann::json::parse(server_response, nullptr, true, true);
+std::optional<ImageTelemetry> MockCamera::getTelemetryFromJsonResponse(std::string json_response) {
+    nlohmann::json json = nlohmann::json::parse(json_response, nullptr, true, true);
 
     return ImageTelemetry{
         .latitude_deg = json["background"]["lat"],

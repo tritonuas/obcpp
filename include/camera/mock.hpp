@@ -7,6 +7,7 @@
 #include <deque>
 #include <vector>
 #include <filesystem>
+#include <string>
 
 #include "camera/interface.hpp"
 #include "network/mavlink.hpp"
