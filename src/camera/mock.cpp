@@ -25,7 +25,7 @@ MockCamera::MockCamera(CameraConfig config) : CameraInterface(config) {
     cli.set_read_timeout(10);
 
     for (int i = 0; i < config.mock.num_images; i++) {
-        auto res = cli.Get("/generate?format=json");
+        httplib::Result res = cli.Get("/generate?format=json");
 
         if (!res || res->status != 200) {
             LOG_F(ERROR, "Failed to query server for images");
@@ -65,7 +65,7 @@ void MockCamera::connect() { return; }
 
 bool MockCamera::isConnected() { return true; }
 
-void MockCamera::startTakingPictures(const std::chrono::milliseconds &interval,
+void MockCamera::startTakingPictures(const std::chrono::milliseconds& interval,
                                      std::shared_ptr<MavlinkClient> mavlinkClient) {
     this->isTakingPictures = true;
     try {
