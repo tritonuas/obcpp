@@ -71,7 +71,7 @@ void MockCamera::startTakingPictures(const std::chrono::milliseconds& interval,
     try {
         this->captureThread = std::thread(&MockCamera::captureEvery, this, interval, mavlinkClient);
     }
-    catch (const std::exception &e) {
+    catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
     }
 }
@@ -100,7 +100,7 @@ std::deque<ImageData> MockCamera::getAllImages() {
     return outputQueue;
 }
 
-void MockCamera::captureEvery(const std::chrono::milliseconds &interval,
+void MockCamera::captureEvery(const std::chrono::milliseconds& interval,
                               std::shared_ptr<MavlinkClient> mavlinkClient) {
     loguru::set_thread_name("mock camera");
     while (this->isTakingPictures) {
@@ -121,7 +121,7 @@ void MockCamera::captureEvery(const std::chrono::milliseconds &interval,
     }
 }
 
-std::optional<ImageData> MockCamera::takePicture(const std::chrono::milliseconds &timeout,
+std::optional<ImageData> MockCamera::takePicture(const std::chrono::milliseconds& timeout,
                                                  std::shared_ptr<MavlinkClient> mavlinkClient) {
     int random_idx = randomInt(0, this->mock_images.size() - 1);
 
