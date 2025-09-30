@@ -54,7 +54,7 @@
     "cv": {
         "yolo_model_dir": "/obcpp/models/yolo11x.onnx",
         "not_stolen_addr": "localhost",
-        "not_stolen_port": 5069
+        "not_stolen_port": 6060
     },
     "camera": {
         "_comment": "See CameraConfig struct in datatypes.hpp for detailed explanations",
@@ -62,7 +62,8 @@
         "save_dir": "/obcpp/images/",
         "save_images_to_file": true,
         "mock": {
-            "images_dir": "/obcpp/tests/integration/images/saliency/"
+            "not_stolen_port": 6060,
+            "num_images": 10
         },
         "lucid": {
             "sensor_shutter_mode": "Rolling",
