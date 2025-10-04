@@ -78,8 +78,6 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
     SET_CONFIG_OPT(pathing, coverage, forward, one_way);
 
     SET_CONFIG_OPT(cv, yolo_model_dir);
-    SET_CONFIG_OPT(cv, not_stolen_addr);
-    SET_CONFIG_OPT(cv, not_stolen_port);
 
     SET_CONFIG_OPT_VARIANT(AirdropDropMethod, pathing, approach, drop_method);
     SET_CONFIG_OPT(pathing, approach, drop_angle_rad);
@@ -94,7 +92,10 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
     SET_CONFIG_OPT(camera, save_dir);
     SET_CONFIG_OPT(camera, save_images_to_file);
     SET_CONFIG_OPT(camera, mock, not_stolen_port);
-    SET_CONFIG_OPT(camera, mock, num_images);
+    SET_CONFIG_OPT(camera, mock, lat);
+    SET_CONFIG_OPT(camera, mock, lon);
+    SET_CONFIG_OPT(camera, mock, alt_ft);
+    SET_CONFIG_OPT(camera, mock, heading);
 
     SET_CONFIG_OPT(takeoff, altitude_m);
     SET_CONFIG_OPT(takeoff, payload_size);
