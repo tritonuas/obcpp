@@ -61,7 +61,10 @@
         "save_images_to_file": true,
         "mock": {
             "not_stolen_port": 6060,
-            "num_images": 10
+            "lat": 38.31587003355332,
+            "lon": -76.55251800009955,
+            "alt_ft": 150,
+            "heading": 270
         },
         "lucid": {
             "sensor_shutter_mode": "Rolling",
