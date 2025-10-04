@@ -104,7 +104,6 @@ void MockCamera::captureEvery(const std::chrono::milliseconds& interval,
 
 std::optional<ImageData> MockCamera::takePicture(const std::chrono::milliseconds& timeout,
                                                  std::shared_ptr<MavlinkClient> mavlinkClient) {
-
     httplib::Result res = cli.Get("/stream/frame?session_id=" + this->session_id +
                                   "&lat=" + std::to_string(this->config.mock.lat) +
                                   "&lon=" + std::to_string(this->config.mock.lon) +

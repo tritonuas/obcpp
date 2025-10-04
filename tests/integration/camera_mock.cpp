@@ -66,6 +66,55 @@ int main (int argc, char *argv[]) {
             std::this_thread::sleep_for(1s);
         }
 
+
+        LOG_F(INFO, "Testing startTakingPictures...");
+
+        camera.startTakingPictures(2s, nullptr);
+        
+        LOG_F(INFO, "Pictures are being taken in background every 2 seconds");
+        
+
+        std::this_thread::sleep_for(8s);
+        
+
+        auto images = camera.getAllImages();
+        LOG_F(INFO, "Captured %zu images during background operation", images.size());
+        
+
+        int image_count = 0;
+        for (const auto& imageData : images) {
+            std::string filename = "background_image_" + std::to_string(image_count) + ".jpg";
+            std::filesystem::path filepath = std::filesystem::path(config.save_dir) / filename;
+            cv::imwrite(filepath.string(), imageData.DATA);
+            LOG_F(INFO, "Saved background image %d: %dx%d pixels to %s", 
+                  image_count, imageData.DATA.cols, imageData.DATA.rows, filepath.string().c_str());
+
+            if (imageData.TELEMETRY.has_value()) {
+                LOG_F(INFO, "  Telemetry - Lat: %.6f, Lon: %.6f, Alt: %.1f ft", 
+                      imageData.TELEMETRY->latitude_deg, 
+                      imageData.TELEMETRY->longitude_deg, 
+                      imageData.TELEMETRY->altitude_agl_m);
+            }
+            
+            image_count++;
+        }
+
+        LOG_F(INFO, "Testing getLatestImage...");
+        std::this_thread::sleep_for(3s);
+        
+        auto latestImage = camera.getLatestImage();
+        if (latestImage.has_value()) {
+            std::string filename = "latest_image.jpg";
+            std::filesystem::path filepath = std::filesystem::path(config.save_dir) / filename;
+            cv::imwrite(filepath.string(), latestImage->DATA);
+            LOG_F(INFO, "Latest image: %dx%d pixels, saved to %s", 
+                  latestImage->DATA.cols, latestImage->DATA.rows, filepath.string().c_str());
+        } else {
+            LOG_F(WARNING, "No latest image available");
+        }
+
+        camera.stopTakingPictures();
+
         LOG_F(INFO, "Mock Camera test completed successfully");
         
     } catch (const std::exception& e) {
