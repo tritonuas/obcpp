@@ -116,7 +116,7 @@ std::optional<ImageData> MockCamera::takePicture(const std::chrono::milliseconds
     httplib::Result res = cli.Get("/stream/frame?session_id=" + this->session_id +
                                   "&lat=" + std::to_string(telemetry.latitude_deg) +
                                   "&lon=" + std::to_string(telemetry.longitude_deg) +
-                                  "&alt_ft=" + std::to_string((int) (telemetry.altitude_agl_m * 3.281)) +
+                                  "&alt_ft=" + std::to_string(static_cast<int>((telemetry.altitude_agl_m * 3.281))) + //NOLINT
                                   "&heading=" + std::to_string(telemetry.heading_deg) +
                                   "&format=png");
 
