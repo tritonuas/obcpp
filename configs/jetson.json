@@ -60,11 +60,7 @@
         "save_dir": "/obcpp/images/",
         "save_images_to_file": true,
         "mock": {
-            "not_stolen_port": 6060,
-            "lat": 10,
-            "lon": 10,
-            "alt_ft": 10,
-            "heading": 10
+            "not_stolen_port": 6060
         },
         "lucid": {
             "sensor_shutter_mode": "Rolling",

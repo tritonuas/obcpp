@@ -64,8 +64,6 @@ class MockCamera : public CameraInterface {
 
     std::thread captureThread;
 
-    std::optional<ImageTelemetry> getTelemetryFromJsonResponse(std::string server_response);
-
     httplib::Client cli;
 
     std::string session_id;

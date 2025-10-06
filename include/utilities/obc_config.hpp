@@ -118,11 +118,6 @@ struct CameraConfig {
     struct {
         // port to query images from for the mock camera
         int not_stolen_port;
-
-        double lat;
-        double lon;
-        int alt_ft;
-        double heading;
     } mock;
 };
 

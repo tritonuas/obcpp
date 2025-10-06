@@ -92,10 +92,6 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
     SET_CONFIG_OPT(camera, save_dir);
     SET_CONFIG_OPT(camera, save_images_to_file);
     SET_CONFIG_OPT(camera, mock, not_stolen_port);
-    SET_CONFIG_OPT(camera, mock, lat);
-    SET_CONFIG_OPT(camera, mock, lon);
-    SET_CONFIG_OPT(camera, mock, alt_ft);
-    SET_CONFIG_OPT(camera, mock, heading);
 
     SET_CONFIG_OPT(takeoff, altitude_m);
     SET_CONFIG_OPT(takeoff, payload_size);

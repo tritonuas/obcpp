@@ -104,23 +104,28 @@ void MockCamera::captureEvery(const std::chrono::milliseconds& interval,
 
 std::optional<ImageData> MockCamera::takePicture(const std::chrono::milliseconds& timeout,
                                                  std::shared_ptr<MavlinkClient> mavlinkClient) {
+    std::optional<ImageTelemetry> telemetryOpt = queryMavlinkImageTelemetry(mavlinkClient);
+
+    if (!telemetryOpt.has_value()) {
+        LOG_F(ERROR, "Could not grab telemetry data from mavlink");
+        return std::nullopt;
+    }
+
+    ImageTelemetry telemetry = telemetryOpt.value();
+
     httplib::Result res = cli.Get("/stream/frame?session_id=" + this->session_id +
-                                  "&lat=" + std::to_string(this->config.mock.lat) +
-                                  "&lon=" + std::to_string(this->config.mock.lon) +
-                                  "&alt_ft=" + std::to_string(this->config.mock.alt_ft) +
-                                  "&heading=" + std::to_string(this->config.mock.heading) +
-                                  "&format=json");
+                                  "&lat=" + std::to_string(telemetry.latitude_deg) +
+                                  "&lon=" + std::to_string(telemetry.longitude_deg) +
+                                  "&alt_ft=" + std::to_string((int) (telemetry.altitude_agl_m * 3.281)) +
+                                  "&heading=" + std::to_string(telemetry.heading_deg) +
+                                  "&format=png");
 
     if (!res || res->status != 200) {
         LOG_F(ERROR, "Failed to query server for images");
         return std::nullopt;
     }
 
-    nlohmann::json json = nlohmann::json::parse(res->body, nullptr, true, true);
-
-    std::string decoded_img = base64_decode(json["image_base64"]);
-    std::vector<uchar> data(decoded_img.begin(), decoded_img.end());
-
+    std::vector<uchar> data(res->body.begin(), res->body.end());
     cv::Mat img = cv::imdecode(data, cv::IMREAD_COLOR);
 
     if (img.data == NULL) {
@@ -128,24 +133,15 @@ std::optional<ImageData> MockCamera::takePicture(const std::chrono::milliseconds
         return std::nullopt;
     }
 
-    ImageTelemetry telemetry = this->getTelemetryFromJsonResponse(res->body).value();
-
     ImageData img_data(
         img,
         0,
         telemetry);
 
-    // if we can't find corresonding telemtry json, just query mavlink
-    if (!img_data.TELEMETRY.has_value()) {
-        LOG_F(ERROR, "no image json value");
-        img_data.TELEMETRY = queryMavlinkImageTelemetry(mavlinkClient);
-    }
-
     return img_data;
 }
 
 void MockCamera::startStreaming() {
-    // need to add support for runway (left / right) and num_targets
     httplib::Result res = cli.Post("/stream/start");
     if (!res || res->status != 200) {
         LOG_F(ERROR, "Failed to grab session id from not-stolen");
@@ -157,19 +153,4 @@ void MockCamera::startStreaming() {
     this->session_id = json["session_id"];
 
     LOG_F(INFO, "Started streaming with session id %s", this->session_id.c_str());
-}
-
-std::optional<ImageTelemetry> MockCamera::getTelemetryFromJsonResponse(std::string json_response) {
-    nlohmann::json json = nlohmann::json::parse(json_response, nullptr, true, true);
-
-    return ImageTelemetry{
-        .latitude_deg = json["background"]["lat"],
-        .longitude_deg = json["background"]["lon"],
-        .altitude_agl_m = json["altitude"],
-        .airspeed_m_s = 0.0,
-        .heading_deg = json["background"]["heading_deg"],
-        .yaw_deg = 0.0,
-        .pitch_deg = 0.0,
-        .roll_deg = 0.0,
-    };
 }
