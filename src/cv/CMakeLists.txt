@@ -8,6 +8,7 @@ set(FILES
     utilities.cpp
     mapping.cpp
     yolo.cpp
+    owlv2.cpp
     preprocess.cpp
 )
 

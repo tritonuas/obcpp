@@ -60,6 +60,25 @@ target_add_matplot(cv_aggregator)
 target_add_loguru(cv_aggregator)
 target_add_mavsdk(cv_aggregator)
 
+# cv_owlv2
+add_executable(cv_owlv2 ${SOURCES} "cv_owlv2.cpp")
+target_link_libraries(cv_owlv2 PRIVATE obcpp_lib)
+target_add_json(cv_owlv2)
+target_add_matplot(cv_owlv2)
+target_add_opencv(cv_owlv2)
+target_add_loguru(cv_owlv2)
+target_add_httplib(cv_owlv2)
+target_add_protobuf(cv_owlv2)
+target_add_torch(cv_owlv2)
+target_add_torchvision(cv_owlv2)
+target_add_mavsdk(cv_owlv2)
+target_add_loguru(cv_owlv2)
+target_add_onnxruntime(cv_owlv2)
+# for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
+# target_add_imagemagick(path_plotting)
+target_include_directories(cv_owlv2 PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(cv_owlv2 PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
+
 # cv_preprocess
 add_executable(cv_preprocess ${SOURCES} "cv_preprocess.cpp")
 target_link_libraries(cv_preprocess PRIVATE obcpp_lib)

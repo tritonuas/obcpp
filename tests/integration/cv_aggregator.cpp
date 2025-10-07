@@ -31,8 +31,8 @@ int main() {
         return 1;
     }
 
-    // Construct the pipeline with the desired YOLO model
-    PipelineParams params("../models/yolo11x.onnx",
+    // Construct the pipeline with the desired OWLv2 model
+    PipelineParams params("../models/owlv2.onnx",
                           "../tests/integration/output/output_aggregator.jpg",
                           false);  // do_preprocess=false
 
@@ -56,8 +56,8 @@ int main() {
         aggregator.runPipeline(imageData);
     }
 
-    // Let the worker threads finish
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    // Wait until all runs are processed
+    aggregator.waitUntilIdle();
 
     // Retrieve the aggregated results in a thread-safe manner
     auto lockedResults = aggregator.getResults();

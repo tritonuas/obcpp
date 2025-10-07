@@ -41,6 +41,9 @@ class CVAggregator {
     // Spawn a thread to run the pipeline on the given imageData
     void runPipeline(const ImageData& image);
 
+    // Block until no workers are running and the overflow queue is empty
+    void waitUntilIdle();
+
     // Lockable pointer to retrieve aggregator results
     LockPtr<CVResults> getResults();
 
@@ -55,7 +58,11 @@ class CVAggregator {
 
     Pipeline pipeline;
 
+    // Serialize access to the shared Pipeline instance to keep it thread-safe
+    std::mutex pipeline_run_mut;
+
     std::mutex mut;
+    std::condition_variable idle_cv;
     int num_worker_threads;
 
     // For when too many pipelines are active at once

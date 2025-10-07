@@ -1,13 +1,14 @@
 #include "cv/pipeline.hpp"
 
 #include <atomic>
+#include <filesystem>
 
 #include "protos/obc.pb.h"
 #include "utilities/logging.hpp"
 
-// Pipeline constructor: initialize YOLO detector and the preprocess flag.
+// Pipeline constructor: initialize detector and the preprocess flag.
 Pipeline::Pipeline(const PipelineParams& p)
-    : yoloDetector(std::make_unique<YOLO>(p.yoloModelPath, 0.05f, 640, 640)),
+    : yoloDetector(std::make_unique<OWLv2>(p.yoloModelPath, 960 /*inputSize*/)),
       outputPath(p.outputPath),
       do_preprocess(p.do_preprocess) {}
 
@@ -75,7 +76,6 @@ PipelineResults Pipeline::run(const ImageData& imageData) {
         if (imageData.TELEMETRY.has_value()) {
             targetPosition = this->gsdLocalizer.localize(imageData.TELEMETRY.value(), box);
         }
-
 
         // Populate your DetectedTarget
         DetectedTarget detected;

@@ -34,7 +34,6 @@ CVAggregator::CVAggregator(Pipeline&& p) : pipeline(std::move(p)) {
     this->matched_results->matched_airdrop[AirdropIndex::Daniel] = dummy;
 }
 
-
 CVAggregator::~CVAggregator() {}
 
 LockPtr<CVResults> CVAggregator::getResults() {
@@ -63,6 +62,12 @@ void CVAggregator::runPipeline(const ImageData& image) {
     worker_thread.detach();  // We don’t need to join in the caller
 }
 
+void CVAggregator::waitUntilIdle() {
+    std::unique_lock<std::mutex> lock(this->mut);
+    this->idle_cv.wait(
+        lock, [&] { return this->num_worker_threads == 0 && this->overflow_queue.empty(); });
+}
+
 static std::atomic<int> global_run_id{0};
 
 void CVAggregator::worker(ImageData image, int thread_num) {
@@ -71,7 +76,10 @@ void CVAggregator::worker(ImageData image, int thread_num) {
 
     while (true) {
         // 1) Run the pipeline
-        auto pipeline_results = this->pipeline.run(image);
+        PipelineResults pipeline_results = [&]() {
+            std::lock_guard<std::mutex> guard(this->pipeline_run_mut);
+            return this->pipeline.run(image);
+        }();
 
         // 2) Build ONE run for all detections in that pipeline output
         AggregatedRun run;
@@ -107,6 +115,9 @@ void CVAggregator::worker(ImageData image, int thread_num) {
         LOG_F(INFO, "CVAggregator worker #%d terminating. Active threads: %d -> %d", thread_num,
               this->num_worker_threads, this->num_worker_threads - 1);
         --this->num_worker_threads;
+        if (this->num_worker_threads == 0 && this->overflow_queue.empty()) {
+            this->idle_cv.notify_all();
+        }
     }
 }
 

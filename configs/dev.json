@@ -52,7 +52,7 @@
         }
     },
     "cv": {
-        "yolo_model_dir": "/workspaces/obcpp/models/yolo11x.onnx",
+        "yolo_model_dir": "/workspaces/obcpp/models/owlv2.onnx",
         "not_stolen_addr": "localhost",
         "not_stolen_port": 6060
     },

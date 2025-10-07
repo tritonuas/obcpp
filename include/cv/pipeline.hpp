@@ -11,9 +11,9 @@
 
 #include "camera/interface.hpp"
 #include "cv/localization.hpp"
+#include "cv/owlv2.hpp"
 #include "cv/preprocess.hpp"
 #include "cv/utilities.hpp"
-#include "cv/yolo.hpp"
 #include "protos/obc.pb.h"
 
 // Processed image holds all predictions made concerning a given image.
@@ -48,7 +48,7 @@ class Pipeline {
     PipelineResults run(const ImageData& imageData);
 
  private:
-    std::unique_ptr<YOLO> yoloDetector;
+    std::unique_ptr<OWLv2> yoloDetector;
     // ECEFLocalization ecefLocalizer;
     GSDLocalization gsdLocalizer;
     bool do_preprocess;       // Flag to enable/disable preprocessing
