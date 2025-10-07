@@ -142,7 +142,12 @@ std::optional<ImageData> MockCamera::takePicture(const std::chrono::milliseconds
 }
 
 void MockCamera::startStreaming() {
-    httplib::Result res = cli.Post("/stream/start");
+    nlohmann:json stream_body;
+    stream_body["runway"] = this->config.mock.runway;
+    stream_body["num_targets"] = this->config.mock.num_targets;
+
+    httplib::Result res = cli.Post("/stream/start", stream_body.dump(), "application/json");
+
     if (!res || res->status != 200) {
         LOG_F(ERROR, "Failed to grab session id from not-stolen");
         return;
