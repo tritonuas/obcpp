@@ -16,8 +16,6 @@
 # target_include_directories(EXECUTABLE_NAME PRIVATE ${ImageMagick_INCLUDE_DIRS})
 # target_link_libraries(EXECUTABLE_NAME PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
-
-
 # playground
 add_executable(playground "playground.cpp")
 target_link_libraries(playground PRIVATE obcpp_lib)
@@ -135,17 +133,6 @@ target_add_loguru(airdrop_packets)
 # airdrop_sockets
 # add_executable(airdrop_sockets src/network/airdrop_sockets.c tests/integration/airdrop_sockets.c)
 # target_include_directories(airdrop_sockets PRIVATE ${INCLUDE_DIRECTORY})
-
-# add_executable(camera_mock "camera_mock.cpp")
-# target_link_libraries(camera_mock PRIVATE obcpp_lib obcpp_camera obcpp_utilities obcpp_network)
-# target_include_directories(camera_mock PRIVATE ${INCLUDE_DIRECTORY})
-# target_add_json(camera_mock)
-# target_add_opencv(camera_mock)
-# target_add_httplib(camera_mock)
-# target_add_mavsdk(camera_mock)
-# target_add_loguru(camera_mock)
-# target_add_matplot(camera_mock)
-# target_add_loguru(camera_mock)
 
 # cuda_check
 add_executable(cuda_check ${SOURCES} cuda_check.cpp)
