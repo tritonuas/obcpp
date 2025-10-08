@@ -121,6 +121,8 @@ struct CameraConfig {
         // left | right
         std::string runway;
         int num_targets;
+        // maximum waiting time for not-stolen server response
+        int connection_timeout;
     } mock;
 };
 

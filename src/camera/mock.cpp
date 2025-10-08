@@ -83,7 +83,7 @@ std::deque<ImageData> MockCamera::getAllImages() {
 void MockCamera::captureEvery(const std::chrono::milliseconds& interval,
                               std::shared_ptr<MavlinkClient> mavlinkClient) {
     loguru::set_thread_name("mock camera");
-    cli.set_read_timeout(10);
+    cli.set_read_timeout(this->config.mock.connection_timeout);
     while (this->isTakingPictures) {
         LOG_F(INFO, "Taking picture with mock camera. Using images from port %d",
               this->config.mock.not_stolen_port);
