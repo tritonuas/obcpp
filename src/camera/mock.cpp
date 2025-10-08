@@ -18,52 +18,21 @@
 #include "utilities/base64.hpp"
 
 
-MockCamera::MockCamera(CameraConfig config) : CameraInterface(config) {
-    LOG_F(INFO, "Grabbing images from port " + config.mock.not_stolen_port);
-    httplib::Client cli("localhost", config.mock.not_stolen_port);
-
-    cli.set_read_timeout(10);
-
-    for (int i = 0; i < config.mock.num_images; i++) {
-        httplib::Result res = cli.Get("/generate?format=json");
-
-        if (!res || res->status != 200) {
-            LOG_F(ERROR, "Failed to query server for images");
-            continue;
-        }
-
-        nlohmann::json json = nlohmann::json::parse(res->body, nullptr, true, true);
-
-        std::string decoded_img = base64_decode(json["image_base64"]);
-        std::vector<uchar> data(decoded_img.begin(), decoded_img.end());
-
-        cv::Mat img = cv::imdecode(data, cv::IMREAD_COLOR);
-
-        if (img.data == NULL) {
-            LOG_F(ERROR, "Failed to decode image from server response");
-            continue;
-        }
-
-        ImageTelemetry telemetry = this->getTelemetryFromJsonResponse(res->body).value();
-
-        ImageData img_data(
-            img,
-            0,
-            telemetry);
-
-        this->mock_images.push_back(img_data);
-    }
-
-    cli.stop();
-}
+MockCamera::MockCamera(CameraConfig config)
+    : CameraInterface(config), cli("localhost", config.mock.not_stolen_port) {}
 
 MockCamera::~MockCamera() {
+    cli.stop();
     this->stopTakingPictures();
 }
 
 void MockCamera::connect() { return; }
 
-bool MockCamera::isConnected() { return true; }
+bool MockCamera::isConnected() {
+    cli.set_read_timeout(2);
+    httplib::Result res = cli.Get("/");
+    return res && (res->status == 200 || res->status == 404);
+}
 
 void MockCamera::startTakingPictures(const std::chrono::milliseconds& interval,
                                      std::shared_ptr<MavlinkClient> mavlinkClient) {
@@ -82,6 +51,17 @@ void MockCamera::stopTakingPictures() {
     }
 
     this->isTakingPictures = false;
+
+    nlohmann::json json;
+    json["session_id"] = this->session_id;
+
+    httplib::Result res = cli.Post("/stream/stop", json.dump(), "application/json");
+
+    if (!res || res->status != 200) {
+        LOG_F(WARNING, "Failed to stop streaming session");
+    } else {
+        LOG_F(INFO, "Successfully stopped streaming session");
+    }
 
     this->captureThread.join();
 }
@@ -103,6 +83,7 @@ std::deque<ImageData> MockCamera::getAllImages() {
 void MockCamera::captureEvery(const std::chrono::milliseconds& interval,
                               std::shared_ptr<MavlinkClient> mavlinkClient) {
     loguru::set_thread_name("mock camera");
+    cli.set_read_timeout(this->config.mock.connection_timeout);
     while (this->isTakingPictures) {
         LOG_F(INFO, "Taking picture with mock camera. Using images from port %d",
               this->config.mock.not_stolen_port);
@@ -123,39 +104,58 @@ void MockCamera::captureEvery(const std::chrono::milliseconds& interval,
 
 std::optional<ImageData> MockCamera::takePicture(const std::chrono::milliseconds& timeout,
                                                  std::shared_ptr<MavlinkClient> mavlinkClient) {
-    int random_idx = randomInt(0, this->mock_images.size() - 1);
+    std::optional<ImageTelemetry> telemetryOpt = queryMavlinkImageTelemetry(mavlinkClient);
 
-    ImageData img_data = this->mock_images.at(random_idx);
-    uint64_t timestamp = getUnixTime_s().count();
-
-    // if we can't find corresonding telemtry json, just query mavlink
-    if (!img_data.TELEMETRY.has_value()) {
-        LOG_F(ERROR, "no image json value");
-        img_data.TELEMETRY = queryMavlinkImageTelemetry(mavlinkClient);
+    if (!telemetryOpt.has_value()) {
+        LOG_F(ERROR, "Could not grab telemetry data from mavlink");
+        return std::nullopt;
     }
 
-    ImageData imageData{
-        .DATA = img_data.DATA,
-        .TIMESTAMP = timestamp,
-        .TELEMETRY = img_data.TELEMETRY,
-    };
+    ImageTelemetry telemetry = telemetryOpt.value();
 
-    return imageData;
+    httplib::Result res = cli.Get("/stream/frame?session_id=" + this->session_id +
+                                  "&lat=" + std::to_string(telemetry.latitude_deg) +
+                                  "&lon=" + std::to_string(telemetry.longitude_deg) +
+                                  "&alt_ft=" + std::to_string(static_cast<int>((telemetry.altitude_agl_m * 3.281))) + //NOLINT
+                                  "&heading=" + std::to_string(telemetry.heading_deg) +
+                                  "&format=png");
+
+    if (!res || res->status != 200) {
+        LOG_F(ERROR, "Failed to query server for images");
+        return std::nullopt;
+    }
+
+    std::vector<uchar> data(res->body.begin(), res->body.end());
+    cv::Mat img = cv::imdecode(data, cv::IMREAD_COLOR);
+
+    if (img.data == NULL) {
+        LOG_F(ERROR, "Failed to decode image from server response");
+        return std::nullopt;
+    }
+
+    ImageData img_data(
+        img,
+        0,
+        telemetry);
+
+    return img_data;
 }
 
-void MockCamera::startStreaming() {}
+void MockCamera::startStreaming() {
+    nlohmann:json stream_body;
+    stream_body["runway"] = this->config.mock.runway;
+    stream_body["num_targets"] = this->config.mock.num_targets;
 
-std::optional<ImageTelemetry> MockCamera::getTelemetryFromJsonResponse(std::string json_response) {
-    nlohmann::json json = nlohmann::json::parse(json_response, nullptr, true, true);
+    httplib::Result res = cli.Post("/stream/start", stream_body.dump(), "application/json");
 
-    return ImageTelemetry{
-        .latitude_deg = json["background"]["lat"],
-        .longitude_deg = json["background"]["lon"],
-        .altitude_agl_m = json["altitude"],
-        .airspeed_m_s = 0.0,
-        .heading_deg = json["background"]["heading_deg"],
-        .yaw_deg = 0.0,
-        .pitch_deg = 0.0,
-        .roll_deg = 0.0,
-    };
+    if (!res || res->status != 200) {
+        LOG_F(ERROR, "Failed to grab session id from not-stolen");
+        return;
+    }
+
+    nlohmann::json json = nlohmann::json::parse(res->body, nullptr, true, true);
+
+    this->session_id = json["session_id"];
+
+    LOG_F(INFO, "Started streaming with session id %s", this->session_id.c_str());
 }

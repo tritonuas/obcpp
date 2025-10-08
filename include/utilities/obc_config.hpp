@@ -118,8 +118,11 @@ struct CameraConfig {
     struct {
         // port to query images from for the mock camera
         int not_stolen_port;
-        // number of images to pull
-        int num_images;
+        // left | right
+        std::string runway;
+        int num_targets;
+        // maximum waiting time for not-stolen server response
+        int connection_timeout;
     } mock;
 };
 

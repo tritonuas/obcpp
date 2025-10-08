@@ -1,6 +1,8 @@
 #ifndef INCLUDE_CAMERA_MOCK_HPP_
 #define INCLUDE_CAMERA_MOCK_HPP_
 
+#include <httplib.h>
+
 #include <thread>
 #include <memory>
 #include <shared_mutex>
@@ -52,8 +54,6 @@ class MockCamera : public CameraInterface {
     void startStreaming() override;
 
  private:
-    std::vector<ImageData> mock_images;
-
     std::atomic_bool isTakingPictures;
 
     void captureEvery(const std::chrono::milliseconds& interval,
@@ -64,7 +64,9 @@ class MockCamera : public CameraInterface {
 
     std::thread captureThread;
 
-    std::optional<ImageTelemetry> getTelemetryFromJsonResponse(std::string server_response);
+    httplib::Client cli;
+
+    std::string session_id;
 };
 
 #endif  // INCLUDE_CAMERA_MOCK_HPP_
