@@ -121,11 +121,22 @@
     response.set_content(body, mime); \
     response.status = response_code
 
+// A special case of the 5 param log function for high density HTTP responses
+#define LOG_RESPONSE_5_HD(LOG_LEVEL, msg, response_code, body, mime) \
+    if (msg != body) LOG_F(LOG_LEVEL, "%s", msg); \
+    LOG_F(LOG_LEVEL, "HTTP %d: %s", response_code, HTTP_STATUS_TO_STRING(response_code)); \
+    LOG_F(LOG_LEVEL, "Response body: [%zu bytes] (truncated for brevity)", strlen(body)); \
+    response.set_content(body, mime); \
+    response.status = response_code
+
 // Essentially a special case of the 5 param log function, where
 // the message body is in plaintext and is also what you want to log
 #define LOG_RESPONSE_3(LOG_LEVEL, msg, response_code) \
     LOG_RESPONSE_5(LOG_LEVEL, msg, response_code, msg, mime::plaintext)
 
+// A special case of the 3 param log function for high density HTTP responses
+#define LOG_RESPONSE_3_HD(LOG_LEVEL, msg, response_code) \
+    LOG_RESPONSE_5_HD(LOG_LEVEL, msg, response_code, msg, mime::plaintext)
 
 // Logs important information about the HTTP request. There are two different
 // ways to call: a 3 parameter version and a 5 parameter version.
@@ -138,5 +149,17 @@
 //   This explicitly lets you send back a body of arbitrary mimetype.
 #define LOG_RESPONSE(...) \
     GET_MACRO_5(__VA_ARGS__, LOG_RESPONSE_5, _4, LOG_RESPONSE_3)(__VA_ARGS__)
+
+// High-density version of LOG_RESPONSE that truncates large response bodies
+// in logs while still sending the full response to the client.
+// Usage is identical to LOG_RESPONSE but with _HD suffix:
+//
+// LOG_RESPONSE_HD(LOG_LEVEL, msg, response_code)
+//   High-density version of 3-parameter LOG_RESPONSE
+//
+// LOG_RESPONSE_HD(LOG_LEVEL, msg, response_code, body, mime)
+//   High-density version of 5-parameter LOG_RESPONSE
+#define LOG_RESPONSE_HD(...) \
+    GET_MACRO_5(__VA_ARGS__, LOG_RESPONSE_5_HD, _4, LOG_RESPONSE_3_HD)(__VA_ARGS__)
 
 #endif  // INCLUDE_NETWORK_GCS_MACROS_HPP_
