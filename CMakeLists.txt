@@ -198,8 +198,6 @@ endif()
 add_custom_target(dev_protos
   COMMAND cd ${CMAKE_BINARY_DIR} &&
           cmake .. &&
-          cd ${CMAKE_SOURCE_DIR}/include/udp_squared &&
-          git checkout feat/udp_update &&
           cd ${CMAKE_SOURCE_DIR}/protos &&
           git checkout feat/cv-stuff &&
           cd ${CMAKE_BINARY_DIR} &&
