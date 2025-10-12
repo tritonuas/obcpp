@@ -92,7 +92,7 @@ using Polyline = std::vector<XYZCoord>;
 
 using GPSProtoVec = google::protobuf::RepeatedPtrField<GPSCoord>;
 
-std::string ODLCObjectsToString(const ODLCObjects& object);
+std::string AirdropTypesToString(const AirdropType& object);
 
 
 #endif  // INCLUDE_UTILITIES_DATATYPES_HPP_

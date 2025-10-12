@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
 
     // dummy info
     std::optional<airdrop_t> next_airdrop_to_drop;
-    AirdropIndex next_airdrop = static_cast<AirdropIndex>(2);
+    AirdropType next_airdrop = static_cast<AirdropType>(2);
     next_airdrop_to_drop = static_cast<airdrop_t>(next_airdrop);
 
     // drop

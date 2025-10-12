@@ -21,18 +21,12 @@ MissionParameters::MissionParameters() {
     // by index and setting its values to the updated values, so we
     // need to initialize placeholder values in the bottles vector
     Airdrop airdropA;
-    airdropA.set_index(AirdropIndex::Kaz);
+    airdropA.set_index(AirdropType::Water);
     Airdrop airdropB;
-    airdropB.set_index(AirdropIndex::Kimi);
-    Airdrop airdropC;
-    airdropC.set_index(AirdropIndex::Chris);
-    Airdrop airdropD;
-    airdropD.set_index(AirdropIndex::Daniel);
+    airdropB.set_index(AirdropType::Beacon);
     // This part is now correct because this->airdrops is std::vector<Airdrop>
     this->airdrops.push_back(airdropA);
     this->airdrops.push_back(airdropB);
-    this->airdrops.push_back(airdropC);
-    this->airdrops.push_back(airdropD);
 }
 
 MissionParameters::MissionParameters(std::string filename) {
@@ -68,9 +62,8 @@ std::tuple<Polygon, Polygon, Polygon, Polyline, std::vector<Airdrop>>
 MissionParameters::getConfig() {
     ReadLock lock(this->mut);
 
-    return std::make_tuple(this->flightBoundary, this->airdropBoundary,
-                           this->mappingBoundary, this->waypoints,
-                           this->airdrops);
+    return std::make_tuple(this->flightBoundary, this->airdropBoundary, this->mappingBoundary,
+                           this->waypoints, this->airdrops);
 }
 
 void MissionParameters::_setAirdrop(const Airdrop& airdrop) {

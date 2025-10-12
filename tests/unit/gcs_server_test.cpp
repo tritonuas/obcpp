@@ -98,8 +98,8 @@
 //     EXPECT_EQ(reuqest_airdrops.size(), NUM_AIRDROPS);
 //     // Create a map from the index to the cached version of the bottle,
 //     // and the version of the bottle that was sent in the request
-//     std::unordered_map<AirdropIndex, Airdrop> indexToCached;
-//     std::unordered_map<AirdropIndex, Airdrop> indexToRequest;
+//     std::unordered_map<AirdropType, Airdrop> indexToCached;
+//     std::unordered_map<AirdropType, Airdrop> indexToRequest;
 //     for (int i = 0; i < NUM_AIRDROPS; i++) {
 //         Airdrop cached = cached_airdrops[i];
 //         Airdrop request;
@@ -108,8 +108,8 @@
 //         indexToRequest.insert({request.index(), request});
 //     }
 //     // Now it is easy to compare bottles of the same drop index
-//     for (int i = AirdropIndex::Kaz; i <= AirdropIndex::Daniel; i++) {
-//         auto index = static_cast<AirdropIndex>(i);
+//     for (int i = AirdropType::Water; i <= AirdropType::Beacon; i++) {
+//         auto index = static_cast<AirdropType>(i);
 //         Airdrop cached = indexToCached.at(index);
 //         Airdrop request = indexToRequest.at(index);
 //         EXPECT_EQ(cached.ismannikin(), request.ismannikin());
@@ -144,14 +144,14 @@
 //     // already made request_bottles above, so can reuse it here
 //     EXPECT_EQ(request_airdrops.size(), response_airdrops.size());
 //     // already made indexToRequest above, so can reuse it here
-//     std::unordered_map<AirdropIndex, Airdrop> indexToResponse;
+//     std::unordered_map<AirdropType, Airdrop> indexToResponse;
 //     for (int i = 0; i < response_airdrops.size(); i++) {
 //         Airdrop response;
 //         google::protobuf::util::JsonStringToMessage(response_airdrops[i].dump(), &response);
 //         indexToResponse.insert({response.index(), response});
 //     }
-//     for (int i = AirdropIndex::Kaz; i <= AirdropIndex::Daniel; i++) {
-//         auto index = static_cast<AirdropIndex>(i);
+//     for (int i = AirdropType::Water; i <= AirdropType::Beacon; i++) {
+//         auto index = static_cast<AirdropType>(i);
 //         Airdrop response = indexToResponse.at(index);
 //         Airdrop request = indexToRequest.at(index);
 //         EXPECT_EQ(response.ismannikin(), request.ismannikin());

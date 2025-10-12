@@ -53,12 +53,10 @@ using json = nlohmann::json;
 DEF_GCS_HANDLE(Get, connections) {
     LOG_REQUEST_TRACE("GET", "/connections");
 
-    std::list<std::pair<AirdropIndex, std::chrono::milliseconds>> lost_airdrop_conns;
+    std::list<std::pair<AirdropType, std::chrono::milliseconds>> lost_airdrop_conns;
     if (state->getAirdrop() == nullptr) {
-        lost_airdrop_conns.push_back({AirdropIndex::Kaz, 99999ms});
-        lost_airdrop_conns.push_back({AirdropIndex::Kimi, 99999ms});
-        lost_airdrop_conns.push_back({AirdropIndex::Chris, 99999ms});
-        lost_airdrop_conns.push_back({AirdropIndex::Daniel, 99999ms});
+        lost_airdrop_conns.push_back({AirdropType::Water, 99999ms});
+        lost_airdrop_conns.push_back({AirdropType::Beacon, 99999ms});
     } else {
         lost_airdrop_conns = state->getAirdrop()->getLostConnections(3s);
     }
@@ -158,14 +156,10 @@ DEF_GCS_HANDLE(Post, targets, locations) {
         google::protobuf::util::JsonStringToMessage(waypoint.dump(), &airdrop_target);
 
         airdrop_t airdrop;
-        if (airdrop_target.index() == AirdropIndex::Kaz) {
+        if (airdrop_target.index() == AirdropType::Water) {
             airdrop = UDP2_A;
-        } else if (airdrop_target.index() == AirdropIndex::Kimi) {
+        } else if (airdrop_target.index() == AirdropType::Beacon) {
             airdrop = UDP2_B;
-        } else if (airdrop_target.index() == AirdropIndex::Chris) {
-            airdrop = UDP2_C;
-        } else if (airdrop_target.index() == AirdropIndex::Daniel) {
-            airdrop = UDP2_D;
         } else {
             LOG_RESPONSE(ERROR, "Invalid bottle index", BAD_REQUEST);
             return;
@@ -319,7 +313,7 @@ DEF_GCS_HANDLE(Post, dodropnow) {
 
     // Copied from the integration test
     std::optional<airdrop_t> next_airdrop_to_drop;
-    AirdropIndex next_airdrop = static_cast<AirdropIndex>(2);
+    AirdropType next_airdrop = static_cast<AirdropType>(2);
     next_airdrop_to_drop = static_cast<airdrop_t>(next_airdrop);
 
     // std::string message;

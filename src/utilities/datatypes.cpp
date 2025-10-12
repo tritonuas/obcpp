@@ -102,26 +102,10 @@ GPSCoord makeGPSCoord(double lat, double lng, double alt) {
 }
 
 
-std::string ODLCObjectsToString(const ODLCObjects& color) {
+std::string AirdropTypeObjectsToString(const AirdropType& color) {
     switch (color) {
-        case ODLCObjects::Mannequin: return "MANNEQUIN";
-        case ODLCObjects::Car: return "CAR";
-        case ODLCObjects::Motorcycle: return "MOTORCYCLE";
-        case ODLCObjects::Airplane: return "AIRPLANE";
-        case ODLCObjects::Bus: return "BUS";
-        case ODLCObjects::Boat: return "BOAT";
-        case ODLCObjects::Stopsign: return "STOPSIGN";
-        case ODLCObjects::Snowboard: return "SNOWBOARD";
-        case ODLCObjects::Umbrella: return "UMBRELLA";
-        case ODLCObjects::SoccerBall: return "SOCCERBALL";
-        case ODLCObjects::Basketball: return "BASKETBALL";
-        case ODLCObjects::Volleyball: return "VOLLEYBALL";
-        case ODLCObjects::Football: return "FOOTBALL";
-        case ODLCObjects::Baseballbat: return "BASEBALLBAT";
-        case ODLCObjects::Mattress: return "MATTRESS";
-        case ODLCObjects::Tennisracket: return "TENNISRACKET";
-        case ODLCObjects::Suitcase: return "SUITCASE";
-        case ODLCObjects::Skis: return "SKIS";
+        case AirdropType::Water: return "WATER";
+        case AirdropType::Beacon: return "BEACON";
         // maybe return optional nullopt here instead of defaulting to IDFK
         // in case of an unknown object (Not relevant anymore I don't think)
         default: return "IDFK";

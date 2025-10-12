@@ -18,22 +18,13 @@ CVAggregator::CVAggregator(Pipeline&& p) : pipeline(std::move(p)) {
     coord_in_dummy->set_latitude(0.0);
     coord_in_dummy->set_longitude(0.0);
 
-    dummy.set_object(ODLCObjects::Undefined);  // Set common properties once
-
     // Now assign copies, each with its specific index
-    dummy.set_index(AirdropIndex::Kaz);
-    this->matched_results->matched_airdrop[AirdropIndex::Kaz] = dummy;
+    dummy.set_index(AirdropType::Water);
+    this->matched_results->matched_airdrop[AirdropType::Water] = dummy;
 
-    dummy.set_index(AirdropIndex::Kimi);
-    this->matched_results->matched_airdrop[AirdropIndex::Kimi] = dummy;
-
-    dummy.set_index(AirdropIndex::Chris);
-    this->matched_results->matched_airdrop[AirdropIndex::Chris] = dummy;
-
-    dummy.set_index(AirdropIndex::Daniel);
-    this->matched_results->matched_airdrop[AirdropIndex::Daniel] = dummy;
+    dummy.set_index(AirdropType::Beacon);
+    this->matched_results->matched_airdrop[AirdropType::Beacon] = dummy;
 }
-
 
 CVAggregator::~CVAggregator() {}
 

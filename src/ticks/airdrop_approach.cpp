@@ -70,9 +70,9 @@ Tick* AirdropApproachTick::tick() {
             // If you want to uncomment the following lines to test if this shit works, make sure
             // to comment the ones in airdrop_prep
 
-            // Convert airdrop_t to AirdropIndex when calling markAirdropAsDropped
+            // Convert airdrop_t to AirdropType when calling markAirdropAsDropped
             // state->markAirdropAsDropped(
-                // static_cast<AirdropIndex>(state->next_airdrop_to_drop.value() - 1));
+                // static_cast<AirdropType>(state->next_airdrop_to_drop.value() - 1));
 
         } else {
             LOG_F(ERROR, "Cannot drop bottle because no bottle to drop");
