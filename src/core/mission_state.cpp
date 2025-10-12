@@ -16,7 +16,7 @@
 #include "utilities/logging.hpp"
 #include "utilities/obc_config.hpp"
 
-MissionState::MissionState(OBCConfig config): config(config) {}
+MissionState::MissionState(OBCConfig config) : config(config) {}
 
 // Need to explicitly define now that Tick is no longer an incomplete class
 // See:
@@ -99,52 +99,32 @@ MissionPath MissionState::getAirdropPath() {
     return this->airdrop_path;
 }
 
-void MissionState::markAirdropAsDropped(AirdropIndex airdrop) {
+void MissionState::markAirdropAsDropped(AirdropType airdrop) {
     Lock lock(this->dropped_airdrops_mut);
     this->dropped_airdrops.insert(airdrop);
 }
 
-std::unordered_set<AirdropIndex> MissionState::getDroppedAirdrops() {
+std::unordered_set<AirdropType> MissionState::getDroppedAirdrops() {
     Lock lock(this->dropped_airdrops_mut);
     return this->dropped_airdrops;
 }
 
-std::shared_ptr<MavlinkClient> MissionState::getMav() {
-    return this->mav;
-}
+std::shared_ptr<MavlinkClient> MissionState::getMav() { return this->mav; }
 
-void MissionState::setMav(std::shared_ptr<MavlinkClient> mav) {
-    this->mav = mav;
-}
+void MissionState::setMav(std::shared_ptr<MavlinkClient> mav) { this->mav = mav; }
 
-std::shared_ptr<AirdropClient> MissionState::getAirdrop() {
-    return this->airdrop;
-}
+std::shared_ptr<AirdropClient> MissionState::getAirdrop() { return this->airdrop; }
 
-void MissionState::setAirdrop(std::shared_ptr<AirdropClient> airdrop) {
-    this->airdrop = airdrop;
-}
+void MissionState::setAirdrop(std::shared_ptr<AirdropClient> airdrop) { this->airdrop = airdrop; }
 
-std::shared_ptr<CVAggregator> MissionState::getCV() {
-    return this->cv;
-}
+std::shared_ptr<CVAggregator> MissionState::getCV() { return this->cv; }
 
-void MissionState::setCV(std::shared_ptr<CVAggregator> cv) {
-    this->cv = cv;
-}
+void MissionState::setCV(std::shared_ptr<CVAggregator> cv) { this->cv = cv; }
 
-std::shared_ptr<CameraInterface> MissionState::getCamera() {
-    return this->camera;
-}
+std::shared_ptr<CameraInterface> MissionState::getCamera() { return this->camera; }
 
-void MissionState::setCamera(std::shared_ptr<CameraInterface> camera) {
-    this->camera = camera;
-}
+void MissionState::setCamera(std::shared_ptr<CameraInterface> camera) { this->camera = camera; }
 
-bool MissionState::getMappingIsDone() {
-    return this->mappingIsDone;
-}
+bool MissionState::getMappingIsDone() { return this->mappingIsDone; }
 
-void MissionState::setMappingIsDone(bool isDone) {
-    this->mappingIsDone = isDone;
-}
+void MissionState::setMappingIsDone(bool isDone) { this->mappingIsDone = isDone; }

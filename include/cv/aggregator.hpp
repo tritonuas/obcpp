@@ -30,7 +30,7 @@ struct CVResults {
 };
 
 struct MatchedResults {
-    std::unordered_map<AirdropIndex, AirdropTarget> matched_airdrop;
+    std::unordered_map<AirdropType, AirdropTarget> matched_airdrop;
 };
 
 class CVAggregator {

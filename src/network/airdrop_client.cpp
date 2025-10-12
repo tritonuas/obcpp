@@ -3,12 +3,12 @@
 #include <future>
 
 extern "C" {
-    #include "udp_squared/protocol.h"
-    #include "network/airdrop_sockets.h"
+#include "network/airdrop_sockets.h"
+#include "udp_squared/protocol.h"
 }
+#include "utilities/common.hpp"
 #include "utilities/locks.hpp"
 #include "utilities/logging.hpp"
-#include "utilities/common.hpp"
 
 using namespace std::chrono_literals;  // NOLINT
 
@@ -44,18 +44,17 @@ void AirdropClient::_establishConnection() {
     LOG_F(INFO, "Attempting to establish connection with the payloads...");
 
     std::atomic_bool stop = false;
-    std::thread send_thread(
-        [this, &stop]() {
-            loguru::set_thread_name("airdrop reset spam");
-            while (true) {
-                LOG_F(INFO, "Sending reset packets to all airdrops...");
-                send_ad_packet(this->socket, makeResetPacket(UDP2_ALL));
-                std::this_thread::sleep_for(10s);
-                if (stop) {
-                    return;
-                }
+    std::thread send_thread([this, &stop]() {
+        loguru::set_thread_name("airdrop reset spam");
+        while (true) {
+            LOG_F(INFO, "Sending reset packets to all airdrops...");
+            send_ad_packet(this->socket, makeResetPacket(UDP2_ALL));
+            std::this_thread::sleep_for(10s);
+            if (stop) {
+                return;
             }
-        });
+        }
+    });
 
     while (true) {
         auto packet = this->_receiveBlocking();
@@ -66,17 +65,16 @@ void AirdropClient::_establishConnection() {
             break;
         }
 
-        LOG_F(WARNING, "Non SET_MODE packet received in setup phase: %d %d",
-            packet.header, packet.id);
+        LOG_F(WARNING, "Non SET_MODE packet received in setup phase: %d %d", packet.header,
+              packet.id);
     }
 
     send_thread.join();
 
     LOG_F(INFO, "Payload connection established in %s mode",
-        (this->mode == GUIDED) ? "Guided" : "Unguided");
+          (this->mode == GUIDED) ? "Guided" : "Unguided");
 
-    send_ad_packet(this->socket,
-        makeModePacket(ACK_MODE, UDP2_ALL, OBC_NULL, *this->mode));
+    send_ad_packet(this->socket, makeModePacket(ACK_MODE, UDP2_ALL, OBC_NULL, *this->mode));
 
     this->worker_future = std::async(std::launch::async, &AirdropClient::_receiveWorker, this);
 }
@@ -110,33 +108,29 @@ std::optional<packet_t> AirdropClient::receive() {
     return packet;
 }
 
-std::list<std::pair<AirdropIndex, std::chrono::milliseconds>>
-    AirdropClient::getLostConnections(std::chrono::milliseconds threshold) {
-    std::list<std::pair<AirdropIndex, std::chrono::milliseconds>> list;
+std::list<std::pair<AirdropType, std::chrono::milliseconds>> AirdropClient::getLostConnections(
+    std::chrono::milliseconds threshold) {
+    std::list<std::pair<AirdropType, std::chrono::milliseconds>> list;
     auto time = getUnixTime_ms();
 
     for (int i = 0; i < this->last_heartbeat.size(); i++) {
         auto time_since_last_heartbeat = time - this->last_heartbeat[i];
         if (time_since_last_heartbeat >= threshold) {
-            list.push_back({static_cast<AirdropIndex>(i + 1), time_since_last_heartbeat});
+            list.push_back({static_cast<AirdropType>(i + 1), time_since_last_heartbeat});
         }
     }
 
     return list;
 }
 
-std::optional<drop_mode_t> AirdropClient::getMode() {
-    return this->mode;
-}
+std::optional<drop_mode_t> AirdropClient::getMode() { return this->mode; }
 
 packet_t AirdropClient::_receiveBlocking() {
-    packet_t packet = { 0 };
+    packet_t packet = {0};
 
     while (true) {
         VLOG_F(TRACE, "Airdrop worker waiting for airdrop packet...");
-        auto result = recv_ad_packet(this->socket,
-            static_cast<void*>(&packet),
-            sizeof(packet_t));
+        auto result = recv_ad_packet(this->socket, static_cast<void*>(&packet), sizeof(packet_t));
         VLOG_F(TRACE, "Airdrop packet found...");
         // block until packet found...
 
@@ -158,7 +152,7 @@ packet_t AirdropClient::_receiveBlocking() {
         // garbage data that shouldn't have been read by this program.
         if (result.data.res != sizeof(packet_t)) {
             LOG_F(ERROR, "recv read %d bytes, when a packet should be %lu. Ignoring...",
-                result.data.res, sizeof(packet_t));
+                  result.data.res, sizeof(packet_t));
             continue;
         }
 
@@ -189,8 +183,8 @@ void AirdropClient::_receiveWorker() {
         if (packet.header == SET_MODE) {
             uint8_t airdrop, state;
             parseID(packet.id, &airdrop, &state);
-            send_ad_packet(this->socket, makeModePacket(ACK_MODE,
-                static_cast<airdrop_t>(airdrop), OBC_NULL, *this->mode));
+            send_ad_packet(this->socket, makeModePacket(ACK_MODE, static_cast<airdrop_t>(airdrop),
+                                                        OBC_NULL, *this->mode));
             LOG_F(INFO, "Received extra SET_MODE, reacking");
             continue;
         }

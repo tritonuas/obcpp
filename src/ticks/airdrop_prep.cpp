@@ -18,7 +18,7 @@ AirdropPrepTick::AirdropPrepTick(std::shared_ptr<MissionState> state)
 std::chrono::milliseconds AirdropPrepTick::getWait() const { return AIRDROP_PREP_TICK_WAIT; }
 
 Tick* AirdropPrepTick::tick() {
-    AirdropIndex next_airdrop = AirdropIndex::Kaz;
+    AirdropType next_airdrop = AirdropType::Water;
 
     auto dropped_airdrops = state->getDroppedAirdrops();
 
@@ -28,12 +28,12 @@ Tick* AirdropPrepTick::tick() {
 
     LockPtr<MatchedResults> results = state->getCV()->getMatchedResults();
 
-    for (int i = AirdropIndex::Kaz; i <= AirdropIndex::Daniel; i++) {
-        if (dropped_airdrops.contains(static_cast<AirdropIndex>(i))) {
+    for (int i = AirdropType::Water; i <= AirdropType::Beacon; i++) {
+        if (dropped_airdrops.contains(static_cast<AirdropType>(i))) {
             continue;
         }
 
-        next_airdrop = static_cast<AirdropIndex>(i);
+        next_airdrop = static_cast<AirdropType>(i);
 
         // Dont think we need this, as everything theoretically should be matched when
         // the matched route is posted.
@@ -52,7 +52,7 @@ Tick* AirdropPrepTick::tick() {
     // before setting next_bottle.
     // But just in case we default to whatever location target 0 was found at.
     // auto target =
-        // results.data->detected_targets.at(results.data->matches.at(next_airdrop).value_or(0));
+    // results.data->detected_targets.at(results.data->matches.at(next_airdrop).value_or(0));
     auto target = results.data->matched_airdrop.at(next_airdrop);
     // IMPORTANT: need to set the altitude of the target coord to the config value so it doesn't
     // try and nosedive into the ground...
