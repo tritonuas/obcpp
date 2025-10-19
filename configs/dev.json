@@ -62,7 +62,7 @@
         "mock": {
             "not_stolen_port": 6060,
             "runway": "right",
-            "num_targets": 4,
+            "num_targets": 2,
             "connection_timeout": 10
         },
         "lucid": {
