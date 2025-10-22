@@ -113,7 +113,7 @@ class MissionState {
     OBCConfig config;
 
     std::optional<airdrop_t> next_airdrop_to_drop;
-    //removes all runs whose id is inside removals 
+    // removes all runs whose id is inside removals
     void pruneRuns(std::vector<int> removals);
 
     std::shared_ptr<std::vector<CVResultRecord>> getAggregatedData();
@@ -151,9 +151,9 @@ class MissionState {
     std::array<size_t, NUM_AIRDROPS> cv_matches;
 
     std::mutex aggregated_data_mut;
-    //record of all cv outputs 
+    // record of all cv outputs
     std::shared_ptr<std::vector<CVResultRecord>> aggregated_data;
-    //If we've pruned runs yet. If true, then no new data will be added to the aggregated_data list 
+    // If we've pruned runs yet. If true, then no new data will be added to the aggregated_data list
     bool havePrunedData;
     bool mappingIsDone;
 

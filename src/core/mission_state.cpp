@@ -133,20 +133,20 @@ bool MissionState::getHavePrunedRuns() { return this->havePrunedData; }
 
 void MissionState::setHavePrunedRunes(bool pruned) { this->havePrunedData = pruned; }
 
-std::shared_ptr<std::vector<CVResultRecord>> MissionState::getAggregatedData() { 
+std::shared_ptr<std::vector<CVResultRecord>> MissionState::getAggregatedData() {
     Lock lock(this->aggregated_data_mut);
     return this->aggregated_data;
 }
-void MissionState::pruneRuns(std::vector<int> removals){
+void MissionState::pruneRuns(std::vector<int> removals) {
     this->setHavePrunedRunes(true);
     std::vector<CVResultRecord> data = *this->getAggregatedData();
-    for(int i = 0; i < data.size(); i++){
-        for(int j = 0; j < removals.size(); j++){
-            if(removals[j] == data[i].run_id()){
+    for (int i = 0; i < data.size(); i++) {
+        for (int j = 0; j < removals.size(); j++) {
+            if (removals[j] == data[i].run_id()) {
                 data.erase(data.begin() + i);
-                //not sure if its a net speed up to include this 
+                // not sure if its a net speed up to include this
                 removals.erase(removals.begin() + j);
-            } 
+            }
         }
     }
 }

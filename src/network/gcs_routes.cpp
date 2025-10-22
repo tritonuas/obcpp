@@ -436,18 +436,16 @@ DEF_GCS_HANDLE(Get, targets, all) {
             proto_bbox->set_y2(run.bboxes[i].y2);
                         // Add coordinate
            }
-        //copy the record with the image included to send to the GCS
+        // copy the record with the image included to send to the GCS
         IdentifiedTarget target = CreateTargetFromRecord(record, b64);
         out_data.push_back(std::move(target));
-        if(!state->getHavePrunedRuns()){
+        if (!state->getHavePrunedRuns()) {
             agg_data.push_back(std::move(record));
         }
     }  // End loop over AggregatedRuns
     // 3) Serialize the vector of IdentifiedTarget messages to JSON
     // Ensure messagesToJson can handle a vector or use iterators correctly
-    
     std::string out_data_json = messagesToJson(out_data.begin(), out_data.end());
-    
     response.set_content(out_data_json.c_str(), mime::json);
     response.status = OK;
 }

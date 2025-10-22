@@ -111,7 +111,7 @@ std::string AirdropTypeObjectsToString(const AirdropType& color) {
         default: return "IDFK";
     }
 }
-IdentifiedTarget CreateTargetFromRecord(CVResultRecord record, std::string img){
+IdentifiedTarget CreateTargetFromRecord(CVResultRecord record, std::string img) {
     IdentifiedTarget target;
     target.set_run_id(record.run_id());
     target.set_picture(img);
