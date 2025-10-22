@@ -351,7 +351,6 @@ DEF_GCS_HANDLE(Post, takeoff, autonomous) {
 
 DEF_GCS_HANDLE(Get, targets, all) {
     LOG_REQUEST("GET", "/targets/all");
-
     auto aggregator = state->getCV();
     if (!aggregator) {
         LOG_RESPONSE(ERROR, "CV not connected yet", BAD_REQUEST);
@@ -369,14 +368,13 @@ DEF_GCS_HANDLE(Get, targets, all) {
     // 2) Convert each AggregatedRun into ONE IdentifiedTarget proto
     std::vector<IdentifiedTarget> out_data;
     out_data.reserve(new_runs.size());  // Reserve space for efficiency
-
+    std::vector<CVResultRecord> agg_data  = *(state->getAggregatedData().get());
+    agg_data.reserve(new_runs.size());
     for (const auto& run : new_runs) {
         // Create ONE IdentifiedTarget message per AggregatedRun
-        IdentifiedTarget target;
-
+        CVResultRecord record;
         // Set the run ID
-        target.set_run_id(run.run_id);
-
+        record.set_run_id(run.run_id);
         // START COMPRESSION
 
         // Compress the annotated image before converting to base64
@@ -412,8 +410,6 @@ DEF_GCS_HANDLE(Get, targets, all) {
 
         // END COMPRESSION
 
-        target.set_picture(b64);
-
         // Ensure coords and bboxes vectors are the same size (should be guaranteed by Aggregator
         // logic)
         if (run.coords.size() != run.bboxes.size()) {
@@ -427,26 +423,31 @@ DEF_GCS_HANDLE(Get, targets, all) {
         // Add all coordinates and bounding boxes from this run
         for (size_t i = 0; i < run.bboxes.size(); ++i) {
             // Add coordinate
-            GPSCoord* proto_coord = target.add_coordinates();  // Use the plural field name
+            GPSCoord* proto_coord = record.add_coordinates();  // Use the plural field name
             proto_coord->set_latitude(run.coords[i].latitude());
             proto_coord->set_longitude(run.coords[i].longitude());
             proto_coord->set_altitude(run.coords[i].altitude());
 
             // Add bounding box
-            BboxProto* proto_bbox = target.add_bboxes();  // Use the plural field name
+            BboxProto* proto_bbox = record.add_bboxes();  // Use the plural field name
             proto_bbox->set_x1(run.bboxes[i].x1);
             proto_bbox->set_y1(run.bboxes[i].y1);
             proto_bbox->set_x2(run.bboxes[i].x2);
             proto_bbox->set_y2(run.bboxes[i].y2);
-        }
-
-        // Add the completed IdentifiedTarget (representing the whole run) to the output list
+                        // Add coordinate
+           }
+        //copy the record with the image included to send to the GCS
+        IdentifiedTarget target = CreateTargetFromRecord(record, b64);
         out_data.push_back(std::move(target));
+        if(!state->getHavePrunedRuns()){
+            agg_data.push_back(std::move(record));
+        }
     }  // End loop over AggregatedRuns
-
     // 3) Serialize the vector of IdentifiedTarget messages to JSON
     // Ensure messagesToJson can handle a vector or use iterators correctly
+    
     std::string out_data_json = messagesToJson(out_data.begin(), out_data.end());
+    
     response.set_content(out_data_json.c_str(), mime::json);
     response.status = OK;
 }
