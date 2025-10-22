@@ -15,7 +15,7 @@ using namespace std::chrono_literals;  // NOLINT
 AirdropClient::AirdropClient(ad_socket_t socket) {
     this->socket = socket;
     auto time = getUnixTime_ms();
-    for (int curr_airdrop = UDP2_A; curr_airdrop <= UDP2_D; curr_airdrop++) {
+    for (int curr_airdrop = UDP2_A; curr_airdrop <= UDP2_B; curr_airdrop++) {
         this->last_heartbeat[curr_airdrop - 1] = time;
     }
     this->_establishConnection();  // block until connection established
@@ -204,7 +204,7 @@ bool AirdropClient::_parseHeartbeats(packet_t packet) {
     uint8_t airdrop, state;
     parseID(packet.id, &airdrop, &state);
 
-    if (airdrop < UDP2_A || airdrop > UDP2_D) {
+    if (airdrop < UDP2_A || airdrop > UDP2_B) {
         LOG_F(ERROR, "ERROR: invalid airdrop heartbeat (from airdrop %d?)", airdrop);
         return false;
     }
