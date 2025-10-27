@@ -87,7 +87,6 @@ class PointHashFunction {
 // so we have our own "constructor" here
 GPSCoord makeGPSCoord(double lat, double lng, double alt);
 
-
 using Polygon = std::vector<XYZCoord>;
 using Polyline = std::vector<XYZCoord>;
 

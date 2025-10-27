@@ -113,8 +113,6 @@ class MissionState {
     OBCConfig config;
 
     std::optional<airdrop_t> next_airdrop_to_drop;
-    // removes all runs whose id is inside removals
-
 
  private:
     std::mutex converter_mut;
