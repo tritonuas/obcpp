@@ -368,8 +368,16 @@ DEF_GCS_HANDLE(Get, targets, all) {
     // 2) Convert each AggregatedRun into ONE IdentifiedTarget proto
     std::vector<IdentifiedTarget> out_data;
     out_data.reserve(new_runs.size());  // Reserve space for efficiency
+<<<<<<< HEAD
     std::vector<CVResultRecord> agg_data  = *(state->getAggregatedData().get());
     agg_data.reserve(new_runs.size());
+=======
+
+    //get aggregate to store a record of these results 
+    LockPtr<std::map<int, IdentifiedTarget>> records = aggregator->getCVRecord();
+    std::shared_ptr<std::map<int, IdentifiedTarget>> records_ptr = records.data;
+
+>>>>>>> 40d0884 (redo to fit new specifcations + unit test)
     for (const auto& run : new_runs) {
         // Create ONE IdentifiedTarget message per AggregatedRun
         CVResultRecord record;
@@ -434,10 +442,23 @@ DEF_GCS_HANDLE(Get, targets, all) {
             proto_bbox->set_y1(run.bboxes[i].y1);
             proto_bbox->set_x2(run.bboxes[i].x2);
             proto_bbox->set_y2(run.bboxes[i].y2);
+<<<<<<< HEAD
                         // Add coordinate
            }
         // copy the record with the image included to send to the GCS
         IdentifiedTarget target = CreateTargetFromRecord(record, b64);
+=======
+        }
+
+        //copy the target to a record object to store
+        IdentifiedTarget record;
+        record.CopyFrom(target);
+        //remove image
+        record.set_picture("");
+        records_ptr->insert_or_assign(run.run_id, target);
+
+        // Add the completed IdentifiedTarget (representing the whole run) to the output list
+>>>>>>> 40d0884 (redo to fit new specifcations + unit test)
         out_data.push_back(std::move(target));
         if (!state->getHavePrunedRuns()) {
             agg_data.push_back(std::move(record));
