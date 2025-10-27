@@ -369,7 +369,7 @@ DEF_GCS_HANDLE(Get, targets, all) {
     std::vector<IdentifiedTarget> out_data;
     out_data.reserve(new_runs.size());  // Reserve space for efficiency
 
-    //get aggregate to store a record of these results 
+    // get aggregate to store a record of these results
     LockPtr<std::map<int, IdentifiedTarget>> records = aggregator->getCVRecord();
     std::shared_ptr<std::map<int, IdentifiedTarget>> records_ptr = records.data;
 
@@ -439,13 +439,12 @@ DEF_GCS_HANDLE(Get, targets, all) {
             proto_bbox->set_y2(run.bboxes[i].y2);
         }
 
-        //copy the target to a record object to store
+        // copy the target to a record object to store
         IdentifiedTarget record;
         record.CopyFrom(target);
-        //remove image
+        // remove image
         record.set_picture("");
         records_ptr->insert_or_assign(run.run_id, target);
-        
         // Add the completed IdentifiedTarget (representing the whole run) to the output list
         out_data.push_back(std::move(target));
     }  // End loop over AggregatedRuns

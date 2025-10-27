@@ -36,16 +36,15 @@ LockPtr<MatchedResults> CVAggregator::getMatchedResults() {
     return LockPtr<MatchedResults>(this->matched_results, &this->mut);
 }
 
-LockPtr<std::map<int, IdentifiedTarget>> CVAggregator::getCVRecord(){
+LockPtr<std::map<int, IdentifiedTarget>> CVAggregator::getCVRecord() {
     return LockPtr<std::map<int, IdentifiedTarget>>(this->cv_record, &this->cv_record_mut);
- }
-void CVAggregator::updateRecords(std::vector<IdentifiedTarget> new_values){
+}
+void CVAggregator::updateRecords(std::vector<IdentifiedTarget> new_values) {
     LockPtr<std::map<int, IdentifiedTarget>> records = this->getCVRecord();
-    for(IdentifiedTarget id : new_values){
-        if(records.data->contains(id.run_id())){
+    for (IdentifiedTarget id : new_values) {
+        if (records.data->contains(id.run_id())) {
             records.data->at(id.run_id()).CopyFrom(id);
-        }
-        else {
+        } else {
             LOG_F(WARNING, "Tried to modify with an ID not inside CVRecord. ID: (%d)", id.run_id());
         }
     }

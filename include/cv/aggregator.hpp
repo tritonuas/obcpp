@@ -11,6 +11,7 @@
 #include <thread>
 #include <unordered_map>
 #include <vector>
+#include <map>
 
 #include "cv/pipeline.hpp"
 #include "cv/utilities.hpp"
@@ -50,13 +51,12 @@ class CVAggregator {
     // For the endpoint to reset the current list of structs
     std::vector<AggregatedRun> popAllRuns();
 
-    //gets the record of all cv results 
+    // gets the record of all cv results
     LockPtr<std::map<int, IdentifiedTarget>> getCVRecord();
-    
-    void updateRecords(std::vector<IdentifiedTarget> new_values);
-    
- private:
 
+    void updateRecords(std::vector<IdentifiedTarget> new_values);
+
+ private:
     std::mutex cv_record_mut;
 
     std::shared_ptr<std::map<int, IdentifiedTarget>> cv_record;
