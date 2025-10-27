@@ -111,22 +111,4 @@ std::string AirdropTypeObjectsToString(const AirdropType& color) {
         default: return "IDFK";
     }
 }
-IdentifiedTarget CreateTargetFromRecord(CVResultRecord record, std::string img) {
-    IdentifiedTarget target;
-    target.set_run_id(record.run_id());
-    target.set_picture(img);
-     for (size_t i = 0; i < record.bboxes_size(); ++i) {
-            // Add coordinate
-            GPSCoord* proto_coord = target.add_coordinates();  // Use the plural field name
-            proto_coord->set_latitude(record.coordinates()[i].latitude());
-            proto_coord->set_longitude(record.coordinates()[i].longitude());
-            proto_coord->set_altitude(record.coordinates()[i].altitude());
 
-            // Add bounding box
-            BboxProto* proto_bbox = target.add_bboxes();  // Use the plural field name
-            proto_bbox->set_x1(record.bboxes()[i].x1());
-            proto_bbox->set_y1(record.bboxes()[i].y1());
-            proto_bbox->set_x2(record.bboxes()[i].x2());
-            proto_bbox->set_y2(record.bboxes()[i].y2());
-    }
-}
