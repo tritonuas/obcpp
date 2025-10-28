@@ -199,7 +199,7 @@ add_custom_target(dev_protos
   COMMAND cd ${CMAKE_BINARY_DIR} &&
           cmake .. &&
           cd ${CMAKE_SOURCE_DIR}/protos &&
-          git checkout feat/Data-Aggregation &&
+          git checkout feat/cv-stuff &&
           cd ${CMAKE_BINARY_DIR} &&
           protoc -I=../protos --cpp_out=./gen_protos/protos ../protos/obc.proto &&
           git config --global --add safe.directory /obcpp/protos &&
