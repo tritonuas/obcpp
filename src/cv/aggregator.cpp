@@ -39,7 +39,7 @@ LockPtr<MatchedResults> CVAggregator::getMatchedResults() {
 LockPtr<std::map<int, IdentifiedTarget>> CVAggregator::getCVRecord() {
     return LockPtr<std::map<int, IdentifiedTarget>>(this->cv_record, &this->cv_record_mut);
 }
-void CVAggregator::updateRecords(std::vector<IdentifiedTarget> new_values) {
+void CVAggregator::updateRecords(std::vector<IdentifiedTarget>& new_values) {
     LockPtr<std::map<int, IdentifiedTarget>> records = this->getCVRecord();
     for (IdentifiedTarget id : new_values) {
         if (records.data->contains(id.run_id())) {

@@ -54,7 +54,7 @@ class CVAggregator {
     // gets the record of all cv results
     LockPtr<std::map<int, IdentifiedTarget>> getCVRecord();
 
-    void updateRecords(std::vector<IdentifiedTarget> new_values);
+    void updateRecords(std::vector<IdentifiedTarget>& new_values);
 
  private:
     std::mutex cv_record_mut;
