@@ -2,7 +2,7 @@
 #include "cv/aggregator.hpp"
 TEST(ModifyRuns, OverWriteData)
 {
-    PipelineParams params("/workspaces/obcpp/models/yolo11x.onnx",
+    PipelineParams params(std::nullopt,
                           "",
                           false);
     Pipeline pipeline(params);
