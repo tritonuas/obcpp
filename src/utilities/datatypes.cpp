@@ -111,3 +111,4 @@ std::string AirdropTypeObjectsToString(const AirdropType& color) {
         default: return "IDFK";
     }
 }
+

@@ -128,3 +128,5 @@ void MissionState::setCamera(std::shared_ptr<CameraInterface> camera) { this->ca
 bool MissionState::getMappingIsDone() { return this->mappingIsDone; }
 
 void MissionState::setMappingIsDone(bool isDone) { this->mappingIsDone = isDone; }
+
+

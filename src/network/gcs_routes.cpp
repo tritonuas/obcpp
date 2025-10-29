@@ -351,7 +351,6 @@ DEF_GCS_HANDLE(Post, takeoff, autonomous) {
 
 DEF_GCS_HANDLE(Get, targets, all) {
     LOG_REQUEST("GET", "/targets/all");
-
     auto aggregator = state->getCV();
     if (!aggregator) {
         LOG_RESPONSE(ERROR, "CV not connected yet", BAD_REQUEST);
@@ -370,13 +369,15 @@ DEF_GCS_HANDLE(Get, targets, all) {
     std::vector<IdentifiedTarget> out_data;
     out_data.reserve(new_runs.size());  // Reserve space for efficiency
 
+    // get aggregate to store a record of these results
+    LockPtr<std::map<int, IdentifiedTarget>> records = aggregator->getCVRecord();
+    std::shared_ptr<std::map<int, IdentifiedTarget>> records_ptr = records.data;
+
     for (const auto& run : new_runs) {
         // Create ONE IdentifiedTarget message per AggregatedRun
         IdentifiedTarget target;
-
         // Set the run ID
         target.set_run_id(run.run_id);
-
         // START COMPRESSION
 
         // Compress the annotated image before converting to base64
@@ -409,10 +410,8 @@ DEF_GCS_HANDLE(Get, targets, all) {
 
         // Convert the compressed image to base64 and set it (once per run)
         std::string b64 = cvMatToBase64(compressed_image);
-
-        // END COMPRESSION
-
         target.set_picture(b64);
+        // END COMPRESSION
 
         // Ensure coords and bboxes vectors are the same size (should be guaranteed by Aggregator
         // logic)
@@ -440,10 +439,15 @@ DEF_GCS_HANDLE(Get, targets, all) {
             proto_bbox->set_y2(run.bboxes[i].y2);
         }
 
+        // copy the target to a record object to store
+        IdentifiedTarget record;
+        record.CopyFrom(target);
+        // remove image
+        record.set_picture("");
+        records_ptr->insert_or_assign(run.run_id, target);
         // Add the completed IdentifiedTarget (representing the whole run) to the output list
         out_data.push_back(std::move(target));
     }  // End loop over AggregatedRuns
-
     // 3) Serialize the vector of IdentifiedTarget messages to JSON
     // Ensure messagesToJson can handle a vector or use iterators correctly
     std::string out_data_json = messagesToJson(out_data.begin(), out_data.end());

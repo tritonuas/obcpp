@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -29,14 +30,21 @@ struct PipelineResults {
 };
 
 struct PipelineParams {
-    // Added outputPath parameter with default empty string
-    explicit PipelineParams(std::string yoloModelPath, std::string outputPath = "",
+    // yoloModelPath is optional; when absent, no CV models will be loaded.
+    explicit PipelineParams(std::optional<std::string> yoloModelPath = std::nullopt,
+                            std::string outputPath = "",
                             bool do_preprocess = true)
         : yoloModelPath{std::move(yoloModelPath)},
           outputPath(std::move(outputPath)),
           do_preprocess(do_preprocess) {}
 
-    std::string yoloModelPath;
+    explicit PipelineParams(const std::string& yoloModelPath,
+                            std::string outputPath = "",
+                            bool do_preprocess = true)
+        : PipelineParams(std::optional<std::string>(yoloModelPath), std::move(outputPath),
+                         do_preprocess) {}
+
+    std::optional<std::string> yoloModelPath;
     bool do_preprocess;
     std::string outputPath;
 };
