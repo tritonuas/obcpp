@@ -22,6 +22,12 @@ Tick* FlyWaypointsTick::tick() {
     bool isMissionFinished = state->getMav()->isMissionFinished();
 
     if (isMissionFinished) {
+        if (state->config.pathing.laps > 1) {
+            state->config.pathing.laps--;
+            state->getMav()->startMission();
+            return nullptr;
+        }
+
         return next_tick;
     }
 
