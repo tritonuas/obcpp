@@ -17,6 +17,7 @@
 	"payload_size": 2
     },
     "pathing": {
+        "laps": 10,
         "dubins": {
             "turning_radius": 5.0,
             "point_separation": 20.0

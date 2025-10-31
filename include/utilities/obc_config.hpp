@@ -102,6 +102,7 @@ struct AirdropApproachConfig {
 };
 
 struct PathingConfig {
+    int laps;
     DubinsConfig dubins;
     RRTConfig rrt;
     AirdropCoverageConfig coverage;
