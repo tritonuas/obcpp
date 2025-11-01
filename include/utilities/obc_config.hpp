@@ -57,15 +57,15 @@ struct DubinsConfig {
     double point_separation;
 };
 
-struct RRTConfig {
-    int iterations_per_waypoint;  // number of iterations run between two waypoints
-    double rewire_radius;         // maximum distance from sampled point to optimize during RRT*
-    bool optimize;                // run RRT* if true
-    PointFetchMethod::Enum point_fetch_method;
-    bool allowed_to_skip_waypoints;  // if true, will skip waypoints if it can not connect after 1
-                                     // RRT iteration
-    bool generate_deviations;
-};
+// struct RRTConfig {
+//     int iterations_per_waypoint;  // number of iterations run between two waypoints
+//     double rewire_radius;         // maximum distance from sampled point to optimize during RRT* //DELETE
+//     bool optimize;                // run RRT* if true //DELETE
+//     PointFetchMethod::Enum point_fetch_method; // DELETE
+//     bool allowed_to_skip_waypoints;  // if true, will skip waypoints if it can not connect after 1
+//                                      // RRT iteration
+//     bool generate_deviations; //DELETE
+// };
 
 namespace AirdropCoverageMethod {
 enum class Enum { HOVER, FORWARD };
