@@ -32,8 +32,8 @@ int main() {
     }
 
     // Construct the pipeline with the desired YOLO model
-    PipelineParams params("../models/yolo11x.onnx",
-                          "../tests/integration/output/output_aggregator.jpg",
+    PipelineParams params(std::string("../models/yolo11x.onnx"),
+                          std::string("../tests/integration/output/output_aggregator.jpg"),
                           false);  // do_preprocess=false
 
     Pipeline pipeline(params);
