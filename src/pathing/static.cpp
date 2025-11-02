@@ -633,6 +633,10 @@ MissionPath generateInitialPath(std::shared_ptr<MissionState> state) {
     std::vector<XYZCoord> path = rrt.getPointsToGoal();
 
     std::vector<GPSCoord> output_coords;
+    output_coords.push_back(
+        state->getCartesianConverter()->toLatLng(state->mission_params.getWaypoints().front()));
+    output_coords.push_back(
+        state->getCartesianConverter()->toLatLng(state->mission_params.getWaypoints().front()));
     for (const XYZCoord &wpt : goals) {
         output_coords.push_back(state->getCartesianConverter()->toLatLng(wpt));
     }
