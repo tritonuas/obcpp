@@ -35,25 +35,8 @@ using json = nlohmann::json;
 //     } mock;
 // };
 
-// Use the robust GStreamer pipeline that worked on the first run
-std::string get_gstreamer_pipeline(int width, int height, int framerate) {
-    return "nvarguscamerasrc ! "
-           "video/x-raw(memory:NVMM), width=(int)" +
-           std::to_string(width) + ", height=(int)" + std::to_string(height) +
-           ", format=(string)NV12, framerate=(fraction)" + std::to_string(framerate) +
-           "/1 ! "
-           "queue ! "
-           "nvvidconv ! "
-           "video/x-raw, format=(string)BGRx ! "
-           "queue ! "
-           "videoconvert ! "
-           "video/x-raw, format=(string)BGR ! "
-           "appsink drop=true";
-}
-
 PiCamera::PiCamera(CameraConfig config, int width, int height, int framerate)
-    : CameraInterface(config),
-      cap(get_gstreamer_pipeline(width, height, framerate), cv::CAP_GSTREAMER) {
+    : CameraInterface(config) {
     if (!this->cap.isOpened()) {
         LOG_F(FATAL, "FATAL: Could not open picamera");
     } else {
@@ -110,19 +93,15 @@ std::optional<ImageData> PiCamera::takePicture(const std::chrono::milliseconds& 
                                                std::shared_ptr<MavlinkClient> mavlinkClient) {
     cv::Mat frame;
 
-    if (!(this->cap.read(frame))) {
-        LOG_F(ERROR, "ERROR: Failed to capture Picture/Frame");
-    }
+    // uint64_t timestamp = getUnixTime_s().count();
 
-    uint64_t timestamp = getUnixTime_s().count();
+    // ImageData imageData{
+    //     .DATA = frame,
+    //     .TIMESTAMP = timestamp,
+    //     .TELEMETRY = queryMavlinkImageTelemetry(mavlinkClient),
+    // };
 
-    ImageData imageData{
-        .DATA = frame,
-        .TIMESTAMP = timestamp,
-        .TELEMETRY = queryMavlinkImageTelemetry(mavlinkClient),
-    };
-
-    return imageData;
+    return std::nullopt;
 }
 
 void PiCamera::startStreaming() {}
