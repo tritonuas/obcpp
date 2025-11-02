@@ -13,88 +13,72 @@
 
 // When we are born, we cry that we are come to this great stage of fools
 
-// RRTNode::RRTNode(const RRTPoint& point, double cost, double path_length,
-//                  const std::vector<XYZCoord> path)
-//     : point{point}, cost{cost}, path_length(path_length), path(path) {}
 
-// RRTNode::RRTNode(const RRTPoint& point, double cost, double path_length,
-//                  const std::vector<XYZCoord> path, RRTNodeList reachable)
-//     : point{point}, cost{cost}, path_length(path_length), path(path), reachable{reachable} {}
+/*
+TODO: rewrite the RRT Node implementation slightly to utilize smart pointers for the reachable
+remove the parents since that introduces insecurity
+*/
 
-// RRTNode::~RRTNode() {
-//     for (RRTNode* node : reachable) {
-//         delete node;
-//     }
-// }
+RRTNode::RRTNode(const RRTPoint& point, double cost, double path_length,
+                 const std::vector<XYZCoord> path)
+    : point{point}, cost{cost}, path_length(path_length), path(path) {}
+
+RRTNode::RRTNode(const RRTPoint& point, double cost, double path_length,
+                 const std::vector<XYZCoord> path, std::vector<RRTNodePtr> reachable)
+    : point{point}, cost{cost}, path_length(path_length), path(path), reachable{reachable} {}
+
+RRTNode::~RRTNode() {
+    reachable.clear();
+}
 
 // // bool RRTNode::operator==(const RRTNode& other_node) const {
 // //     return this->point == other_node.point && this->cost == other_node.cost;
 // // }
 
-// RRTPoint& RRTNode::getPoint() { return this->point; }
+RRTPoint& RRTNode::getPoint() { return this->point; }
 
-// void RRTNode::setReachable(const RRTNodeList& reachable) {
-//     this->reachable = reachable;
-//     for (RRTNode* node : reachable) {
-//         node->parent = this;
-//     }
-// }
+void RRTNode::setReachable(const std::vector<RRTNodePtr>& reachable) {
+    this->reachable = reachable;
+}
+void RRTNode::addReachable(RRTNodePtr new_node) {
+    this->reachable.push_back(new_node);
+}
 
-// void RRTNode::addReachable(RRTNode* new_node) {
-//     this->reachable.push_back(new_node);
-//     new_node->parent = this;
-// }
+void RRTNode::removeReachable(RRTNodePtr old_node) {
+    for (int i = 0; i < reachable.size(); i++) {
+        if (reachable.at(i) == old_node) {
+            reachable.erase(reachable.begin() + i);
+            return;
+        }
+    }
+}
 
-// void RRTNode::removeReachable(RRTNode* old_node) {
-//     for (int i = 0; i < reachable.size(); i++) {
-//         if (reachable.at(i) == old_node) {
-//             // TODO - UNSAFE
-//             reachable.at(i)->parent = nullptr;
-//             reachable.erase(reachable.begin() + i);
-//         }
-//     }
-// }
+const std::vector<RRTNodePtr>& RRTNode::getReachable() { return (this->reachable); }
 
-// const RRTNodeList& RRTNode::getReachable() { return (this->reachable); }
+double RRTNode::getCost() const { return this->cost; }
 
-// double RRTNode::getCost() const { return this->cost; }
+void RRTNode::setCost(double new_cost) { this->cost = new_cost; }
 
-// void RRTNode::setCost(double new_cost) { this->cost = new_cost; }
+const std::vector<XYZCoord>& RRTNode::getPath() const { return this->path; }
 
-// RRTNode* RRTNode::getParent() const { return this->parent; }
+void RRTNode::setPath(const std::vector<XYZCoord>& path) { this->path = path; }
 
-// void RRTNode::setParent(RRTNode* new_parent) { this->parent = new_parent; }
+double RRTNode::getPathLength() const { return this->path_length; }
 
-// const std::vector<XYZCoord>& RRTNode::getPath() const { return this->path; }
-
-// void RRTNode::setPath(const std::vector<XYZCoord>& path) { this->path = path; }
-
-// double RRTNode::getPathLength() const { return this->path_length; }
-
-// void RRTNode::setPathLength(double new_path_length) { this->path_length = new_path_length; }
-// /*
+void RRTNode::setPathLength(double new_path_length) { this->path_length = new_path_length; }
 
 
 
+/** RRTTree */
 
-// */
-// /** RRTTree */
-// /*
+RRTTree::RRTTree(RRTPoint root_point, Environment airspace, Dubins dubins)
+    : airspace(airspace), dubins(dubins), tree_size(1) {
+    RRTNodePtr new_node = std::make_shared<RRTNode>(root_point, 0, 0, {});
+    root = new_node;
+    current_head = new_node;
+}
 
-
-
-
-// */
-
-// RRTTree::RRTTree(RRTPoint root_point, Environment airspace, Dubins dubins)
-//     : airspace(airspace), dubins(dubins), tree_size(1) {
-//     RRTNode* new_node = new RRTNode(root_point, 0, 0, {});
-//     root = new_node;
-//     current_head = new_node;
-// }
-
-// // TODO - seems a bit sketchy
-// RRTTree::~RRTTree() { delete root; }
+RRTTree::~RRTTree() { root.reset(); }
 
 // bool RRTTree::validatePath(const std::vector<XYZCoord>& path, const RRTOption& option) const {
 //     return airspace.isPathInBounds(path);
