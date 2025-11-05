@@ -132,6 +132,8 @@ I have wrestled with C++. It is the most unexciting contest you can imagine.
 //     return true;
 // }
 
+// This code will disappear, but not immediately. Deo volente, it will provide a useful framework.
+
 // bool RRT::epochEvaluation(RRTNode *goal_node, int current_goal_index) {
 //     // If a single epoch has not been passed, mark this goal as the first
 //     // benchmark.

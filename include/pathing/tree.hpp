@@ -185,13 +185,6 @@ class RRTTree {
         const RRTPoint& end, PointFetchMethod::Enum path_option = PointFetchMethod::Enum::NONE,
         int quantity_options = MAX_DUBINS_OPTIONS_TO_PARSE) const;
 
-    /** DOES RRT* for the program
-     *
-     * @param sample          ==> the point to used as the base
-     * @param rewire_radius   ==> the radius to search for nodes to rewire
-     */
-    void RRTStar(RRTNodePtr sample, double rewire_radius);
-
     /**
      * Changes the currentHead to the given goal
      *
@@ -208,59 +201,6 @@ class RRTTree {
     //   * @return  ==> list of 2-vectors to the goal region
     //   */
     //  std::vector<XYZCoord> getPathToGoal() const;
-
-    /**
-     * Rewires an edge from an old path to a new path.
-     * preserves ALL elements of the tree (i.e. NO elements are removed).
-     *
-     * @param current_point         ==> the current/end point to be rewired
-     * @param previous_parent       ==> the previous parent to the current point
-     * @param new_parent            ==> the new parent to the current point
-     * @param path                  ==> the new path new_parrent --> current_point
-     * @param path_cost             ==> the cost of the new path
-     */
-    void rewireEdge(RRTNodePtr current_point, RRTNodePtr previous_parent, RRTNodePtr new_parent,
-                    const std::vector<XYZCoord>& path, double path_cost);
-
-    /**
-     * Gets K random nodes from the tree, starting at the current head
-     *
-     * @param k ==> the number of nodes to get
-     * @return  ==> list of k random nodes (unordered)
-     */
-    std::vector<RRTNodePtr> getKRandomNodes(int k) const;
-
-    /**
-     * __Recursive Helper__
-     * Gets K random nodes from the tree, starting at the current head
-     *
-     * @param nodes         ==> the list (reference) of nodes to add to
-     * @param current_node  ==> the current node that is being accessed
-     * @param k             ==> the number of nodes to get
-     * @param chance        ==> the chance to add the current node to the list
-     */
-    void getKRandomNodesRecursive(std::vector<RRTNodePtr>& nodes, RRTNodePtr current_node,
-                                  double chance) const;
-
-    /**
-     * Gets the k closest nodes to a given point
-     *
-     * @param sample    ==> the point to find the closest nodes to
-     * @param k         ==> the number of nodes to get
-     * @return          ==> list (ordered) of k closest nodes
-     */
-    std::vector<RRTNodePtr> getKClosestNodes(const RRTPoint& sample, int k) const;
-
-    /**
-     * __Recursive Helper__
-     * Gets the k closest nodes to a given point
-     *
-     * @param nodes_by_distance ==> the list (reference) of {distance, node} to add to
-     * @param sample            ==> the point to find the closest nodes to
-     * @param current_node      ==> the current node that is being accessed
-     */
-    void getKClosestNodesRecursive(std::vector<std::pair<double, RRTNodePtr>>& nodes_by_distance,
-                                   const RRTPoint& sample, RRTNodePtr current_node) const;
 
     /**
      * Fills in a list of options from an existing list of nodes
@@ -319,37 +259,6 @@ class RRTTree {
      * @return          ==> the nearest node to the point
      */
     // std::pair<RRTNodePtr, double> getNearestNode(const XYZCoord& point) const;
-
-    /**
-     * RRTStar Recursive
-     *  (RECURSIVE HELPER)
-     * Rewires the tree by finding paths that are more efficintly routed through
-     * the sample. Only searches for nodes a specific radius around the sample
-     * to reduce computational expense
-     *
-     * @param current_node   ==> current node (DFS)
-     * @param sample         ==> sampled point
-     * @param search_radius  ==> the radius to search for nodes to rewire
-     */
-    void RRTStarRecursive(RRTNodePtr current_node, RRTNodePtr sample, double rewire_radius);
-
-    /**
-     * After rewire edge, it goes down the tree and reassigns the cost of the
-     * nodes
-     *
-     * @param changed_node the node that has been changed
-     */
-    void reassignCosts(RRTNodePtr changed_node);
-
-    /**
-     *  Recurses down the tree to reassign the costs of the nodes
-     * (RECURSIVE HELPER)
-     *
-     * @param parent        ==> the parent node
-     * @param node          ==> the current node
-     * @param path_cost     ==> the cost of the path to the current node
-     */
-    void reassignCostsRecursive(RRTNodePtr parent, RRTNodePtr current_node, double cost_difference);
 };
 
 #endif  // INCLUDE_PATHING_TREE_HPP_
