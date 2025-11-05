@@ -32,16 +32,34 @@ const std::vector<mavsdk::MissionRaw::MissionItem> MissionPath::getCommands() co
 }
 
 void MissionPath::generateForwardCommands() {
-    this->path_mav.clear();  // incase this gets called multiple times, but it shouldnt
+    this->path_mav.clear();
+
+    // Push the first point Twice, otherwise, SITL will skip
+    mavsdk::MissionRaw::MissionItem first_item{};
+    first_item.seq = 0;
+    first_item.frame = MAV_FRAME_GLOBAL_RELATIVE_ALT;
+    first_item.command = MAV_CMD_NAV_WAYPOINT;
+    first_item.current = 1;  // first waypoint should be true, others false
+    first_item.autocontinue = 1;
+    first_item.param1 = 0.0;  // Hold
+    first_item.param2 = 1.0;  // Accept Radius 7.0m close to 25ft
+    first_item.param3 = 1.0;  // Pass Radius
+    first_item.param4 = NAN;  // Yaw
+    first_item.x = int32_t(std::round(this->path.at(0).latitude() * 1e7));
+    first_item.y = int32_t(std::round(this->path.at(0).longitude() * 1e7));
+    first_item.z = this->path.at(0).altitude();
+    first_item.mission_type = MAV_MISSION_TYPE_MISSION;
+    this->path_mav.push_back(first_item);
 
     // Parse the waypoint information
-    int i = 0;
-    for (const auto& coord : this->path) {
+    for (int i = 0; i < this->path.size(); i++) {
+        const GPSCoord& coord = this->path.at(i);
+
         mavsdk::MissionRaw::MissionItem item{};
-        item.seq = i;
+        item.seq = i + 1;
         item.frame = MAV_FRAME_GLOBAL_RELATIVE_ALT;
         item.command = MAV_CMD_NAV_WAYPOINT;
-        item.current = (i == 0) ? 1 : 0;
+        item.current = 0;
         item.autocontinue = 1;
         item.param1 = 0.0;  // Hold
         item.param2 = 7.0;  // Accept Radius 7.0m close to 25ft
@@ -52,7 +70,6 @@ void MissionPath::generateForwardCommands() {
         item.z = coord.altitude();
         item.mission_type = MAV_MISSION_TYPE_MISSION;
         this->path_mav.push_back(item);
-        i++;
     }
 }
 
