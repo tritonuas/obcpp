@@ -1,30 +1,26 @@
-#include "cv/clustering.hpp"
 #include <vector>
+#include <algorithm>
 #include "protos/obc.pb.h"
 #include "cv/localization.hpp"
-#include <algorithm>
-#include <tuple>
-#include "cv/utilities.hpp"
-#include "camera/interface.hpp"
-#include "utilities/datatypes.hpp"
-
+#include "cv/clustering.hpp"
 
 /*
  Takes in a list of list of points, where each list is a set of points in one cluster
 
  uses median approach
  */
-std::vector<GPSCoord> Clustering::FindClustersCenter(const std::vector<std::vector<GPSCoord>>& points){
+std::vector<GPSCoord> Clustering::FindClustersCenter(
+    const std::vector<std::vector<GPSCoord>>& points) {
         GSDLocalization local;
         std::vector<GPSCoord> centers;
         centers.reserve(points.size());
-        for(const std::vector<GPSCoord> &cluster : points){
+        for (const std::vector<GPSCoord> &cluster : points) {
             GPSCoord avg;
             std::vector<double> lats;
             std::vector<double> longs;
             lats.reserve(cluster.size());
             longs.reserve(cluster.size());
-            for(const GPSCoord& cord : cluster){
+            for (const GPSCoord& cord : cluster) {
                 lats.push_back(cord.latitude());
                 longs.push_back(cord.longitude());
             }
@@ -36,8 +32,9 @@ std::vector<GPSCoord> Clustering::FindClustersCenter(const std::vector<std::vect
         }
         return std::move(centers);
     }
- //mean approach 
-// std::vector<GPSCoord> Clustering::FindClustersCenter(const std::vector<std::vector<GPSCoord>>& points){
+// mean approach
+// std::vector<GPSCoord> Clustering::FindClustersCenter
+// (const std::vector<std::vector<GPSCoord>>& points){
 //     std::vector<GPSCoord> centers;
 //     centers.reserve(points.size());
 //     for(std::vector<GPSCoord> &cluster : points){
