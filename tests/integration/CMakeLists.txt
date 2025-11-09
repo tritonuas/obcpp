@@ -142,21 +142,6 @@ target_add_loguru(airdrop_packets)
 #     -E env LD_LIBRARY_s/target_siamese_1.pt
 # )
 
-add_executable(camera_mock "camera_mock.cpp")
-target_link_libraries(camera_mock PRIVATE obcpp_lib)
-target_include_directories(camera_mock PRIVATE ${INCLUDE_DIRECTORY})
-target_add_protobuf(camera_mock)
-target_add_torch(camera_mock)
-target_add_torchvision(camera_mock)
-target_add_json(camera_mock)
-target_add_opencv(camera_mock)
-target_add_httplib(camera_mock)
-target_add_mavsdk(camera_mock)
-target_add_matplot(camera_mock)
-target_add_loguru(camera_mock)
-target_include_directories(camera_mock PRIVATE ${ImageMagick_INCLUDE_DIRS})
-target_link_libraries(camera_mock PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
-
 add_executable(tcp_client_mock "tcp_client_mock.cpp")
 target_link_libraries(tcp_client_mock PRIVATE 
     obcpp_lib
@@ -228,24 +213,6 @@ target_add_matplot(udp_server_mock)
 target_add_loguru(udp_server_mock)
 target_include_directories(udp_server_mock PRIVATE ${ImageMagick_INCLUDE_DIRS})
 target_link_libraries(udp_server_mock PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
-
-# cuda_check
-add_executable(cuda_check ${SOURCES} cuda_check.cpp)
-target_add_torch(cuda_check)
-target_add_json(cuda_check)
-target_add_httplib(cuda_check)
-target_add_mavsdk(cuda_check)
-target_add_matplot(cuda_check)
-target_add_protobuf(cuda_check)
-target_add_opencv(cuda_check)
-target_add_loguru(cuda_check)
-# for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
-# target_add_imagemagick(cuda_check)
-target_include_directories(cuda_check PRIVATE ${ImageMagick_INCLUDE_DIRS})
-target_link_libraries(cuda_check PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
-# cuda_check
-add_executable(cuda_check ${SOURCES} cuda_check.cpp)
-target_add_torch(cuda_check)
 
 add_executable(drop_it_like_its_hot "drop_it_like_its_hot.cpp")
 target_link_libraries(drop_it_like_its_hot PRIVATE obcpp_lib)
