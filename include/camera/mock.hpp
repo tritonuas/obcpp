@@ -35,14 +35,14 @@ class MockCamera : public CameraInterface {
      * image from a queue of images which means that the same image won't.
      * be returned in two subsequent calls
     */ 
-    // std::optional<ImageData> getLatestImage() override;
+    std::optional<ImageData> getLatestImage() override;
 
     /**
      * getAllImages returns a queue of all the images that have been
      * cached since the last call to getAllImages. Once this is called,
      * it returns the cached images and clears the internal cache.
     */
-    // std::deque<ImageData> getAllImages() override;
+    std::deque<ImageData> getAllImages() override;
 
     /**
     * Blocking call that takes an image. If it takes longer than the timeout 
