@@ -48,7 +48,8 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
                            libmagick++-dev \
                            # needed for pytorch 
                            libopenblas-dev \
-                           ninja-build
+                           ninja-build \
+                           libopencv-dev
 
 RUN pip3 install typing-extensions PyYAML cpplint
 
@@ -91,7 +92,7 @@ COPY . .
 
 RUN rm -rf /obcpp/build
 WORKDIR /obcpp/build
-ENV CMAKE_PREFIX_PATH="/usr/local/lib/python3.10/dist-packages/torch/share/cmake/Torch;/usr/local/share/cmake/TorchVision"
+ENV CMAKE_PREFIX_PATH="/usr/local/lib/python3.10/dist-packages/torch/share/cmake/Torch:/usr/local/share/cmake/TorchVision"
 RUN GITHUB_ACTIONS=true cmake -DCMAKE_PREFIX_PATH="/usr/local/lib/python3.10/dist-packages/torch/share/cmake/Torch;/usr/local/share/cmake/TorchVision" -DCMAKE_MODULE_PATH="/usr/local/share/cmake/TorchVision" -DCMAKE_BUILD_TYPE="Release" ..
 
 RUN ninja obcpp 

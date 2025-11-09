@@ -18,6 +18,16 @@ void assertLocalizationAccuracy(
     ASSERT_NEAR(expectedCoord.longitude(), predictedCoord.longitude(), longitudeDegThreshold);
 }
 
+void assertDistanceAccuracy(
+    double distancePredicted,
+    double distanceExpected,
+    double distanceThreshold = 0.03) { 
+
+    SCOPED_TRACE(::testing::Message() << "\nExpected Distance, Long: " << distancePredicted << ", "
+                                      << "\nPredicted Distance, Long: " << distanceExpected );
+        
+    ASSERT_NEAR(distancePredicted, distanceExpected, distanceExpected * distanceThreshold);
+}
 
 TEST(CVLocalization, LocalizationAccuracy) {
     struct TestCase {
@@ -132,3 +142,158 @@ TEST(CVLocalization, LocalizationAccuracy) {
         assertLocalizationAccuracy(testCase.expectedTargetCoord, gsdTargetCoord);
     };
 }
+
+TEST(CVLocalization, DistanceAccuracy) {
+    struct DistanceTestCase {
+        std::string name;
+
+        double lat1; 
+        double lon1;
+        double lat2;
+        double lon2;
+
+        double expectedDistance;
+    };
+    
+    const std::vector<DistanceTestCase> distanceTestCases{{
+        {
+            // coordinate 1 (0N, 0W)
+            // coordinate 2 (20S, 0W)
+            // esitmitated distance from https://www.omnicalculator.com/other/latitude-longitude-distance is 2223 km
+
+            "Coordinates of Distance 1",
+            0,
+            0,
+            -20,
+            0,
+
+            2223899,
+        },
+
+        {
+            // coordinate 3 (20N, 0W)
+            // coordinate 4 (53N, 109W)
+            // esitmitated distance from https://www.omnicalculator.com/other/latitude-longitude-distance is 9439557 m
+
+            "Coordinates of Distance 2",
+            20,
+            0,
+            53,
+            -109,
+
+            9439557,
+        },
+        
+        {
+            // coordinate 5 (20N, 35W)
+            // coordinate 6 (20S, 0W)
+            // esitmitated distance from https://www.omnicalculator.com/other/latitude-longitude-distance is 5857063 m
+
+            "Coordinates of Distance 3",
+            20,
+            -35,
+            -20,
+            0,
+
+            5857063,
+        },
+
+        {
+            // coordinate 7 (20N, 40E)
+            // coordinate 8 (50N, 65W)
+            // esitmitated distance from https://www.omnicalculator.com/other/latitude-longitude-distance is 9333060 m
+
+            "Coordinates of Distance 4",
+            20,
+            40,
+            50,
+            -65,
+
+            9333060,
+        },
+
+        {
+            // coordinate 9 (40.459N, 50.459E)
+            // coordinate 10 (40.46N, 50.46E)
+            // esitmitated distance from https://www.omnicalculator.com/other/latitude-longitude-distance is 139.72 m
+
+            "Coordinates of Distance 5",
+            40.459,
+            50.459,
+            40.46,
+            50.46,
+
+            139.72,
+        },
+
+        {
+            // coordinate 11 (50.1123N, 45.1234E)
+            // coordinate 12 (50.11235N, 45.1234E)
+            // esitmitated distance from https://www.omnicalculator.com/other/latitude-longitude-distance is 5.56 m
+
+            "Coordinates of Distance 6",
+            50.1123,
+            45.1234,
+            50.11235,
+            45.1234,
+
+            5.56,
+        },
+
+        {
+            // coordinate 13 (5.123N, 2.345E)
+            // coordinate 14 (5.122N, 2.345E)
+            // esitmitated distance from https://www.omnicalculator.com/other/latitude-longitude-distance is 111.2 m
+
+            "Coordinates of Distance 7",
+            5.123,
+            2.345,
+            5.122,
+            2.345,
+
+            111.2,
+        },
+
+        {
+            // coordinate 15 (5.123N, 2.345E)
+            // coordinate 16 (5.1231N, 2.3452E)
+            // esitmitated distance from https://www.omnicalculator.com/other/latitude-longitude-distance is 24.785 m
+
+            "Coordinates of Distance 8",
+            5.123,
+            2.345,
+            5.1231,
+            2.3452,
+
+            24.785,
+        },
+
+        {
+            // DUMMY TEST (the same coordinate)
+            "DUMMY TEST",
+            20,
+            109,
+            20,
+            109,
+
+            0,
+        },
+
+    }};
+
+    for (const auto &distanceTestCase : distanceTestCases) {
+        GSDLocalization gsdLocalization;
+        std::cout << "Test case: " << distanceTestCase.name << std::endl;
+
+        // GPSCoord ecefTargetCoord = ecefLocalizer.localize(testCase.inputImageTelemetry, testCase.inputTargetBbox);
+        // assertLocalizationAccuracy(testCase.expectedTargetCoord, ecefTargetCoord);
+
+        double distanceTargeted = gsdLocalization.distanceInMetersBetweenCords(distanceTestCase.lat1, distanceTestCase.lon1,
+                                                                    distanceTestCase.lat2, distanceTestCase.lon2);
+
+        std::cout << "Estimated Distance " << distanceTargeted << std::endl << "Expected Distance" << distanceTestCase.expectedDistance << std::endl;
+
+        assertDistanceAccuracy(distanceTestCase.expectedDistance, distanceTargeted);
+    };
+}
+

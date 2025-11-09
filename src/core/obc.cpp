@@ -5,6 +5,7 @@
 #include <future>
 
 #include "camera/mock.hpp"
+#include "camera/picamera.hpp"
 #include "core/obc.hpp"
 #include "core/mission_state.hpp"
 #include "ticks/tick.hpp"
@@ -36,6 +37,14 @@ OBC::OBC(OBCConfig config) {
 
     if (this->state->config.camera.type == "mock") {
         this->state->setCamera(std::make_shared<MockCamera>(this->state->config.camera));
+    } else if (this->state->config.camera.type == "picamera") {
+        this->state->setCamera(std::make_shared<PiCamera>(this->state->config.camera));
+    } else if (this->state->config.camera.type == "picamera-1080p") {
+        this->state->setCamera(std::make_shared<PiCamera>(
+            this->state->config.camera, 1920, 1080, 60));
+    } else if (this->state->config.camera.type == "picamera-4k") {
+        this->state->setCamera(std::make_shared<PiCamera>(
+            this->state->config.camera, 4956, 3040, 30));
     } else if (this->state->config.camera.type == "lucid") {
         LOG_F(FATAL, "ATTEMPTING TO CONNECT TO LUCID CAMERA: LUCID CAMERA NO LONGER EXISTS");
     } else {

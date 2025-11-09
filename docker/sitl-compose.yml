@@ -8,7 +8,11 @@ services:
   #   #  - 5010:5010
   not-stolen-israeli-code: 
     image: ghcr.io/tritonuas/not-stolen-israeli-code:latest
+    volumes: 
+      - ~/Clubs/TUAS/not-stolen-israeli-code/backgrounds:/not-stolen-israeli-code/backgrounds
+      - ~/Clubs/TUAS/not-stolen-israeli-code/emergent_target_pics:/not-stolen-israeli-code/emergent_target_pics
     ports:
-      - 5069:5000
+      - 5069:6060
+    command: poetry run python main.py -d
 volumes:
   sitl:

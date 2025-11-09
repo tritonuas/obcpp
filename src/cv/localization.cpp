@@ -38,7 +38,8 @@ ECEFLocalization::ECEFCoordinates ECEFLocalization::ENUtoECEF(
     return target;
 }
 
-// Converts ECEF coordinates to GPS coordinates using Heikkinen's procedure
+// Converts ECEF cooordinates to GPS coordinates using Heikkinen's procedure
+// Dont use. Shit doesnt work :sob:
 GPSCoord ECEFLocalization::ECEFtoGPS(ECEFCoordinates ecef) {
     GPSCoord gps;
     double a = EARTH_RADIUS_METERS;
@@ -127,6 +128,8 @@ GPSCoord GSDLocalization::localize(const ImageTelemetry& telemetry, const Bbox& 
     // Ground Sample Distance (mm/pixel), 1.0~2.5cm per px is ideal aka 10mm~25mm ppx
     // double GSD = (SENSOR_WIDTH * (telemetry.altitude_agl_m * 1000))
     //              / (FOCAL_LENGTH_MM * IMG_WIDTH_PX);
+
+    std::cout << "Pre-localization: " << telemetry.latitude_deg << " " << telemetry.longitude_deg;
 
     double GSD = (ANGLE_OF_VIEW_RATIO * (telemetry.altitude_agl_m * 1000)
                  /IMG_WIDTH_PX);

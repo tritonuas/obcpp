@@ -60,5 +60,5 @@ TEST(CVUtilities, CropValidAndInvalidSizes) {
 
         EXPECT_EQ(cropped.rows, testCase.expectedCroppedImg.rows);
         EXPECT_EQ(cropped.cols, testCase.expectedCroppedImg.cols);
-    };
+    }
 }

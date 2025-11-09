@@ -1,12 +1,13 @@
 #ifndef INCLUDE_UTILITIES_OBC_CONFIG_HPP_
 #define INCLUDE_UTILITIES_OBC_CONFIG_HPP_
 
-#include <variant>
-#include <string>
-#include <utility>
-#include <unordered_set>
-#include <unordered_map>
 #include <initializer_list>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <variant>
+
 #include "udp_squared/internal/enum.h"
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
@@ -31,26 +32,24 @@ struct NetworkConfig {
 
 struct TakeoffConfig {
     float altitude_m;
+    int payload_size;
 };
 
 struct CVConfig {
-    std::string matching_model_dir;
-    std::string segmentation_model_dir;
-    std::string saliency_model_dir;
+    std::string yolo_model_dir;
     std::string not_stolen_addr;
     uint16_t not_stolen_port;
 };
 
 namespace PointFetchMethod {
-    enum class Enum {
-        NONE,    // check RRT against every node (path optimal, but incredibly slow)
-        RANDOM,  // check ~k randomly sampled nodes from the tree.
-        NEAREST  // check ~$p$ nodes closest to the sampled node (best performance/time ratio from
-                // rudimentary testing)
-    };
-    CONFIG_VARIANT_MAPPING_T(Enum) MAPPINGS = {
-        {"none", Enum::NONE}, {"random", Enum::RANDOM}, {"nearest", Enum::NEAREST}
-    };
+enum class Enum {
+    NONE,    // check RRT against every node (path optimal, but incredibly slow)
+    RANDOM,  // check ~k randomly sampled nodes from the tree.
+    NEAREST  // check ~$p$ nodes closest to the sampled node (best performance/time ratio from
+             // rudimentary testing)
+};
+CONFIG_VARIANT_MAPPING_T(Enum)
+MAPPINGS = {{"none", Enum::NONE}, {"random", Enum::RANDOM}, {"nearest", Enum::NEAREST}};
 };  // namespace PointFetchMethod
 
 struct DubinsConfig {
@@ -65,16 +64,12 @@ struct RRTConfig {
     PointFetchMethod::Enum point_fetch_method;
     bool allowed_to_skip_waypoints;  // if true, will skip waypoints if it can not connect after 1
                                      // RRT iteration
+    bool generate_deviations;
 };
 
 namespace AirdropCoverageMethod {
-    enum class Enum {
-        HOVER,
-        FORWARD
-    };
-    CONFIG_VARIANT_MAPPING_T(Enum) MAPPINGS = {
-        {"hover", Enum::HOVER}, {"forward", Enum::FORWARD}
-    };
+enum class Enum { HOVER, FORWARD };
+CONFIG_VARIANT_MAPPING_T(Enum) MAPPINGS = {{"hover", Enum::HOVER}, {"forward", Enum::FORWARD}};
 };  // namespace AirdropCoverageMethod
 
 struct AirdropCoverageConfig {
@@ -93,18 +88,13 @@ struct AirdropCoverageConfig {
 };
 
 namespace AirdropDropMethod {
-    enum class Enum {
-        GUIDED,
-        UNGUIDED
-    };
-    CONFIG_VARIANT_MAPPING_T(Enum) MAPPINGS = {
-        {"guided", Enum::GUIDED}, {"unguided", Enum::UNGUIDED}
-    };
-};
+enum class Enum { GUIDED, UNGUIDED };
+CONFIG_VARIANT_MAPPING_T(Enum) MAPPINGS = {{"guided", Enum::GUIDED}, {"unguided", Enum::UNGUIDED}};
+};  // namespace AirdropDropMethod
 
 struct AirdropApproachConfig {
     AirdropDropMethod::Enum drop_method;
-    std::unordered_set<int> bottle_ids;
+    std::unordered_set<int> airdrop_ids;
     double drop_angle_rad;
     double drop_altitude_m;
     double guided_drop_distance_m;
@@ -112,6 +102,7 @@ struct AirdropApproachConfig {
 };
 
 struct PathingConfig {
+    int laps;
     DubinsConfig dubins;
     RRTConfig rrt;
     AirdropCoverageConfig coverage;
@@ -119,16 +110,20 @@ struct PathingConfig {
 };
 
 struct CameraConfig {
-    // either "mock" or "lucid"
+    // "mock", "picamera", "picamera-1080p", "picamera-4k", "lucid"
     std::string type;
     // directory to save images to
     std::string save_dir;
     // whether or not to save to save_dir
     bool save_images_to_file;
     struct {
-        // directory to randomly pick images from
-        // for the mock camera
-        std::string images_dir;
+        // port to query images from for the mock camera
+        int not_stolen_port;
+        // left | right
+        std::string runway;
+        int num_targets;
+        // maximum waiting time for not-stolen server response
+        int connection_timeout;
     } mock;
 };
 

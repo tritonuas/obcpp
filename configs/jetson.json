@@ -1,10 +1,10 @@
 {
     "logging": {
-        "dir": "/workspaces/obcpp/logs"
+        "dir": "/obcpp/logs"
     },
     "network": {
         "mavlink": {
-            "connect": "serial:///dev/ttyACM0",
+            "connect": "serial:///dev/ttyTHS1",
             "log_params": false,
             "telem_poll_rate": 1.0
         },
@@ -13,11 +13,13 @@
         }
     },
     "takeoff": {
-        "altitude_m": 60.0
+        "altitude_m": 60.0,
+	"payload_size": 2
     },
     "pathing": {
+        "laps": 10,
         "dubins": {
-            "turning_radius": 30.0,
+            "turning_radius": 5.0,
             "point_separation": 20.0
         },
         "rrt": {
@@ -25,8 +27,9 @@
             "rewire_radius": 256.0,
             "optimize": true,
             "point_fetch_method": "nearest", 
-            "allowed_to_skip_waypoints": false
-        },
+            "allowed_to_skip_waypoints": false,
+            "generate_deviations": false
+	},
         "coverage": {
             "altitude_m": 30.0,
             "camera_vision_m": 6.0,
@@ -50,19 +53,17 @@
         }
     },
     "cv": {
-        "matching_model_dir": "/obcpp/models/target_siamese_1.pt",
-        "segmentation_model_dir": "/obcpp/models/fcn-model_20-epochs_06-01-2023T21-16-02.pth",
-        "saliency_model_dir": "/obcpp/models/torchscript_19.pth",
-        "not_stolen_addr": "localhost",
-        "not_stolen_port": 5069
+        "yolo_model_dir": "/obcpp/models/yolo11x.onnx"
     },
     "camera": {
         "_comment": "See CameraConfig struct in datatypes.hpp for detailed explanations",
-        "type": "lucid",
+        "type": "picamera",
         "save_dir": "/obcpp/images/",
         "save_images_to_file": true,
         "mock": {
-            "images_dir": "/obcpp/tests/integration/images/saliency/"
+            "not_stolen_port": 6060,
+            "runway": "right",
+            "num_targets": 2
         },
         "lucid": {
             "sensor_shutter_mode": "Rolling",

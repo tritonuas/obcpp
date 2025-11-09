@@ -101,32 +101,14 @@ GPSCoord makeGPSCoord(double lat, double lng, double alt) {
     return coord;
 }
 
-std::string ODLCShapeToString(const ODLCShape& shape) {
-    switch (shape) {
-        case ODLCShape::Circle: return "CIRCLE";
-        case ODLCShape::Semicircle: return "SEMICIRCLE";
-        case ODLCShape::QuarterCircle: return "QUARTERCIRCLE";
-        case ODLCShape::Triangle: return "TRIANGLE";
-        case ODLCShape::Rectangle: return "RECTANGLE";
-        case ODLCShape::Pentagon: return "PENTAGON";
-        case ODLCShape::Star: return "STAR";
-        case ODLCShape::Cross: return "CROSS";
-        default: return "CIRCLE";
+
+std::string AirdropTypeObjectsToString(const AirdropType& color) {
+    switch (color) {
+        case AirdropType::Water: return "WATER";
+        case AirdropType::Beacon: return "BEACON";
+        // maybe return optional nullopt here instead of defaulting to IDFK
+        // in case of an unknown object (Not relevant anymore I don't think)
+        default: return "IDFK";
     }
 }
 
-std::string ODLCColorToString(const ODLCColor& color) {
-    switch (color) {
-        case ODLCColor::White: return "WHITE";
-        case ODLCColor::Black: return "BLACK";
-        case ODLCColor::Red: return "RED";
-        case ODLCColor::Blue: return "BLUE";
-        case ODLCColor::Green: return "GREEN";
-        case ODLCColor::Purple: return "PURPLE";
-        case ODLCColor::Brown: return "BROWN";
-        case ODLCColor::Orange: return "ORANGE";
-        // maybe return optional nullopt here instead of defaulting to WHITE
-        // in case of an unknown color
-        default: return "WHITE";
-    }
-}

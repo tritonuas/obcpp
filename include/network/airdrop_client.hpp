@@ -1,18 +1,18 @@
 #ifndef INCLUDE_NETWORK_AIRDROP_CLIENT_HPP_
 #define INCLUDE_NETWORK_AIRDROP_CLIENT_HPP_
 
+#include <array>
+#include <atomic>
+#include <future>
+#include <list>
+#include <mutex>
 #include <optional>
 #include <queue>
-#include <mutex>
-#include <atomic>
-#include <array>
-#include <list>
 #include <utility>
-#include <future>
 
 extern "C" {
-    #include "udp_squared/protocol.h"
-    #include "network/airdrop_sockets.h"
+#include "network/airdrop_sockets.h"
+#include "udp_squared/protocol.h"
 }
 #include "protos/obc.pb.h"
 #include "utilities/constants.hpp"
@@ -32,14 +32,14 @@ class AirdropClient {
     // Returns list of all the payloads we have not heard from for more than
     // `threshold` seconds, and includes how many seconds it has been since
     // we last heard from them.
-    std::list<std::pair<BottleDropIndex, std::chrono::milliseconds>>
-        getLostConnections(std::chrono::milliseconds threshold);
+    std::list<std::pair<AirdropType, std::chrono::milliseconds>> getLostConnections(
+        std::chrono::milliseconds threshold);
 
     std::optional<drop_mode_t> getMode();
 
  private:
-    std::optional<drop_mode_t> mode {};
-    ad_socket_t socket {};
+    std::optional<drop_mode_t> mode{};
+    ad_socket_t socket{};
 
     std::queue<packet_t> recv_queue;
     std::mutex recv_mut;
@@ -48,7 +48,7 @@ class AirdropClient {
     std::future<void> worker_future;
 
     // holds unix timestamp of the last heartbeat received from every payload
-    std::array<std::chrono::milliseconds, NUM_AIRDROP_BOTTLES> last_heartbeat;
+    std::array<std::chrono::milliseconds, NUM_AIRDROPS> last_heartbeat;
 
     // Get initial SET_MODE msg from payloads and set up workers
     void _establishConnection();

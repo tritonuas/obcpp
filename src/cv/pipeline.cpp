@@ -1,72 +1,136 @@
 #include "cv/pipeline.hpp"
-#include "utilities/logging.hpp"
+
+#include <atomic>
+
 #include "protos/obc.pb.h"
+#include "utilities/logging.hpp"
 
-// TODO: eventually we will need to invoke non-default constructors for all the
-// modules of the pipeline (to customize model filepath, etc...)
-// TODO: I also want to have a way to customize if the model will use
-// matching vs segmentation/classification
-Pipeline::Pipeline(const PipelineParams& p) :
-    // assumes reference images passed to pipeline from not_stolen
-        matcher(p.competitionObjectives, p.referenceImages, p.matchingModelPath),
-        segmentor(p.segmentationModelPath),
-        detector(p.saliencyModelPath) {}
+// Pipeline constructor: initialize YOLO detector and the preprocess flag.
+Pipeline::Pipeline(const PipelineParams& p)
+    : outputPath(p.outputPath),
+      do_preprocess(p.do_preprocess) {
+    if (p.yoloModelPath.has_value() && !p.yoloModelPath->empty()) {
+        yoloDetector = std::make_unique<YOLO>(*p.yoloModelPath, 0.05f, 640, 640);
+        LOG_F(INFO, "YOLO model loaded from path: %s", p.yoloModelPath->c_str());
+    } else {
+        yoloDetector.reset();
+        LOG_F(WARNING, "No CV models are loaded (no YOLO model path provided).");
+        LOG_F(WARNING, "CVAGGREGATOR WILL NOT BE WORKING AS INTENDED. USE AT YOUR OWN RISK.");
+        LOG_F(WARNING, "Provide a YOLO model path to enable detections.");
+    }
+}
 
-/*
- *  Entrypoint of CV Pipeline. At a high level, it will include the following
- *  stages:
- *      - Saliency takes the full size image and outputs any cropped targets
- *        that are detected
- *      - Cropped targets are passed into target matching where they will
- *        be compared against targets associated with each water bottle.
- *        All targets (regardless of match status) will be passed onto
- *        later stages.
- *      - Bounding boxes predicted from saliency and GPS telemetry from when
- *        the photo was captured are passed into the localization algorithm.
- *        Here, the real latitude/longitude coordinates of the target are
- *        calculated.
- *      - Note, we may use a slight variation of this pipeline where the
- *        target matching stage is replaced by segmentation/classification.
- */
-PipelineResults Pipeline::run(const ImageData &imageData) {
+PipelineResults Pipeline::run(const ImageData& imageData) {
     LOG_F(INFO, "Running pipeline on an image");
 
-    VLOG_F(TRACE, "Saliency Start");
-    std::vector<CroppedTarget> saliencyResults = this->detector.salience(imageData.DATA);
-
-    // if saliency finds no potential targets, end early with no results
-    if (saliencyResults.empty()) {
-        LOG_F(INFO, "No saliency results, terminating...");
-        return PipelineResults(imageData, {});
+    // Preprocess the image if enabled; otherwise, use the original.
+    cv::Mat processedImage = imageData.DATA;
+    if (do_preprocess) {
+        processedImage = preprocessor.cropRight(imageData.DATA);
     }
 
-    VLOG_F(TRACE, "Saliency cropped %ld potential targets", saliencyResults.size());
-    std::vector<DetectedTarget> detectedTargets;
-    size_t curr_target_num = 0;
-    for (CroppedTarget target : saliencyResults) {
-        VLOG_F(TRACE, "Working on target %ld/%ld", ++curr_target_num, saliencyResults.size());
-        VLOG_F(TRACE, "Matching Start");
-        MatchResult potentialMatch = this->matcher.match(target);
+    // 1) YOLO DETECTION using the (possibly preprocessed) image
+    std::vector<Detection> yoloResults = this->yoloDetector->detect(processedImage);
 
-        VLOG_F(TRACE, "Localization Start");
-        // TODO: determine what to do if image is missing telemetry metadata
-        GPSCoord targetPosition;
-        if (imageData.TELEMETRY.has_value()) {
-            // targetPosition = GPSCoord(this->ecefLocalizer.localize(
-            //     imageData.TELEMETRY.value(), target.bbox));
-            targetPosition.set_latitude(imageData.TELEMETRY.value().latitude_deg);
-            targetPosition.set_longitude(imageData.TELEMETRY.value().longitude_deg);
-            targetPosition.set_altitude(0);
+    // If YOLO finds no potential targets, we can return early (still saving out the final image).
+    if (yoloResults.empty()) {
+        LOG_F(INFO, "No YOLO detections, terminating...");
+
+        if (!outputPath.empty()) {
+            static std::atomic<int> file_counter{0};
+            int i = file_counter.fetch_add(1);
+
+            // Build a unique filename
+            std::string uniqueOutputPath;
+            size_t dotPos = outputPath.find_last_of('.');
+            size_t sepPos = outputPath.find_last_of("/\\");
+            if (dotPos != std::string::npos && (sepPos == std::string::npos || dotPos > sepPos)) {
+                uniqueOutputPath = outputPath.substr(0, dotPos) + "_" + std::to_string(i) +
+                                   outputPath.substr(dotPos);
+            } else {
+                uniqueOutputPath = outputPath + "_" + std::to_string(i) + ".jpg";
+            }
+
+            if (!cv::imwrite(uniqueOutputPath, processedImage)) {
+                LOG_F(ERROR, "Failed to write image to %s", uniqueOutputPath.c_str());
+            } else {
+                LOG_F(INFO, "Output image saved to %s", uniqueOutputPath.c_str());
+            }
         }
 
-        VLOG_F(TRACE, "Detected target %ld/%ld at [%f, %f] matched to bottle %d with %f distance.",
-            curr_target_num, saliencyResults.size(),
-            targetPosition.latitude(), targetPosition.longitude(),
-            static_cast<int>(potentialMatch.bottleDropIndex), potentialMatch.distance);
-        detectedTargets.push_back(DetectedTarget(targetPosition,
-            potentialMatch.bottleDropIndex, potentialMatch.distance, target));
+        // Return the processed image (with no detections)
+        ImageData processedData = imageData;
+        processedData.DATA = processedImage;
+        return PipelineResults(processedData, {});
+    }
+
+    // 2) BUILD DETECTED TARGETS & LOCALIZE
+    std::vector<DetectedTarget> detectedTargets;
+    detectedTargets.reserve(yoloResults.size());
+
+    for (const auto& det : yoloResults) {
+        // Fill bounding box
+        Bbox box;
+        box.x1 = static_cast<int>(det.x1);
+        box.y1 = static_cast<int>(det.y1);
+        box.x2 = static_cast<int>(det.x2);
+        box.y2 = static_cast<int>(det.y2);
+
+        // If you want to keep cropping code, you can call:
+        // cv::Mat cropped = crop(processedImage, box);
+
+        // Localize
+        GPSCoord targetPosition;
+        if (imageData.TELEMETRY.has_value()) {
+            targetPosition = this->gsdLocalizer.localize(imageData.TELEMETRY.value(), box);
+        }
+
+        // Populate your DetectedTarget
+        DetectedTarget detected;
+        detected.bbox = box;
+        detected.coord = targetPosition;
+        detected.likely_airdrop = static_cast<AirdropType>(det.class_id);
+        detected.match_distance = (det.confidence > 0.f) ? (1.0 / det.confidence) : 9999.0;
+
+        detectedTargets.push_back(detected);
+    }
+
+    // 3) DRAW DETECTIONS ON THE IMAGE
+    //    (this modifies processedImage in-place)
+    if (this->yoloDetector) {
+        this->yoloDetector->drawAndPrintDetections(processedImage, yoloResults);
+    }
+
+    // Save the annotated image if an output path is specified
+    if (!outputPath.empty()) {
+        static std::atomic<int> file_counter{0};
+        int i = file_counter.fetch_add(1);
+        std::string uniqueOutputPath;
+
+        size_t dotPos = outputPath.find_last_of('.');
+        size_t sepPos = outputPath.find_last_of("/\\");
+        if (dotPos != std::string::npos && (sepPos == std::string::npos || dotPos > sepPos)) {
+            uniqueOutputPath =
+                outputPath.substr(0, dotPos) + "_" + std::to_string(i) + outputPath.substr(dotPos);
+        } else {
+            uniqueOutputPath = outputPath + "_" + std::to_string(i) + ".jpg";
+        }
+
+        if (!cv::imwrite(uniqueOutputPath, processedImage)) {
+            LOG_F(ERROR, "Failed to write image to %s", uniqueOutputPath.c_str());
+        } else {
+            LOG_F(INFO, "Output image saved to %s", uniqueOutputPath.c_str());
+        }
     }
 
     LOG_F(INFO, "Finished Pipeline on an image");
-    return PipelineResults(imageData, detectedTargets);
+
+    // Wrap up the final annotated image to return
+    ImageData processedData = imageData;
+    processedData.DATA = processedImage;
+
+    // Return a PipelineResults that includes:
+    //  1) The final big image with bounding boxes drawn
+    //  2) The bounding boxes + localized GPS coords
+    return PipelineResults(processedData, detectedTargets);
 }

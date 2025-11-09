@@ -13,7 +13,9 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/mat.hpp>
 
-#include "network/mavlink.hpp"
+// Forward declaration to avoid circular dependency
+// #include "network/mavlink.hpp"
+class MavlinkClient;
 #include "utilities/datatypes.hpp"
 #include "utilities/obc_config.hpp"
 

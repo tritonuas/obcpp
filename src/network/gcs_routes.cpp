@@ -1,35 +1,45 @@
 #include <google/protobuf/util/json_util.h>
 #include <httplib.h>
 
-#include <vector>
-#include <memory>
-#include <string>
-#include <optional>
 #include <filesystem>
+#include <memory>
+#include <optional>
+#include <string>
+#include <vector>
+
+
+#include <nlohmann/json.hpp>
 
 #include "core/mission_state.hpp"
-#include "protos/obc.pb.h"
-#include "utilities/serialize.hpp"
-#include "utilities/logging.hpp"
-#include "utilities/http.hpp"
-#include "pathing/mission_path.hpp"
 #include "network/gcs_macros.hpp"
-#include "ticks/tick.hpp"
+#include "network/mavlink.hpp"
+#include "pathing/mission_path.hpp"
+#include "protos/obc.pb.h"
+#include "ticks/airdrop_approach.hpp"
+#include "ticks/cv_loiter.hpp"
 #include "ticks/path_gen.hpp"
 #include "ticks/path_validate.hpp"
+#include "ticks/tick.hpp"
 #include "ticks/wait_for_takeoff.hpp"
-#include "ticks/cv_loiter.hpp"
+#include "utilities/http.hpp"
+#include "utilities/logging.hpp"
+#include "utilities/serialize.hpp"
 
-using namespace std::chrono_literals; // NOLINT
+extern "C" {
+#include "udp_squared/protocol.h"
+}
+
+using namespace std::chrono_literals;  // NOLINT
+using json = nlohmann::json;
 
 /*
  * This file defines all of the GCS handler functions for every route
  * the gcs server is listening on.
- * 
+ *
  * Inside of each of the functions, you have access to these variables
- * 
+ *
  * state: std::shared_ptr<MissionState>
- *        This is a shared pointer to the mission state, just like 
+ *        This is a shared pointer to the mission state, just like
  *        other parts of the code have available.
  * request: const httplib::Request&
  *        Lets you access all of the information about the HTTP request
@@ -40,17 +50,13 @@ using namespace std::chrono_literals; // NOLINT
  *        the LOG_RESPONSE macro will handle it for you.
  */
 
-
 DEF_GCS_HANDLE(Get, connections) {
     LOG_REQUEST_TRACE("GET", "/connections");
 
-    std::list<std::pair<BottleDropIndex, std::chrono::milliseconds>> lost_airdrop_conns;
+    std::list<std::pair<AirdropType, std::chrono::milliseconds>> lost_airdrop_conns;
     if (state->getAirdrop() == nullptr) {
-        lost_airdrop_conns.push_back({BottleDropIndex::A, 99999ms});
-        lost_airdrop_conns.push_back({BottleDropIndex::B, 99999ms});
-        lost_airdrop_conns.push_back({BottleDropIndex::C, 99999ms});
-        lost_airdrop_conns.push_back({BottleDropIndex::D, 99999ms});
-        lost_airdrop_conns.push_back({BottleDropIndex::E, 99999ms});
+        lost_airdrop_conns.push_back({AirdropType::Water, 99999ms});
+        lost_airdrop_conns.push_back({AirdropType::Beacon, 99999ms});
     } else {
         lost_airdrop_conns = state->getAirdrop()->getLostConnections(3s);
     }
@@ -64,7 +70,6 @@ DEF_GCS_HANDLE(Get, connections) {
         mav_conn = state->getMav()->get_conn_status();
     }
 
-
     bool camera_good = false;
 
     if (state->getCamera()) {
@@ -72,8 +77,8 @@ DEF_GCS_HANDLE(Get, connections) {
     }
 
     OBCConnInfo info;
-    for (auto const& [bottle_index, ms_since_last_heartbeat] : lost_airdrop_conns) {
-        info.add_dropped_bottle_idx(bottle_index);
+    for (auto const& [airdrop_index, ms_since_last_heartbeat] : lost_airdrop_conns) {
+        info.add_dropped_airdrop_idx(airdrop_index);
         info.add_ms_since_ad_heartbeat(ms_since_last_heartbeat.count());
     }
     info.set_mav_rc_good(mav_conn.is_available);
@@ -150,17 +155,11 @@ DEF_GCS_HANDLE(Post, targets, locations) {
     for (const auto& waypoint : waypoints) {
         google::protobuf::util::JsonStringToMessage(waypoint.dump(), &airdrop_target);
 
-        bottle_t bottle;
-        if (airdrop_target.index() == BottleDropIndex::A) {
-            bottle = UDP2_A;
-        } else if (airdrop_target.index() == BottleDropIndex::B) {
-            bottle = UDP2_B;
-        } else if (airdrop_target.index() == BottleDropIndex::C) {
-            bottle = UDP2_C;
-        } else if (airdrop_target.index() == BottleDropIndex::D) {
-            bottle = UDP2_D;
-        } else if (airdrop_target.index() == BottleDropIndex::E) {
-            bottle = UDP2_E;
+        airdrop_t airdrop;
+        if (airdrop_target.index() == AirdropType::Water) {
+            airdrop = UDP2_A;
+        } else if (airdrop_target.index() == AirdropType::Beacon) {
+            airdrop = UDP2_B;
         } else {
             LOG_RESPONSE(ERROR, "Invalid bottle index", BAD_REQUEST);
             return;
@@ -168,8 +167,8 @@ DEF_GCS_HANDLE(Post, targets, locations) {
 
         float drop_lat = airdrop_target.coordinate().latitude();
         float drop_lng = airdrop_target.coordinate().longitude();
-        state->getAirdrop()->send(
-            makeLatLngPacket(SEND_LATLNG, bottle, TARGET_ACQUIRED, drop_lat, drop_lng, curr_alt_m));
+        state->getAirdrop()->send(makeLatLngPacket(SEND_LATLNG, airdrop, TARGET_ACQUIRED, drop_lat,
+                                                   drop_lng, curr_alt_m));
     }
     LOG_RESPONSE(INFO, "Uploaded airdrop targets coordinates", OK);
 }
@@ -253,8 +252,38 @@ DEF_GCS_HANDLE(Get, camera, capture) {
 
     std::optional<ImageTelemetry> telemetry = image->TELEMETRY;
 
+    // START COMPRESSION
+    // Compress the image before converting to base64
+    std::vector<uchar> compressed_data;
+    std::vector<int> compression_params;
+    compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
+    compression_params.push_back(85);  // Quality: 0-100, 85 is a good balance for transmission
+
+    cv::Mat compressed_image;
+    if (cv::imencode(".jpg", image->DATA, compressed_data, compression_params)) {
+        // Create compressed Mat from encoded data
+        compressed_image = cv::imdecode(compressed_data, cv::IMREAD_COLOR);
+
+        if (!compressed_image.empty()) {
+            LOG_F(INFO,
+                  "Compressed manual capture image from %d bytes to %d bytes (%.1f%% compression)",
+                  image->DATA.total() * image->DATA.elemSize(), compressed_data.size(),
+                  (1.0 - static_cast<double>(compressed_data.size()) /
+                             (image->DATA.total() * image->DATA.elemSize())) *
+                      100.0);
+        } else {
+            LOG_F(WARNING, "Failed to decode compressed manual capture image, using original");
+            compressed_image = image->DATA;
+        }
+    } else {
+        LOG_F(WARNING, "Failed to compress manual capture image, using original");
+        compressed_image = image->DATA;
+    }
+
     ManualImage manual_image;
-    manual_image.set_img_b64(cvMatToBase64(image->DATA));
+    manual_image.set_img_b64(cvMatToBase64(compressed_image));
+    // END COMPRESSION
+
     manual_image.set_timestamp(image->TIMESTAMP);
     if (telemetry.has_value()) {
         manual_image.set_lat_deg(telemetry->latitude_deg);
@@ -275,36 +304,25 @@ DEF_GCS_HANDLE(Get, camera, capture) {
 
 DEF_GCS_HANDLE(Post, dodropnow) {
     LOG_REQUEST("POST", "/dodropnow");
+    LOG_F(INFO, "Received signal to drop current bottle ");
 
-    BottleSwap bottle_proto;
-    google::protobuf::util::JsonStringToMessage(request.body, &bottle_proto);
+    if (state->getMav() == nullptr) {
+        LOG_RESPONSE(ERROR, "Mavlink not connected", BAD_REQUEST);
+        return;
+    }
 
-    bottle_t bottle;
-    if (bottle_proto.index() == BottleDropIndex::A) {
-        bottle = UDP2_A;
-    } else if (bottle_proto.index() == BottleDropIndex::B) {
-        bottle = UDP2_B;
-    } else if (bottle_proto.index() == BottleDropIndex::C) {
-        bottle = UDP2_C;
-    } else if (bottle_proto.index() == BottleDropIndex::D) {
-        bottle = UDP2_D;
-    } else if (bottle_proto.index() == BottleDropIndex::E) {
-        bottle = UDP2_E;
+    // Copied from the integration test
+    std::optional<airdrop_t> next_airdrop_to_drop;
+    AirdropType next_airdrop = static_cast<AirdropType>(2);
+    next_airdrop_to_drop = static_cast<airdrop_t>(next_airdrop);
+
+    // std::string message;
+    // drop
+    if (triggerAirdrop(state->getMav(), next_airdrop_to_drop.value())) {
+        LOG_RESPONSE(INFO, "Dropped Bottle Successfully", OK);
     } else {
-        LOG_RESPONSE(ERROR, "Invalid bottle index", BAD_REQUEST);
-        return;
+        LOG_RESPONSE(INFO, "Failed to drop bottle", INTERNAL_SERVER_ERROR);
     }
-
-    LOG_F(INFO, "Received signal to drop bottle %d", bottle);
-
-    if (state->getAirdrop() == nullptr) {
-        LOG_RESPONSE(ERROR, "Airdrop not connected", BAD_REQUEST);
-        return;
-    }
-
-    state->getAirdrop()->send(makeDropNowPacket(bottle));
-
-    LOG_RESPONSE(INFO, "Dropped bottle", OK);
 }
 
 DEF_GCS_HANDLE(Post, takeoff, manual) {
@@ -331,223 +349,150 @@ DEF_GCS_HANDLE(Post, takeoff, autonomous) {
     LOG_RESPONSE(INFO, "Set status of WaitForTakeoff Tick to autonomous", OK);
 }
 
-DEF_GCS_HANDLE(Post, targets, validate) {
-    LOG_REQUEST("POST", "/targets/validate");
-    auto lock_ptr = state->getTickLockPtr<CVLoiterTick>();
-
-    if (!lock_ptr.has_value()) {
-        LOG_RESPONSE(WARNING, "Not currently in CVLoiter Tick", BAD_REQUEST);
-        return;
-    }
-
-    lock_ptr->data->setStatus(CVLoiterTick::Status::Validated);
-    LOG_RESPONSE(INFO, "Set status of CVLoiter Tick to validated", OK);
-}
-
-DEF_GCS_HANDLE(Post, targets, reject) {
-    LOG_REQUEST("POST", "/targets/reject");
-    auto lock_ptr = state->getTickLockPtr<CVLoiterTick>();
-
-    if (!lock_ptr.has_value()) {
-        LOG_RESPONSE(WARNING, "Not currently in CVLoiter Tick", BAD_REQUEST);
-        return;
-    }
-
-    lock_ptr->data->setStatus(CVLoiterTick::Status::Rejected);
-    LOG_RESPONSE(INFO, "Set status of CVLoiter Tick to rejected", OK);
-}
-
 DEF_GCS_HANDLE(Get, targets, all) {
     LOG_REQUEST("GET", "/targets/all");
-
-    if (state->getCV() == nullptr) {
+    auto aggregator = state->getCV();
+    if (!aggregator) {
         LOG_RESPONSE(ERROR, "CV not connected yet", BAD_REQUEST);
         return;
     }
 
-    LockPtr<CVResults> results = state->getCV()->getResults();
+    // 1) Lock aggregator & pop all new runs
+    std::vector<AggregatedRun> new_runs = aggregator->popAllRuns();
+    if (new_runs.empty()) {
+        // No new data
+        LOG_RESPONSE(INFO, "No new runs found", OK, "[]", mime::json);
+        return;
+    }
 
-    // Convert to protobuf serialization
+    // 2) Convert each AggregatedRun into ONE IdentifiedTarget proto
     std::vector<IdentifiedTarget> out_data;
+    out_data.reserve(new_runs.size());  // Reserve space for efficiency
 
-    int id = 0;  // id of the target is the index in the detected_targets vector
-    // See layout of Identified target proto here:
-    // https://github.com/tritonuas/protos/blob/master/obc.proto
-    for (auto& target : results.data->detected_targets) {
-        IdentifiedTarget out;
-        out.set_id(id);
-        out.set_picture(cvMatToBase64(target.crop.croppedImage));
-        out.set_ismannikin(target.crop.isMannikin);
+    // get aggregate to store a record of these results
+    LockPtr<std::map<int, IdentifiedTarget>> records = aggregator->getCVRecord();
+    std::shared_ptr<std::map<int, IdentifiedTarget>> records_ptr = records.data;
 
-        GPSCoord* coord = new GPSCoord;
-        coord->set_altitude(target.coord.altitude());
-        coord->set_longitude(target.coord.longitude());
-        coord->set_latitude(target.coord.latitude());
-        out.set_allocated_coordinate(coord);  // will be freed in destructor
+    for (const auto& run : new_runs) {
+        // Create ONE IdentifiedTarget message per AggregatedRun
+        IdentifiedTarget target;
+        // Set the run ID
+        target.set_run_id(run.run_id);
+        // START COMPRESSION
 
-        out_data.push_back(std::move(out));
+        // Compress the annotated image before converting to base64
+        std::vector<uchar> compressed_data;
+        std::vector<int> compression_params;
+        compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
+        compression_params.push_back(85);
+        // Quality: 0-100, 85 is a good balance for transmission
 
-        // not setting target info because that doesn't really make sense with the current context
-        // of the matching algorithm, since the algorithm is matching cropped targets to the
-        // expected not-stolen generated images, so it isn't really classifying targets with a
-        // specific alphanumeric, color, etc...
+        cv::Mat compressed_image;
+        if (cv::imencode(".jpg", run.annotatedImage, compressed_data, compression_params)) {
+            // Create compressed Mat from encoded data
+            compressed_image = cv::imdecode(compressed_data, cv::IMREAD_COLOR);
 
-        id++;
-    }
+            if (!compressed_image.empty()) {
+                LOG_F(INFO, "Compressed image from %d bytes to %d bytes (%.1f%% compression)",
+                      run.annotatedImage.total() * run.annotatedImage.elemSize(),
+                      compressed_data.size(),
+                      (1.0 - static_cast<double>(compressed_data.size()) /
+                                 (run.annotatedImage.total() * run.annotatedImage.elemSize())) *
+                          100.0);
+            } else {
+                LOG_F(WARNING, "Failed to decode compressed image, using original");
+                compressed_image = run.annotatedImage;
+            }
+        } else {
+            LOG_F(WARNING, "Failed to compress image, using original");
+            compressed_image = run.annotatedImage;
+        }
 
+        // Convert the compressed image to base64 and set it (once per run)
+        std::string b64 = cvMatToBase64(compressed_image);
+        target.set_picture(b64);
+        // END COMPRESSION
+
+        // Ensure coords and bboxes vectors are the same size (should be guaranteed by Aggregator
+        // logic)
+        if (run.coords.size() != run.bboxes.size()) {
+            LOG_F(ERROR,
+                  "Mismatch between coordinates (%ld) and bboxes (%ld) count in run_id %d. "
+                  "Skipping this run.",
+                  run.coords.size(), run.bboxes.size(), run.run_id);
+            continue;  // Skip this problematic run
+        }
+
+        // Add all coordinates and bounding boxes from this run
+        for (size_t i = 0; i < run.bboxes.size(); ++i) {
+            // Add coordinate
+            GPSCoord* proto_coord = target.add_coordinates();  // Use the plural field name
+            proto_coord->set_latitude(run.coords[i].latitude());
+            proto_coord->set_longitude(run.coords[i].longitude());
+            proto_coord->set_altitude(run.coords[i].altitude());
+
+            // Add bounding box
+            BboxProto* proto_bbox = target.add_bboxes();  // Use the plural field name
+            proto_bbox->set_x1(run.bboxes[i].x1);
+            proto_bbox->set_y1(run.bboxes[i].y1);
+            proto_bbox->set_x2(run.bboxes[i].x2);
+            proto_bbox->set_y2(run.bboxes[i].y2);
+        }
+
+        // copy the target to a record object to store
+        IdentifiedTarget record;
+        record.CopyFrom(target);
+        // remove image
+        record.set_picture("");
+        records_ptr->insert_or_assign(run.run_id, target);
+        // Add the completed IdentifiedTarget (representing the whole run) to the output list
+        out_data.push_back(std::move(target));
+    }  // End loop over AggregatedRuns
+    // 3) Serialize the vector of IdentifiedTarget messages to JSON
+    // Ensure messagesToJson can handle a vector or use iterators correctly
     std::string out_data_json = messagesToJson(out_data.begin(), out_data.end());
-    LOG_RESPONSE(INFO, "Got serialized target data", OK, out_data_json.c_str(), mime::json);
+    response.set_content(out_data_json.c_str(), mime::json);
+    response.status = OK;
 }
 
-DEF_GCS_HANDLE(Get, targets, matched) {
-    try {
-        LOG_REQUEST("GET", "/targets/matched");
-
-        if (state->getCV() == nullptr) {
-            LOG_RESPONSE(ERROR, "CV not connected yet", BAD_REQUEST);
-            return;
-        }
-
-        /*
-            NOTE / TODO:
-            ok so these protobuf messages should really be refactored a bit
-            currently the MatchedTarget protobuf message contains both a Bottle and
-            IdentifiedTarget, which in theory seems fine but gets annoying because
-            now to make the message to send down here we have to construct an entire IdentifiedTarget
-            struct and then send that down, when really we should only need to send the id
-            down because all of the IdentifiedTarget information should have been sent
-            in the GET /targets/all endpoint
-
-            - tyler
-        */
-
-        // this vector of bottles needs to live as long as this function because
-        // we need to give a ptr to these bottles when constructing the MatchedTarget protobuf,
-        // and we don't want that data to go out of scope and become garbage
-        std::vector<Bottle> bottles = state->mission_params.getAirdropBottles();
-
-        // convert to protobuf serialization
-        std::vector<MatchedTarget> out_data;
-
-        LockPtr<CVResults> results = state->getCV()->getResults();
-        for (const auto& [bottle, target_index] : results.data->matches) {
-            if (!target_index.has_value()) {
-                continue;
-            }
-
-            if (target_index.value() >= results.data->detected_targets.size()) {
-                LOG_RESPONSE(ERROR, "Out of bounds match error", INTERNAL_SERVER_ERROR);
-                return;
-            }
-
-            LOG_F(INFO, "bottle %d matched with target %ld",
-                static_cast<int>(bottle), target_index.value());
-
-            const DetectedTarget& detected_target =
-                results.data->detected_targets.at(target_index.value());
-
-            MatchedTarget matched_target;
-            Bottle* curr_bottle = nullptr;
-            for (auto& b : bottles) {
-                if (b.index() == bottle) {
-                    curr_bottle = new Bottle;
-                    // this is soooo goooooood :0
-                    curr_bottle->set_index(b.index());
-                    curr_bottle->set_alphanumeric(b.alphanumeric());
-                    curr_bottle->set_alphanumericcolor(b.alphanumericcolor());
-                    curr_bottle->set_shape(b.shape());
-                    curr_bottle->set_shapecolor(b.shapecolor());
-                }
-            }
-            if (curr_bottle == nullptr) {
-                LOG_F(WARNING, "Unmatched bottle");
-                continue;
-            }
-            matched_target.set_allocated_bottle(curr_bottle);  // freed in destructor
-
-            auto identified_target = new IdentifiedTarget;
-
-            identified_target->set_id(target_index.value());
-            identified_target->set_alphanumeric(curr_bottle->alphanumeric());
-            identified_target->set_alphanumericcolor(curr_bottle->alphanumericcolor());
-            identified_target->set_shape(curr_bottle->shape());
-            identified_target->set_shapecolor(curr_bottle->shapecolor());
-
-            matched_target.set_allocated_target(identified_target);  // will be freed in destructor
-
-            out_data.push_back(matched_target);
-        }
-
-        for (auto& matched_target : out_data) {
-            LOG_F(INFO, "bottle %d matched to target %d",
-                static_cast<int>(matched_target.bottle().index()),
-                matched_target.target().id());
-        }
-
-        std::string out_data_json = messagesToJson(out_data.begin(), out_data.end());
-        LOG_RESPONSE(INFO, "Got serialized target match data", OK,
-            out_data_json.c_str(), mime::json);
-    }
-    catch (std::exception ex) {
-        LOG_RESPONSE(ERROR, "Who fucking knows what just happened", INTERNAL_SERVER_ERROR);
-    }
-}
-
+// *** NEW Handler for POST /targets/matched ***
 DEF_GCS_HANDLE(Post, targets, matched) {
-    try {
-        LOG_REQUEST("POST", "/targets/matched");
+    LOG_REQUEST("POST", "/targets/matched");
 
-        // not using protobufs cause that shit is NOT working
-        // json string will be in the format
-        // {"A": 3}
-
-        json j = json::parse(request.body);
-
-        if (state->getCV() == nullptr) {
-            LOG_RESPONSE(ERROR, "CV not init yet", BAD_REQUEST);
-            return;
-        }
-
-        LockPtr<CVResults> results = state->getCV()->getResults();
-
-        LOG_S(INFO) << j;
-
-        for (auto& [key, val] : j.items()) {
-            std::cout << "key: " << key << ", val: " << val << std::endl;
-        }
-
-        // obviously this should be cleaned up, but it should work for now
-        if (j.contains("A")) {
-            int id = j.at("A");
-            LOG_F(INFO, "Updating bottle A to id %d", id);
-            results.data->matches[BottleDropIndex::A] = static_cast<size_t>(id);
-        }
-        if (j.contains("B")) {
-            int id = j.at("B");
-            LOG_F(INFO, "Updating bottle B to id %d", id);
-            results.data->matches[BottleDropIndex::B] = static_cast<size_t>(id);
-        }
-        if (j.contains("C")) {
-            int id = j.at("C");
-            LOG_F(INFO, "Updating bottle C to id %d", id);
-            results.data->matches[BottleDropIndex::C] = static_cast<size_t>(id);
-        }
-        if (j.contains("D")) {
-            int id = j.at("D");
-            LOG_F(INFO, "Updating bottle D to id %d", id);
-            results.data->matches[BottleDropIndex::D] = static_cast<size_t>(id);
-        }
-        if (j.contains("E")) {
-            int id = j.at("E");
-            LOG_F(INFO, "Updating bottle E to id %d", id);
-            results.data->matches[BottleDropIndex::E] = static_cast<size_t>(id);
-        }
-
-        LOG_RESPONSE(INFO, "Updated bottle matchings", OK);
+    if (state->getCV() == nullptr) {
+        LOG_RESPONSE(ERROR, "CV not init yet", BAD_REQUEST);
+        return;
     }
-    catch (std::exception ex) {
-        LOG_RESPONSE(ERROR, "Who fucking knows what just happened", INTERNAL_SERVER_ERROR);
+
+    nlohmann::json j_root = nlohmann::json::parse(request.body);
+
+    LOG_S(INFO) << j_root;
+
+    LockPtr<MatchedResults> matched_results = state->getCV()->getMatchedResults();
+
+    if (matched_results.data == nullptr) {
+        LOG_S(ERROR) << "lockptr is null";
     }
+
+    AirdropTarget returned_matched_result;
+
+    for (const auto& instance : j_root) {
+        LOG_S(INFO) << returned_matched_result.index();
+        google::protobuf::util::JsonStringToMessage(instance.dump(), &returned_matched_result);
+        LOG_S(WARNING) << returned_matched_result.index();
+        matched_results.data->matched_airdrop[returned_matched_result.index()] =
+            returned_matched_result;
+        LOG_S(ERROR) << returned_matched_result.index();
+    }
+
+    auto lock_ptr = state->getTickLockPtr<CVLoiterTick>();
+    if (!lock_ptr.has_value()) {
+        LOG_RESPONSE(WARNING, "Not currently in Loiter Tick", BAD_REQUEST);
+        return;
+    }
+    lock_ptr->data->setStatus(CVLoiterTick::Status::Validated);
+
+    LOG_RESPONSE(INFO, "Finished setting targets (and thus loitering)", OK);
 }
 
 DEF_GCS_HANDLE(Post, kill, kill, kill) {
@@ -561,34 +506,154 @@ DEF_GCS_HANDLE(Post, kill, kill, kill) {
     }
 }
 
-DEF_GCS_HANDLE(Get, oh, shit)  {
-    LOG_REQUEST("GET", "/oh/shit");
+DEF_GCS_HANDLE(Post, camera, startstream) {
+    LOG_REQUEST("POST", "/camera/startstream");
 
-    if (state->getCV() == nullptr) {
-        LOG_RESPONSE(ERROR, "No CV yet :(", BAD_REQUEST);
-        return;
+    std::shared_ptr<CameraInterface> cam = state->getCamera();
+    // const string
+    uint32_t interval;
+    unsigned long parsed_ul = std::stoul(request.body);  // NOLINT
+    interval = static_cast<uint32_t>(parsed_ul);
+    std::chrono::milliseconds chrono_interval(interval);
+
+    if (!cam->isConnected()) {
+        LOG_F(INFO, "Camera not connected. Attempting to connect...");
+        cam->connect();
+        if (!cam->isConnected()) {
+            LOG_F(ERROR, "Failed to connect to the camera after connection attempt.");
+            LOG_RESPONSE(ERROR, "Failed to connect to camera", NOT_FOUND);
+            return;
+        }
+        LOG_F(INFO, "Camera connected successfully.");
     }
 
-    GPSCoord center;
-    center.set_latitude(38.31440741337194);
-    center.set_longitude(-76.54460728168489);
-    center.set_altitude(0);
+    cam->startStreaming();
+    cam->startTakingPictures(chrono_interval, state->getMav());
 
-    LockPtr<CVResults> results = state->getCV()->getResults();
-
-    for (int i = 1; i <= 5; i++) {
-        CroppedTarget crop;
-        crop.isMannikin = false;
-        crop.croppedImage = cv::Mat(cv::Size(20, 20), CV_8UC3, cv::Scalar(255));
-
-        DetectedTarget target(center, static_cast<BottleDropIndex>(i), 100.0, crop);
-        target.coord = center;
-        target.likely_bottle = static_cast<BottleDropIndex>(i);
-        target.crop = crop;
-
-        results.data->detected_targets.push_back(target);
-    }
-
-    LOG_RESPONSE(INFO, "Oh shit", OK);
+    LOG_RESPONSE(INFO, "Started Camera Stream", OK);
 }
 
+DEF_GCS_HANDLE(Post, camera, endstream) {
+    LOG_REQUEST("POST", "/camera/endstream");
+
+    std::shared_ptr<CameraInterface> cam = state->getCamera();
+
+    if (!cam->isConnected()) {
+        LOG_F(INFO, "Camera not connected. Attempting to connect...");
+        cam->connect();
+        if (!cam->isConnected()) {
+            LOG_F(ERROR, "Failed to connect to the camera after connection attempt.");
+            LOG_RESPONSE(ERROR, "Failed to connect to camera", NOT_FOUND);
+            return;
+        }
+        LOG_F(INFO, "Camera connected successfully.");
+    }
+
+    cam->stopTakingPictures();
+
+    std::deque<ImageData> images;
+    images = cam->getAllImages();
+    for (const ImageData& image : images) {
+        std::filesystem::path save_dir = state->config.camera.save_dir;
+        std::filesystem::path img_filepath =
+            save_dir / (std::to_string(image.TIMESTAMP) + std::string(".jpg"));
+        std::filesystem::path json_filepath =
+            save_dir / (std::to_string(image.TIMESTAMP) + std::string(".json"));
+        saveImageToFile(image.DATA, img_filepath);
+        if (image.TELEMETRY.has_value()) {
+            saveImageTelemetryToFile(image.TELEMETRY.value(), json_filepath);
+        }
+        LOG_F(INFO, "Saving image %s", img_filepath.string().c_str());
+    }
+
+    LOG_RESPONSE(INFO, "Ended Camera Stream", OK);
+}
+
+DEF_GCS_HANDLE(Get, tickstate) {
+    // Not using the macros here so that it doesn't scream at you every 1 second
+    // LOG_REQUEST("GET", "/tickstate");
+
+    TickID tickID = state->getTickID();
+    std::string tick_state = TICK_ID_TO_STR(tickID);
+
+    // LOG_RESPONSE(INFO, "Returning tick state", OK, tick_state, mime::plaintext);
+    response.set_content(tick_state, mime::plaintext);
+    response.status = OK;
+}
+
+DEF_GCS_HANDLE(Post, camera, runpipeline) {
+    LOG_REQUEST("POST", "/camera/runpipeline");
+
+    std::shared_ptr<CameraInterface> cam = state->getCamera();
+
+    std::string yolo_model_dir = state->config.cv.yolo_model_dir;
+    LOG_F(INFO, "Instantiating CV Aggregator with the following models:");
+    LOG_F(INFO, "Yolo Model: %s", yolo_model_dir.c_str());
+
+    // Make a CVAggregator instance and set it in the state
+    state->setCV(std::make_shared<CVAggregator>(Pipeline(PipelineParams(yolo_model_dir))));
+
+    if (!cam->isConnected()) {
+        LOG_F(INFO, "Camera not connected. Attempting to connect...");
+        cam->connect();
+        if (!cam->isConnected()) {
+            LOG_F(ERROR, "Failed to connect to the camera after connection attempt.");
+            LOG_RESPONSE(ERROR, "Failed to connect to camera", NOT_FOUND);
+            return;
+        }
+        LOG_F(INFO, "Camera connected successfully.");
+    }
+
+    cam->startStreaming();
+
+    for (int i = 0; i < state->config.pathing.coverage.hover.pictures_per_stop; i++) {
+        auto photo = state->getCamera()->takePicture(500ms, state->getMav());
+        if (state->config.camera.save_images_to_file) {
+            photo->saveToFile(state->config.camera.save_dir);
+        }
+
+        if (photo.has_value()) {
+            // Run the pipeline on the photo
+            state->getCV()->runPipeline(photo.value());
+        }
+    }
+
+    LOG_RESPONSE(INFO, "Successfully ran camera Stream", OK);
+}
+
+DEF_GCS_HANDLE(Post, rtl) {
+    LOG_REQUEST("POST", "/rtl");
+    state->getMav()->rtl();
+    LOG_RESPONSE(INFO, "RTL activated", OK);
+}
+
+// DEF_GCS_HANDLE(Get, oh, shit) {
+//     LOG_REQUEST("GET", "/oh/shit");
+
+//     if (state->getCV() == nullptr) {
+//         LOG_RESPONSE(ERROR, "No CV yet :(", BAD_REQUEST);
+//         return;
+//     }
+
+//     GPSCoord center;
+//     center.set_latitude(38.31440741337194);
+//     center.set_longitude(-76.54460728168489);
+//     center.set_altitude(0);
+
+//     LockPtr<CVResults> results = state->getCV()->getResults();
+
+//     for (int i = 1; i <= 5; i++) {
+//         CroppedTarget crop;
+//         crop.isMannikin = false;
+//         crop.croppedImage = cv::Mat(cv::Size(20, 20), CV_8UC3, cv::Scalar(255));
+
+//         DetectedTarget target(center, static_cast<BottleDropIndex>(i), 100.0, crop);
+//         target.coord = center;
+//         target.likely_bottle = static_cast<BottleDropIndex>(i);
+//         target.crop = crop;
+
+//         results.data->detected_targets.push_back(target);
+//     }
+
+//     LOG_RESPONSE(INFO, "Oh shit", OK);
+// }

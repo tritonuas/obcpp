@@ -20,6 +20,10 @@ models/*
 
 images/*
 !images/.gitkeep
+!images/mapping/
+
+images/mapping/*
+!images/mapping/.gitkeep
 
 tests/integration/images/*
 !tests/integration/images/.gitkeep
@@ -38,8 +42,17 @@ tests/integration/mapping/batch2/*
 tests/integration/mapping/images/*
 !tests/integration/mapping/images/.gitkeep
 
+tests/integration/mapping/direct_test_images/*
+!tests/integration/mapping/direct_test_images/.gitkeep
+
 tests/integration/mapping/output/*
 !tests/integration/mapping/output/.gitkeep
+
+tests/integration/mapping/direct_output/*
+!tests/integration/mapping/direct_output/.gitkeep
+
+tests/integration/aggregator/*
+!tests/integration/aggregator/.gitkeep
 
 .vscode/*
 !.vscode/c_cpp_properties.json
@@ -49,3 +62,5 @@ libcore_library.dylib
 
 **/*.pb.cc
 **/*.pb.h
+
+*~

@@ -17,10 +17,10 @@ add_subdirectory(utilities)
 add_library(obcpp_lib INTERFACE)
 target_link_libraries(obcpp_lib INTERFACE
     obcpp_protos
+    obcpp_network
     obcpp_camera
     obcpp_core
     obcpp_cv
-    obcpp_network
     obcpp_pathing
     obcpp_ticks
     obcpp_utilities
@@ -56,6 +56,7 @@ target_add_opencv(${PROJECT_NAME})
 target_add_httplib(${PROJECT_NAME})
 target_add_loguru(${PROJECT_NAME})
 target_add_boost(${PROJECT_NAME})
+target_add_onnxruntime(${PROJECT_NAME})
 # for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
 # target_add_imagemagick(${PROJECT_NAME})
 target_include_directories(${PROJECT_NAME} PRIVATE ${ImageMagick_INCLUDE_DIRS})

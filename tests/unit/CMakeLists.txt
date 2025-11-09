@@ -21,6 +21,7 @@ target_add_opencv(${BINARY})
 target_add_matplot(${BINARY})
 target_add_httplib(${BINARY})
 target_add_loguru(${BINARY})
+target_add_onnxruntime(${BINARY})
 # for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
 # target_add_imagemagick(path_plotting)
 target_include_directories(${BINARY} PRIVATE ${ImageMagick_INCLUDE_DIRS})
@@ -30,9 +31,19 @@ add_test(NAME ${BINARY} COMMAND ${BINARY})
 
 # setup make target (make test)
 add_custom_target(test)
+# add_custom_command(
+#     TARGET test
+#     COMMAND "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${BINARY}"
+#     ARGS "--output-on-failure"
+# )
+# add_dependencies(test ${BINARY})
+
 add_custom_command(
-    TARGET test
+    TARGET  test
+    USES_TERMINAL               # let the output stream through immediately
     COMMAND "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${BINARY}"
+    ARGS "--gtest_color=yes"
+    ARGS "--gtest_brief=0"     # prints every test name
     ARGS "--output-on-failure"
 )
 add_dependencies(test ${BINARY})

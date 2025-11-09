@@ -3,6 +3,7 @@
 
 #include <array>
 #include <chrono>
+#include <cmath>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -52,8 +53,8 @@ class MissionState {
     void setAirdropPath(const MissionPath& airdrop_path);
     MissionPath getAirdropPath();
 
-    void markBottleAsDropped(BottleDropIndex bottle);
-    std::unordered_set<BottleDropIndex> getDroppedBottles();
+    void markAirdropAsDropped(AirdropType airdrop);
+    std::unordered_set<AirdropType> getDroppedAirdrops();
 
     /*
      * Gets a locking reference to the underlying tick for the given tick subclass T.
@@ -103,12 +104,15 @@ class MissionState {
     std::shared_ptr<CameraInterface> getCamera();
     void setCamera(std::shared_ptr<CameraInterface> camera);
 
-    MissionParameters mission_params;  // has its own mutex
+    // Getters and setters for mapping status.
+    bool getMappingIsDone();
+    void setMappingIsDone(bool isDone);
 
+    MissionParameters mission_params;  // has its own mutex
 
     OBCConfig config;
 
-    std::optional<bottle_t> next_bottle_to_drop;
+    std::optional<airdrop_t> next_airdrop_to_drop;
 
  private:
     std::mutex converter_mut;
@@ -124,8 +128,8 @@ class MissionState {
     std::mutex airdrop_path_mut;
     MissionPath airdrop_path;
 
-    std::mutex dropped_bottles_mut;
-    std::unordered_set<BottleDropIndex> dropped_bottles;
+    std::mutex dropped_airdrops_mut;
+    std::unordered_set<AirdropType> dropped_airdrops;
 
     std::shared_ptr<MavlinkClient> mav;
     std::shared_ptr<AirdropClient> airdrop;
@@ -133,11 +137,13 @@ class MissionState {
     std::shared_ptr<CameraInterface> camera;
 
     std::mutex cv_mut;
+    // Represents a single detected target used in pipeline
     std::vector<DetectedTarget> cv_detected_targets;
     // Gives an index into cv_detected_targets, and specifies that that bottle is matched
     // with the detected_target specified by the index
-    std::array<size_t, NUM_AIRDROP_BOTTLES> cv_matches;
+    std::array<size_t, NUM_AIRDROPS> cv_matches;
 
+    bool mappingIsDone;
 
     void _setTick(Tick* newTick);  // does not acquire the tick_mut
 };

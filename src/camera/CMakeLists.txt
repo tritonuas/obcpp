@@ -4,11 +4,12 @@ set(FILES
     interface.cpp
     mock.cpp
     rpi.cpp
+    picamera.cpp
 )
 
 SET(LIB_DEPS
     obcpp_protos
-    obcpp_network
+    # obcpp_network # circular dependency
 )
 
 add_library(${LIB_NAME} STATIC

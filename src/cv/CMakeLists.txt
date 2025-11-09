@@ -4,12 +4,12 @@ set(FILES
     aggregator.cpp
     hdr.cpp
     localization.cpp
-    matching.cpp
     pipeline.cpp
-    saliency.cpp
-    segmentation.cpp
     utilities.cpp
     mapping.cpp
+    yolo.cpp
+    preprocess.cpp
+    clustering.cpp
 )
 
 set(LIB_DEPS
@@ -37,6 +37,7 @@ target_add_httplib(${LIB_NAME})
 target_add_mavsdk(${LIB_NAME})
 target_add_matplot(${LIB_NAME})
 target_add_loguru(${LIB_NAME})
+target_add_onnxruntime(${LIB_NAME})
 
 target_include_directories(${LIB_NAME} PRIVATE ${ImageMagick_INCLUDE_DIRS})
 target_link_libraries(${LIB_NAME} PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})

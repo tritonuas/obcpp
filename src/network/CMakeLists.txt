@@ -23,11 +23,10 @@ set(MOCK_FILES
 )
 
 set(LIB_DEPS
-    obcpp_protos
-    obcpp_utilities
-    obcpp_ticks
     obcpp_core
     obcpp_pathing
+    obcpp_protos
+    obcpp_utilities
 )
 
 add_library(${LIB_NAME} STATIC
@@ -50,6 +49,7 @@ target_add_mavsdk(${LIB_NAME})
 target_add_matplot(${LIB_NAME})
 target_add_loguru(${LIB_NAME})
 target_add_boost(${LIB_NAME})
+target_add_onnxruntime(${LIB_NAME})
 
 target_include_directories(${LIB_NAME} PRIVATE ${ImageMagick_INCLUDE_DIRS})
 target_link_libraries(${LIB_NAME} PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})

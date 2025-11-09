@@ -1,7 +1,6 @@
 #include "pathing/plotting.hpp"
 #include "utilities/datatypes.hpp"
 #include <matplot/matplot.h>
-#include <cmath>
 
 int main() {
     Polygon flightBounds{{XYZCoord(0, 0, 0), XYZCoord(100, 0, 0), XYZCoord(100, 30, 0), XYZCoord(0, 30, 0)}};

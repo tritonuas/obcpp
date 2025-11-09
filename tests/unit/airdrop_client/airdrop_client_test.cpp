@@ -33,8 +33,8 @@ TEST(AirdropClientTest, HeartbeatConnectionNeverSend) {
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
     auto lost_connections = client.getLostConnections(std::chrono::milliseconds(500));
-    EXPECT_EQ(lost_connections.size(), NUM_AIRDROP_BOTTLES);
-    for (const auto& [bottle_index, time_since_last_heartbeat] : lost_connections) {
+    EXPECT_EQ(lost_connections.size(), NUM_AIRDROPS);
+    for (const auto& [airdrop_index, time_since_last_heartbeat] : lost_connections) {
         EXPECT_GE(time_since_last_heartbeat, std::chrono::milliseconds(500));
     }
 }
@@ -58,9 +58,9 @@ TEST(AirdropClientTest, ObcSendToPayload) {
         recv_ad_packet(payload_socket, &p, sizeof(packet_t));
         if (num_received > 1) { // ignore first two because will be ack_mode
             ASSERT_EQ(p.header, ARM);
-            uint8_t bottle, state;
-            parseID(p.id, &bottle, &state);
-            ASSERT_EQ(bottle, UDP2_A);
+            uint8_t airdrop, state;
+            parseID(p.id, &airdrop, &state);
+            ASSERT_EQ(airdrop, UDP2_A);
             ASSERT_EQ(state, OBC_NULL);
         }
         num_received++;

@@ -7,6 +7,7 @@
 #include "nlohmann/json.hpp"
 #include <loguru.hpp>
 
+#include "network/mavlink.hpp"  // imported here but not in the header due to circular dependency
 #include "utilities/base64.hpp"
 
 using json = nlohmann::json;
@@ -71,6 +72,30 @@ std::optional<ImageTelemetry> queryMavlinkImageTelemetry(
     };
   }
 
+  auto [lat_deg, lon_deg] = mavlinkClient->latlng_deg();
+  double altitude_agl_m = mavlinkClient->altitude_agl_m();
+  double airspeed_m_s = mavlinkClient->airspeed_m_s();
+  double heading_deg = mavlinkClient->heading_deg();
+  double yaw_deg = mavlinkClient->yaw_deg();
+  double pitch_deg = mavlinkClient->pitch_deg();
+  double roll_deg = mavlinkClient->roll_deg();
+
+  std::cout << "lat_deg" << lat_deg << std::endl;
+  std::cout << "long deg" << lon_deg << std::endl;
+  std::cout << "altitude" << altitude_agl_m << std::endl;
+
+  return ImageTelemetry {
+    .latitude_deg = lat_deg,
+    .longitude_deg = lon_deg,
+    .altitude_agl_m = altitude_agl_m,
+    .airspeed_m_s = airspeed_m_s,
+    .heading_deg = heading_deg,
+    .yaw_deg = yaw_deg,
+    .pitch_deg = pitch_deg,
+    .roll_deg = roll_deg
+  };
+}
+
 bool ImageData::saveToFile(std::string directory) const {
     try {
         std::filesystem::path save_dir = directory;
@@ -78,6 +103,8 @@ bool ImageData::saveToFile(std::string directory) const {
             save_dir / (std::to_string(this->TIMESTAMP) + std::string(".jpg"));
         std::filesystem::path json_filepath =
             save_dir / (std::to_string(this->TIMESTAMP) + std::string(".json"));
+
+        LOG_F(INFO, "Saving %s to %s", img_filepath, json_filepath);
         saveImageToFile(this->DATA, img_filepath);
         if (this->TELEMETRY.has_value()) {
             saveImageTelemetryToFile(this->TELEMETRY.value(), json_filepath);
