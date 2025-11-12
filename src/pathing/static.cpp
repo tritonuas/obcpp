@@ -20,269 +20,280 @@
 #include "utilities/obc_config.hpp"
 #include "utilities/rng.hpp"
 
-RRT::RRT(RRTPoint start, std::vector<XYZCoord> goals, double search_radius, Polygon bounds,
-         const OBCConfig &config, std::vector<Polygon> obstacles, std::vector<double> angles)
-    : iterations_per_waypoint(config.pathing.rrt.iterations_per_waypoint),
-      search_radius(search_radius),
-      rewire_radius(config.pathing.rrt.rewire_radius),
-      tree(start, Environment(bounds, {}, {}, goals, obstacles),
-           Dubins(config.pathing.dubins.turning_radius, config.pathing.dubins.point_separation)),
-      config(config.pathing.rrt) {
-    if (angles.size() != 0) {
-        this->angles = angles;
-    }
-}
+/*
+I remained to dream the nightmare out to the end, and to show my loyalty to TUAS once more. 
+Path-planning. My Path-planning! Droll thing RRT is—that mysterious arrangement of merciless logic for a futile purpose. 
+The most you can hope from it is some knowledge of yourself—that comes too late—a crop of unextinguishable errors. 
+I have wrestled with C++. It is the most unexciting contest you can imagine.
+*/
 
-RRT::RRT(RRTPoint start, std::vector<XYZCoord> goals, double search_radius, Environment airspace,
-         const OBCConfig &config, std::vector<double> angles)
-    : iterations_per_waypoint(config.pathing.rrt.iterations_per_waypoint),
-      search_radius(search_radius),
-      rewire_radius(config.pathing.rrt.rewire_radius),
-      tree(start, airspace,
-           Dubins(config.pathing.dubins.turning_radius, config.pathing.dubins.point_separation)),
-      config(config.pathing.rrt) {
-    if (angles.size() != 0) {
-        this->angles = angles;
-    }
-}
+// RRT::RRT(RRTPoint start, std::vector<XYZCoord> goals, double search_radius, Polygon bounds,
+//          const OBCConfig &config, std::vector<Polygon> obstacles, std::vector<double> angles)
+//     : iterations_per_waypoint(config.pathing.rrt.iterations_per_waypoint),
+//       search_radius(search_radius),
+//       rewire_radius(config.pathing.rrt.rewire_radius),
+//       tree(start, Environment(bounds, {}, {}, goals, obstacles),
+//            Dubins(config.pathing.dubins.turning_radius, config.pathing.dubins.point_separation)),
+//       config(config.pathing.rrt) {
+//     if (angles.size() != 0) {
+//         this->angles = angles;
+//     }
+// }
 
-void RRT::run() {
-    /*
-     * RRT algorithm
-     * - Treats each waypoint as a goal, DOES NOT reuse trees between waypoints,
-     *    basically calls RRT for each waypoint
-     * - For Each Waypoint
-     *  - Tries to connect directly to the goal
-     *  - If it can't, it runs the RRT algorithm
-     *      - Attempts to converge based on epoch intervals
-     *      - If it can't, it connects to the goal with whatever it has
-     */
-    const int total_goals = tree.getAirspace().getNumGoals();
+// RRT::RRT(RRTPoint start, std::vector<XYZCoord> goals, double search_radius, Environment airspace,
+//          const OBCConfig &config, std::vector<double> angles)
+//     : iterations_per_waypoint(config.pathing.rrt.iterations_per_waypoint),
+//       search_radius(search_radius),
+//       rewire_radius(config.pathing.rrt.rewire_radius),
+//       tree(start, airspace,
+//            Dubins(config.pathing.dubins.turning_radius, config.pathing.dubins.point_separation)),
+//       config(config.pathing.rrt) {
+//     if (angles.size() != 0) {
+//         this->angles = angles;
+//     }
+// }
 
-    for (int current_goal_index = 0; current_goal_index < total_goals; current_goal_index++) {
-        // tries to connect directly to the goal
-        if (connectToGoal(current_goal_index)) {
-            continue;
-        }
+// void RRT::run() {
+//     /*
+//      * RRT algorithm
+//      * - Treats each waypoint as a goal, DOES NOT reuse trees between waypoints,
+//      *    basically calls RRT for each waypoint
+//      * - For Each Waypoint
+//      *  - Tries to connect directly to the goal
+//      *  - If it can't, it runs the RRT algorithm
+//      *      - Attempts to converge based on epoch intervals
+//      *      - If it can't, it connects to the goal with whatever it has
+//      */
+//     const int total_goals = tree.getAirspace().getNumGoals();
 
-        // run the RRT algorithm if it can not connect
-        RRTIteration(iterations_per_waypoint, current_goal_index);
-    }
-}
+//     for (int current_goal_index = 0; current_goal_index < total_goals; current_goal_index++) {
+//         // tries to connect directly to the goal
+//         if (connectToGoal(current_goal_index)) {
+//             continue;
+//         }
 
-std::vector<XYZCoord> RRT::getPointsToGoal() const {
-    // return tree.getPathToGoal();
-    return flight_path;
-}
+//         // run the RRT algorithm if it can not connect
+//         RRTIteration(iterations_per_waypoint, current_goal_index);
+//     }
+// }
 
-bool RRT::RRTIteration(int tries, int current_goal_index) {
-    const int epoch_interval = tries / NUM_EPOCHS;
-    int current_epoch = epoch_interval;
+// std::vector<XYZCoord> RRT::getPointsToGoal() const {
+//     // return tree.getPathToGoal();
+//     return flight_path;
+// }
 
-    RRTNode *goal_node = nullptr;
+// bool RRT::RRTIteration(int tries, int current_goal_index) {
+//     const int epoch_interval = tries / NUM_EPOCHS;
+//     int current_epoch = epoch_interval;
 
-    for (int i = 0; i < tries; i++) {
-        if (i == current_epoch) {
-            // generates a new node (not connect), and adds and breaks if it is
-            // within X% of the last generation
-            if (epochEvaluation(goal_node, current_goal_index)) {
-                return true;
-            }
+//     RRTNode *goal_node = nullptr;
 
-            current_epoch += epoch_interval;
-        }
-        // generate a sample point
-        const RRTPoint sample = generateSamplePoint();
+//     for (int i = 0; i < tries; i++) {
+//         if (i == current_epoch) {
+//             // generates a new node (not connect), and adds and breaks if it is
+//             // within X% of the last generation
+//             if (epochEvaluation(goal_node, current_goal_index)) {
+//                 return true;
+//             }
 
-        // returns all dubins options from the tree to the sample
-        const std::vector<std::pair<RRTNode *, RRTOption>> &options =
-            tree.pathingOptions(sample, config.point_fetch_method);
+//             current_epoch += epoch_interval;
+//         }
+//         // generate a sample point
+//         const RRTPoint sample = generateSamplePoint();
 
-        // returns true if the node is successfully added to the tree
-        RRTNode *new_node = parseOptions(options, sample);
+//         // returns all dubins options from the tree to the sample
+//         const std::vector<std::pair<RRTNode *, RRTOption>> &options =
+//             tree.pathingOptions(sample, config.point_fetch_method);
 
-        if (new_node != nullptr && config.optimize) {
-            optimizeTree(new_node);
-        }
-    }
+//         // returns true if the node is successfully added to the tree
+//         RRTNode *new_node = parseOptions(options, sample);
 
-    // frees memory
-    delete (goal_node);
-    if (!connectToGoal(current_goal_index)) {
-        loguru::set_thread_name("Static Pathing");
-        LOG_F(WARNING, "Failed to connect to goal on iteration: [%s]. Trying again...",
-              std::to_string(current_goal_index).c_str());
+//         if (new_node != nullptr && config.optimize) {
+//             optimizeTree(new_node);
+//         }
+//     }
 
-        if (!config.allowed_to_skip_waypoints &&
-            !connectToGoal(current_goal_index, std::numeric_limits<int>::max())) {
-            // will always return true (unless it turns into a pseudo-infinite loop)
-            return RRTIteration(tries, current_goal_index);
-        } else {
-            return false;
-        }
-    }
+//     // frees memory
+//     delete (goal_node);
+//     if (!connectToGoal(current_goal_index)) {
+//         loguru::set_thread_name("Static Pathing");
+//         LOG_F(WARNING, "Failed to connect to goal on iteration: [%s]. Trying again...",
+//               std::to_string(current_goal_index).c_str());
 
-    return true;
-}
+//         if (!config.allowed_to_skip_waypoints &&
+//             !connectToGoal(current_goal_index, std::numeric_limits<int>::max())) {
+//             // will always return true (unless it turns into a pseudo-infinite loop)
+//             return RRTIteration(tries, current_goal_index);
+//         } else {
+//             return false;
+//         }
+//     }
 
-bool RRT::epochEvaluation(RRTNode *goal_node, int current_goal_index) {
-    // If a single epoch has not been passed, mark this goal as the first
-    // benchmark.
-    if (goal_node == nullptr) {
-        goal_node = sampleToGoal(current_goal_index, TOTAL_OPTIONS_FOR_GOAL_CONNECTION);
-        return false;
-    }
+//     return true;
+// }
 
-    RRTNode *new_node = sampleToGoal(current_goal_index, TOTAL_OPTIONS_FOR_GOAL_CONNECTION);
+// This code will disappear, but not immediately. Deo volente, it will provide a useful framework.
 
-    if (new_node == nullptr) {
-        return false;
-    }
+// bool RRT::epochEvaluation(RRTNode *goal_node, int current_goal_index) {
+//     // If a single epoch has not been passed, mark this goal as the first
+//     // benchmark.
+//     if (goal_node == nullptr) {
+//         goal_node = sampleToGoal(current_goal_index, TOTAL_OPTIONS_FOR_GOAL_CONNECTION);
+//         return false;
+//     }
 
-    /* If the new node is within ~X% of the goal, then we are done.
-     * It should be impossible for new_node to be more inefficient than
-     * goal_node as it uses a superset of the tree goal_node used
-     */
-    if (new_node->getCost() < EPOCH_TEST_MARGIN * goal_node->getCost()) {
-        delete (goal_node);
-        goal_node = new_node;
-        return false;
-    }
+//     RRTNode *new_node = sampleToGoal(current_goal_index, TOTAL_OPTIONS_FOR_GOAL_CONNECTION);
 
-    addNodeToTree(new_node, current_goal_index);
-    return true;
-}
+//     if (new_node == nullptr) {
+//         return false;
+//     }
 
-RRTPoint RRT::generateSamplePoint() const { return tree.getRandomPoint(search_radius); }
+//     /* If the new node is within ~X% of the goal, then we are done.
+//      * It should be impossible for new_node to be more inefficient than
+//      * goal_node as it uses a superset of the tree goal_node used
+//      */
+//     if (new_node->getCost() < EPOCH_TEST_MARGIN * goal_node->getCost()) {
+//         delete (goal_node);
+//         goal_node = new_node;
+//         return false;
+//     }
 
-std::vector<std::pair<RRTPoint, std::pair<RRTNode *, RRTOption>>> RRT::getOptionsToGoal(
-    int current_goal_index, int total_options) const {
-    // attempts to connect to the goal, should always connect
-    std::vector<RRTPoint> goal_points;
+//     addNodeToTree(new_node, current_goal_index);
+//     return true;
+// }
 
-    // Generates goal specific points based on current Waypoints and list og
-    // Angles
-    for (const double angle : angles) {
-        const XYZCoord &goal = tree.getAirspace().getGoal(current_goal_index);
-        goal_points.push_back(RRTPoint(goal, angle));
-    }
+// RRTPoint RRT::generateSamplePoint() const { return tree.getRandomPoint(search_radius); }
 
-    // RRTPoint is the goal that is to be connected
-    // RRTNode is the node in the tree that is the anchor
-    // RRTOPtion Node-->Point
-    std::vector<std::pair<RRTPoint, std::pair<RRTNode *, RRTOption>>> all_options;
+// std::vector<std::pair<RRTPoint, std::pair<RRTNode *, RRTOption>>> RRT::getOptionsToGoal(
+//     int current_goal_index, int total_options) const {
+//     // attempts to connect to the goal, should always connect
+//     std::vector<RRTPoint> goal_points;
 
-    // limit amount of options to sort, defined in constants.hpp
-    const int NUMBER_OPTIONS_EACH = total_options / angles.size();
+//     // Generates goal specific points based on current Waypoints and list og
+//     // Angles
+//     for (const double angle : angles) {
+//         const XYZCoord &goal = tree.getAirspace().getGoal(current_goal_index);
+//         goal_points.push_back(RRTPoint(goal, angle));
+//     }
 
-    // gets all options for each of the goals, and puts them into a unified list
-    // TODO ? maybe better for a max heap?
-    for (const RRTPoint &goal : goal_points) {
-        const std::vector<std::pair<RRTNode *, RRTOption>> &options =
-            // For now, we use optimal pathing
-            tree.pathingOptions(goal, PointFetchMethod::Enum::NONE, NUMBER_OPTIONS_EACH);
+//     // RRTPoint is the goal that is to be connected
+//     // RRTNode is the node in the tree that is the anchor
+//     // RRTOPtion Node-->Point
+//     std::vector<std::pair<RRTPoint, std::pair<RRTNode *, RRTOption>>> all_options;
 
-        for (const auto &[node, option] : options) {
-            all_options.push_back({goal, {node, option}});
-        }
-    }
+//     // limit amount of options to sort, defined in constants.hpp
+//     const int NUMBER_OPTIONS_EACH = total_options / angles.size();
 
-    std::sort(all_options.begin(), all_options.end(), [](const auto &a, const auto &b) {
-        auto &[a_goal, a_paths] = a;
-        auto &[a_node, a_option] = a_paths;
-        auto &[b_goal, b_paths] = b;
-        auto &[b_node, b_option] = b_paths;
-        return a_option.length + a_node->getCost() < b_option.length + b_node->getCost();
-    });
+//     // gets all options for each of the goals, and puts them into a unified list
+//     // TODO ? maybe better for a max heap?
+//     for (const RRTPoint &goal : goal_points) {
+//         const std::vector<std::pair<RRTNode *, RRTOption>> &options =
+//             // For now, we use optimal pathing
+//             tree.pathingOptions(goal, PointFetchMethod::Enum::NONE, NUMBER_OPTIONS_EACH);
 
-    return all_options;
-}
+//         for (const auto &[node, option] : options) {
+//             all_options.push_back({goal, {node, option}});
+//         }
+//     }
 
-RRTNode *RRT::sampleToGoal(int current_goal_index, int total_options) const {
-    // gets all options for each of the goals
-    const auto &all_options = getOptionsToGoal(current_goal_index, total_options);
+//     std::sort(all_options.begin(), all_options.end(), [](const auto &a, const auto &b) {
+//         auto &[a_goal, a_paths] = a;
+//         auto &[a_node, a_option] = a_paths;
+//         auto &[b_goal, b_paths] = b;
+//         auto &[b_node, b_option] = b_paths;
+//         return a_option.length + a_node->getCost() < b_option.length + b_node->getCost();
+//     });
 
-    // <RRTPoint GOAL, {RRTNode* ANCHOR, RRTOption} >
-    for (const auto &[goal, pair] : all_options) {
-        auto &[anchor_node, option] = pair;
+//     return all_options;
+// }
 
-        RRTNode *new_node = tree.generateNode(anchor_node, goal, option);
+// RRTNode *RRT::sampleToGoal(int current_goal_index, int total_options) const {
+//     // gets all options for each of the goals
+//     const auto &all_options = getOptionsToGoal(current_goal_index, total_options);
 
-        if (new_node != nullptr) {
-            return new_node;
-        }
-    }
+//     // <RRTPoint GOAL, {RRTNode* ANCHOR, RRTOption} >
+//     for (const auto &[goal, pair] : all_options) {
+//         auto &[anchor_node, option] = pair;
 
-    return nullptr;
-}
+//         RRTNode *new_node = tree.generateNode(anchor_node, goal, option);
 
-bool RRT::connectToGoal(int current_goal_index, int total_options) {
-    RRTNode *goal_node = sampleToGoal(current_goal_index, total_options);
+//         if (new_node != nullptr) {
+//             return new_node;
+//         }
+//     }
 
-    if (goal_node == nullptr) {
-        return false;
-    }
+//     return nullptr;
+// }
 
-    addNodeToTree(goal_node, current_goal_index);
-    return true;
-}
+// bool RRT::connectToGoal(int current_goal_index, int total_options) {
+//     RRTNode *goal_node = sampleToGoal(current_goal_index, total_options);
 
-void RRT::addNodeToTree(RRTNode *goal_node, int current_goal_index) {
-    // add the node to the tree
-    tree.addNode(goal_node->getParent(), goal_node);
+//     if (goal_node == nullptr) {
+//         return false;
+//     }
 
-    // inserts the altitude into the path
-    std::vector<XYZCoord> local_path = tree.getPathSegment(goal_node);
+//     addNodeToTree(goal_node, current_goal_index);
+//     return true;
+// }
 
-    double start_height;
-    if (current_goal_index == 0) {
-        start_height = tree.getStart().coord.z;
-    } else {
-        start_height = tree.getAirspace().getGoal(current_goal_index - 1).z;
-    }
+// void RRT::addNodeToTree(RRTNode *goal_node, int current_goal_index) {
+//     // add the node to the tree
+//     tree.addNode(goal_node->getParent(), goal_node);
 
-    double height_difference = tree.getAirspace().getGoal(current_goal_index).z - start_height;
-    double height_increment = height_difference / local_path.size();
+//     // inserts the altitude into the path
+//     std::vector<XYZCoord> local_path = tree.getPathSegment(goal_node);
 
-    for (XYZCoord &point : local_path) {
-        point.z = start_height;
-        start_height += height_increment;
-    }
+//     double start_height;
+//     if (current_goal_index == 0) {
+//         start_height = tree.getStart().coord.z;
+//     } else {
+//         start_height = tree.getAirspace().getGoal(current_goal_index - 1).z;
+//     }
 
-    // adds local path to the flight path, and updates the tree
-    flight_path.insert(flight_path.end(), local_path.begin(), local_path.end());
-    tree.setCurrentHead(goal_node);
-}
+//     double height_difference = tree.getAirspace().getGoal(current_goal_index).z - start_height;
+//     double height_increment = height_difference / local_path.size();
 
-RRTNode *RRT::parseOptions(const std::vector<std::pair<RRTNode *, RRTOption>> &options,
-                           const RRTPoint &sample) {
-    for (auto &[node, option] : options) {
-        /*
-         *  stop if
-         *  1. the node is null
-         *  2. the node is the same as the sample
-         *
-         *  The idea is that any further options will have the same if not more
-         * issues
-         *
-         * This shouldn't ever happen?
-         */
-        // if (node == nullptr || node->getPoint() == sample) {
-        //     return nullptr;
+//     for (XYZCoord &point : local_path) {
+//         point.z = start_height;
+//         start_height += height_increment;
+//     }
 
-        // else, attempt to add the node to the tree
-        RRTNode *sucessful_addition = tree.addSample(node, sample, option);
+//     // adds local path to the flight path, and updates the tree
+//     flight_path.insert(flight_path.end(), local_path.begin(), local_path.end());
+//     tree.setCurrentHead(goal_node);
+// }
 
-        if (sucessful_addition != nullptr) {
-            return sucessful_addition;
-        }
-    }
+// RRTNode *RRT::parseOptions(const std::vector<std::pair<RRTNode *, RRTOption>> &options,
+//                            const RRTPoint &sample) {
+//     for (auto &[node, option] : options) {
+//         /*
+//          *  stop if
+//          *  1. the node is null
+//          *  2. the node is the same as the sample
+//          *
+//          *  The idea is that any further options will have the same if not more
+//          * issues
+//          *
+//          * This shouldn't ever happen?
+//          */
+//         // if (node == nullptr || node->getPoint() == sample) {
+//         //     return nullptr;
 
-    return nullptr;
-}
+//         // else, attempt to add the node to the tree
+//         RRTNode *sucessful_addition = tree.addSample(node, sample, option);
 
-void RRT::optimizeTree(RRTNode *sample) { tree.RRTStar(sample, rewire_radius); }
+//         if (sucessful_addition != nullptr) {
+//             return sucessful_addition;
+//         }
+//     }
 
+//     return nullptr;
+// }
+
+// void RRT::optimizeTree(RRTNode *sample) { tree.RRTStar(sample, rewire_radius); }
+
+
+// sanctuary of safety
 ForwardCoveragePathing::ForwardCoveragePathing(const RRTPoint &start, double scan_radius,
                                                Polygon bounds, Polygon airdrop_zone,
                                                const OBCConfig &config,
@@ -594,6 +605,7 @@ std::vector<std::vector<XYZCoord>> generateRankedNewGoalsList(const std::vector<
     2. we omit the first waypoint (FATAL) - this means we never tell the computer to hit it
     3. We don't know where home location is - we rely on geofencing to not fly out of bounds
 */
+// DO NOT TOUCH THIS
 MissionPath generateInitialPath(std::shared_ptr<MissionState> state) {
     // first waypoint is start
 
@@ -609,16 +621,20 @@ MissionPath generateInitialPath(std::shared_ptr<MissionState> state) {
 
     // Copy elements from the second element to the last element of source into
     // destination all other methods of copying over crash???
+
+    // dont start second, incorrect asumption. Change in the RRT object
     for (int i = 1; i < state->mission_params.getWaypoints().size(); i++) {
         goals.emplace_back(state->mission_params.getWaypoints()[i]);
     }
 
     // update goals here
+    // DELETE
     if (state->config.pathing.rrt.generate_deviations) {
         Environment mapping_bounds(state->mission_params.getMappingBoundary(), {}, {}, goals, {});
         goals = generateRankedNewGoalsList(goals, mapping_bounds)[0];
     }
 
+    // assumes that first waypoint is home pos
     double init_angle =
         std::atan2(goals.front().y - state->mission_params.getWaypoints().front().y,
                    goals.front().x - state->mission_params.getWaypoints().front().x);
@@ -642,6 +658,7 @@ MissionPath generateInitialPath(std::shared_ptr<MissionState> state) {
     return MissionPath(MissionPath::Type::FORWARD, output_coords);
 }
 
+// DO NOT TOUCH THIS
 MissionPath generateSearchPath(std::shared_ptr<MissionState> state) {
     std::vector<GPSCoord> gps_coords;
     if (state->config.pathing.coverage.method == AirdropCoverageMethod::Enum::FORWARD) {
@@ -671,6 +688,7 @@ MissionPath generateSearchPath(std::shared_ptr<MissionState> state) {
     }
 }
 
+// DO NOT TOUCH
 MissionPath generateAirdropApproach(std::shared_ptr<MissionState> state, const GPSCoord &goal) {
     // finds starting location
     std::shared_ptr<MavlinkClient> mav = state->getMav();
