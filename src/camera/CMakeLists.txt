@@ -9,7 +9,7 @@ set(FILES
 
 SET(LIB_DEPS
     obcpp_protos
-    # obcpp_network # circular dependency
+    obcpp_network # circular dependency - resolved at executable level
 )
 
 add_library(${LIB_NAME} STATIC

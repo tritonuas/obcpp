@@ -71,6 +71,8 @@ class RPICamera : public CameraInterface {
 		void connect() override;
 		bool isConnected() override;
 
+        std::optional<ImageData> getLatestImage() override {return std::nullopt;}
+        std::deque<ImageData> getAllImages() override {return std::deque<ImageData>();}
 		std::optional<ImageData> takePicture(const std::chrono::milliseconds& timeout, std::shared_ptr<MavlinkClient> mavlinkClient) override;
 
         void startTakingPictures(const std::chrono::milliseconds& interval,
