@@ -6,7 +6,7 @@
 #define POINT_DISTANCE 10
 #define NUM_OUTLIERS 5
 #define NUM_RUNS 5
-//redeclaring method to not have fixed seed so the test is deterministic 
+//redeclaring method to not have fixed seed so the test is non-deterministic 
 unsigned int seed = time(NULL);
 double random(double min, double max) {
     return min + static_cast<double>(rand_r(&seed)) / RAND_MAX * (max - min);
@@ -90,7 +90,8 @@ int main()
         std::ostringstream stringStream;
         stringStream << "run" << run << ".png";
         std::string copyOfStr = stringStream.str();
-     //  std::filesystem::remove(copyOfStr);
+        std::cout << "saved to /build/" << copyOfStr << std::endl;
+        //std::filesystem::remove(copyOfStr);
         save(copyOfStr);
         hold(off);
 

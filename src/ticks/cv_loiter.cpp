@@ -6,6 +6,7 @@
 #include "ticks/fly_search.hpp"
 #include "ticks/ids.hpp"
 #include "utilities/constants.hpp"
+#include "cv/clustering.hpp"
 
 CVLoiterTick::CVLoiterTick(std::shared_ptr<MissionState> state) : Tick(state, TickID::CVLoiter) {
     this->status = CVLoiterTick::Status::None;
@@ -40,7 +41,34 @@ Tick* CVLoiterTick::tick() {
         };
         */
 
-        LockPtr<CVResults> results = state->getCV()->getResults();
+        LockPtr<std::map<int, IdentifiedTarget>> results = state->getCV()->getCVRecord();
+        std::vector<std::vector<GPSCoord>> cluster_input;
+        for(const auto& pair : *results.data.get()){
+            auto cords = pair.second.coordinates();
+            auto types = pair.second.target_type();
+            for(int i = 0; i < cords.size(); i++){
+                GPSCoord location = cords.at(i);
+                int type = types.at(i);
+                if(cluster_input.size() < type){
+                    for(int j = cluster_input.size(); j < type; j++){
+                        cluster_input.push_back(std::vector<GPSCoord>());
+                    }
+                }
+                cluster_input[type].push_back(location);
+            }
+        }
+        Clustering clustering; 
+        std::vector<GPSCoord> clusterCenters = clustering.FindClustersCenter(cluster_input);
+
+
+        LockPtr<MatchedResults> matched = state->getCV()->getMatchedResults();
+        std::unordered_map<AirdropType, AirdropTarget> matched_clusters;
+        for(int i = 0; i < clusterCenters.size(); i++){
+             AirdropTarget airdrop;
+             airdrop.mutable_coordinate()->CopyFrom(clusterCenters[i]);
+             matched_clusters.insert(std::pair(static_cast<AirdropType>(i), std::move(airdrop))); 
+        }
+        matched.data->matched_airdrop = std::move(matched_clusters);
 
         // for (const auto& bottle : ALL_BOTTLES) {
         //     // contains will never be false but whatever
