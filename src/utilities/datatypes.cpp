@@ -58,6 +58,15 @@ double XYZCoord::normSquared() const {
     return this->x * this->x + this->y * this->y + this->z * this->z;
 }
 
+nlohmann::json XYZCoord::to_json() {
+    json expr = {
+        {"x", x},
+        {"y", y},
+        {"z", z}
+    };
+    return expr;
+}
+
 XYZCoord XYZCoord::normalized() const {
     double norm = this->norm();
 
