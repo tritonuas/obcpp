@@ -86,7 +86,9 @@ int main()
         scatter(x, y, std::vector<double>(), c);
         hold(on);
         auto plot = scatter(cluster_x, cluster_y);
+        ::matplot::legend({"Cluster points", "Calculated cluster Center"});
         plot->marker_style(line_spec::marker_style::diamond);
+        title("Clustering run " + std::to_string(run));
         std::ostringstream stringStream;
         stringStream << "run" << run << ".png";
         std::string copyOfStr = stringStream.str();
