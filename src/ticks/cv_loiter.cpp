@@ -65,6 +65,7 @@ Tick* CVLoiterTick::tick() {
         std::unordered_map<AirdropType, AirdropTarget> matched_clusters;
         for (int i = 0; i < clusterCenters.size(); i++) {
              AirdropTarget airdrop;
+             airdrop.set_index(static_cast<AirdropType>(i));
              airdrop.mutable_coordinate()->CopyFrom(clusterCenters[i]);
              matched_clusters.insert(std::pair(static_cast<AirdropType>(i), std::move(airdrop)));
         }
