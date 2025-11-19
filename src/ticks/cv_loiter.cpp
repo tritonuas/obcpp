@@ -6,6 +6,7 @@
 #include "ticks/fly_search.hpp"
 #include "ticks/ids.hpp"
 #include "utilities/constants.hpp"
+#include "cv/clustering.hpp"
 
 CVLoiterTick::CVLoiterTick(std::shared_ptr<MissionState> state) : Tick(state, TickID::CVLoiter) {
     this->status = CVLoiterTick::Status::None;
@@ -39,9 +40,7 @@ Tick* CVLoiterTick::tick() {
             AirdropType::Water, AirdropType::Beacon,
         };
         */
-
-        LockPtr<CVResults> results = state->getCV()->getResults();
-
+       state->getCV()->calculateClusters();
         // for (const auto& bottle : ALL_BOTTLES) {
         //     // contains will never be false but whatever
         //     if (results.data->matches.contains(bottle)) {
