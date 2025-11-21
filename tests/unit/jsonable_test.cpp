@@ -2,7 +2,6 @@
 #include "utilities/jsonable.hpp"
 #include "utilities/datatypes.hpp"
 
-
 TEST(XYZCoordJSON, jsonable_test) {
 
     const double x = 1.0;
@@ -16,5 +15,4 @@ TEST(XYZCoordJSON, jsonable_test) {
     EXPECT_EQ(x, output["x"]);
     EXPECT_EQ(y, output["y"]);
     EXPECT_EQ(z, output["z"]);
-
 }
