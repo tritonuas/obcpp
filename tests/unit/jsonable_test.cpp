@@ -9,7 +9,6 @@ TEST(XYZCoordJSON, jsonable_test) {
     const double y = 2.0;
     const double z = 3.0;
 
-    jsonable json_obj;
     XYZCoord xyz_coord_obj(x, y, z);
 
     json output = xyz_coord_obj.to_json();

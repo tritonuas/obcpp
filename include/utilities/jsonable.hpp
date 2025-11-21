@@ -6,9 +6,11 @@
 using json = nlohmann::json;
 
 class jsonable {
-
+    /*
+    Class to inherit from to make sure that objects can be serialized to json format.
+    */
     json to_json();
 
 };
 
-#endif
+#endif // INCLUDE_UTILITIES_JSONABLE_HPP_

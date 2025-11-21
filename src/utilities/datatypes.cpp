@@ -59,12 +59,12 @@ double XYZCoord::normSquared() const {
 }
 
 nlohmann::json XYZCoord::to_json() {
-    json expr = {
+    json xyz_json = {
         {"x", x},
         {"y", y},
         {"z", z}
     };
-    return expr;
+    return xyz_json;
 }
 
 XYZCoord XYZCoord::normalized() const {
