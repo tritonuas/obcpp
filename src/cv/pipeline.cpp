@@ -10,7 +10,7 @@ Pipeline::Pipeline(const PipelineParams& p)
     : outputPath(p.outputPath),
       do_preprocess(p.do_preprocess) {
     if (p.yoloModelPath.has_value() && !p.yoloModelPath->empty()) {
-        yoloDetector = std::make_unique<YOLO>(*p.yoloModelPath, 0.35f, 1024, 1024);
+        yoloDetector = std::make_unique<YOLO>(*p.yoloModelPath, p.detection_threshold, 1024, 1024);
         LOG_F(INFO, "YOLO model loaded from path: %s", p.yoloModelPath->c_str());
     } else {
         yoloDetector.reset();

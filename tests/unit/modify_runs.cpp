@@ -3,6 +3,7 @@
 TEST(ModifyRuns, OverWriteData)
 {
     PipelineParams params(std::nullopt,
+                          0.35f,
                           "",
                           false);
     Pipeline pipeline(params);
