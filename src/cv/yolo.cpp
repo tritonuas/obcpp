@@ -8,6 +8,13 @@
 // Make sure to catch and handle exceptions in production code
 
 namespace {
+/**
+ * @brief Computes the Intersection over Union (IoU) between two detection boxes.
+ *
+ * @param a First detection box.
+ * @param b Second detection box.
+ * @return float The IoU value in the range [0, 1].
+ */
 float computeIoU(const Detection& a, const Detection& b) {
     const float ax1 = std::max(a.x1, b.x1);
     const float ay1 = std::max(a.y1, b.y1);
@@ -25,11 +32,24 @@ float computeIoU(const Detection& a, const Detection& b) {
     return inter / uni;
 }
 
+/**
+ * @brief Performs Non-Maximum Suppression (NMS) on detections, independently for each class.
+ *
+ * Groups detections by class, sorts them by confidence, and suppresses boxes with
+ * IoU greater than the threshold relative to higher-confidence boxes.
+ * Basically this removes duplicate detections that are very close to one another.
+ *
+ * @param detections Vector of all detections to filter.
+ * @param iouThreshold IoU threshold for suppression.
+ * @return std::vector<Detection> Filtered list of detections.
+ */
 std::vector<Detection> nmsPerClass(const std::vector<Detection>& detections, float iouThreshold) {
     std::vector<Detection> kept;
     if (detections.empty()) return kept;
 
     std::unordered_map<int, std::vector<Detection>> byClass;
+    // Reserve buckets to avoid rehashing.
+    // (We only have 2 classes, but it's better to be safe than sorry.)
     byClass.reserve(16);
     for (const auto& d : detections) {
         byClass[d.class_id].push_back(d);
@@ -57,6 +77,7 @@ std::vector<Detection> nmsPerClass(const std::vector<Detection>& detections, flo
     return kept;
 }
 }  // namespace
+
 YOLO::YOLO(const std::string& modelPath, float confThreshold, int inputWidth, int inputHeight,
            float nmsThreshold)
     : env_(ORT_LOGGING_LEVEL_WARNING, "yolo-inference"),
@@ -120,13 +141,14 @@ std::vector<float> YOLO::preprocess(const cv::Mat& image) {
 
     // Then call letterbox(...). This returns a new image of size (inputWidth_ x inputHeight_),
     // but we know how it was scaled & padded:
+    // Note: 114 is the standard YOLO background padding color (grey)
     cv::Mat resized = letterbox(image, inputWidth_, inputHeight_, cv::Scalar(114, 114, 114));
 
     // Convert BGR->RGB if your model is trained on RGB:
     cv::cvtColor(resized, resized, cv::COLOR_BGR2RGB);
 
     // Convert to float [0..1]
-    resized.convertTo(resized, CV_32F, 1.0f / 255.0f);
+    resized.convertTo(resized, CV_32F, 1.0f / 255.0f);  // Normalize pixel values to [0, 1]
 
     // HWC -> CHW
     std::vector<float> inputData(inputWidth_ * inputHeight_ * 3);
@@ -147,6 +169,8 @@ std::vector<Detection> YOLO::detect(const cv::Mat& image) {
     std::vector<float> inputTensorValues = preprocess(image);
 
     // Create input tensor object from data values
+    // 1 = batch size (we only process one image at a time)
+    // 3 = number of channels (RGB)
     std::vector<int64_t> inputShape = {1, 3, static_cast<int64_t>(inputHeight_),
                                        static_cast<int64_t>(inputWidth_)};
     size_t inputTensorSize = static_cast<size_t>(1) * 3 * inputHeight_ * inputWidth_;
@@ -216,6 +240,8 @@ std::vector<Detection> YOLO::detect(const cv::Mat& image) {
             float h = get(3);
 
             // Find best class score and ID over channels 4..(numChannels-1)
+            // Channels 0, 1, 2, 3 correspond to x, y, w, h respectively.
+            // Class probabilities start at index 4.
             int bestClass = -1;
             float bestScore = 0.0f;
             for (int64_t c = 4; c < numChannels; ++c) {
@@ -284,6 +310,7 @@ std::vector<Detection> YOLO::detect(const cv::Mat& image) {
 
             int bestClass = -1;
             float bestScore = 0.0f;
+            // Channels 0-3 are box coordinates, so iterate starting from 4 for class scores
             for (int64_t c = 4; c < numChannels; ++c) {
                 float s = p[c];
                 if (s > bestScore) {
@@ -383,11 +410,12 @@ void YOLO::drawAndPrintDetections(cv::Mat& image, const std::vector<Detection>& 
         cv::rectangle(image, cv::Point(static_cast<int>(det.x1), static_cast<int>(det.y1)),
                       cv::Point(static_cast<int>(det.x2), static_cast<int>(det.y2)),
                       cv::Scalar(0, 255, 0),  // green box
-                      2);
+                      2);                     // line thickness in pixels
 
         // Draw label (class + confidence) above the box
         std::string label = "ID:" + std::to_string(det.class_id) +
                             " conf:" + std::to_string(det.confidence).substr(0, 4);
+        // Position label 5 pixels above top-left corner; Font scale 0.5, thickness 1
         cv::putText(image, label, cv::Point(static_cast<int>(det.x1), static_cast<int>(det.y1) - 5),
                     cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0), 1);
     }
