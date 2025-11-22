@@ -1,16 +1,70 @@
 #include "cv/yolo.hpp"
 
+#include <algorithm>
 #include <atomic>
+#include <unordered_map>
 
 // For simplicity, we are not doing advanced error handling
 // Make sure to catch and handle exceptions in production code
 
-YOLO::YOLO(const std::string& modelPath, float confThreshold, int inputWidth, int inputHeight)
+namespace {
+float computeIoU(const Detection& a, const Detection& b) {
+    const float ax1 = std::max(a.x1, b.x1);
+    const float ay1 = std::max(a.y1, b.y1);
+    const float ax2 = std::min(a.x2, b.x2);
+    const float ay2 = std::min(a.y2, b.y2);
+
+    const float interW = std::max(0.0f, ax2 - ax1);
+    const float interH = std::max(0.0f, ay2 - ay1);
+    const float inter = interW * interH;
+
+    const float areaA = std::max(0.0f, a.x2 - a.x1) * std::max(0.0f, a.y2 - a.y1);
+    const float areaB = std::max(0.0f, b.x2 - b.x1) * std::max(0.0f, b.y2 - b.y1);
+    const float uni = areaA + areaB - inter;
+    if (uni <= 0.0f) return 0.0f;
+    return inter / uni;
+}
+
+std::vector<Detection> nmsPerClass(const std::vector<Detection>& detections, float iouThreshold) {
+    std::vector<Detection> kept;
+    if (detections.empty()) return kept;
+
+    std::unordered_map<int, std::vector<Detection>> byClass;
+    byClass.reserve(16);
+    for (const auto& d : detections) {
+        byClass[d.class_id].push_back(d);
+    }
+
+    for (auto& kv : byClass) {
+        std::vector<Detection>& dets = kv.second;
+        std::sort(dets.begin(), dets.end(), [](const Detection& a, const Detection& b) {
+            return a.confidence > b.confidence;
+        });
+
+        std::vector<char> suppressed(dets.size(), 0);
+        for (size_t i = 0; i < dets.size(); ++i) {
+            if (suppressed[i]) continue;
+            kept.push_back(dets[i]);
+            for (size_t j = i + 1; j < dets.size(); ++j) {
+                if (suppressed[j]) continue;
+                if (computeIoU(dets[i], dets[j]) > iouThreshold) {
+                    suppressed[j] = 1;
+                }
+            }
+        }
+    }
+
+    return kept;
+}
+}  // namespace
+YOLO::YOLO(const std::string& modelPath, float confThreshold, int inputWidth, int inputHeight,
+           float nmsThreshold)
     : env_(ORT_LOGGING_LEVEL_WARNING, "yolo-inference"),
       session_(nullptr),
       confThreshold_(confThreshold),
       inputWidth_(inputWidth),
-      inputHeight_(inputHeight) {
+      inputHeight_(inputHeight),
+      nmsThreshold_(nmsThreshold) {
     // Initialize session options if needed
     sessionOptions_.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
 
@@ -89,13 +143,14 @@ std::vector<float> YOLO::preprocess(const cv::Mat& image) {
 }
 
 std::vector<Detection> YOLO::detect(const cv::Mat& image) {
-    // Preprocess the image
+    // Preprocess (letterbox to network size, store scale_ / padLeft_ / padTop_)
     std::vector<float> inputTensorValues = preprocess(image);
 
     // Create input tensor object from data values
     std::vector<int64_t> inputShape = {1, 3, static_cast<int64_t>(inputHeight_),
                                        static_cast<int64_t>(inputWidth_)};
-    size_t inputTensorSize = 1 * 3 * inputHeight_ * inputWidth_;
+    size_t inputTensorSize = static_cast<size_t>(1) * 3 * inputHeight_ * inputWidth_;
+
     Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
     Ort::Value inputTensor =
         Ort::Value::CreateTensor<float>(memoryInfo, inputTensorValues.data(), inputTensorSize,
@@ -103,71 +158,194 @@ std::vector<Detection> YOLO::detect(const cv::Mat& image) {
 
     // Convert std::vector<std::string> to std::vector<const char*>
     std::vector<const char*> inputNamesCStr;
+    inputNamesCStr.reserve(inputNames_.size());
     for (const auto& name : inputNames_) {
         inputNamesCStr.push_back(name.c_str());
     }
 
     std::vector<const char*> outputNamesCStr;
+    outputNamesCStr.reserve(outputNames_.size());
     for (const auto& name : outputNames_) {
         outputNamesCStr.push_back(name.c_str());
     }
 
-    // Run inference using the C-style string arrays
+    // Run inference
     auto outputTensors =
         session_->Run(Ort::RunOptions{nullptr}, inputNamesCStr.data(), &inputTensor, 1,
                       outputNamesCStr.data(), outputNamesCStr.size());
 
-    // Extract output
-    float* outputData = outputTensors[0].GetTensorMutableData<float>();
+    if (outputTensors.empty()) {
+        std::cerr << "No output tensors from ONNX session.\n";
+        return {};
+    }
 
-    std::vector<Detection> detections;
-    size_t numDetections = 300;       // for example
-    size_t elementsPerDetection = 6;  // [x1, y1, x2, y2, conf, classID]
-
-    auto shapeInfo = outputTensors[0].GetTensorTypeAndShapeInfo();
+    Ort::Value& out = outputTensors[0];
+    auto shapeInfo = out.GetTensorTypeAndShapeInfo();
     auto shape = shapeInfo.GetShape();
 
-    // Parse the output data
-    for (size_t i = 0; i < numDetections; i++) {
-        size_t offset = i * elementsPerDetection;
-        float x1 = outputData[offset + 0];
-        float y1 = outputData[offset + 1];
-        float x2 = outputData[offset + 2];
-        float y2 = outputData[offset + 3];
-        float conf = outputData[offset + 4];
-        float cls = outputData[offset + 5];
+    // Expected: [1, C, N] or [1, N, C]
+    if (shape.size() != 3) {
+        std::cerr << "Unexpected output shape: ";
+        for (auto d : shape) std::cerr << d << " ";
+        std::cerr << std::endl;
+        return {};
+    }
 
-        if (conf >= confThreshold_) {
-            // Remove the letterbox offset
-            x1 -= padLeft_;
-            y1 -= padTop_;
-            x2 -= padLeft_;
-            y2 -= padTop_;
+    int64_t b = shape[0];
+    int64_t d1 = shape[1];
+    int64_t d2 = shape[2];
 
-            // Scale back to original image
-            x1 /= scale_;
-            y1 /= scale_;
-            x2 /= scale_;
-            y2 /= scale_;
+    if (b != 1) {
+        std::cerr << "Only batch size 1 is supported, got batch = " << b << "\n";
+        return {};
+    }
 
-            // Clamp coords to image boundaries
-            x1 = std::max(0.f, std::min(x1, static_cast<float>(image.cols) - 1));
-            y1 = std::max(0.f, std::min(y1, static_cast<float>(image.rows) - 1));
-            x2 = std::max(0.f, std::min(x2, static_cast<float>(image.cols) - 1));
-            y2 = std::max(0.f, std::min(y2, static_cast<float>(image.rows) - 1));
+    float* outputData = out.GetTensorMutableData<float>();
+    std::vector<Detection> detections;
+
+    // Helper lambdas for indexing and box/class extraction
+    auto process_anchor_layout_CxN = [&](int64_t numChannels, int64_t numAnchors) {
+        // Layout: [1, C, N], contiguous in row-major:
+        // index = (c * numAnchors) + n
+        for (int64_t a = 0; a < numAnchors; ++a) {
+            auto get = [&](int64_t c) -> float { return outputData[c * numAnchors + a]; };
+
+            float x = get(0);
+            float y = get(1);
+            float w = get(2);
+            float h = get(3);
+
+            // Find best class score and ID over channels 4..(numChannels-1)
+            int bestClass = -1;
+            float bestScore = 0.0f;
+            for (int64_t c = 4; c < numChannels; ++c) {
+                float s = get(c);
+                if (s > bestScore) {
+                    bestScore = s;
+                    bestClass = static_cast<int>(c - 4);  // class index offset
+                }
+            }
+
+            if (bestScore < confThreshold_ || bestClass < 0) {
+                continue;
+            }
+
+            // Convert [x, y, w, h] (center in letterboxed input space) -> [x1, y1, x2, y2]
+            float x1 = x - w * 0.5f;
+            float y1 = y - h * 0.5f;
+            float x2 = x + w * 0.5f;
+            float y2 = y + h * 0.5f;
+
+            // Remove letterbox padding
+            x1 -= static_cast<float>(padLeft_);
+            y1 -= static_cast<float>(padTop_);
+            x2 -= static_cast<float>(padLeft_);
+            y2 -= static_cast<float>(padTop_);
+
+            // Scale back to original image coordinates
+            if (scale_ > 0.0f) {
+                x1 /= scale_;
+                y1 /= scale_;
+                x2 /= scale_;
+                y2 /= scale_;
+            }
+
+            // Clamp to image boundaries
+            float imgW = static_cast<float>(image.cols);
+            float imgH = static_cast<float>(image.rows);
+
+            x1 = std::max(0.0f, std::min(x1, imgW - 1.0f));
+            y1 = std::max(0.0f, std::min(y1, imgH - 1.0f));
+            x2 = std::max(0.0f, std::min(x2, imgW - 1.0f));
+            y2 = std::max(0.0f, std::min(y2, imgH - 1.0f));
 
             Detection det;
             det.x1 = x1;
             det.y1 = y1;
             det.x2 = x2;
             det.y2 = y2;
-            det.confidence = conf;
-            det.class_id = static_cast<int>(cls);
+            det.confidence = bestScore;
+            det.class_id = bestClass;
 
             detections.push_back(det);
         }
+    };
+
+    auto process_anchor_layout_NxC = [&](int64_t numAnchors, int64_t numChannels) {
+        // Layout: [1, N, C], contiguous:
+        // for anchor a: row pointer = outputData + a * numChannels
+        for (int64_t a = 0; a < numAnchors; ++a) {
+            float* p = outputData + a * numChannels;
+
+            float x = p[0];
+            float y = p[1];
+            float w = p[2];
+            float h = p[3];
+
+            int bestClass = -1;
+            float bestScore = 0.0f;
+            for (int64_t c = 4; c < numChannels; ++c) {
+                float s = p[c];
+                if (s > bestScore) {
+                    bestScore = s;
+                    bestClass = static_cast<int>(c - 4);
+                }
+            }
+
+            if (bestScore < confThreshold_ || bestClass < 0) {
+                continue;
+            }
+
+            float x1 = x - w * 0.5f;
+            float y1 = y - h * 0.5f;
+            float x2 = x + w * 0.5f;
+            float y2 = y + h * 0.5f;
+
+            // Remove letterbox padding
+            x1 -= static_cast<float>(padLeft_);
+            y1 -= static_cast<float>(padTop_);
+            x2 -= static_cast<float>(padLeft_);
+            y2 -= static_cast<float>(padTop_);
+
+            // Scale back to original image size
+            if (scale_ > 0.0f) {
+                x1 /= scale_;
+                y1 /= scale_;
+                x2 /= scale_;
+                y2 /= scale_;
+            }
+
+            float imgW = static_cast<float>(image.cols);
+            float imgH = static_cast<float>(image.rows);
+
+            x1 = std::max(0.0f, std::min(x1, imgW - 1.0f));
+            y1 = std::max(0.0f, std::min(y1, imgH - 1.0f));
+            x2 = std::max(0.0f, std::min(x2, imgW - 1.0f));
+            y2 = std::max(0.0f, std::min(y2, imgH - 1.0f));
+
+            Detection det;
+            det.x1 = x1;
+            det.y1 = y1;
+            det.x2 = x2;
+            det.y2 = y2;
+            det.confidence = bestScore;
+            det.class_id = bestClass;
+
+            detections.push_back(det);
+        }
+    };
+
+    // Choose layout based on which dimension looks like "channels"
+    if (d1 < d2) {
+        // [1, C, N]
+        process_anchor_layout_CxN(d1, d2);
+    } else {
+        // [1, N, C]
+        process_anchor_layout_NxC(d1, d2);
     }
 
+    // Apply Non-Maximum Suppression per class
+    detections = nmsPerClass(detections, nmsThreshold_);
     return detections;
 }
 

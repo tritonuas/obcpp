@@ -53,7 +53,7 @@
         }
     },
     "cv": {
-        "yolo_model_dir": "/workspaces/obcpp/models/yolo11x.onnx"
+        "yolo_model_dir": "/workspaces/obcpp/models/yolo-wittner-v2.onnx"
     },
     "camera": {
         "_comment": "See CameraConfig struct in datatypes.hpp for detailed explanations",

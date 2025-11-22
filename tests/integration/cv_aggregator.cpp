@@ -32,7 +32,7 @@ int main() {
     }
 
     // Construct the pipeline with the desired YOLO model
-    PipelineParams params(std::string("../models/yolo11x.onnx"),
+    PipelineParams params(std::string("../models/yolo-wittner-v2.onnx"),
                           std::string("../tests/integration/output/output_aggregator.jpg"),
                           false);  // do_preprocess=false
 
