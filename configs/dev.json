@@ -54,7 +54,9 @@
     },
     "cv": {
         "yolo_model_dir": "/workspaces/obcpp/models/yolo-wittner-v2.onnx",
-        "detection_threshold": 0.35
+        "detection_threshold": 0.35,
+        "input_width": 1024,
+        "input_height": 1024
     },
     "camera": {
         "_comment": "See CameraConfig struct in datatypes.hpp for detailed explanations",

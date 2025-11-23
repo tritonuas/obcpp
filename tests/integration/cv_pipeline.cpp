@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
     ImageData imageData(image, 0, mockTelemetry);
 
     // Construct the pipeline with the given parameters.
-    PipelineParams params(yoloModelPath, 0.35f, outputPath, do_preprocess);
+    PipelineParams params(yoloModelPath, 0.35f, 1024, 1024, outputPath, do_preprocess);
     Pipeline pipeline(params);
 
     // Run pipeline
