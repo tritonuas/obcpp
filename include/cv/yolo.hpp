@@ -29,8 +29,8 @@ class YOLO {
      * @param inputHeight Height of the model input
      * @param nmsThreshold IoU threshold for Non-Maximum Suppression
      */
-    YOLO(const std::string& modelPath, float confThreshold, int inputWidth = 1024,
-         int inputHeight = 1024, float nmsThreshold = 0.9f);
+    YOLO(const std::string& modelPath, float confThreshold, int inputWidth,
+         int inputHeight, float nmsThreshold = 0.9f);
 
     /**
      * @brief Destroy the YOLO object
