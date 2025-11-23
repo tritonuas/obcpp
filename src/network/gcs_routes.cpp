@@ -591,7 +591,9 @@ DEF_GCS_HANDLE(Post, camera, runpipeline) {
     LOG_F(INFO, "Yolo Model: %s", yolo_model_dir.c_str());
 
     // Make a CVAggregator instance and set it in the state
-    state->setCV(std::make_shared<CVAggregator>(Pipeline(PipelineParams(yolo_model_dir))));
+    state->setCV(std::make_shared<CVAggregator>(Pipeline(PipelineParams(
+        yolo_model_dir, state->config.cv.detection_threshold, state->config.cv.input_width,
+        state->config.cv.input_height))));
 
     if (!cam->isConnected()) {
         LOG_F(INFO, "Camera not connected. Attempting to connect...");

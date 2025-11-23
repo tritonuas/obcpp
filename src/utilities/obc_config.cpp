@@ -79,7 +79,9 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
     SET_CONFIG_OPT(pathing, coverage, forward, one_way);
 
     SET_CONFIG_OPT(cv, yolo_model_dir);
-
+    SET_CONFIG_OPT(cv, detection_threshold);
+    SET_CONFIG_OPT(cv, input_width);
+    SET_CONFIG_OPT(cv, input_height);
     SET_CONFIG_OPT_VARIANT(AirdropDropMethod, pathing, approach, drop_method);
     SET_CONFIG_OPT(pathing, approach, drop_angle_rad);
     SET_CONFIG_OPT(pathing, approach, drop_altitude_m);

@@ -31,20 +31,23 @@ struct PipelineResults {
 
 struct PipelineParams {
     // yoloModelPath is optional; when absent, no CV models will be loaded.
-    explicit PipelineParams(std::optional<std::string> yoloModelPath = std::nullopt,
+    explicit PipelineParams(std::optional<std::string> yoloModelPath,
+                            float detection_threshold,
+                            int inputWidth,
+                            int inputHeight,
                             std::string outputPath = "",
                             bool do_preprocess = true)
         : yoloModelPath{std::move(yoloModelPath)},
+          detection_threshold{detection_threshold},
+          inputWidth(inputWidth),
+          inputHeight(inputHeight),
           outputPath(std::move(outputPath)),
           do_preprocess(do_preprocess) {}
 
-    explicit PipelineParams(const std::string& yoloModelPath,
-                            std::string outputPath = "",
-                            bool do_preprocess = true)
-        : PipelineParams(std::optional<std::string>(yoloModelPath), std::move(outputPath),
-                         do_preprocess) {}
-
     std::optional<std::string> yoloModelPath;
+    float detection_threshold;
+    int inputWidth;
+    int inputHeight;
     bool do_preprocess;
     std::string outputPath;
 };

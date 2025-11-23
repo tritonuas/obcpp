@@ -8,7 +8,6 @@
 
 #include <opencv2/opencv.hpp>
 
-
 /// Simple struct to store a detection result
 struct Detection {
     float x1;
@@ -28,9 +27,10 @@ class YOLO {
      * @param confThreshold Minimum confidence threshold for a detection
      * @param inputWidth Width of the model input
      * @param inputHeight Height of the model input
+     * @param nmsThreshold IoU threshold for Non-Maximum Suppression
      */
-    YOLO(const std::string &modelPath, float confThreshold = 0.25f, int inputWidth = 640,
-         int inputHeight = 640);
+    YOLO(const std::string& modelPath, float confThreshold, int inputWidth,
+         int inputHeight, float nmsThreshold = 0.9f);
 
     /**
      * @brief Destroy the YOLO object
@@ -43,7 +43,7 @@ class YOLO {
      * @param image Input image (cv::Mat in BGR format)
      * @return std::vector<Detection> A list of detections
      */
-    std::vector<Detection> detect(const cv::Mat &image);
+    std::vector<Detection> detect(const cv::Mat& image);
 
     /**
      * @brief Draws and prints the given detections on the image.
@@ -51,7 +51,7 @@ class YOLO {
      * @param image The original image on which boxes and labels will be drawn
      * @param detections The list of detections to visualize
      */
-    void drawAndPrintDetections(cv::Mat &image, const std::vector<Detection> &detections);
+    void drawAndPrintDetections(cv::Mat& image, const std::vector<Detection>& detections);
 
     /**
      * @brief Process an input image: detect objects, draw detections, and save the output image.
@@ -59,11 +59,11 @@ class YOLO {
      * @param image The input image (cv::Mat in BGR format)
      * @param outputFile Path to save the output image.
      */
-    void processAndSaveImage(const cv::Mat &image, const std::string &outputFile);
+    void processAndSaveImage(const cv::Mat& image, const std::string& outputFile);
 
  private:
     /// Preprocess a cv::Mat to match the model's input shape and format
-    std::vector<float> preprocess(const cv::Mat &image);
+    std::vector<float> preprocess(const cv::Mat& image);
 
     /**
      * @brief Resize + pad the image to maintain aspect ratio as typical YOLO does.
@@ -74,15 +74,16 @@ class YOLO {
      * @param color     Letterbox color fill (default 114 for typical YOLO)
      * @return cv::Mat  The letterboxed image of size [newHeight x newWidth]
      */
-    cv::Mat letterbox(const cv::Mat &src, int newWidth, int newHeight,
-                      const cv::Scalar &color = cv::Scalar(114, 114, 114));
+    cv::Mat letterbox(const cv::Mat& src, int newWidth, int newHeight,
+                      const cv::Scalar& color = cv::Scalar(114, 114, 114));
 
  private:
     Ort::Env env_;
-    Ort::Session *session_;
+    Ort::Session* session_;
     Ort::SessionOptions sessionOptions_;
 
     float confThreshold_;
+    float nmsThreshold_;
     int inputWidth_;
     int inputHeight_;
     float scale_ = 1.f;

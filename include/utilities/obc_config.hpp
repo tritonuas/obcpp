@@ -37,6 +37,9 @@ struct TakeoffConfig {
 
 struct CVConfig {
     std::string yolo_model_dir;
+    float detection_threshold;
+    int input_width;
+    int input_height;
     std::string not_stolen_addr;
     uint16_t not_stolen_port;
 };
