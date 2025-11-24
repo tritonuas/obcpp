@@ -10,8 +10,9 @@
 #include "protos/obc.pb.h"
 #include "udp_squared/internal/enum.h"
 #include "utilities/constants.hpp"
+#include "utilities/jsonable.hpp"
 
-struct XYZCoord {
+struct XYZCoord: jsonable{
     XYZCoord(double x, double y, double z) : x(x), y(y), z(z) {}
 
     /**
@@ -53,6 +54,8 @@ struct XYZCoord {
     double normSquared() const;
 
     XYZCoord normalized() const;
+
+    nlohmann::json to_json();
 
     double x;
     double y;
