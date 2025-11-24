@@ -53,7 +53,9 @@ class CVAggregator {
 
     // gets the record of all cv results
     LockPtr<std::map<int, IdentifiedTarget>> getCVRecord();
-
+    // Calculates the clustered center of each airdroptype in matched results,
+    // then assigns matched_results.matched_airdrop to the results
+    void calculateClusters();
     void updateRecords(std::vector<IdentifiedTarget>& new_values);
 
  private:
