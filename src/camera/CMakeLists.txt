@@ -3,12 +3,13 @@ set(LIB_NAME obcpp_camera)
 set(FILES
     interface.cpp
     mock.cpp
+    rpi.cpp
     picamera.cpp
 )
 
 SET(LIB_DEPS
     obcpp_protos
-    # obcpp_network # circular dependency
+    obcpp_network # circular dependency - resolved at executable level
 )
 
 add_library(${LIB_NAME} STATIC
@@ -30,6 +31,7 @@ target_add_httplib(${LIB_NAME})
 target_add_mavsdk(${LIB_NAME})
 target_add_matplot(${LIB_NAME})
 target_add_loguru(${LIB_NAME})
+target_add_boost(${LIB_NAME})
 
 target_include_directories(${LIB_NAME} PRIVATE ${ImageMagick_INCLUDE_DIRS})
 target_link_libraries(${LIB_NAME} PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
