@@ -19,14 +19,15 @@
 	"customizations": {
 		"vscode": {
 			"settings": {
-				// Use bash instead ofk sh
+				// Use bash instead of sh
 				"terminal.integrated.defaultProfile.linux": "bash"
 			},
 			"extensions": [
 				"ms-vscode.cpptools",
 				"twxs.cmake",
 				"me-dutour-mathieu.vscode-github-actions"
-			]
+			],
+      "C_Cpp.clang_format_style": "file"
 		}
 	}
 
