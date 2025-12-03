@@ -174,16 +174,15 @@ MavlinkClient::MavlinkClient(OBCConfig config)
     });
 
     this->passthrough->subscribe_message(WIND_COV, [this](const mavlink_message_t& message) {
-        auto payload = message.payload64;
-        // LOG_F(INFO, "UNIX TIME: %lu", payload[0]);
+        // LOG_F(INFO, "UNIX TIME: %lu", message.payload64[0]);
 
         /*
             NOT TESTED - don't actually know where the data is in thie uint64_t[]
             TODO - test on actual pixhawk to make sure that the data makes sense
         */
-        this->data.wind.x = (payload[1] >> 56) & 0xFF;
-        this->data.wind.y = (payload[1] >> 48) & 0xFF;
-        this->data.wind.z = (payload[1] >> 40) & 0xFF;
+        this->data.wind.x = (message.payload64[1] >> 56) & 0xFF;
+        this->data.wind.y = (message.payload64[1] >> 48) & 0xFF;
+        this->data.wind.z = (message.payload64[1] >> 40) & 0xFF;
     });
     // this->telemetry->subscribe_attitude_euler(
     //     [this](mavsdk::Telemetry::EulerAngle attitude) {
