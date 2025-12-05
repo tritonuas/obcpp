@@ -103,7 +103,7 @@ int main() {
 
     // get the path, put it into the file
     std::vector<XYZCoord> path = rrt.getPointsToGoal();
-    LOG_F(INFO, "Path size: %d", path.size());
+    LOG_F(INFO, "Path size: %zu", path.size());
     LOG_F(INFO, "Path length: %f", path.size() * state->config.pathing.dubins.point_separation);
 
     // files to put path_coordinates to
