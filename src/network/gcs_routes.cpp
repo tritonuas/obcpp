@@ -266,8 +266,8 @@ DEF_GCS_HANDLE(Get, camera, capture) {
 
         if (!compressed_image.empty()) {
                 LOG_F(INFO,
-                  "Compressed manual capture image from %zu bytes to %zu bytes"
-                        + "(%.1f%% compression)",
+                  "Compressed manual capture image from %zu bytes to %zu bytes "
+                  "(%.1f%% compression)",
                   image->DATA.total() * image->DATA.elemSize(), compressed_data.size(),
                   (1.0 - static_cast<double>(compressed_data.size()) /
                              (image->DATA.total() * image->DATA.elemSize())) *
