@@ -73,7 +73,7 @@ int main() {
     LOG_F(WARNING, "Running Search");
     std::vector<XYZCoord> path = search.run();
     LOG_F(INFO, "Search Complete");
-    LOG_F(INFO, "Path size: %d", path.size());
+    LOG_F(INFO, "Path size: %zu", path.size());
 
     // files to put path_coordinates to
     file.open("pathing_output/coverage_coords.txt");

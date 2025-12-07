@@ -83,7 +83,9 @@ bool ImageData::saveToFile(std::string directory) const {
         std::filesystem::path json_filepath =
             save_dir / (std::to_string(this->TIMESTAMP) + std::string(".json"));
 
-        LOG_F(INFO, "Saving %s to %s", img_filepath, json_filepath);
+        LOG_F(INFO, "Saving %s to %s",
+              img_filepath.string().c_str(),
+              json_filepath.string().c_str());
         saveImageToFile(this->DATA, img_filepath);
         if (this->TELEMETRY.has_value()) {
             saveImageTelemetryToFile(this->TELEMETRY.value(), json_filepath);
