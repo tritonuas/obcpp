@@ -70,11 +70,6 @@ add_executable(cv_mapping ${SOURCES} "cv_mapping.cpp")
 target_link_libraries(cv_mapping PRIVATE obcpp_lib)
 target_include_directories(cv_mapping PRIVATE ${INCLUDE_DIRECTORY})
 
-# cv_yolo
-add_executable(cv_yolo ${SOURCES} "cv_yolo.cpp")
-target_link_libraries(cv_yolo PRIVATE obcpp_lib)
-target_include_directories(cv_yolo PRIVATE ${INCLUDE_DIRECTORY})
-
 # for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
 # target_add_imagemagick(${PROJECT_NAME})
 target_include_directories(${PROJECT_NAME} PRIVATE ${ImageMagick_INCLUDE_DIRS})

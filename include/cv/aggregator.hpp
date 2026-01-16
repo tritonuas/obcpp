@@ -5,13 +5,13 @@
 #include <cmath>
 #include <functional>
 #include <future>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <queue>
 #include <thread>
 #include <unordered_map>
 #include <vector>
-#include <map>
 
 #include "cv/pipeline.hpp"
 #include "cv/utilities.hpp"
@@ -36,7 +36,7 @@ struct MatchedResults {
 
 class CVAggregator {
  public:
-    explicit CVAggregator(Pipeline&& p);
+    explicit CVAggregator(Pipeline&& pipeline);
     ~CVAggregator();
 
     // Spawn a thread to run the pipeline on the given imageData

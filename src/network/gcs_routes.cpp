@@ -1,4 +1,3 @@
-#include <google/protobuf/util/json_util.h>
 #include <httplib.h>
 
 #include <filesystem>
@@ -6,9 +5,6 @@
 #include <optional>
 #include <string>
 #include <vector>
-
-
-#include <nlohmann/json.hpp>
 
 #include "core/mission_state.hpp"
 #include "network/gcs_macros.hpp"
@@ -24,6 +20,8 @@
 #include "utilities/http.hpp"
 #include "utilities/logging.hpp"
 #include "utilities/serialize.hpp"
+#include <google/protobuf/util/json_util.h>
+#include <nlohmann/json.hpp>
 
 extern "C" {
 #include "udp_squared/protocol.h"
@@ -265,7 +263,7 @@ DEF_GCS_HANDLE(Get, camera, capture) {
         compressed_image = cv::imdecode(compressed_data, cv::IMREAD_COLOR);
 
         if (!compressed_image.empty()) {
-                LOG_F(INFO,
+            LOG_F(INFO,
                   "Compressed manual capture image from %zu bytes to %zu bytes "
                   "(%.1f%% compression)",
                   image->DATA.total() * image->DATA.elemSize(), compressed_data.size(),
@@ -587,14 +585,14 @@ DEF_GCS_HANDLE(Post, camera, runpipeline) {
 
     std::shared_ptr<CameraInterface> cam = state->getCamera();
 
-    std::string yolo_model_dir = state->config.cv.yolo_model_dir;
-    LOG_F(INFO, "Instantiating CV Aggregator with the following models:");
-    LOG_F(INFO, "Yolo Model: %s", yolo_model_dir.c_str());
+    std::string model_path = state->config.cv.model_path;
+    LOG_F(INFO, "Instantiating CV Aggregator with SAM3 model:");
+    LOG_F(INFO, "Model: %s", model_path.c_str());
 
     // Make a CVAggregator instance and set it in the state
-    state->setCV(std::make_shared<CVAggregator>(Pipeline(PipelineParams(
-        yolo_model_dir, state->config.cv.detection_threshold, state->config.cv.input_width,
-        state->config.cv.input_height))));
+    PipelineParams cvParams(model_path, state->config.cv.tokenizer_path, {state->config.cv.prompt});
+    auto pipeline = Pipeline(std::move(cvParams));
+    state->setCV(std::make_shared<CVAggregator>(std::move(pipeline)));
 
     if (!cam->isConnected()) {
         LOG_F(INFO, "Camera not connected. Attempting to connect...");

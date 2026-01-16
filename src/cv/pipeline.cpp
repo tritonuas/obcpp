@@ -5,19 +5,23 @@
 #include "protos/obc.pb.h"
 #include "utilities/logging.hpp"
 
-// Pipeline constructor: initialize YOLO detector and the preprocess flag.
+// Pipeline constructor: initialize SAM3 detector and the preprocess flag.
 Pipeline::Pipeline(const PipelineParams& p)
     : outputPath(p.outputPath),
-      do_preprocess(p.do_preprocess) {
-    if (p.yoloModelPath.has_value() && !p.yoloModelPath->empty()) {
-        yoloDetector = std::make_unique<YOLO>(
-            *p.yoloModelPath, p.detection_threshold, p.inputWidth, p.inputHeight);
-        LOG_F(INFO, "YOLO model loaded from path: %s", p.yoloModelPath->c_str());
+      do_preprocess(p.do_preprocess),
+      prompts_(p.prompts),
+      min_confidence_(p.min_confidence),
+      nms_iou_(p.nms_iou) {
+    if (p.modelPath && !p.modelPath->empty() && p.tokenizerPath && !p.tokenizerPath->empty()) {
+        sam3Detector =
+            std::make_unique<SAM3>(*p.modelPath, *p.tokenizerPath, p.min_confidence, p.nms_iou);
+        LOG_F(INFO, "SAM3 end-to-end model loaded from: %s", p.modelPath->c_str());
+        LOG_F(INFO, "Tokenizer loaded from: %s", p.tokenizerPath->c_str());
     } else {
-        yoloDetector.reset();
-        LOG_F(WARNING, "No CV models are loaded (no YOLO model path provided).");
+        sam3Detector.reset();
+        LOG_F(WARNING, "No CV models are loaded (SAM3 model path or tokenizer not provided).");
         LOG_F(WARNING, "CVAGGREGATOR WILL NOT BE WORKING AS INTENDED. USE AT YOUR OWN RISK.");
-        LOG_F(WARNING, "Provide a YOLO model path to enable detections.");
+        LOG_F(WARNING, "Provide both SAM3 model path and tokenizer path to enable detections.");
     }
 }
 
@@ -30,12 +34,12 @@ PipelineResults Pipeline::run(const ImageData& imageData) {
         processedImage = preprocessor.cropRight(imageData.DATA);
     }
 
-    // 1) YOLO DETECTION using the (possibly preprocessed) image
-    std::vector<Detection> yoloResults = this->yoloDetector->detect(processedImage);
+    // 1) SAM3 DETECTION using the (possibly preprocessed) image and configured prompts
+    std::vector<Detection> nms_out = this->sam3Detector->detect(processedImage, prompts_);
 
-    // If YOLO finds no potential targets, we can return early (still saving out the final image).
-    if (yoloResults.empty()) {
-        LOG_F(INFO, "No YOLO detections, terminating...");
+    // If SAM3 finds no potential targets, we can return early (still saving out the final image).
+    if (nms_out.empty()) {
+        LOG_F(INFO, "No SAM3 detections, terminating...");
 
         if (!outputPath.empty()) {
             static std::atomic<int> file_counter{0};
@@ -67,9 +71,9 @@ PipelineResults Pipeline::run(const ImageData& imageData) {
 
     // 2) BUILD DETECTED TARGETS & LOCALIZE
     std::vector<DetectedTarget> detectedTargets;
-    detectedTargets.reserve(yoloResults.size());
+    detectedTargets.reserve(nms_out.size());
 
-    for (const auto& det : yoloResults) {
+    for (const auto& det : nms_out) {
         // Fill bounding box
         Bbox box;
         box.x1 = static_cast<int>(det.x1);
@@ -94,12 +98,6 @@ PipelineResults Pipeline::run(const ImageData& imageData) {
         detected.match_distance = (det.confidence > 0.f) ? (1.0 / det.confidence) : 9999.0;
 
         detectedTargets.push_back(detected);
-    }
-
-    // 3) DRAW DETECTIONS ON THE IMAGE
-    //    (this modifies processedImage in-place)
-    if (this->yoloDetector) {
-        this->yoloDetector->drawAndPrintDetections(processedImage, yoloResults);
     }
 
     // Save the annotated image if an output path is specified

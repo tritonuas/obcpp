@@ -7,7 +7,7 @@ set(FILES
     pipeline.cpp
     utilities.cpp
     mapping.cpp
-    yolo.cpp
+    sam3.cpp
     preprocess.cpp
     clustering.cpp
 )

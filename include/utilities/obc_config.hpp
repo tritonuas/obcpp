@@ -36,10 +36,9 @@ struct TakeoffConfig {
 };
 
 struct CVConfig {
-    std::string yolo_model_dir;
-    float detection_threshold;
-    int input_width;
-    int input_height;
+    std::string model_path;      // Path to sam3.onnx
+    std::string tokenizer_path;  // Path to tokenizer.json
+    std::string prompt;          // Text prompt (e.g., "person")
     std::string not_stolen_addr;
     uint16_t not_stolen_port;
 };

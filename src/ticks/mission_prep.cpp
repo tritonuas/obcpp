@@ -30,15 +30,16 @@ Tick* MissionPrepTick::tick() {
         std::copy_n(state->mission_params.getAirdrops().begin(), NUM_AIRDROPS,
                     airdrops_to_drop.begin());
 
-        std::string yolo_model_dir = this->state->config.cv.yolo_model_dir;
+        std::string model_path = this->state->config.cv.model_path;
 
-        LOG_F(INFO, "Instantiating CV Aggregator with the following models:");
-        LOG_F(INFO, "Yolo Model: %s", yolo_model_dir.c_str());
+        LOG_F(INFO, "Instantiating CV Aggregator with SAM3 model:");
+        LOG_F(INFO, "Model: %s", model_path.c_str());
 
         // Make a CVAggregator instance and set it in the state
-        this->state->setCV(std::make_shared<CVAggregator>(Pipeline(PipelineParams(
-            yolo_model_dir, this->state->config.cv.detection_threshold,
-            this->state->config.cv.input_width, this->state->config.cv.input_height))));
+        PipelineParams cvParams(model_path, this->state->config.cv.tokenizer_path,
+                                {this->state->config.cv.prompt});
+        auto pipeline = Pipeline(std::move(cvParams));
+        this->state->setCV(std::make_shared<CVAggregator>(std::move(pipeline)));
 
         this->state->setMappingIsDone(false);
         return new PathGenTick(this->state);

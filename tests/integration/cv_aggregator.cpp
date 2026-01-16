@@ -1,23 +1,65 @@
 #include <chrono>
 #include <filesystem>
 #include <iostream>
-#include <loguru.hpp>
-#include <opencv2/opencv.hpp>
+#include <string>
 #include <thread>
 #include <vector>
 
 #include "cv/aggregator.hpp"
 #include "cv/pipeline.hpp"
+#include <loguru.hpp>
+#include <opencv2/opencv.hpp>
 
 namespace fs = std::filesystem;
 
-int main() {
-    // Define the directory containing the test images
-    std::string imagesDirectory = "../tests/integration/aggregator/";
-    std::vector<std::string> imagePaths;
+// Helper to parse comma-separated prompts
+static std::vector<std::string> splitCSV(const std::string& s) {
+    std::vector<std::string> out;
+    std::string cur;
+    for (char c : s) {
+        if (c == ',') {
+            if (!cur.empty()) out.push_back(cur);
+            cur.clear();
+        } else {
+            cur.push_back(c);
+        }
+    }
+    if (!cur.empty()) out.push_back(cur);
+    return out;
+}
 
-    // Iterate over the directory to collect all .jpg, .jpeg, and .png files
-    for (const auto& entry : fs::directory_iterator(imagesDirectory)) {
+int main(int argc, char** argv) {
+    // Usage: cv_aggregator <prompts_csv>
+    if (argc < 2) {
+        std::cerr << "Usage: cv_aggregator <prompts_csv>" << std::endl;
+        return 1;
+    }
+
+    // Hardcoded paths relative to build directory
+    std::string modelPath = "../models/sam3_detection.onnx";
+    std::string tokenizerPath = "../configs/cv/tokenizer.json";
+    std::string inputDir = "../tests/integration/images/";
+    std::string outputPath = "../tests/integration/output/output_aggregator.jpg";
+    bool doPreprocess = false;
+
+    // Parse prompts from command line argument
+    std::vector<std::string> prompts = splitCSV(argv[1]);
+
+    // Construct the PipelineParams
+    PipelineParams params(modelPath, tokenizerPath, prompts, outputPath, doPreprocess,
+                          0.20 /*min_confidence*/, 0.20 /*nms_iou*/);
+
+    // 1. Create the pipeline on the stack (no shared_ptr)
+    Pipeline pipeline(params);
+
+    // 2. Build the aggregator by transferring ownership using std::move
+    CVAggregator aggregator(std::move(pipeline));
+
+    // Mock telemetry
+    ImageTelemetry mockTelemetry{38.31568, 76.55006, 75, 20, 100, 5, 3};
+
+    std::vector<std::string> imagePaths;
+    for (const auto& entry : fs::directory_iterator(inputDir)) {
         if (entry.is_regular_file()) {
             std::string ext = entry.path().extension().string();
             if (ext == ".jpg" || ext == ".jpeg" || ext == ".png") {
@@ -27,42 +69,25 @@ int main() {
     }
 
     if (imagePaths.empty()) {
-        std::cerr << "No image files found in directory: " << imagesDirectory << std::endl;
+        std::cerr << "No image files found in directory: " << inputDir << std::endl;
         return 1;
     }
 
-    // Construct the pipeline with the desired YOLO model
-    PipelineParams params(std::string("../models/yolo-wittner-v2.onnx"),
-                          0.35f,
-                          1024,
-                          1024,
-                          std::string("../tests/integration/output/output_aggregator.jpg"),
-                          false);  // do_preprocess=false
-
-    Pipeline pipeline(params);
-
-    // Build the aggregator by transferring ownership of the pipeline
-    CVAggregator aggregator(std::move(pipeline));
-
-    // Create a mock telemetry object (using the same telemetry for simplicity)
-    ImageTelemetry mockTelemetry{38.31568, 76.55006, 75, 20, 100, 5, 3};
-
-    // Submit each image from the directory to the aggregator concurrently
+    // Submit images to aggregator
     for (const auto& imagePath : imagePaths) {
         cv::Mat image = cv::imread(imagePath);
         if (image.empty()) {
             std::cerr << "Could not open image: " << imagePath << std::endl;
             continue;
         }
-        // Create an ImageData instance for each image
         ImageData imageData(image, 0, mockTelemetry);
         aggregator.runPipeline(imageData);
     }
 
-    // Let the worker threads finish
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    // Allow workers to finish
+    std::this_thread::sleep_for(std::chrono::seconds(120));
 
-    // Retrieve the aggregated results in a thread-safe manner
+    // Retrieve results
     auto lockedResults = aggregator.getResults();
     auto resultsPtr = lockedResults.data;
     if (!resultsPtr) {
@@ -70,22 +95,26 @@ int main() {
         return 1;
     }
 
-    // Count total detections across all runs
     size_t totalDetections = 0;
     for (const auto& run : resultsPtr->runs) {
         totalDetections += run.bboxes.size();
     }
 
-    // Print out bounding box info for each run
+    std::cout << "\nPrompts: ";
+    for (size_t i = 0; i < prompts.size(); ++i) {
+        std::cout << prompts[i] << (i + 1 < prompts.size() ? "," : "");
+    }
+    std::cout << " | Total detections: " << totalDetections << std::endl;
+
     for (size_t runIdx = 0; runIdx < resultsPtr->runs.size(); ++runIdx) {
         const auto& run = resultsPtr->runs[runIdx];
-        std::cout << "=== AggregatedRun #" << runIdx << " ===" << std::endl;
+        std::cout << "--- AggregatedRun #" << runIdx << " ---" << std::endl;
 
         for (size_t detIdx = 0; detIdx < run.bboxes.size(); ++detIdx) {
             const auto& bbox = run.bboxes[detIdx];
             const auto& coord = run.coords[detIdx];
 
-            std::cout << "  Detection #" << detIdx << "  BBox=[" << bbox.x1 << "," << bbox.y1 << ","
+            std::cout << "  Det #" << detIdx << "  BBox=[" << bbox.x1 << "," << bbox.y1 << ","
                       << bbox.x2 << "," << bbox.y2 << "]"
                       << "  Lat=" << coord.latitude() << "  Lon=" << coord.longitude() << std::endl;
         }

@@ -5,11 +5,12 @@
 #include "utilities/locks.hpp"
 #include "utilities/logging.hpp"
 
-CVAggregator::CVAggregator(Pipeline&& p) : pipeline(std::move(p)) {
+CVAggregator::CVAggregator(Pipeline&& pipeline) : pipeline(std::move(pipeline)) {
     this->num_worker_threads = 0;
     this->results = std::make_shared<CVResults>();
     this->matched_results = std::make_shared<MatchedResults>();
     this->cv_record = std::make_shared<std::map<int, IdentifiedTarget>>();
+
     AirdropTarget dummy;  // Create one dummy template
 
     // Configure the coordinate part of the dummy
@@ -74,7 +75,7 @@ void CVAggregator::worker(ImageData image, int thread_num) {
     LOG_F(INFO, "New CVAggregator worker #%d spawned.", thread_num);
 
     while (true) {
-        // 1) Run the pipeline
+        // 1) Run the pipeline using the shared Pipeline instance
         auto pipeline_results = this->pipeline.run(image);
 
         // 2) Build ONE run for all detections in that pipeline output
