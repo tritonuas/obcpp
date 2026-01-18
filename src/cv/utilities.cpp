@@ -12,11 +12,10 @@ cv::Mat crop(const cv::Mat& original, const Bbox& bbox) {
     return x;
 }
 
- /*
-    Compresses a JPEG image to a desired quality. Returns std::nullopt if the image 
-    compression fails. A quality of about 60 compresses an image to almost half the 
-    file size.
-*/
+
+// Compresses a JPEG image to a desired quality and also denoises it.
+// Returns std::nullopt if the image compression fails. 
+// A quality of about 60 compresses an image to almost half the file size.
 std::optional<cv::Mat> compressImg(const cv::Mat& img, int quality) {
     std::vector<int> compressionParams {cv::IMWRITE_JPEG_QUALITY, quality};
     std::vector<uchar> buffer;
