@@ -29,14 +29,16 @@ struct DetectedTarget {
 // Helper function to crop out a bounding box from an image if you still need it
 cv::Mat crop(const cv::Mat& original, const Bbox& bbox);
 
-/*
-Denoises and compresses a JPEG image to a desired quality.
-@param img : a const reference to the image you want to compress
-@param quality : the quality you want to compress to. 
-A quality of about 60 compresses an image about half size. 
-@return : std::nullopt if the compression fails. If it does not, then 
-it returns an cv::Mat. 
-*/
+/**
+ * Denoises and compresses a JPEG image to a desired quality.
+ * 
+ * @param img       : a const reference to the image you want to compress
+ * @param quality   : the quality you want to compress to. A quality of about 60
+ *                    compresses an image about half size.
+ * 
+ * @return          : std::nullopt if the compression fails. 
+ *                    cv::Mat otherwise
+ */
 std::optional<cv::Mat> compressImg(const cv::Mat& img, int quality = 60);
 
 #endif  // INCLUDE_CV_UTILITIES_HPP_
