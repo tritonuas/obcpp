@@ -252,12 +252,9 @@ DEF_GCS_HANDLE(Get, camera, capture) {
     }
 
     std::optional<ImageTelemetry> telemetry = image->TELEMETRY;
-    
     std::optional<cv::Mat> optCompressedImg = compressImg(image->DATA);
-    // if image compression suceeded, it clones it. Otherwise we use the original.
-    cv::Mat compressed_image = optCompressedImg.has_value() ? optCompressedImg->clone() : image->DATA;
-
-    // Convert image to base64
+    cv::Mat compressed_image = optCompressedImg.has_value() ?
+    optCompressedImg->clone() : image->DATA;
     ManualImage manual_image;
     manual_image.set_img_b64(cvMatToBase64(compressed_image));
 
@@ -355,40 +352,12 @@ DEF_GCS_HANDLE(Get, targets, all) {
         IdentifiedTarget target;
         // Set the run ID
         target.set_run_id(run.run_id);
-        // START COMPRESSION
 
-        // Compress the annotated image before converting to base64
-        std::vector<uchar> compressed_data;
-        std::vector<int> compression_params;
-        compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
-        compression_params.push_back(85);
-        // Quality: 0-100, 85 is a good balance for transmission
-
-        cv::Mat compressed_image;
-        if (cv::imencode(".jpg", run.annotatedImage, compressed_data, compression_params)) {
-            // Create compressed Mat from encoded data
-            compressed_image = cv::imdecode(compressed_data, cv::IMREAD_COLOR);
-
-            if (!compressed_image.empty()) {
-                LOG_F(INFO, "Compressed image from %zu bytes to %zu bytes (%.1f%% compression)",
-                      run.annotatedImage.total() * run.annotatedImage.elemSize(),
-                      compressed_data.size(),
-                      (1.0 - static_cast<double>(compressed_data.size()) /
-                                 (run.annotatedImage.total() * run.annotatedImage.elemSize())) *
-                          100.0);
-            } else {
-                LOG_F(WARNING, "Failed to decode compressed image, using original");
-                compressed_image = run.annotatedImage;
-            }
-        } else {
-            LOG_F(WARNING, "Failed to compress image, using original");
-            compressed_image = run.annotatedImage;
-        }
-
-        // Convert the compressed image to base64 and set it (once per run)
+        std::optional<cv::Mat> optCompressedImg = compressImg(run.annotatedImage);
+        cv::Mat compressed_image = optCompressedImg.has_value() ?
+        optCompressedImg->clone() : run.annotatedImage;
         std::string b64 = cvMatToBase64(compressed_image);
         target.set_picture(b64);
-        // END COMPRESSION
 
         // Ensure coords and bboxes vectors are the same size (should be guaranteed by Aggregator
         // logic)

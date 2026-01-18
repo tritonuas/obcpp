@@ -1,4 +1,5 @@
 #include "cv/utilities.hpp"
+#include "utilities/logging.hpp"
 
 int Bbox::width() const { return x2 - x1; }
 
@@ -11,13 +12,12 @@ cv::Mat crop(const cv::Mat& original, const Bbox& bbox) {
     return x;
 }
 
-std::optional<cv::Mat> compressImg(const cv::Mat& img, int quality) {
-    /*
+ /*
     Compresses a JPEG image to a desired quality. Returns std::nullopt if the image 
     compression fails. A quality of about 60 compresses an image to almost half the 
     file size.
-    */
-
+*/
+std::optional<cv::Mat> compressImg(const cv::Mat& img, int quality) {
     std::vector<int> compressionParams {cv::IMWRITE_JPEG_QUALITY, quality};
     std::vector<uchar> buffer;
     cv::Mat denoisedImg;
