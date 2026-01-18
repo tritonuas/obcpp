@@ -30,7 +30,7 @@ class MissionParameters {
 
     Polygon getFlightBoundary();
     Polygon getAirdropBoundary();
-    Polygon getMappingBoundary();
+    Polygon getSearchBoundary();
     Polyline getWaypoints();
     // CHANGE: Return type is now std::vector<Airdrop>
     std::vector<Airdrop> getAirdrops();
@@ -55,7 +55,7 @@ class MissionParameters {
 
     Polygon flightBoundary;
     Polygon airdropBoundary;
-    Polygon mappingBoundary;
+    Polygon searchBoundary;
     Polyline waypoints;
     // CHANGE: Member variable type is now std::vector<Airdrop>
     std::vector<Airdrop> airdrops;

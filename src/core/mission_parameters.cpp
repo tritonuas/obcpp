@@ -43,9 +43,9 @@ Polygon MissionParameters::getAirdropBoundary() {
     return this->airdropBoundary;
 }
 
-Polygon MissionParameters::getMappingBoundary() {
+Polygon MissionParameters::getSearchBoundary() {
     ReadLock lock(this->mut);
-    return this->mappingBoundary;
+    return this->searchBoundary;
 }
 
 Polyline MissionParameters::getWaypoints() {
@@ -62,7 +62,7 @@ std::tuple<Polygon, Polygon, Polygon, Polyline, std::vector<Airdrop>>
 MissionParameters::getConfig() {
     ReadLock lock(this->mut);
 
-    return std::make_tuple(this->flightBoundary, this->airdropBoundary, this->mappingBoundary,
+    return std::make_tuple(this->flightBoundary, this->airdropBoundary, this->searchBoundary,
                            this->waypoints, this->airdrops);
 }
 
@@ -95,7 +95,7 @@ std::optional<std::string> MissionParameters::setMission(
         err += "Airdrop boundary must have at least 3 coordinates.";
     }
 
-    if (mission.mappingboundary().size() < 3) {
+    if (mission.searchboundary().size() < 3) {
         err += "Mapping boundary must have at least 3 coordinates.";
     }
 
@@ -106,7 +106,7 @@ std::optional<std::string> MissionParameters::setMission(
     this->cached_mission = mission;
     this->flightBoundary = cconverter.toXYZ(mission.flightboundary());
     this->airdropBoundary = cconverter.toXYZ(mission.airdropboundary());
-    this->mappingBoundary = cconverter.toXYZ(mission.mappingboundary());
+    this->searchBoundary = cconverter.toXYZ(mission.searchboundary());
     this->waypoints = cconverter.toXYZ(mission.waypoints());
     for (const auto& airdrop : mission.airdropassignments()) {  // Use const& for efficiency
         this->_setAirdrop(airdrop);
