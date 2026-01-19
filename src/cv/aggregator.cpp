@@ -4,6 +4,7 @@
 #include "utilities/lockptr.hpp"
 #include "utilities/locks.hpp"
 #include "utilities/logging.hpp"
+#include "cv/clustering.hpp"
 
 CVAggregator::CVAggregator(Pipeline&& p) : pipeline(std::move(p)) {
     this->num_worker_threads = 0;
@@ -122,4 +123,36 @@ std::vector<AggregatedRun> CVAggregator::popAllRuns() {
     // Now results->runs is empty
     this->results->runs.clear();
     return out;
+}
+
+void CVAggregator::calculateClusters() {
+    LockPtr<std::map<int, IdentifiedTarget>> results = this->getCVRecord();
+        std::vector<std::vector<GPSCoord>> cluster_input;
+        for (const auto& pair : *results.data.get()) {
+            GPSProtoVec cords = pair.second.coordinates();
+            auto types = pair.second.target_type();
+            // add all types up to the current, in order to keep list format
+            for (int i = 0; i < cords.size(); i++) {
+                GPSCoord location = cords.at(i);
+                int type = types.at(i);
+                if (cluster_input.size() < type) {
+                    for (int j = cluster_input.size(); j < type; j++) {
+                        cluster_input.push_back(std::vector<GPSCoord>());
+                    }
+                }
+                cluster_input[type].push_back(location);
+            }
+        }
+        Clustering clustering;
+        std::vector<GPSCoord> clusterCenters = clustering.FindClustersCenter(cluster_input);
+
+        LockPtr<MatchedResults> matched = this->getMatchedResults();
+        std::unordered_map<AirdropType, AirdropTarget> matched_clusters;
+        for (int i = 0; i < clusterCenters.size(); i++) {
+             AirdropTarget airdrop;
+             airdrop.set_index(static_cast<AirdropType>(i));
+             airdrop.mutable_coordinate()->CopyFrom(clusterCenters[i]);
+             matched_clusters.insert(std::pair(static_cast<AirdropType>(i), std::move(airdrop)));
+        }
+        matched.data->matched_airdrop = std::move(matched_clusters);
 }
