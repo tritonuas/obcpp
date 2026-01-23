@@ -2,15 +2,12 @@
 #define INCLUDE_CV_AGGREGATOR_HPP_
 
 #include <atomic>
-#include <cmath>
-#include <functional>
-#include <future>
+#include <condition_variable>
 #include <map>
 #include <memory>
 #include <mutex>
 #include <queue>
 #include <thread>
-#include <unordered_map>
 #include <vector>
 
 #include "cv/pipeline.hpp"
@@ -20,14 +17,14 @@
 #include "utilities/lockptr.hpp"
 
 struct AggregatedRun {
-    int run_id;                    // Unique integer ID for this pipeline run
-    cv::Mat annotatedImage;        // The "big image" with bounding boxes drawn
-    std::vector<Bbox> bboxes;      // All bounding boxes in that image
-    std::vector<GPSCoord> coords;  // Matching lat-longs for each bounding box
+    int run_id;
+    cv::Mat annotatedImage;
+    std::vector<Bbox> bboxes;
+    std::vector<GPSCoord> coords;
 };
 
 struct CVResults {
-    std::vector<AggregatedRun> runs;  // Each pipeline invocation => 1 run
+    std::vector<AggregatedRun> runs;
 };
 
 struct MatchedResults {
@@ -39,42 +36,34 @@ class CVAggregator {
     explicit CVAggregator(Pipeline&& pipeline);
     ~CVAggregator();
 
-    // Spawn a thread to run the pipeline on the given imageData
+    // Adds the image to the work queue (non-blocking)
     void runPipeline(const ImageData& image);
 
-    // Lockable pointer to retrieve aggregator results
     LockPtr<CVResults> getResults();
-
-    // Lockable pointer to retrieve matched results (after manual match)
     LockPtr<MatchedResults> getMatchedResults();
-
-    // For the endpoint to reset the current list of structs
     std::vector<AggregatedRun> popAllRuns();
-
-    // gets the record of all cv results
     LockPtr<std::map<int, IdentifiedTarget>> getCVRecord();
-
     void updateRecords(std::vector<IdentifiedTarget>& new_values);
 
  private:
-    std::mutex cv_record_mut;
-
-    std::shared_ptr<std::map<int, IdentifiedTarget>> cv_record;
-
-    void worker(ImageData image, int thread_num);
+    // The worker loop that runs inside each thread
+    void workerLoop(int thread_id);
 
     Pipeline pipeline;
 
-    std::mutex mut;
-    int num_worker_threads;
+    // Thread Pool Synchronization
+    std::vector<std::thread> workers;   // Fixed pool of threads
+    std::queue<ImageData> tasks;        // The work queue
+    std::mutex queue_mutex;             // Protects the queue
+    std::condition_variable condition;  // Wakes up workers
+    bool stop_processing;               // Flag to signal shutdown
 
-    // For when too many pipelines are active at once
-    std::queue<ImageData> overflow_queue;
+    // Results storage
+    std::mutex cv_record_mut;
+    std::shared_ptr<std::map<int, IdentifiedTarget>> cv_record;
 
-    // Shared aggregator results
+    std::mutex results_mut;  // Renamed from 'mut' for clarity
     std::shared_ptr<CVResults> results;
-
-    // Shared matched results
     std::shared_ptr<MatchedResults> matched_results;
 };
 

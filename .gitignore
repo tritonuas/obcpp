@@ -11,6 +11,7 @@ _deps/
 
 models/**
 !models/.gitkeep
+!models/sam3/
 
 Testing/
 imgs/

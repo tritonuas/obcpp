@@ -132,9 +132,7 @@ std::vector<Detection> SAM3::detect(cv::Mat& image, const std::vector<std::strin
             // --- 5. NON-MAXIMUM SUPPRESSION (NMS) ---
             std::sort(
                 rawDetections.begin(), rawDetections.end(),
-                [](const Detection& a, const Detection& b) {
-                    return a.confidence > b.confidence;
-                });
+                [](const Detection& a, const Detection& b) { return a.confidence > b.confidence; });
 
             for (const auto& det : rawDetections) {
                 bool overlap = false;
@@ -149,8 +147,7 @@ std::vector<Detection> SAM3::detect(cv::Mat& image, const std::vector<std::strin
                 }
             }
 
-            LOG_F(INFO, "Detected %zu objects for prompt '%s'", results.size(),
-                  promptText.c_str());
+            LOG_F(INFO, "Detected %zu objects for prompt '%s'", results.size(), promptText.c_str());
 
         } catch (const Ort::Exception& e) {
             LOG_F(ERROR, "ONNX Inference Error: %s", e.what());
