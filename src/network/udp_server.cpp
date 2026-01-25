@@ -1,6 +1,8 @@
 #include <filesystem>
 #include "network/udp_server.hpp"
 
+// TODO: Didn't touch this for the most part since its for mocking. 
+
 cv::Mat UDPServer::createBGR() {
     std::cout << std::filesystem::current_path() << '\n';
     cv::Mat image = cv::imread("/workspaces/obcpp/tests/integration/images/blurb.jpeg");
@@ -74,8 +76,8 @@ void UDPServer::send(asio::ip::udp::endpoint & endpoint) {
     cv::Mat flatten = img.reshape(1, img.total() * img.channels());
     std::vector<std::uint8_t> imgBuffer = img.isContinuous() ? flatten : flatten.clone();
 
-    if (imgBuffer.size() != BUFFER_SIZE) {
-        std::cout << "size: " << imgBuffer.size() << " expected: " << BUFFER_SIZE << '\n';
+    if (imgBuffer.size() != IMG_BUFFER) {
+        std::cout << "size: " << imgBuffer.size() << " expected: " << IMG_BUFFER << '\n';
         return;
     }
 

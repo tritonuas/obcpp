@@ -266,7 +266,7 @@ DEF_GCS_HANDLE(Get, camera, capture) {
 
         if (!compressed_image.empty()) {
             LOG_F(INFO,
-                  "Compressed manual capture image from %d bytes to %d bytes (%.1f%% compression)",
+                  "Compressed manual capture image from %zu bytes to %zu bytes (%.1f%% compression)",
                   image->DATA.total() * image->DATA.elemSize(), compressed_data.size(),
                   (1.0 - static_cast<double>(compressed_data.size()) /
                              (image->DATA.total() * image->DATA.elemSize())) *
@@ -393,7 +393,7 @@ DEF_GCS_HANDLE(Get, targets, all) {
             compressed_image = cv::imdecode(compressed_data, cv::IMREAD_COLOR);
 
             if (!compressed_image.empty()) {
-                LOG_F(INFO, "Compressed image from %d bytes to %d bytes (%.1f%% compression)",
+                LOG_F(INFO, "Compressed image from %zu bytes to %zu bytes (%.1f%% compression)",
                       run.annotatedImage.total() * run.annotatedImage.elemSize(),
                       compressed_data.size(),
                       (1.0 - static_cast<double>(compressed_data.size()) /
@@ -417,7 +417,7 @@ DEF_GCS_HANDLE(Get, targets, all) {
         // logic)
         if (run.coords.size() != run.bboxes.size()) {
             LOG_F(ERROR,
-                  "Mismatch between coordinates (%ld) and bboxes (%ld) count in run_id %d. "
+                  "Mismatch between coordinates (%zu) and bboxes (%zu) count in run_id %d. "
                   "Skipping this run.",
                   run.coords.size(), run.bboxes.size(), run.run_id);
             continue;  // Skip this problematic run
