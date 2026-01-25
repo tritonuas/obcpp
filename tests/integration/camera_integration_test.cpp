@@ -15,6 +15,8 @@ int main(int argc, char* argv[]) {
 
     CameraConfig config;
     asio::io_context io_context_;
+    const int NUM_IMAGES = 5;
+    const std::chrono::milliseconds IMAGE_INTERVAL = std::chrono::milliseconds(250);
 
     std::cout << "[Test] Initializing RPICamera..." << std::endl;
     RPICamera camera(config, &io_context_);
@@ -27,27 +29,30 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    std::cout << "[Test] Requesting Picture..." << std::endl;
-    std::optional<ImageData> img = camera.takePicture(std::chrono::milliseconds(3000), nullptr);
+    for (int i = 0; i < NUM_IMAGES; i++) {
+        std::cout << "[Test] Requesting Picture " << i + 1 << "/" << NUM_IMAGES << std::endl;
+        std::this_thread::sleep_for(IMAGE_INTERVAL);
+        std::optional<ImageData> img = camera.takePicture(std::chrono::milliseconds(3000), nullptr);
 
-    if (img.has_value()) {
-        std::cout << "[Test] Image Received! Size: " << img.value().DATA.total() << " bytes." << std::endl;
-        
-        fs::path base_dir = "images";
-        if (!fs::exists(base_dir)) {
-            fs::create_directory(base_dir);
-        }
+        if (img.has_value()) {
+            std::cout << "[Test] Image Received! Size: " << img.value().DATA.total() << " bytes." << std::endl;
+            
+            fs::path base_dir = "images";
+            if (!fs::exists(base_dir)) {
+                fs::create_directory(base_dir);
+            }
 
-        fs::path filepath = base_dir / (std::to_string(img.value().TIMESTAMP) + ".png");
-        
-        if (img.value().saveToFile(base_dir.string())) {
-             std::cout << "[Test] Saved successfully to " << base_dir << std::endl;
+            fs::path filepath = base_dir / (std::to_string(img.value().TIMESTAMP) + ".png");
+            
+            if (img.value().saveToFile(base_dir.string())) {
+                std::cout << "[Test] Saved successfully to " << base_dir << std::endl;
+            } else {
+                std::cerr << "[Test] Failed to save image file." << std::endl;
+            }
         } else {
-             std::cerr << "[Test] Failed to save image file." << std::endl;
+            std::cerr << "[Test] FAILED: No image received (Timeout or Error)." << std::endl;
+            return 1;
         }
-    } else {
-        std::cerr << "[Test] FAILED: No image received (Timeout or Error)." << std::endl;
-        return 1;
     }
 
     return 0;
