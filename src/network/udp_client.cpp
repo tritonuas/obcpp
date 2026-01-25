@@ -1,4 +1,5 @@
 #include "network/udp_client.hpp"
+#include <chrono>
 
 UDPClient::UDPClient(asio::io_context* io_context_, std::string ip, int port) : socket_(*io_context_) {
     this->ip = ip;
@@ -7,9 +8,8 @@ UDPClient::UDPClient(asio::io_context* io_context_, std::string ip, int port) : 
 
 bool UDPClient::connect() {
     boost::system::error_code ec;
-    asio::ip::udp::endpoint endpoint_(asio::ip::udp::endpoint(asio::ip::make_address(this->ip), this->port));
-
-    // open the UDP socket using ip::udp::v4()
+    
+    // Open the UDP socket
     this->socket_.open(asio::ip::udp::v4(), ec);
 
     if (ec) {
@@ -17,8 +17,13 @@ bool UDPClient::connect() {
         return false;
     }
 
-    LOG_F(INFO, "Connected to %s on port %d", this->ip.c_str(), this->port);
+    // Set Receive Timeout 
+    struct timeval read_timeout;
+    read_timeout.tv_sec = 2;
+    read_timeout.tv_usec = 0;
+    setsockopt(this->socket_.native_handle(), SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout));
 
+    LOG_F(INFO, "Connected to %s on port %d", this->ip.c_str(), this->port);
     return true;
 }
 
@@ -36,17 +41,13 @@ bool UDPClient::send(std::uint8_t request) {
         return false;
     }
 
-    LOG_F(INFO, "Sent %d bytes", bytesSent);
-
     return true;
 }
 
 // receive an image back from the server
 Header UDPClient::recvHeader() {
     boost::system::error_code ec;
-    // asio::ip::udp::endpoint endpoint_(asio::ip::udp::endpoint(asio::ip::make_address(this->ip), this->port));
     asio::ip::udp::endpoint sender_endpoint;
-
     Header header;
 
     int bytesRead = this->socket_.receive_from(asio::buffer(&header, sizeof(Header)), sender_endpoint, 0, ec);
@@ -55,57 +56,58 @@ Header UDPClient::recvHeader() {
         LOG_F(ERROR, "Failed to read header: %s", ec.message().c_str());
         return {};
     }
-
-    LOG_F(INFO, "Bytes read (header): %d", bytesRead);
-
+    
+    // Network to Host Byte Order conversion handled by caller or here? 
+    // rpi.cpp expects to handle it, but todo
     return header;
 }
 
 std::vector<std::uint8_t> UDPClient::recvBody(const int mem_size, const int total_chunks) {
     boost::system::error_code ec;
-    // asio::ip::udp::endpoint endpoint_(asio::ip::udp::endpoint(asio::ip::make_address(this->ip), this->port));
     asio::ip::udp::endpoint sender_endpoint;
 
-    const int bufSize = mem_size * total_chunks;
-    int totalBytesRead = 0;
-
-    LOG_F(INFO, "Reading in bufSize (body): %d", bufSize);
-
+    const int bufSize = mem_size; 
     std::vector<std::uint8_t> buf(bufSize);
+    std::vector<bool> received_chunks(total_chunks, false);
+    
+    int chunks_received_count = 0;
+    
+    // Use raw buffer? hopefully no mem leaks
+    char chunk_buf[CHUNK_SIZE + sizeof(uint32_t)];
 
-    int totalChunks = 0;
-
-    for (int i = 0; i < total_chunks; i++) {
-        char chunk_buf[CHUNK_SIZE + sizeof(uint32_t)];
-
-        int bytesRead = this->socket_.receive_from(asio::buffer(chunk_buf), sender_endpoint, 0, ec);
+    // Loop until all chunks received
+    // Note: we prolly want to add a max retry count or timeout check inside the loop
+    // But the socket timeout will break the loop eventually if data stops coming
+    while (chunks_received_count < total_chunks) {
         
-        int chunk_idx = ntohl(*reinterpret_cast<uint32_t*>(chunk_buf));
-        int data_size = bytesRead - sizeof(uint32_t);
-        int offset = chunk_idx * CHUNK_SIZE;
+        size_t bytesRead = this->socket_.receive_from(asio::buffer(chunk_buf), sender_endpoint, 0, ec);
+
+        if (ec) {
+             LOG_F(ERROR, "Receive chunk failed: %s", ec.message().c_str());
+             // Return what we have or empty? Returning empty signals failure.
+             return {}; 
+        }
+
+        if (bytesRead < sizeof(uint32_t)) continue;
+        
+        uint32_t chunk_idx = ntohl(*reinterpret_cast<uint32_t*>(chunk_buf));
+        size_t data_size = bytesRead - sizeof(uint32_t);
+        size_t offset = chunk_idx * CHUNK_SIZE;
+
+        if (offset + data_size > (size_t)bufSize) {
+             LOG_F(ERROR, "Chunk exceeds buffer bounds");
+             continue;
+        }
 
         // copy into buffer
         memcpy(buf.data() + offset, chunk_buf + sizeof(uint32_t), data_size);
 
-        totalBytesRead += data_size;
-        totalChunks += 1;
-        
-        // LOG_F(INFO, "Chunk: %d, Total bytes read: %d, Total chunks: %d", chunk_idx, totalBytesRead, totalChunks);
+        if (!received_chunks[chunk_idx]) {
+            received_chunks[chunk_idx] = true;
+            chunks_received_count++;
+        }
     }
 
-    if (ec) {
-        LOG_F(ERROR, "Failed to send body: %s", ec.message().c_str());
-        return {};
-    }
-
-    if (totalBytesRead != bufSize) {
-        LOG_F(ERROR, "Total bytes read: %d, Expected bytes: %d", totalBytesRead, bufSize);
-        return {}; // TODO: not sure what to return here, incomplete read
-    }
-
-    LOG_F(INFO, "Bytes read: %d", totalBytesRead);
-
-    LOG_F(INFO, "Buffer size: %lu", buf.size());
-
+    LOG_F(INFO, "Successfully reconstructed plane: %lu bytes", buf.size());
     return buf;
 }
