@@ -2,158 +2,158 @@
 #include <thread>
 #include <optional>
 #include <string>
-#include <unordered_map>
+#include <vector>
 #include <deque>
 
 #include <nlohmann/json.hpp>
 #include <opencv2/opencv.hpp>
-#include <opencv2/core/mat.hpp>
-#include <opencv2/core.hpp>
 #include <loguru.hpp>
 
-#include "camera/interface.hpp"
-#include "network/mavlink.hpp"
-#include "utilities/locks.hpp"
-#include "utilities/datatypes.hpp"
-#include "utilities/common.hpp"
-
 #include "camera/rpi.hpp"
+#include "network/rpi_connection.hpp" 
 
-// const uint32_t IMG_WIDTH = 2028;
-// const uint32_t IMG_HEIGHT = 1520;
-// const uint32_t IMG_BUFFER = IMG_WIDTH * IMG_HEIGHT * 3 / 2; // normal image size
-const uint32_t IMG_SIZE = 4668440;
+// Setup Logging
+// ...
 
-
-RPICamera::RPICamera(CameraConfig config, asio::io_context* io_context_) : CameraInterface(config), client(io_context_, SERVER_IP, SERVER_PORT) {
+RPICamera::RPICamera(CameraConfig config, asio::io_context* io_context_) 
+    : CameraInterface(config), client(io_context_, SERVER_IP, SERVER_PORT) {
     this->connected = false;
 }
 
 void RPICamera::connect() {
-    if (this->connected == true) {
-        return;
+    if (this->connected) return;
+    
+    // Keep trying to connect/bind logic
+    // For UDP, "connect" just means opening the socket which is fast
+    if (client.connect()) {
+        this->connected = true;
+        // Optionally send START_REQUEST if needed, but 'I' usually works standalone (i think)
+        // client.send(START_REQUEST);
     }
-	
-	while (!this->connected) {
-        this->connected = client.connect();
-	}
-	
-    // tells the camera to start the camera thread
-	client.send(START_REQUEST);
 }
 
-RPICamera::~RPICamera() {
-    // TODO: probably have to shutdown/free the socket and free the iocontext if that's a thing
-}
+RPICamera::~RPICamera() {}
 
 std::optional<ImageData> RPICamera::takePicture(const std::chrono::milliseconds& timeout, std::shared_ptr<MavlinkClient> mavlinkClient) {
-	
-	// client sends a request to take a pictures
-	client.send(PICTURE_REQUEST);
+    
+    // 1. Send Request
+    if (!client.send(PICTURE_REQUEST)) {
+        LOG_F(ERROR, "Failed to send picture request");
+        return {};
+    }
 
-    // TODO: get the imgbuf
-    std::vector<std::uint8_t> imgbuf = readImage();
+    // 2. Read 3 Planes
+    std::vector<std::vector<uint8_t>> planes = readImage();
 
-	// give the image buffer to imgConvert
-	std::optional<cv::Mat> mat = imgConvert(imgbuf);
+    if (planes.size() != 3) {
+        LOG_F(ERROR, "Failed to read all 3 planes");
+        return {};
+    }
 
-	if (!mat.has_value()) {
-		return {};
-	}
+    // 3. Convert to cv::Mat
+    std::optional<cv::Mat> mat = imgConvert(planes);
+
+    if (!mat.has_value()) {
+        return {};
+    }
 
     uint64_t timestamp = getUnixTime_s().count();
 
-	return ImageData {
-		.DATA = mat.value(),
-		.TIMESTAMP = timestamp,
-		.TELEMETRY = {} // TODO: nullopt for now
-	};
+    return ImageData {
+        .DATA = mat.value(),
+        .TIMESTAMP = timestamp,
+        .TELEMETRY = {} 
+    };
 }
 
-std::optional<cv::Mat> RPICamera::imgConvert(std::vector<std::uint8_t> buf) {
+std::vector<std::vector<uint8_t>> RPICamera::readImage() {
+    std::vector<std::vector<uint8_t>> planes;
 
-    // TODO: how to check the expected buffer size idk, counter?
-    // if (buf.size() != BUFFER_SIZE) {
-    //     return {};
-    // }
+    // We expect exactly 3 planes: Y, U, V
+    for (int i = 0; i < 3; i++) {
+        Header header = client.recvHeader();
+        
+        // Convert endianness
+        header.magic = ntohl(header.magic);
+        header.mem_size = ntohl(header.mem_size);
+        header.total_chunks = ntohl(header.total_chunks);
 
-    // put raw bytes in cv::Mat
-    cv::Mat yuv420_img(IMG_HEIGHT * 3 / 2, IMG_WIDTH, CV_8UC1, buf.data());
+        if (header.magic != EXPECTED_MAGIC) {
+            LOG_F(ERROR, "Invalid Magic on plane %d: %x", i, header.magic);
+            return {};
+        }
 
-    cv::Mat bgr_img(IMG_HEIGHT, IMG_WIDTH, CV_8UC3);
-    cv::cvtColor(yuv420_img, bgr_img, cv::COLOR_YUV2BGR_I420); // TODO: not sure if this is the right color space
+        std::vector<uint8_t> planeData = client.recvBody(header.mem_size, header.total_chunks);
+        if (planeData.empty()) {
+            LOG_F(ERROR, "Failed to receive body for plane %d", i);
+            return {};
+        }
+        
+        planes.push_back(std::move(planeData));
+    }
+
+    return planes;
+}
+
+std::optional<cv::Mat> RPICamera::imgConvert(const std::vector<std::vector<uint8_t>>& planes) {
+    // We rely on constants from rpi_connection.hpp:
+    // IMG_WIDTH, IMG_HEIGHT, STRIDE_Y, STRIDE_UV
+
+    if (planes.size() != 3) return {};
+
+    const std::vector<uint8_t>& p0 = planes[0]; // Y
+    const std::vector<uint8_t>& p1 = planes[1]; // U
+    const std::vector<uint8_t>& p2 = planes[2]; // V
+
+    // Create wrappers around the raw data with specific stride (Step)
+    // Note: cv::Mat constructor with data pointer does not copy data, so we must be careful with lifetime
+    // But we copy immediately below.
+    cv::Mat y_src(IMG_HEIGHT, IMG_WIDTH, CV_8UC1, (void*)p0.data(), STRIDE_Y);
+    cv::Mat u_src(IMG_HEIGHT/2, IMG_WIDTH/2, CV_8UC1, (void*)p1.data(), STRIDE_UV);
+    cv::Mat v_src(IMG_HEIGHT/2, IMG_WIDTH/2, CV_8UC1, (void*)p2.data(), STRIDE_UV);
+
+    // Allocate continuous buffer for standard I420
+    cv::Mat yuv_continuous(IMG_HEIGHT + IMG_HEIGHT/2, IMG_WIDTH, CV_8UC1);
+
+    // Copy Y (Removes padding)
+    y_src.copyTo(yuv_continuous(cv::Rect(0, 0, IMG_WIDTH, IMG_HEIGHT)));
+
+    // Copy U and V (Removes padding)
+    // We need to flatten them carefully into the buffer after Y
+    size_t y_size = IMG_WIDTH * IMG_HEIGHT;
+    size_t uv_size = (IMG_WIDTH / 2) * (IMG_HEIGHT / 2);
+
+    uint8_t* u_dst = yuv_continuous.data + y_size;
+    uint8_t* v_dst = u_dst + uv_size;
+
+    // Copy U
+    if (u_src.isContinuous()) {
+        memcpy(u_dst, u_src.data, uv_size);
+    } else {
+        for (int row = 0; row < u_src.rows; ++row) {
+             memcpy(u_dst + row * (IMG_WIDTH/2), u_src.ptr(row), IMG_WIDTH/2);
+        }
+    }
+
+    // Copy V
+    if (v_src.isContinuous()) {
+        memcpy(v_dst, v_src.data, uv_size);
+    } else {
+        for (int row = 0; row < v_src.rows; ++row) {
+             memcpy(v_dst + row * (IMG_WIDTH/2), v_src.ptr(row), IMG_WIDTH/2);
+        }
+    }
+
+    // Convert I420 to BGR
+    cv::Mat bgr_img;
+    cv::cvtColor(yuv_continuous, bgr_img, cv::COLOR_YUV2BGR_I420);
 
     return bgr_img;
 }
 
-void RPICamera::startTakingPictures(const std::chrono::milliseconds& timeout, std::shared_ptr<MavlinkClient> mavlinkClient) {
-
-}
-
-void RPICamera::stopTakingPictures() {
-
-}
-
-void RPICamera::ping() {
-
-}
-
-std::vector<std::uint8_t> RPICamera::readImage() {
-    // 3 separate reads for 3 separate files
-
-    // std::vector<std::uint8_t> imgbuf;
-
-    // for (int i = 0; i < 3; i++) {
-    //     std::vector<std::uint8_t> packet = readPacket();
-
-    //     // have to concatenate the packets since there are 3 "image files"
-    //     imgbuf.reserve(imgbuf.size() + packet.size());
-    //     imgbuf.insert(imgbuf.end(), packet.begin(), packet.end());
-    // }
-
-    std::vector<std::uint8_t> packet = readPacket();
-
-    return packet;
-    // return imgbuf;
-}
-
-std::optional<ImageTelemetry> RPICamera::readTelemetry() {
-
-    ImageTelemetry telemetry;
-    // asio::read()
-
-    return telemetry;
-}
-
-std::vector<std::uint8_t> RPICamera::readPacket() {
-
-    std::vector<std::uint8_t> packet;
-
-    Header header = client.recvHeader();
-
-    // TODO: ntohl or ntohs?
-    header.magic = ntohl(header.magic);
-    header.mem_size = ntohl(header.mem_size);
-    header.total_chunks = ntohl(header.total_chunks);
-
-    LOG_F(INFO, "mem_size: %d, total_chunks: %d", header.mem_size, header.total_chunks);
-
-    // check the magic number, sort of like a checksum ig
-    if (header.magic != EXPECTED_MAGIC) {
-        // TODO: how do we even handle this, after we read the corrupted header we don't even know how many bytes to throw away to read the next header
-    }
-
-    packet = client.recvBody(header.mem_size, header.total_chunks);
-    
-    io_context_.run();
-
-    return packet;
-}
-
-void RPICamera::startStreaming() {
-
-}
-
-bool RPICamera::isConnected() {
-    return true;
-}
+// Unused methods stubbed out
+void RPICamera::startTakingPictures(const std::chrono::milliseconds& timeout, std::shared_ptr<MavlinkClient> mavlinkClient) {}
+void RPICamera::stopTakingPictures() {}
+void RPICamera::startStreaming() {}
+void RPICamera::ping() {}
+bool RPICamera::isConnected() { return connected; }
