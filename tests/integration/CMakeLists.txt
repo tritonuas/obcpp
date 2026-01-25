@@ -142,23 +142,7 @@ target_add_loguru(airdrop_packets)
 #     -E env LD_LIBRARY_s/target_siamese_1.pt
 # )
 
-add_executable(tcp_client_mock "tcp_client_mock.cpp")
-target_link_libraries(tcp_client_mock PRIVATE 
-    obcpp_lib
-)
-target_include_directories(tcp_client_mock PRIVATE ${INCLUDE_DIRECTORY})
-target_add_boost(tcp_client_mock)
-target_add_protobuf(tcp_client_mock)
-target_add_torch(tcp_client_mock)
-target_add_torchvision(tcp_client_mock)
-target_add_json(tcp_client_mock)
-target_add_opencv(tcp_client_mock)
-target_add_httplib(tcp_client_mock)
-target_add_mavsdk(tcp_client_mock)
-target_add_matplot(tcp_client_mock)
-target_add_loguru(tcp_client_mock)
-target_include_directories(tcp_client_mock PRIVATE ${ImageMagick_INCLUDE_DIRS})
-target_link_libraries(tcp_client_mock PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
+
 
 add_executable(udp_client_mock "udp_client_mock.cpp")
 target_link_libraries(udp_client_mock PRIVATE 
@@ -178,23 +162,7 @@ target_add_loguru(udp_client_mock)
 target_include_directories(udp_client_mock PRIVATE ${ImageMagick_INCLUDE_DIRS})
 target_link_libraries(udp_client_mock PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
-add_executable(tcp_server_mock "tcp_server_mock.cpp")
-target_link_libraries(tcp_server_mock PRIVATE 
-    obcpp_lib
-)
-target_include_directories(tcp_server_mock PRIVATE ${INCLUDE_DIRECTORY})
-target_add_boost(tcp_server_mock)
-target_add_protobuf(tcp_server_mock)
-target_add_torch(tcp_server_mock)
-target_add_torchvision(tcp_server_mock)
-target_add_json(tcp_server_mock)
-target_add_opencv(tcp_server_mock)
-target_add_httplib(tcp_server_mock)
-target_add_mavsdk(tcp_server_mock)
-target_add_matplot(tcp_server_mock)
-target_add_loguru(tcp_server_mock)
-target_include_directories(tcp_server_mock PRIVATE ${ImageMagick_INCLUDE_DIRS})
-target_link_libraries(tcp_server_mock PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
+
 
 add_executable(udp_server_mock "udp_server_mock.cpp")
 target_link_libraries(udp_server_mock PRIVATE 
@@ -235,3 +203,15 @@ target_link_libraries(clustering PRIVATE obcpp_lib obcpp_camera)
 target_add_matplot(clustering) 
 target_add_json(clustering)
 target_add_protobuf(clustering)
+
+add_executable(camera_integration_test "camera_integration_test.cpp")
+target_link_libraries(camera_integration_test PRIVATE obcpp_lib)
+target_include_directories(camera_integration_test PRIVATE ${INCLUDE_DIRECTORY})
+target_add_loguru(camera_integration_test)
+target_add_opencv(camera_integration_test)
+target_add_boost(camera_integration_test)
+target_add_mavsdk(camera_integration_test)
+target_add_matplot(camera_integration_test)
+target_add_json(camera_integration_test)
+target_include_directories(camera_integration_test PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(camera_integration_test PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})

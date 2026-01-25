@@ -5,8 +5,6 @@ set(COMMON_FILES
     gcs_routes.cpp
     gcs.cpp
     mavlink.cpp
-    tcp_client.cpp
-    tcp_server.cpp
     udp_client.cpp
     udp_server.cpp
 )
