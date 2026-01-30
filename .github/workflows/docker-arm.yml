@@ -3,7 +3,7 @@ name: Push ARM Docker Image
 on:
   push:
     branches:
-      - main 
+      # - main 
 
 env:
   REGISTRY: ghcr.io
