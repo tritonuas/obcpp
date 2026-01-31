@@ -10,30 +10,23 @@
 #include "utilities/datatypes.hpp"
 #include "utilities/rng.hpp"
 
+
+/*
+To nuke or not to nuke, that is the question
+Whether 'tis nobler in the mind to suffer
+The pointers and recursion of outrageous fortune,
+Or to take arms against a sea of segfaults
+And by opposing end them.
+*/
+
 Environment::Environment(const Polygon& valid_region, const Polygon& airdrop_zone,
-                         const Polygon& mapping_region, const std::vector<XYZCoord>& goals,
-                         const std::vector<Polygon>& obstacles)
+                         const Polygon& mapping_region, const std::vector<XYZCoord>& goals)
     : valid_region(valid_region),
       airdrop_zone(airdrop_zone),
       mapping_region(mapping_region),
       goals(goals),
       goals_found(0),
-      bounds(findBounds(valid_region)),
-      obstacles(obstacles) {}
-
-bool Environment::isPointInBounds(const XYZCoord& point) const {
-    if (!isPointInPolygon(valid_region, point)) {
-        return false;
-    }
-
-    for (const Polygon& obstacle : obstacles) {
-        if (isPointInPolygon(obstacle, point)) {
-            return false;
-        }
-    }
-
-    return true;
-}
+      bounds(findBounds(valid_region)) {}
 
 bool Environment::isPathInBounds(const std::vector<XYZCoord>& path) const {
     /*
@@ -48,7 +41,7 @@ bool Environment::isPathInBounds(const std::vector<XYZCoord>& path) const {
     const int interval = ENV_PATH_VALIDATION_STEP_SIZE;
 
     // special case not checked in the loop
-    if (!isPointInBounds(path[center])) {
+    if (!isPointInPolygon(valid_region, [center])) {
         return false;
     }
 
@@ -57,7 +50,7 @@ bool Environment::isPathInBounds(const std::vector<XYZCoord>& path) const {
 
         // to the right
         while (count < path.size()) {
-            if (!isPointInBounds(path[count])) {
+            if (!isPointInPolygon(valid_region, path[count])) {
                 return false;
             }
             count += interval;
@@ -66,7 +59,7 @@ bool Environment::isPathInBounds(const std::vector<XYZCoord>& path) const {
         // to the left
         count = center - i;
         while (count >= 0) {
-            if (!isPointInBounds(path[count])) {
+            if (!isPointInPolygon(valid_region, path[count])) {
                 return false;
             }
             count -= interval;
@@ -76,44 +69,6 @@ bool Environment::isPathInBounds(const std::vector<XYZCoord>& path) const {
     return true;
 }
 
-// bool Environment::isPathInBoundsAdv(const std::vector<XYZCoord>& path,
-//                                     const RRTOption& option) const {
-//     if (!option.has_straight) {
-//         return isPathInBounds(path);
-//     }
-
-//     // finds the last point on the first curve, and the first point on the second curve
-//     // does this using the option, using arclength and the point separation
-//     const int first_curve_end =
-//         std::abs(option.dubins_path.beta_0) * TURNING_RADIUS / POINT_SEPARATION + 1;
-//     const int second_curve_start =
-//         path.size() - std::abs(option.dubins_path.beta_2) * TURNING_RADIUS / POINT_SEPARATION;
-
-//     // sanity check
-//     if (first_curve_end >= second_curve_start) {
-//         return isPathInBounds(path);
-//     }
-
-//     if (!isLineInBounds(path[first_curve_end], path[second_curve_start])) {
-//         return false;
-//     }
-
-//     // checks the points manually in the curve
-//     for (int i = 0; i <= first_curve_end; i++) {
-//         if (!isPointInBounds(path[i])) {
-//             return false;
-//         }
-//     }
-
-//     for (int i = second_curve_start; i < path.size(); i++) {
-//         if (!isPointInBounds(path[i])) {
-//             return false;
-//         }
-//     }
-
-//     return true;
-// }
-
 const XYZCoord& Environment::getGoal() const { return goals[goals_found]; }
 
 const XYZCoord& Environment::getGoal(int index) const { return goals[index]; }
@@ -121,13 +76,14 @@ const XYZCoord& Environment::getGoal(int index) const { return goals[index]; }
 XYZCoord Environment::getRandomPoint(bool use_mapping_region = false) const {
     // TODO - use some heuristic to more efficiently generate direction
     // vector (and make it toggleable)
+    // potentially utilize ellipse sampling or goal biasing
     std::pair<std::pair<double, double>, std::pair<double, double>> polygon_bounds = bounds;
     if (use_mapping_region) {
         polygon_bounds = findBounds(mapping_region);
     }
 
     for (int i = 0; i < TRIES_FOR_RANDOM_POINT; i++) {
-        // generates a random point in the rectangle contianing the valid region
+        // generates a random point in the rectangle containing the valid region
         XYZCoord generated_point = {
             random(polygon_bounds.first.first, polygon_bounds.first.second),
             random(polygon_bounds.second.first, polygon_bounds.second.second), 0};
@@ -137,7 +93,7 @@ XYZCoord Environment::getRandomPoint(bool use_mapping_region = false) const {
                 return generated_point;
             }
         } else {
-            if (isPointInBounds(generated_point)) {
+            if (isPointInPolygon(valid_region, generated_point)) {
                 return generated_point;
             }
         }
@@ -162,20 +118,6 @@ bool Environment::isPointInPolygon(const Polygon& polygon, const XYZCoord& point
     }
 
     return is_inside;
-}
-
-bool Environment::isLineInBounds(const XYZCoord& start_point, const XYZCoord& end_point) const {
-    if (doesLineIntersectPolygon(start_point, end_point, valid_region)) {
-        return false;
-    }
-
-    for (const Polygon& obstacle : obstacles) {
-        if (doesLineIntersectPolygon(start_point, end_point, obstacle)) {
-            return false;
-        }
-    }
-
-    return true;
 }
 
 bool Environment::doesLineIntersectPolygon(const XYZCoord& start_point, const XYZCoord& end_point,

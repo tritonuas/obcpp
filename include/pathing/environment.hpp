@@ -17,25 +17,11 @@
  *
  *  [FUTURE]
  *      - add dynamic shrinking and enlarging of the boundary
- *      - add dynamic obstacles
  */
 class Environment {
  public:
     Environment(const Polygon& valid_region, const Polygon& airdrop_zone,
-                const Polygon& mapping_region, const std::vector<XYZCoord>& goals,
-                const std::vector<Polygon>& obstacles);
-
-    /**
-     * Check if a point is in the valid region
-     *
-     * TODO - analysis if checking all regions for a given point at one time
-     * is optimal. The alternative would be to check each region individually
-     * for all points
-     *
-     * @param point the point to check
-     * @return true if the point is in the valid region, false otherwise
-     */
-    bool isPointInBounds(const XYZCoord& point) const;
+                const Polygon& mapping_region, const std::vector<XYZCoord>& goals);
 
     /**
      * Check if an entire flight path is in bounds
@@ -48,20 +34,6 @@ class Environment {
      * @return true if the path is in bounds, false otherwise
      */
     bool isPathInBounds(const std::vector<XYZCoord>& path) const;
-
-    /**
-     *
-     * Check if an entire flight path is in bounds
-     *
-     * Attemps to skip a straight section by checking line segments instead of
-     * points, this doesn't actually end up making a large differernce with small
-     * path length?
-     *
-     * @param path the path to check
-     * @param option the RRT option associated with the path
-     * @return true if the path is in bounds, false otherwise
-     */
-    bool isPathInBoundsAdv(const std::vector<XYZCoord>& path, const RRTOption& option) const;
 
     /**
      * Get the goal point
@@ -117,18 +89,6 @@ class Environment {
      *  [TODO] something that increases cost based on time in the edge
      */
     static bool isPointInPolygon(const Polygon& polygon, const XYZCoord& point);
-
-    /**
-     * Checks wheter a line segment is in bounds or not, it must NOT intersect
-     * either the valid region or the obstacles
-     *
-     * ASSUMES THAT THE END POINTS ARE IN THE POLYGON
-     *
-     * @param start_point ==> start point of the line segment
-     * @param end_point   ==> end point of the line segment
-     * @return            ==> whether or not the line segment is in bounds
-     */
-    bool isLineInBounds(const XYZCoord& start_point, const XYZCoord& end_point) const;
 
     /**
      * Determines whether a line segment intersects the polygon
@@ -272,7 +232,6 @@ class Environment {
     const Polygon airdrop_zone;         // boundary of the airdrop zone (subset of valid_region)
     const Polygon mapping_region;       // boundary of the mapping region (subset of valid_region)
     const std::vector<XYZCoord> goals;  // goal point
-    const std::vector<Polygon> obstacles;  // obstacles in the map
 
     int goals_found;  // whether or not the goal has been found, once it becomes ture, it will never
                       // be false again
