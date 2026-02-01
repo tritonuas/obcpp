@@ -615,7 +615,7 @@ MissionPath generateInitialPath(std::shared_ptr<MissionState> state) {
 
     // update goals here
     if (state->config.pathing.rrt.generate_deviations) {
-        Environment mapping_bounds(state->mission_params.getMappingBoundary(), {}, {}, goals, {});
+        Environment mapping_bounds(state->mission_params.getAirdropBoundary(), {}, {}, goals, {});
         goals = generateRankedNewGoalsList(goals, mapping_bounds)[0];
     }
 
