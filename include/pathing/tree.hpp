@@ -365,6 +365,22 @@ class RRTTree {
      * @param path_cost     ==> the cost of the path to the current node
      */
     void reassignCostsRecursive(RRTNode* parent, RRTNode* current_node, double cost_difference);
+
+    /**
+     * Finds the sequence of nodes from current_head to the target node using BFS
+     *
+     * @param target_node   ==> the node to find the path to
+     * @return              ==> vector of nodes from current_head to target_node
+     */
+    std::vector<RRTNode*> findPathToNode(RRTNode* target_node) const;
+
+    /**
+     * Constructs the coordinate path from a sequence of nodes
+     *
+     * @param nodes         ==> sequence of nodes
+     * @return              ==> vector of coordinates representing the path
+     */
+    std::vector<XYZCoord> buildPathFromNodes(const std::vector<RRTNode*>& nodes) const;
 };
 
 #endif  // INCLUDE_PATHING_TREE_HPP_

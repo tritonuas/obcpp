@@ -1,5 +1,7 @@
 #include "pathing/tree.hpp"
 
+#include <queue>
+#include <stack>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -244,42 +246,7 @@ RRTPoint RRTTree::getRandomPoint(double search_radius) const {
 
     // // picks the nearest node to the sample, and then returns a point `search_radius` distance
     // away
-    // // from tat point in the direction of the sample
-    // std::pair<RRTNode*, double> nearest_node = getNearestNode(sample);
-
-    // int count = 0;
-
-    // while (nearest_node.second < search_radius && count < TRIES_FOR_RANDOM_POINT) {
-    //     sample = airspace.getRandomPoint();
-    //     nearest_node = getNearestNode(sample);
-    //     count++;
-    // }
-    // // shouldn't happen, it is here for memory safety
-    // if (nearest_node == nullptr) {
-    //     return sample;
-    // }
-
-    // const RRTPoint& nearest_point = nearest_node->getPoint();
-
-    // const XYZCoord displacement_vector = sample.coord - nearest_point.coord;
-
-    // // TODO - use some heuristic to make this angle as optimal as possible
-    // const double angle =
-    //     std::atan2(displacement_vector.y, displacement_vector.x) + random(-M_PI / 2, M_PI / 2);
-
-    // // distance between the vectors, if it is less than the search radius, then it will return
-    // the
-    // // sample point, otherwise, it will return a point `search_radius` away from the nearest
-    // point const double distance = displacement_vector.norm();
-
-    // if (distance < search_radius) {
-    //     return RRTPoint(sample.coord, angle);
-    // }
-
-    // RRTPoint new_point(nearest_point.coord + (search_radius / distance) * displacement_vector,
-    //                    angle);
-
-    // return new_point;
+  
     return RRTPoint(sample, random(0, TWO_PI));
 }
 
@@ -374,38 +341,70 @@ void RRTTree::setCurrentHead(RRTNode* goal) {
     current_head = goal;
 }
 
-// std::vector<XYZCoord> RRTTree::getPathToGoal() const {
-//     RRTNode* current_node = current_head;
-//     std::vector<XYZCoord> path = {};
-
-//     while (current_node != nullptr && current_node->getParent() != nullptr) {
-//         const std::vector<XYZCoord>& edge_path = current_node->getPath();
-
-//         path.insert(path.begin(), edge_path.begin() + 1, edge_path.end());
-//         current_node = current_node->getParent();
-//     }
-
-//     // loop above misses the first node, this adds it manually
-//     path.insert(path.begin(), current_node->getPoint().coord);
-//     return path;
-// }
-
 std::vector<XYZCoord> RRTTree::getPathSegment(RRTNode* node) const {
-    RRTNode* current_node = node;
-    std::vector<XYZCoord> path = {};
-
-    while (current_node != current_head) {
-        if (current_node == nullptr) {
-            LOG_F(ERROR, "TREE: Segement does not find a path");
-            return {};
-        }
-
-        const std::vector<XYZCoord>& edge_path = current_node->getPath();
-
-        path.insert(path.begin(), edge_path.begin() + 1, edge_path.end());
-        current_node = current_node->getParent();
+    if (node == current_head) {
+        return {};
     }
 
+    std::vector<RRTNode*> nodes = findPathToNode(node);
+    return buildPathFromNodes(nodes);
+}
+
+std::vector<RRTNode*> RRTTree::findPathToNode(RRTNode* target_node) const {
+    if (target_node == current_head) {
+        LOG_F(WARNING, "TREE: target_node and current_head are the same");
+        return {target_node, target_node};
+    }
+
+    // Stack stores pairs of (node, next_child_index)
+    std::stack<std::pair<RRTNode*, size_t>> dfs_stack;
+    std::vector<RRTNode*> current_path;
+
+    dfs_stack.push({current_head, 0});
+    current_path.push_back(current_head);
+
+    while (!dfs_stack.empty()) {
+        RRTNode* current_node = dfs_stack.top().first;
+        size_t& child_idx = dfs_stack.top().second;
+
+        if (current_node == target_node) {
+            if (current_path.size() <= 1) {
+                LOG_F(WARNING, "TREE: target_node and current_head are the same");
+                return {target_node, target_node};
+            }
+
+            // Return path excluding current_head (index 0)
+            return std::vector<RRTNode*>(current_path.begin() + 1, current_path.end());
+        }
+
+        const RRTNodeList& children = current_node->getReachable();
+
+        if (child_idx < children.size()) {
+            RRTNode* next_child = children[child_idx];
+            child_idx++;
+            
+            dfs_stack.push({next_child, 0});
+            current_path.push_back(next_child);
+        } else {
+            // All children visited, backtrack
+            dfs_stack.pop();
+            current_path.pop_back();
+        }
+    }
+
+    LOG_F(ERROR, "TREE: Iterative DFS failed to find target_node from current_head");
+    return {};
+}
+
+std::vector<XYZCoord> RRTTree::buildPathFromNodes(const std::vector<RRTNode*>& nodes) const {
+    std::vector<XYZCoord> path;
+    for (const auto* node : nodes) {
+        const std::vector<XYZCoord>& edge_path = node->getPath();
+        // Skip the first point to avoid duplicates (it's the end point of previous edge)
+        if (!edge_path.empty()) {
+            path.insert(path.end(), edge_path.begin() + 1, edge_path.end());
+        }
+    }
     return path;
 }
 
@@ -414,21 +413,6 @@ RRTPoint& RRTTree::getStart() const { return root->getPoint(); }
 /*-----------------*/
 /* RRTTree Private */
 /*-----------------*/
-
-// std::pair<RRTNode*, double> RRTTree::getNearestNode(const XYZCoord& point) const {
-//     RRTNode* nearest = nullptr;
-//     double min_distance = std::numeric_limits<double>::infinity();
-
-//     for (auto& node : node_set) {
-//         double distance = point.distanceToSquared(node->getPoint().coord);
-//         if (distance < min_distance) {
-//             min_distance = distance;
-//             nearest = node;
-//         }
-//     }
-
-//     return {nearest, min_distance};
-// }
 
 void RRTTree::RRTStarRecursive(RRTNode* current_node, RRTNode* sample,
                                double rewire_radius_squared) {
