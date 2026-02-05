@@ -645,13 +645,12 @@ MissionPath generateInitialPath(std::shared_ptr<MissionState> state) {
 MissionPath generateSearchPath(std::shared_ptr<MissionState> state) {
     std::vector<GPSCoord> gps_coords;
     if (state->config.pathing.coverage.method == AirdropCoverageMethod::Enum::FORWARD) {
-        LOG_F(FATAL, "Forward search path not fully integrated yet.");
-
         RRTPoint start(state->mission_params.getWaypoints().front(), 0);
 
         // TODO , change the starting point to be something closer to loiter
         // region
-        ForwardCoveragePathing pathing(start, SEARCH_RADIUS,
+        double scan_radius = state->config.pathing.coverage.camera_vision_m;
+        ForwardCoveragePathing pathing(start, scan_radius,
                                        state->mission_params.getFlightBoundary(),
                                        state->mission_params.getAirdropBoundary(), state->config);
 
@@ -659,7 +658,7 @@ MissionPath generateSearchPath(std::shared_ptr<MissionState> state) {
             gps_coords.push_back(state->getCartesianConverter()->toLatLng(coord));
         }
 
-        return MissionPath(MissionPath::Type::FORWARD, {});
+        return MissionPath(MissionPath::Type::FORWARD, gps_coords);
     } else {  // hover
         HoverCoveragePathing pathing(state);
 
