@@ -57,7 +57,9 @@ std::optional<ImageData> RPICamera::takePicture(const std::chrono::milliseconds&
         return {};
     }
 
-    uint64_t timestamp = getUnixTime_s().count();
+    uint64_t timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()
+    ).count();
 
     return ImageData {
         .DATA = mat.value(),
