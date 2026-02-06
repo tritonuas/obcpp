@@ -35,21 +35,16 @@ RRTPoint& RRTNode::getPoint() { return this->point; }
 
 void RRTNode::setReachable(const RRTNodeList& reachable) {
     this->reachable = reachable;
-    for (RRTNode* node : reachable) {
-        node->parent = this;
-    }
 }
 
 void RRTNode::addReachable(RRTNode* new_node) {
     this->reachable.push_back(new_node);
-    new_node->parent = this;
 }
 
 void RRTNode::removeReachable(RRTNode* old_node) {
     for (int i = 0; i < reachable.size(); i++) {
         if (reachable.at(i) == old_node) {
             // TODO - UNSAFE
-            reachable.at(i)->parent = nullptr;
             reachable.erase(reachable.begin() + i);
         }
     }
@@ -60,10 +55,6 @@ const RRTNodeList& RRTNode::getReachable() { return (this->reachable); }
 double RRTNode::getCost() const { return this->cost; }
 
 void RRTNode::setCost(double new_cost) { this->cost = new_cost; }
-
-RRTNode* RRTNode::getParent() const { return this->parent; }
-
-void RRTNode::setParent(RRTNode* new_parent) { this->parent = new_parent; }
 
 const std::vector<XYZCoord>& RRTNode::getPath() const { return this->path; }
 
@@ -113,7 +104,6 @@ RRTNode* RRTTree::generateNode(RRTNode* anchor_node, const RRTPoint& new_point,
     // needs to add the node to the tree
     RRTNode* new_node =
         new RRTNode(new_point, anchor_node->getCost() + option.length, option.length, path);
-    new_node->setParent(anchor_node);
 
     return new_node;
 }

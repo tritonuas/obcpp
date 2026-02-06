@@ -48,13 +48,11 @@ class RRTNode {
 
     /*
      *  Add a new node to the end of this node's reachable list.
-     *  Set the new node's parent to be this node.
      */
     void addReachable(RRTNode* new_node);
 
     /*
      *  Remove a specific node from this node's reachable list.
-     *  Set the removed node's parent pointer to be null.
      */
     void removeReachable(RRTNode* old_node);
 
@@ -72,20 +70,6 @@ class RRTNode {
      *  Set the cost associated with this node
      */
     void setCost(double new_cost);
-
-    /**
-     * Get the parent of this node
-     *
-     * @return RRTNode* pointer to parent node
-     */
-    RRTNode* getParent() const;
-
-    /**
-     * Set the parent of this node
-     *
-     * @param new_parent pointer to new parent node
-     */
-    void setParent(RRTNode* new_parent);
 
     /**
      * Get the path associated with this node
@@ -120,7 +104,6 @@ class RRTNode {
     RRTNodeList reachable{};
     double cost;
     double path_length;
-    RRTNode* parent{};
     std::vector<XYZCoord> path{};
 };
 

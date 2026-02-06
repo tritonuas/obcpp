@@ -83,8 +83,6 @@ TEST(SimpleTreeTest, rewireEdgeTest) {
     // EXPECT_TRUE(simple_tree.getEdge(node2, node3).getCost() ==
     // std::numeric_limits<double>::infinity());
 
-    EXPECT_TRUE(node3->getParent() == node4);
-    EXPECT_TRUE(node2->getParent() == root);
     EXPECT_TRUE(node4->getReachable().size() == 1);
     EXPECT_TRUE(node2->getReachable().size() == 0);
     EXPECT_TRUE(root->getReachable().size() == 2);
