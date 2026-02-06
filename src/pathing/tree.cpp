@@ -21,15 +21,9 @@ RRTNode::RRTNode(const RRTPoint& point, double cost, double path_length,
                  const std::vector<XYZCoord> path, RRTNodeList reachable)
     : point{point}, cost{cost}, path_length(path_length), path(path), reachable{reachable} {}
 
-RRTNode::~RRTNode() {
-    for (RRTNode* node : reachable) {
-        delete node;
-    }
+bool RRTNode::operator==(const RRTNode& other_node) const {
+    return this->point == other_node.point && this->cost == other_node.cost;
 }
-
-// bool RRTNode::operator==(const RRTNode& other_node) const {
-//     return this->point == other_node.point && this->cost == other_node.cost;
-// }
 
 RRTPoint& RRTNode::getPoint() { return this->point; }
 
@@ -37,16 +31,16 @@ void RRTNode::setReachable(const RRTNodeList& reachable) {
     this->reachable = reachable;
 }
 
-void RRTNode::addReachable(RRTNode* new_node) {
+void RRTNode::addReachable(std::shared_ptr<RRTNode> new_node) {
     this->reachable.push_back(new_node);
 }
 
-void RRTNode::removeReachable(RRTNode* old_node) {
+void RRTNode::removeReachable(std::shared_ptr<RRTNode> old_node) {
     for (int i = 0; i < reachable.size(); i++) {
         if (reachable.at(i) == old_node) {
-            // TODO - UNSAFE
             reachable.erase(reachable.begin() + i);
-        }
+            return;
+        } 
     }
 }
 
@@ -79,20 +73,20 @@ void RRTNode::setPathLength(double new_path_length) { this->path_length = new_pa
 
 RRTTree::RRTTree(RRTPoint root_point, Environment airspace, Dubins dubins)
     : airspace(airspace), dubins(dubins), tree_size(1) {
-    RRTNode* new_node = new RRTNode(root_point, 0, 0, {});
+    std::shared_ptr<RRTNode> new_node = std::make_shared<RRTNode>(root_point, 0, 0, std::vector<XYZCoord>{});
     root = new_node;
     current_head = new_node;
 }
 
 // TODO - seems a bit sketchy
-RRTTree::~RRTTree() { delete root; }
+RRTTree::~RRTTree() { }
 
 bool RRTTree::validatePath(const std::vector<XYZCoord>& path, const RRTOption& option) const {
     return airspace.isPathInBounds(path);
     // return airspace.isPathInBoundsAdv(path, option);
 }
 
-RRTNode* RRTTree::generateNode(RRTNode* anchor_node, const RRTPoint& new_point,
+std::shared_ptr<RRTNode> RRTTree::generateNode(std::shared_ptr<RRTNode> anchor_node, const RRTPoint& new_point,
                                const RRTOption& option) const {
     const std::vector<XYZCoord>& path = dubins.generatePoints(
         anchor_node->getPoint(), new_point, option.dubins_path, option.has_straight);
@@ -102,13 +96,13 @@ RRTNode* RRTTree::generateNode(RRTNode* anchor_node, const RRTPoint& new_point,
     }
 
     // needs to add the node to the tree
-    RRTNode* new_node =
-        new RRTNode(new_point, anchor_node->getCost() + option.length, option.length, path);
+    std::shared_ptr<RRTNode> new_node =
+        std::make_shared<RRTNode>(new_point, anchor_node->getCost() + option.length, option.length, path);
 
     return new_node;
 }
 
-bool RRTTree::addNode(RRTNode* anchor_node, RRTNode* new_node) {
+bool RRTTree::addNode(std::shared_ptr<RRTNode> anchor_node, std::shared_ptr<RRTNode> new_node) {
     if (new_node == nullptr || anchor_node == nullptr) {
         return false;
     }
@@ -119,9 +113,9 @@ bool RRTTree::addNode(RRTNode* anchor_node, RRTNode* new_node) {
 }
 
 // TODO - convert from old to new
-RRTNode* RRTTree::addSample(RRTNode* anchor_node, const RRTPoint& new_point,
+std::shared_ptr<RRTNode> RRTTree::addSample(std::shared_ptr<RRTNode> anchor_node, const RRTPoint& new_point,
                             const RRTOption& option) {
-    RRTNode* new_node = generateNode(anchor_node, new_point, option);
+    std::shared_ptr<RRTNode> new_node = generateNode(anchor_node, new_point, option);
 
     if (addNode(anchor_node, new_node)) {
         return new_node;
@@ -130,7 +124,7 @@ RRTNode* RRTTree::addSample(RRTNode* anchor_node, const RRTPoint& new_point,
     return nullptr;
 }
 
-void RRTTree::rewireEdge(RRTNode* current_node, RRTNode* previous_parent, RRTNode* new_parent,
+void RRTTree::rewireEdge(std::shared_ptr<RRTNode> current_node, std::shared_ptr<RRTNode> previous_parent, std::shared_ptr<RRTNode> new_parent,
                          const std::vector<XYZCoord>& path, double path_cost) {
     // ORDER MATTERS, REMOVE THEN ADD TO PRESERVE THE CURR_NODE HAS A PARENT
     previous_parent->removeReachable(current_node);
@@ -143,8 +137,8 @@ void RRTTree::rewireEdge(RRTNode* current_node, RRTNode* previous_parent, RRTNod
     reassignCosts(current_node);
 }
 
-std::vector<RRTNode*> RRTTree::getKRandomNodes(int k) const {
-    std::vector<RRTNode*> nodes;
+std::vector<std::shared_ptr<RRTNode>> RRTTree::getKRandomNodes(int k) const {
+    std::vector<std::shared_ptr<RRTNode>> nodes;
     // proabability that any given node should be added
     double chance = 1.0 * k / tree_size;
     getKRandomNodesRecursive(nodes, current_head, chance);
@@ -152,7 +146,7 @@ std::vector<RRTNode*> RRTTree::getKRandomNodes(int k) const {
     return nodes;
 }
 
-void RRTTree::getKRandomNodesRecursive(std::vector<RRTNode*>& nodes, RRTNode* current_node,
+void RRTTree::getKRandomNodesRecursive(std::vector<std::shared_ptr<RRTNode>>& nodes, std::shared_ptr<RRTNode> current_node,
                                        double chance) const {
     if (current_node == nullptr) {
         return;
@@ -164,17 +158,17 @@ void RRTTree::getKRandomNodesRecursive(std::vector<RRTNode*>& nodes, RRTNode* cu
         nodes.emplace_back(current_node);
     }
 
-    for (RRTNode* node : current_node->getReachable()) {
+    for (std::shared_ptr<RRTNode> node : current_node->getReachable()) {
         getKRandomNodesRecursive(nodes, node, chance);
     }
 }
 
-std::vector<RRTNode*> RRTTree::getKClosestNodes(const RRTPoint& sample, int k) const {
-    std::vector<RRTNode*> closest_nodes;
+std::vector<std::shared_ptr<RRTNode>> RRTTree::getKClosestNodes(const RRTPoint& sample, int k) const {
+    std::vector<std::shared_ptr<RRTNode>> closest_nodes;
 
     // helper vector that associates nodes with distances
     // TODO - do some benchmarks with max-heaps to see which one is more efficient
-    std::vector<std::pair<double, RRTNode*>> nodes_by_distance;
+    std::vector<std::pair<double, std::shared_ptr<RRTNode>>> nodes_by_distance;
     getKClosestNodesRecursive(nodes_by_distance, sample, current_head);
 
     // sorts the nodes by distance
@@ -191,8 +185,8 @@ std::vector<RRTNode*> RRTTree::getKClosestNodes(const RRTPoint& sample, int k) c
     return closest_nodes;
 }
 
-void RRTTree::getKClosestNodesRecursive(std::vector<std::pair<double, RRTNode*>>& nodes_by_distance,
-                                        const RRTPoint& sample, RRTNode* current_node) const {
+void RRTTree::getKClosestNodesRecursive(std::vector<std::pair<double, std::shared_ptr<RRTNode>>>& nodes_by_distance,
+                                        const RRTPoint& sample, std::shared_ptr<RRTNode> current_node) const {
     if (current_node == nullptr) {
         return;
     }
@@ -201,14 +195,14 @@ void RRTTree::getKClosestNodesRecursive(std::vector<std::pair<double, RRTNode*>>
     double distance = sample.coord.distanceToSquared(current_node->getPoint().coord);
     nodes_by_distance.push_back({distance, current_node});
 
-    for (RRTNode* node : current_node->getReachable()) {
+    for (std::shared_ptr<RRTNode> node : current_node->getReachable()) {
         getKClosestNodesRecursive(nodes_by_distance, sample, node);
     }
 }
 
-void RRTTree::fillOptionsNodes(std::vector<std::pair<RRTNode*, RRTOption>>& options,
-                               const std::vector<RRTNode*>& nodes, const RRTPoint& sample) const {
-    for (RRTNode* node : nodes) {
+void RRTTree::fillOptionsNodes(std::vector<std::pair<std::shared_ptr<RRTNode>, RRTOption>>& options,
+                               const std::vector<std::shared_ptr<RRTNode>>& nodes, const RRTPoint& sample) const {
+    for (std::shared_ptr<RRTNode> node : nodes) {
         const std::vector<RRTOption>& local_options = dubins.allOptions(node->getPoint(), sample);
 
         for (const RRTOption& option : local_options) {
@@ -222,7 +216,7 @@ void RRTTree::fillOptionsNodes(std::vector<std::pair<RRTNode*, RRTOption>>& opti
     }
 }
 
-RRTNode* RRTTree::getRoot() const { return this->root; }
+std::shared_ptr<RRTNode> RRTTree::getRoot() const { return this->root; }
 
 const XYZCoord& RRTTree::getGoal() const { return airspace.getGoal(); }
 
@@ -243,18 +237,18 @@ RRTPoint RRTTree::getRandomPoint(double search_radius) const {
 /*
     TODO - investigate whether a max heap is better or worse
 */
-std::vector<std::pair<RRTNode*, RRTOption>> RRTTree::pathingOptions(
+std::vector<std::pair<std::shared_ptr<RRTNode>, RRTOption>> RRTTree::pathingOptions(
     const RRTPoint& end, PointFetchMethod::Enum point_fetch_method, int quantity_options) const {
     // fills the options list with valid values
-    std::vector<std::pair<RRTNode*, RRTOption>> options;
+    std::vector<std::pair<std::shared_ptr<RRTNode>, RRTOption>> options;
 
     switch (point_fetch_method) {
         case PointFetchMethod::Enum::RANDOM: {
-            const std::vector<RRTNode*>& nodes = getKRandomNodes(K_RANDOM_NODES);
+            const std::vector<std::shared_ptr<RRTNode>>& nodes = getKRandomNodes(K_RANDOM_NODES);
             fillOptionsNodes(options, nodes, end);
         } break;
         case PointFetchMethod::Enum::NEAREST: {
-            const std::vector<RRTNode*>& nodes = getKClosestNodes(end, K_CLOESEST_NODES);
+            const std::vector<std::shared_ptr<RRTNode>>& nodes = getKClosestNodes(end, K_CLOESEST_NODES);
             fillOptionsNodes(options, nodes, end);
         } break;
         case PointFetchMethod::Enum::NONE:
@@ -288,7 +282,7 @@ std::vector<std::pair<RRTNode*, RRTOption>> RRTTree::pathingOptions(
     return options;
 }
 
-void RRTTree::fillOptions(std::vector<std::pair<RRTNode*, RRTOption>>& options, RRTNode* node,
+void RRTTree::fillOptions(std::vector<std::pair<std::shared_ptr<RRTNode>, RRTOption>>& options, std::shared_ptr<RRTNode> node,
                           const RRTPoint& end) const {
     /*
        TODO - try to limit the scope of the search to prevent too many calls to dubins
@@ -310,17 +304,17 @@ void RRTTree::fillOptions(std::vector<std::pair<RRTNode*, RRTOption>>& options, 
     }
 
     // recursively calls the function for all reachable nodes
-    for (RRTNode* child : node->getReachable()) {
+    for (std::shared_ptr<RRTNode> child : node->getReachable()) {
         fillOptions(options, child, end);
     }
 }
 
-void RRTTree::RRTStar(RRTNode* sample, double rewire_radius) {
+void RRTTree::RRTStar(std::shared_ptr<RRTNode> sample, double rewire_radius) {
     // last element takes in the squared value of rewire_radius to prevent the need for sqrt()
     RRTStarRecursive(current_head, sample, rewire_radius * rewire_radius);
 }
 
-void RRTTree::setCurrentHead(RRTNode* goal) {
+void RRTTree::setCurrentHead(std::shared_ptr<RRTNode> goal) {
     if (goal == nullptr) {
         LOG_F(ERROR, "FAILURE: Goal is not in the tree");
         return;
@@ -331,30 +325,30 @@ void RRTTree::setCurrentHead(RRTNode* goal) {
     current_head = goal;
 }
 
-std::vector<XYZCoord> RRTTree::getPathSegment(RRTNode* node) const {
+std::vector<XYZCoord> RRTTree::getPathSegment(std::shared_ptr<RRTNode> node) const {
     if (node == current_head) {
         return {};
     }
 
-    std::vector<RRTNode*> nodes = findPathToNode(node);
+    std::vector<std::shared_ptr<RRTNode>> nodes = findPathToNode(node);
     return buildPathFromNodes(nodes);
 }
 
-std::vector<RRTNode*> RRTTree::findPathToNode(RRTNode* target_node) const {
+std::vector<std::shared_ptr<RRTNode>> RRTTree::findPathToNode(std::shared_ptr<RRTNode> target_node) const {
     if (target_node == current_head) {
         LOG_F(WARNING, "TREE: target_node and current_head are the same");
         return {target_node, target_node};
     }
 
     // Stack stores pairs of (node, next_child_index)
-    std::stack<std::pair<RRTNode*, size_t>> dfs_stack;
-    std::vector<RRTNode*> current_path;
+    std::stack<std::pair<std::shared_ptr<RRTNode>, size_t>> dfs_stack;
+    std::vector<std::shared_ptr<RRTNode>> current_path;
 
     dfs_stack.push({current_head, 0});
     current_path.push_back(current_head);
 
     while (!dfs_stack.empty()) {
-        RRTNode* current_node = dfs_stack.top().first;
+        std::shared_ptr<RRTNode> current_node = dfs_stack.top().first;
         size_t& child_idx = dfs_stack.top().second;
 
         if (current_node == target_node) {
@@ -364,13 +358,13 @@ std::vector<RRTNode*> RRTTree::findPathToNode(RRTNode* target_node) const {
             }
 
             // Return path excluding current_head (index 0)
-            return std::vector<RRTNode*>(current_path.begin() + 1, current_path.end());
+            return std::vector<std::shared_ptr<RRTNode>>(current_path.begin() + 1, current_path.end());
         }
 
         const RRTNodeList& children = current_node->getReachable();
 
         if (child_idx < children.size()) {
-            RRTNode* next_child = children[child_idx];
+            std::shared_ptr<RRTNode> next_child = children[child_idx];
             child_idx++;
             
             dfs_stack.push({next_child, 0});
@@ -386,9 +380,9 @@ std::vector<RRTNode*> RRTTree::findPathToNode(RRTNode* target_node) const {
     return {};
 }
 
-std::vector<XYZCoord> RRTTree::buildPathFromNodes(const std::vector<RRTNode*>& nodes) const {
+std::vector<XYZCoord> RRTTree::buildPathFromNodes(const std::vector<std::shared_ptr<RRTNode>>& nodes) const {
     std::vector<XYZCoord> path;
-    for (const auto* node : nodes) {
+    for (const auto& node : nodes) {
         const std::vector<XYZCoord>& edge_path = node->getPath();
         // Skip the first point to avoid duplicates (it's the end point of previous edge)
         if (!edge_path.empty()) {
@@ -404,7 +398,7 @@ RRTPoint& RRTTree::getStart() const { return root->getPoint(); }
 /* RRTTree Private */
 /*-----------------*/
 
-void RRTTree::RRTStarRecursive(RRTNode* current_node, RRTNode* sample,
+void RRTTree::RRTStarRecursive(std::shared_ptr<RRTNode> current_node, std::shared_ptr<RRTNode> sample,
                                double rewire_radius_squared) {
     // base case
     if (current_node == nullptr) {
@@ -412,7 +406,9 @@ void RRTTree::RRTStarRecursive(RRTNode* current_node, RRTNode* sample,
     }
 
     // for all nodes past the current node, attempt to rewire them
-    for (RRTNode* child : current_node->getReachable()) {
+    // Use a copy of reachable nodes because rewireEdge modifies the list
+    RRTNodeList children = current_node->getReachable();
+    for (std::shared_ptr<RRTNode> child : children) {
         // get the distance between the current node and the nearest node
         if (child->getPoint().distanceToSquared(sample->getPoint()) > rewire_radius_squared) {
             continue;
@@ -457,29 +453,29 @@ void RRTTree::RRTStarRecursive(RRTNode* current_node, RRTNode* sample,
     }
 
     // recurse
-    for (RRTNode* child : current_node->getReachable()) {
+    for (std::shared_ptr<RRTNode> child : current_node->getReachable()) {
         RRTStarRecursive(child, sample, rewire_radius_squared);
     }
 }
 
-void RRTTree::reassignCosts(RRTNode* changed_node) {
+void RRTTree::reassignCosts(std::shared_ptr<RRTNode> changed_node) {
     if (changed_node == nullptr) {
         return;
     }
 
-    for (RRTNode* child : changed_node->getReachable()) {
+    for (std::shared_ptr<RRTNode> child : changed_node->getReachable()) {
         reassignCostsRecursive(changed_node, child, changed_node->getCost());
     }
 }
 
-void RRTTree::reassignCostsRecursive(RRTNode* parent, RRTNode* current_node, double path_cost) {
+void RRTTree::reassignCostsRecursive(std::shared_ptr<RRTNode> parent, std::shared_ptr<RRTNode> current_node, double path_cost) {
     if (current_node == nullptr) {
         return;
     }
 
     // reassigns the cost: cost to get to the parent + known path length between parent and child
     current_node->setCost(path_cost + current_node->getPathLength());
-    for (RRTNode* neighbor : current_node->getReachable()) {
+    for (std::shared_ptr<RRTNode> neighbor : current_node->getReachable()) {
         reassignCostsRecursive(current_node, neighbor, current_node->getCost());
     }
 }

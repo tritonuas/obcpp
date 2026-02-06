@@ -99,7 +99,7 @@ class RRT {
      * @param current_goal_index ==> index of the goal that we are trying to connect to
      * @return                  ==> true if the RRT algorithm should stop (converged or adequate), false otherwise
      */
-    bool epochEvaluation(RRTNode* goal_node, RRTNode* goal_parent, int current_goal_index);
+    bool epochEvaluation(std::shared_ptr<RRTNode> goal_node, std::shared_ptr<RRTNode> goal_parent, int current_goal_index);
 
     /**
      * Generates a random point in the airspace (uniformly)
@@ -116,10 +116,9 @@ class RRT {
      * connect to
      * @param total_options         ==> number of options to try to connect to the goal
      * @return                      ==> list of options to connect to the goal
-     *                                  <RRTPoint GOAL, {RRTNode* ANCHOR,
-     * RRTOption} >
+     *                                  <RRTPoint GOAL, {RRTNode* ANCHOR, RRTOption} >
      */
-    std::vector<std::pair<RRTPoint, std::pair<RRTNode *, RRTOption>>> getOptionsToGoal(
+    std::vector<std::pair<RRTPoint, std::pair<std::shared_ptr<RRTNode>, RRTOption>>> getOptionsToGoal(
         int current_goal_index, int total_options) const;
 
     /**
@@ -133,7 +132,7 @@ class RRT {
      * @return                      ==> pointer to the node if one was found,
      * nullptr otherwise
      */
-    RRTNode* sampleToGoal(int current_goal_index, int total_options, RRTNode*& parent) const;
+    std::shared_ptr<RRTNode> sampleToGoal(int current_goal_index, int total_options, std::shared_ptr<RRTNode>& parent) const;
 
     /**
      * Connects to the goal after RRT is finished
@@ -157,7 +156,7 @@ class RRT {
      * @param parent     ==> parent of the goal node
      * @param current_goal_index ==> index of the goal that we are trying to
      */
-    void addNodeToTree(RRTNode *goal_node, RRTNode* parent, int current_goal_index);
+    void addNodeToTree(std::shared_ptr<RRTNode> goal_node, std::shared_ptr<RRTNode> parent, int current_goal_index);
 
     /**
      * Goes through generated options to try to connect the sample to the tree
@@ -167,7 +166,7 @@ class RRT {
      * @return          ==> whether or not the sample was successfully added to
      * the tree (nullptr if not added)
      */
-    RRTNode *parseOptions(const std::vector<std::pair<RRTNode *, RRTOption>> &options,
+    std::shared_ptr<RRTNode> parseOptions(const std::vector<std::pair<std::shared_ptr<RRTNode>, RRTOption>> &options,
                           const RRTPoint &sample);
 
     /**
@@ -177,7 +176,7 @@ class RRT {
      *
      * @param sample    ==> sampled point
      */
-    void optimizeTree(RRTNode *sample);
+    void optimizeTree(std::shared_ptr<RRTNode> sample);
 };
 
 /**
