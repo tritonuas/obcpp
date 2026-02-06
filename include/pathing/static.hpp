@@ -94,12 +94,15 @@ class RRT {
      * meaningful progress. If it isn't, it will simply tell the RRT algoritm to
      * stop.
      *
-     * @param goal_node         ==> current best node reaching the goal (updated if better found)
-     * @param goal_parent       ==> parent of the goal_node (updated if better found)
-     * @param current_goal_index ==> index of the goal that we are trying to connect to
-     * @return                  ==> true if the RRT algorithm should stop (converged or adequate), false otherwise
+     * @param goal_node             ==> current best node reaching the goal (updated if better found)
+     * @param goal_parent           ==> parent of the goal_node (updated if better found)
+     * @param current_goal_index    ==> index of the goal that we are trying to connect to
+     * @return                      ==> true if the RRT algorithm should stop (converged or
+     *                                  adequate), false otherwise
      */
-    bool epochEvaluation(std::shared_ptr<RRTNode> goal_node, std::shared_ptr<RRTNode> goal_parent, int current_goal_index);
+    bool epochEvaluation(std::shared_ptr<RRTNode> goal_node,
+                         std::shared_ptr<RRTNode> goal_parent,
+                         int current_goal_index);
 
     /**
      * Generates a random point in the airspace (uniformly)
@@ -118,8 +121,8 @@ class RRT {
      * @return                      ==> list of options to connect to the goal
      *                                  <RRTPoint GOAL, {RRTNode* ANCHOR, RRTOption} >
      */
-    std::vector<std::pair<RRTPoint, std::pair<std::shared_ptr<RRTNode>, RRTOption>>> getOptionsToGoal(
-        int current_goal_index, int total_options) const;
+    std::vector<std::pair<RRTPoint, std::pair<std::shared_ptr<RRTNode>, RRTOption>>>
+        getOptionsToGoal(int current_goal_index, int total_options) const;
 
     /**
      * Tries to get the optimal  node to the goal, which is NOT connected into the
@@ -132,7 +135,9 @@ class RRT {
      * @return                      ==> pointer to the node if one was found,
      * nullptr otherwise
      */
-    std::shared_ptr<RRTNode> sampleToGoal(int current_goal_index, int total_options, std::shared_ptr<RRTNode>& parent) const;
+    std::shared_ptr<RRTNode> sampleToGoal(int current_goal_index,
+                                          int total_options,
+                                          std::shared_ptr<RRTNode>& parent) const;
 
     /**
      * Connects to the goal after RRT is finished
@@ -156,7 +161,9 @@ class RRT {
      * @param parent     ==> parent of the goal node
      * @param current_goal_index ==> index of the goal that we are trying to
      */
-    void addNodeToTree(std::shared_ptr<RRTNode> goal_node, std::shared_ptr<RRTNode> parent, int current_goal_index);
+    void addNodeToTree(std::shared_ptr<RRTNode> goal_node,
+                       std::shared_ptr<RRTNode> parent,
+                       int current_goal_index);
 
     /**
      * Goes through generated options to try to connect the sample to the tree
@@ -166,8 +173,9 @@ class RRT {
      * @return          ==> whether or not the sample was successfully added to
      * the tree (nullptr if not added)
      */
-    std::shared_ptr<RRTNode> parseOptions(const std::vector<std::pair<std::shared_ptr<RRTNode>, RRTOption>> &options,
-                          const RRTPoint &sample);
+    std::shared_ptr<RRTNode> parseOptions(
+                        const std::vector<std::pair<std::shared_ptr<RRTNode>, RRTOption>> &options,
+                        const RRTPoint &sample);
 
     /**
      * Rewires the tree by finding paths that are more efficintly routed through

@@ -110,8 +110,9 @@ class RRTTree {
     /**
      * Generates node without adding it to the tree
      */
-    std::shared_ptr<RRTNode> generateNode(std::shared_ptr<RRTNode> anchor_node, const RRTPoint& new_point,
-                          const RRTOption& option) const;
+    std::shared_ptr<RRTNode> generateNode(std::shared_ptr<RRTNode> anchor_node,
+                                          const RRTPoint& new_point,
+                                          const RRTOption& option) const;
 
     /**
      * Adds a node to the tree
@@ -125,7 +126,9 @@ class RRTTree {
      *  Add a node to the RRTTree.
      *  If adding the first node to the tree, connectTo can be anything.
      */
-    std::shared_ptr<RRTNode> addSample(std::shared_ptr<RRTNode> anchor_node, const RRTPoint& new_point, const RRTOption& option);
+    std::shared_ptr<RRTNode> addSample(std::shared_ptr<RRTNode> anchor_node,
+                                       const RRTPoint& new_point,
+                                       const RRTOption& option);
 
     /**
      * Returns a pointer to the root node
@@ -202,7 +205,9 @@ class RRTTree {
      * @param path                  ==> the new path new_parrent --> current_point
      * @param path_cost             ==> the cost of the new path
      */
-    void rewireEdge(std::shared_ptr<RRTNode> current_point, std::shared_ptr<RRTNode> previous_parent, std::shared_ptr<RRTNode> new_parent,
+    void rewireEdge(std::shared_ptr<RRTNode> current_point,
+                    std::shared_ptr<RRTNode> previous_parent,
+                    std::shared_ptr<RRTNode> new_parent,
                     const std::vector<Vector>& path, double path_cost);
 
     /**
@@ -222,7 +227,8 @@ class RRTTree {
      * @param k             ==> the number of nodes to get
      * @param chance        ==> the chance to add the current node to the list
      */
-    void getKRandomNodesRecursive(std::vector<std::shared_ptr<RRTNode>>& nodes, std::shared_ptr<RRTNode> current_node,
+    void getKRandomNodesRecursive(std::vector<std::shared_ptr<RRTNode>>& nodes,
+                                  std::shared_ptr<RRTNode> current_node,
                                   double chance) const;
 
     /**
@@ -242,8 +248,10 @@ class RRTTree {
      * @param sample            ==> the point to find the closest nodes to
      * @param current_node      ==> the current node that is being accessed
      */
-    void getKClosestNodesRecursive(std::vector<std::pair<double, std::shared_ptr<RRTNode>>>& nodes_by_distance,
-                                   const RRTPoint& sample, std::shared_ptr<RRTNode> current_node) const;
+    void getKClosestNodesRecursive(std::vector<std::pair<double,
+                                   std::shared_ptr<RRTNode>>>& nodes_by_distance,
+                                   const RRTPoint& sample,
+                                   std::shared_ptr<RRTNode> current_node) const;
 
     /**
      * Fills in a list of options from an existing list of nodes
@@ -252,8 +260,10 @@ class RRTTree {
      * @param nodes     ==> the list of nodes to parse
      * @param sample    ==> the end point that the options will be connected to
      */
-    void fillOptionsNodes(std::vector<std::pair<std::shared_ptr<RRTNode>, RRTOption>>& options,
-                          const std::vector<std::shared_ptr<RRTNode>>& nodes, const RRTPoint& sample) const;
+    void fillOptionsNodes(std::vector<std::pair<std::shared_ptr<RRTNode>,
+                          RRTOption>>& options,
+                          const std::vector<std::shared_ptr<RRTNode>>& nodes,
+                          const RRTPoint& sample) const;
 
     /**
      * Returns the segment of path from the given node to the current head
@@ -292,7 +302,8 @@ class RRTTree {
      * @param node      ==> current node that will be traversed (DFS)
      * @param sample    ==> the end point that the options will be connected to
      */
-    void fillOptions(std::vector<std::pair<std::shared_ptr<RRTNode>, RRTOption>>& options, std::shared_ptr<RRTNode> node,
+    void fillOptions(std::vector<std::pair<std::shared_ptr<RRTNode>, RRTOption>>& options,
+                     std::shared_ptr<RRTNode> node,
                      const RRTPoint& sample) const;
 
     /**
@@ -314,7 +325,9 @@ class RRTTree {
      * @param sample         ==> sampled point
      * @param search_radius  ==> the radius to search for nodes to rewire
      */
-    void RRTStarRecursive(std::shared_ptr<RRTNode> current_node, std::shared_ptr<RRTNode> sample, double rewire_radius);
+    void RRTStarRecursive(std::shared_ptr<RRTNode> current_node,
+                          std::shared_ptr<RRTNode> sample,
+                          double rewire_radius);
 
     /**
      * After rewire edge, it goes down the tree and reassigns the cost of the
@@ -332,7 +345,9 @@ class RRTTree {
      * @param node          ==> the current node
      * @param path_cost     ==> the cost of the path to the current node
      */
-    void reassignCostsRecursive(std::shared_ptr<RRTNode> parent, std::shared_ptr<RRTNode> current_node, double cost_difference);
+    void reassignCostsRecursive(std::shared_ptr<RRTNode> parent,
+                                std::shared_ptr<RRTNode> current_node,
+                                double cost_difference);
 
     /**
      * Finds the sequence of nodes from current_head to the target node using BFS
@@ -340,7 +355,7 @@ class RRTTree {
      * @param target_node   ==> the node to find the path to
      * @return              ==> vector of nodes from current_head to target_node
      */
-    std::vector<std::shared_ptr<RRTNode>> findPathToNode(std::shared_ptr<RRTNode> target_node) const;
+    RRTNodeList findPathToNode(std::shared_ptr<RRTNode> target_node) const;
 
     /**
      * Constructs the coordinate path from a sequence of nodes
@@ -348,7 +363,8 @@ class RRTTree {
      * @param nodes         ==> sequence of nodes
      * @return              ==> vector of coordinates representing the path
      */
-    std::vector<XYZCoord> buildPathFromNodes(const std::vector<std::shared_ptr<RRTNode>>& nodes) const;
+    std::vector<XYZCoord> buildPathFromNodes(
+                           const std::vector<std::shared_ptr<RRTNode>>& nodes) const;
 };
 
 #endif  // INCLUDE_PATHING_TREE_HPP_
