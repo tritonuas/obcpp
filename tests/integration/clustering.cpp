@@ -6,7 +6,7 @@
 #define POINT_DISTANCE 10
 #define NUM_OUTLIERS 5
 #define NUM_RUNS 5
-//redeclaring method to not have fixed seed so the test is deterministic 
+//redeclaring method to not have fixed seed so the test is non-deterministic 
 unsigned int seed = time(NULL);
 double random(double min, double max) {
     return min + static_cast<double>(rand_r(&seed)) / RAND_MAX * (max - min);
@@ -86,11 +86,14 @@ int main()
         scatter(x, y, std::vector<double>(), c);
         hold(on);
         auto plot = scatter(cluster_x, cluster_y);
+        ::matplot::legend({"Cluster points", "Calculated cluster Center"});
         plot->marker_style(line_spec::marker_style::diamond);
+        title("Clustering run " + std::to_string(run));
         std::ostringstream stringStream;
         stringStream << "run" << run << ".png";
         std::string copyOfStr = stringStream.str();
-     //  std::filesystem::remove(copyOfStr);
+        std::cout << "saved to /build/" << copyOfStr << std::endl;
+        //std::filesystem::remove(copyOfStr);
         save(copyOfStr);
         hold(off);
 
