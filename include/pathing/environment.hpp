@@ -259,6 +259,15 @@ class Environment {
         const std::vector<XYZCoord>& goals) const;
 
     /**
+     * Find the centroid of a given valid region. 
+     * This rests on the assumption that the region
+     * is in an non-intersecting order.
+     * 
+     * @return the centroid coordinate
+     */
+    XYZCoord findCentroid() const;
+
+    /**
      * Returns a new polygon that is scaled by a given factor
      *
      * @param scale the factor to scale the polygon by

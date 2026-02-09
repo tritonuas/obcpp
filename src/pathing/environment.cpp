@@ -492,3 +492,49 @@ std::pair<std::pair<double, double>, std::pair<double, double>> Environment::fin
 
     return {{min_x, max_x}, {min_y, max_y}};
 }
+
+XYZCoord Environment::findCentroid() const {
+
+    if (valid_region.size() < 3) {
+        throw std::invalid_argument("valid_region field must have at least 3 points.");
+    }
+
+    size_t n_verticies = valid_region.size();
+
+    double centroid_x = 0.0;
+    double centroid_y = 0.0;
+    double signed_area = 0.0;
+
+    for (size_t i = 0; i < n_verticies - 1; ++i) {
+        
+        double x0 = valid_region[i].x;
+        double y0 = valid_region[i].y;
+        double x1 = valid_region[i+1].x;
+        double y1 = valid_region[i+1].y;
+
+        double delta_area = (x0 * y1) - (x1 * y0);
+        signed_area += delta_area;
+        centroid_x += (x0 + x1) * delta_area;
+        centroid_y += (y0 + y1) * delta_area;
+    }
+
+    double x0 = valid_region[n_verticies - 1].x;
+    double y0 = valid_region[n_verticies - 1].y;
+    double x1 = valid_region[0].x;
+    double y1 = valid_region[0].y;
+
+    double delta_area = (x0 * y1) - (x1 * y0);
+    
+    signed_area += delta_area;
+    centroid_x += (x0 + x1) * delta_area;
+    centroid_y += (y0 + y1) * delta_area;
+
+    if (signed_area == 0.0) {
+        throw std::runtime_error("The points are colinear. No centroid exists");
+    }
+
+    centroid_x /= (3.0*signed_area);
+    centroid_y /= (3.0*signed_area);
+
+    return XYZCoord{centroid_x, centroid_y, 0};
+}
