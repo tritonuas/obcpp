@@ -36,8 +36,9 @@ int main(int argc, char** argv) {
     }
 
     // Hardcoded paths relative to build directory
-    std::string modelPath = "../models/sam3_detection.onnx";
-    std::string tokenizerPath = "../configs/cv/tokenizer.json";
+    std::string encoderPath = "../models/sam3_encoder.onnx";
+    std::string decoderPath = "../models/sam3_decoder.onnx";
+    std::string tokenizerPath = "../configs/sam3/tokenizer.json";
     std::string inputDir = "../tests/integration/images/";
     std::string outputPath = "../tests/integration/output/output_aggregator.jpg";
     bool doPreprocess = false;
@@ -46,8 +47,8 @@ int main(int argc, char** argv) {
     std::vector<std::string> prompts = splitCSV(argv[1]);
 
     // Construct the PipelineParams
-    PipelineParams params(modelPath, tokenizerPath, prompts, outputPath, doPreprocess,
-                          0.20 /*min_confidence*/, 0.20 /*nms_iou*/);
+    PipelineParams params(encoderPath, decoderPath, tokenizerPath, prompts, outputPath,
+                          doPreprocess, 0.30 /*min_confidence*/, 0.20 /*nms_iou*/);
 
     // 1. Create the pipeline on the stack (no shared_ptr)
     Pipeline pipeline(params);

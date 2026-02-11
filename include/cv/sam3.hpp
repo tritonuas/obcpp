@@ -23,14 +23,15 @@ struct Detection {
 class SAM3 {
  public:
     /**
-     * @brief Construct the SAM3 Detector
-     * * @param modelPath Path to the exported .onnx model
+     * @brief Construct the SAM3 Detector with split encoder/decoder models
+     * @param encoderPath Path to the encoder .onnx model (sam3_encoder_fp16.onnx)
+     * @param decoderPath Path to the decoder .onnx model (sam3_decoder_fp16.onnx)
      * @param tokenizerPath Path to tokenizer.json
-     * @param min_confidence threshold to filter weak detections (default 0.4)
-     * @param nms_iou threshold for Non-Maximum Suppression (default 0.5)
+     * @param min_confidence threshold to filter weak detections (default 0.30)
+     * @param nms_iou threshold for Non-Maximum Suppression (default 0.2)
      */
-    SAM3(const std::string& modelPath, const std::string& tokenizerPath,
-         double min_confidence = 0.20, double nms_iou = 0.2);
+    SAM3(const std::string& encoderPath, const std::string& decoderPath,
+         const std::string& tokenizerPath, double min_confidence = 0.30, double nms_iou = 0.2);
 
     /**
      * @brief Run inference on an image (draws boxes on the provided image)
@@ -52,10 +53,9 @@ class SAM3 {
 
     // --- ONNX Runtime Resources ---
     std::shared_ptr<Ort::Env> env_;
-    std::unique_ptr<Ort::Session> session_;
+    std::unique_ptr<Ort::Session> encoderSession_;
+    std::unique_ptr<Ort::Session> decoderSession_;
     Ort::SessionOptions sessionOptions_;
-    // Allocator is usually implicit, but you can keep it if your implementation uses it
-    // Ort::AllocatorWithDefaultOptions allocator_;
 
     // --- Tokenizer Resources ---
     std::unordered_map<std::string, int> vocab_;

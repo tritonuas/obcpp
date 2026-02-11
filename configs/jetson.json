@@ -9,12 +9,12 @@
             "telem_poll_rate": 1.0
         },
         "cv": {
-            "model_path": "/obcpp/models/sam3_detection.onnx",
-            "tokenizer_path": "/obcpp/models/tokenizer.json",
+            "encoder_path": "/obcpp/models/sam3_encoder.onnx",
+            "decoder_path": "/obcpp/models/sam3_decoder.onnx",
+            "tokenizer_path": "/obcpp/configs/sam3/tokenizer.json",
             "prompt": "person",
-            "detection_threshold": 0.60,
-            "input_width": 1008,
-            "input_height": 1008
+            "confidence_threshold": 0.30,
+            "nms_iou": 0.20
         }
     },
     "pathing": {
@@ -54,10 +54,12 @@
         }
     },
     "cv": {
-        "model_path": "/obcpp/models/sam3_detection.onnx",
-        "detection_threshold": 0.60,
-        "input_width": 896,
-        "input_height": 896
+        "encoder_path": "/obcpp/models/sam3_encoder.onnx",
+        "decoder_path": "/obcpp/models/sam3_decoder.onnx",
+        "tokenizer_path": "/obcpp/configs/sam3/tokenizer.json",
+        "prompt": "person",
+        "confidence_threshold": 0.30,
+        "nms_iou": 0.20
     },
     "camera": {
         "_comment": "See CameraConfig struct in datatypes.hpp for detailed explanations",

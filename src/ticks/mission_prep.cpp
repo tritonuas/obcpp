@@ -30,14 +30,20 @@ Tick* MissionPrepTick::tick() {
         std::copy_n(state->mission_params.getAirdrops().begin(), NUM_AIRDROPS,
                     airdrops_to_drop.begin());
 
-        std::string model_path = this->state->config.cv.model_path;
+        std::string encoder_path = this->state->config.cv.encoder_path;
+        std::string decoder_path = this->state->config.cv.decoder_path;
 
-        LOG_F(INFO, "Instantiating CV Aggregator with SAM3 model:");
-        LOG_F(INFO, "Model: %s", model_path.c_str());
+        LOG_F(INFO, "Instantiating CV Aggregator with SAM3 split encoder/decoder:");
+        LOG_F(INFO, "Encoder: %s", encoder_path.c_str());
+        LOG_F(INFO, "Decoder: %s", decoder_path.c_str());
 
         // Make a CVAggregator instance and set it in the state
-        PipelineParams cvParams(model_path, this->state->config.cv.tokenizer_path,
-                                {this->state->config.cv.prompt});
+        PipelineParams cvParams(encoder_path, decoder_path, this->state->config.cv.tokenizer_path,
+                                {this->state->config.cv.prompt},
+                                "",    // outputPath
+                                true,  // do_preprocess
+                                this->state->config.cv.confidence_threshold,
+                                this->state->config.cv.nms_iou);
         auto pipeline = Pipeline(std::move(cvParams));
         this->state->setCV(std::make_shared<CVAggregator>(std::move(pipeline)));
 

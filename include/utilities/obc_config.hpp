@@ -36,9 +36,12 @@ struct TakeoffConfig {
 };
 
 struct CVConfig {
-    std::string model_path;      // Path to sam3.onnx
-    std::string tokenizer_path;  // Path to tokenizer.json
-    std::string prompt;          // Text prompt (e.g., "person")
+    std::string encoder_path;     // Path to sam3_encoder.onnx
+    std::string decoder_path;     // Path to sam3_decoder.onnx
+    std::string tokenizer_path;   // Path to tokenizer.json
+    std::string prompt;           // Text prompt (e.g., "person")
+    double confidence_threshold;  // Minimum confidence for detections (0.0-1.0)
+    double nms_iou;               // IoU threshold for NMS (0.0-1.0)
     std::string not_stolen_addr;
     uint16_t not_stolen_port;
 };

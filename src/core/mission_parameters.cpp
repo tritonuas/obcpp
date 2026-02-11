@@ -95,10 +95,6 @@ std::optional<std::string> MissionParameters::setMission(
         err += "Airdrop boundary must have at least 3 coordinates.";
     }
 
-    if (mission.mappingboundary().size() < 3) {
-        err += "Mapping boundary must have at least 3 coordinates.";
-    }
-
     if (!err.empty()) {
         return err;
     }
@@ -106,7 +102,6 @@ std::optional<std::string> MissionParameters::setMission(
     this->cached_mission = mission;
     this->flightBoundary = cconverter.toXYZ(mission.flightboundary());
     this->airdropBoundary = cconverter.toXYZ(mission.airdropboundary());
-    this->mappingBoundary = cconverter.toXYZ(mission.mappingboundary());
     this->waypoints = cconverter.toXYZ(mission.waypoints());
     for (const auto& airdrop : mission.airdropassignments()) {  // Use const& for efficiency
         this->_setAirdrop(airdrop);
