@@ -585,12 +585,18 @@ DEF_GCS_HANDLE(Post, camera, runpipeline) {
 
     std::shared_ptr<CameraInterface> cam = state->getCamera();
 
-    std::string model_path = state->config.cv.model_path;
-    LOG_F(INFO, "Instantiating CV Aggregator with SAM3 model:");
-    LOG_F(INFO, "Model: %s", model_path.c_str());
+    std::string encoder_path = state->config.cv.encoder_path;
+    std::string decoder_path = state->config.cv.decoder_path;
+    LOG_F(INFO, "Instantiating CV Aggregator with SAM3 split encoder/decoder:");
+    LOG_F(INFO, "Encoder: %s", encoder_path.c_str());
+    LOG_F(INFO, "Decoder: %s", decoder_path.c_str());
 
     // Make a CVAggregator instance and set it in the state
-    PipelineParams cvParams(model_path, state->config.cv.tokenizer_path, {state->config.cv.prompt});
+    PipelineParams cvParams(encoder_path, decoder_path, state->config.cv.tokenizer_path,
+                            {state->config.cv.prompt},
+                            "",    // outputPath
+                            true,  // do_preprocess
+                            state->config.cv.confidence_threshold, state->config.cv.nms_iou);
     auto pipeline = Pipeline(std::move(cvParams));
     state->setCV(std::make_shared<CVAggregator>(std::move(pipeline)));
 

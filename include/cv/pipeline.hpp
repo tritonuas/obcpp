@@ -30,13 +30,16 @@ struct PipelineResults {
 };
 
 struct PipelineParams {
-    // SAM3 model and tokenizer paths are optional; when absent, no CV models will be loaded.
-    explicit PipelineParams(std::optional<std::string> modelPath,
+    // SAM3 encoder/decoder and tokenizer paths are optional;
+    // when absent, no CV models will be loaded.
+    explicit PipelineParams(std::optional<std::string> encoderPath,
+                            std::optional<std::string> decoderPath,
                             std::optional<std::string> tokenizerPath,
                             std::vector<std::string> prompts = {"person"},
                             std::string outputPath = "", bool do_preprocess = true,
-                            double min_confidence = 0.20, double nms_iou = 0.2)
-        : modelPath{std::move(modelPath)},
+                            double min_confidence = 0.30, double nms_iou = 0.2)
+        : encoderPath{std::move(encoderPath)},
+          decoderPath{std::move(decoderPath)},
           tokenizerPath{std::move(tokenizerPath)},
           prompts{std::move(prompts)},
           outputPath(std::move(outputPath)),
@@ -44,7 +47,8 @@ struct PipelineParams {
           min_confidence(min_confidence),
           nms_iou(nms_iou) {}
 
-    std::optional<std::string> modelPath;
+    std::optional<std::string> encoderPath;
+    std::optional<std::string> decoderPath;
     std::optional<std::string> tokenizerPath;
     std::vector<std::string> prompts;
     std::string outputPath;

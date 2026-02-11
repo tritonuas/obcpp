@@ -1,10 +1,26 @@
 #include <iostream>
-#include <sstream>
+#include <string>
 #include <vector>
 
 #include "cv/pipeline.hpp"
 #include <loguru.hpp>
 #include <opencv2/opencv.hpp>
+
+// Helper to parse comma-separated prompts
+static std::vector<std::string> splitCSV(const std::string& s) {
+    std::vector<std::string> out;
+    std::string cur;
+    for (char c : s) {
+        if (c == ',') {
+            if (!cur.empty()) out.push_back(cur);
+            cur.clear();
+        } else {
+            cur.push_back(c);
+        }
+    }
+    if (!cur.empty()) out.push_back(cur);
+    return out;
+}
 
 // Mock telemetry data
 const double latitude = 32.990795399999996;
@@ -16,103 +32,56 @@ const double pitch = 5;
 const double roll = 3;
 
 /**
- * Runs a single instance of the pipeline
- *
- * arg 1 --> ModelPath
- * arg 2 --> TokenizerPath
- * arg 3 --> ImagePath
- * arg 4 --> OutputPath
- * arg 5 --> enable preprocessing ("true" or "false") - default true
- * arg 6 --> prompt text (optional, default: "person")
- * arg 7 --> min_confidence (optional, default: 0.08)
- * arg 8 --> nms_iou (optional, default: 0.5)
+ * Usage: cv_pipeline <prompts_csv> [image_path]
+ * Example: cv_pipeline "person,tent" ../tests/integration/images/test.jpg
  */
 int main(int argc, char** argv) {
-    std::string modelPath = "../models/sam3_detection.onnx";
-    std::string tokenizerPath = "../configs/cv/tokenizer.json";
-    std::string imagePath = "../tests/integration/images/image.png";
-    std::string outputPath = "../tests/integration/output/output_pipeline.png";
-
-    bool do_preprocess = true;  // Default: perform preprocessing
-
-    if (argc > 1) {
-        modelPath = argv[1];
-    }
-    if (argc > 2) {
-        tokenizerPath = argv[2];
-    }
-    if (argc > 3) {
-        imagePath = argv[3];
-    }
-    if (argc > 4) {
-        outputPath = argv[4];
-    }
-    // Optional fifth argument to disable preprocessing (e.g., "false" or "0")
-    if (argc > 5) {
-        std::string preprocessArg = argv[5];
-        if (preprocessArg == "false" || preprocessArg == "0") {
-            do_preprocess = false;
-        }
-    }
-    // Optional sixth argument for prompt(s); supports comma-separated list
-    std::vector<std::string> prompts = {"person"};
-    if (argc > 6) {
-        std::string promptArg = argv[6];
-        prompts.clear();
-        std::istringstream ss(promptArg);
-        std::string token;
-        while (std::getline(ss, token, ',')) {
-            if (!token.empty()) prompts.push_back(token);
-        }
-        if (prompts.empty()) {
-            prompts.push_back(promptArg);
-        }
-    }
-
-    double min_confidence = 0.20;
-    double nms_iou = 0.2;
-    if (argc > 7) {
-        min_confidence = std::stod(argv[7]);
-    }
-    if (argc > 8) {
-        nms_iou = std::stod(argv[8]);
-    }
-
-    // Load test image
-    cv::Mat image = cv::imread(imagePath);
-    if (!image.data) {
-        LOG_F(ERROR, "Failed to open testing image from %s", imagePath.c_str());
+    if (argc < 2) {
+        std::cerr << "Usage: cv_pipeline <prompts_csv> [image_path]" << std::endl;
         return 1;
     }
 
-    // Prepare telemetry data
+    // Hardcoded paths relative to build directory
+    std::string encoderPath = "../models/sam3_encoder.onnx";
+    std::string decoderPath = "../models/sam3_decoder.onnx";
+    std::string tokenizerPath = "../configs/sam3/tokenizer.json";
+    std::string imagePath = "../tests/integration/images/tent1.png";
+    std::string outputPath = "../tests/integration/output/output_pipeline.jpg";
+    bool doPreprocess = false;
+
+    // Parse prompts from command line
+    std::vector<std::string> prompts = splitCSV(argv[1]);
+
+    // Optional image path
+    if (argc > 2) {
+        imagePath = argv[2];
+    }
+
+    // Load image
+    cv::Mat image = cv::imread(imagePath);
+    if (image.empty()) {
+        LOG_F(ERROR, "Failed to open image: %s", imagePath.c_str());
+        return 1;
+    }
+
+    // Mock telemetry
     ImageTelemetry mockTelemetry(latitude, longitude, altitude, airspeed, yaw, pitch, roll);
     ImageData imageData(image, 0, mockTelemetry);
 
-    // Construct the pipeline with the given parameters.
-    PipelineParams params(modelPath, tokenizerPath, prompts, outputPath, do_preprocess,
-                          min_confidence, nms_iou);
-
     // Create pipeline
+    PipelineParams params(encoderPath, decoderPath, tokenizerPath, prompts, outputPath,
+                          doPreprocess, 0.30 /*min_confidence*/, 0.20 /*nms_iou*/);
     Pipeline pipeline(params);
 
     // Run pipeline
     PipelineResults output = pipeline.run(imageData);
 
-    // Report number of detected targets.
-    size_t numTargets = output.targets.size();
-    LOG_F(INFO, "Detected %ld targets.", numTargets);
-
-    // Print details for each detected target.
+    // Report results
+    LOG_F(INFO, "Detected %zu targets.", output.targets.size());
     for (size_t i = 0; i < output.targets.size(); ++i) {
         const auto& t = output.targets[i];
-        LOG_F(INFO,
-              "Target #%ld: class_id=%d, match_distance=%.2f, "
-              "bbox=[%d %d %d %d], lat=%.5f, lon=%.5f",
-              i,
-              static_cast<int>(t.likely_airdrop),  // SAM3 class index
-              t.match_distance, t.bbox.x1, t.bbox.y1, t.bbox.x2, t.bbox.y2, t.coord.latitude(),
-              t.coord.longitude());
+        LOG_F(INFO, "Target #%zu: bbox=[%d,%d,%d,%d] lat=%.5f lon=%.5f", i, t.bbox.x1, t.bbox.y1,
+              t.bbox.x2, t.bbox.y2, t.coord.latitude(), t.coord.longitude());
     }
 
     return 0;

@@ -12,16 +12,19 @@ Pipeline::Pipeline(const PipelineParams& p)
       prompts_(p.prompts),
       min_confidence_(p.min_confidence),
       nms_iou_(p.nms_iou) {
-    if (p.modelPath && !p.modelPath->empty() && p.tokenizerPath && !p.tokenizerPath->empty()) {
-        sam3Detector =
-            std::make_unique<SAM3>(*p.modelPath, *p.tokenizerPath, p.min_confidence, p.nms_iou);
-        LOG_F(INFO, "SAM3 end-to-end model loaded from: %s", p.modelPath->c_str());
+    if (p.encoderPath && !p.encoderPath->empty() && p.decoderPath && !p.decoderPath->empty() &&
+        p.tokenizerPath && !p.tokenizerPath->empty()) {
+        sam3Detector = std::make_unique<SAM3>(*p.encoderPath, *p.decoderPath, *p.tokenizerPath,
+                                              p.min_confidence, p.nms_iou);
+        LOG_F(INFO, "SAM3 encoder loaded from: %s", p.encoderPath->c_str());
+        LOG_F(INFO, "SAM3 decoder loaded from: %s", p.decoderPath->c_str());
         LOG_F(INFO, "Tokenizer loaded from: %s", p.tokenizerPath->c_str());
     } else {
         sam3Detector.reset();
-        LOG_F(WARNING, "No CV models are loaded (SAM3 model path or tokenizer not provided).");
+        LOG_F(WARNING,
+              "No CV models are loaded (SAM3 encoder/decoder path or tokenizer not provided).");
         LOG_F(WARNING, "CVAGGREGATOR WILL NOT BE WORKING AS INTENDED. USE AT YOUR OWN RISK.");
-        LOG_F(WARNING, "Provide both SAM3 model path and tokenizer path to enable detections.");
+        LOG_F(WARNING, "Provide encoder, decoder, and tokenizer paths to enable detections.");
     }
 }
 

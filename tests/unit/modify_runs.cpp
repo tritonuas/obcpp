@@ -2,10 +2,10 @@
 #include <gtest/gtest.h>
 
 TEST(ModifyRuns, OverWriteData) {
-    PipelineParams params(std::nullopt, std::nullopt, std::vector<std::string>{"person"}, "", false,
-                              0.20, 0.2);
-    auto pipeline = std::make_shared<Pipeline>(params);
-    CVAggregator aggregator(pipeline);
+    PipelineParams params(std::nullopt, std::nullopt, std::nullopt,
+                          std::vector<std::string>{"person"}, "", false, 0.20, 0.2);
+    Pipeline pipeline(params);
+    CVAggregator aggregator(std::move(pipeline));
 
     std::vector<IdentifiedTarget> updated;
     {

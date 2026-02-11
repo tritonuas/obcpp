@@ -53,12 +53,12 @@
         }
     },
     "cv": {
-        "model_path": "/workspaces/obcpp/models/sam3_detection.onnx",
-        "tokenizer_path": "/workspaces/obcpp/models/tokenizer.json",
+        "encoder_path": "/workspaces/obcpp/models/sam3_encoder.onnx",
+        "decoder_path": "/workspaces/obcpp/models/sam3_decoder.onnx",
+        "tokenizer_path": "/workspaces/obcpp/configs/sam3/tokenizer.json",
         "prompt": "person",
-        "detection_threshold": 0.60,
-        "input_width": 1008,
-        "input_height": 1008
+        "confidence_threshold": 0.30,
+        "nms_iou": 0.20
     },
     "camera": {
         "_comment": "See CameraConfig struct in datatypes.hpp for detailed explanations",

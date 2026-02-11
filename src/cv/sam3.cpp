@@ -11,25 +11,30 @@
 // Sigmoid helper: logits -> probabilities
 inline float sigmoid(float x) { return 1.0f / (1.0f + std::exp(-x)); }
 
-SAM3::SAM3(const std::string& modelPath, const std::string& tokenizerPath, double min_confidence,
-           double nms_iou) {
+SAM3::SAM3(const std::string& encoderPath, const std::string& decoderPath,
+           const std::string& tokenizerPath, double min_confidence, double nms_iou) {
     try {
         min_confidence_ = min_confidence;
         nms_iou_ = nms_iou;
         // 1. Initialize Environment
         env_ = std::make_shared<Ort::Env>(ORT_LOGGING_LEVEL_WARNING, "SAM3_Detector");
 
-        // 2. Session Options (Graph Optimization Level 99 = ALL)
+        // 2. Session Options
         sessionOptions_.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
         sessionOptions_.SetIntraOpNumThreads(4);
 
-        // 3. Load Model
-        session_ = std::make_unique<Ort::Session>(*env_, modelPath.c_str(), sessionOptions_);
+        // 3. Load Encoder Model
+        encoderSession_ =
+            std::make_unique<Ort::Session>(*env_, encoderPath.c_str(), sessionOptions_);
+        LOG_F(INFO, "Successfully loaded SAM3 Encoder from: %s", encoderPath.c_str());
 
-        // 4. Load Tokenizer
+        // 4. Load Decoder Model
+        decoderSession_ =
+            std::make_unique<Ort::Session>(*env_, decoderPath.c_str(), sessionOptions_);
+        LOG_F(INFO, "Successfully loaded SAM3 Decoder from: %s", decoderPath.c_str());
+
+        // 5. Load Tokenizer
         loadTokenizer(tokenizerPath);
-
-        LOG_F(INFO, "Successfully loaded SAM3 Model from: %s", modelPath.c_str());
 
     } catch (const std::exception& e) {
         LOG_F(ERROR, "Error loading SAM3 model: %s", e.what());
@@ -51,8 +56,8 @@ float computeIoU(const Detection& a, const Detection& b) {
 
 std::vector<Detection> SAM3::detect(cv::Mat& image, const std::vector<std::string>& prompts) {
     std::vector<Detection> results;
-    if (!session_) {
-        LOG_F(WARNING, "Session not initialized");
+    if (!encoderSession_ || !decoderSession_) {
+        LOG_F(WARNING, "Encoder or decoder session not initialized");
         return results;
     }
 
@@ -61,40 +66,68 @@ std::vector<Detection> SAM3::detect(cv::Mat& image, const std::vector<std::strin
     std::vector<float> pixelValues = preprocess(image);
     std::vector<int64_t> inputShape = {1, 3, 1008, 1008};
 
-    // --- 2. TOKENIZE ---
-    // Shared inference resources
     auto memoryInfo = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
-    const char* inputNames[] = {"pixel_values", "input_ids"};
-    const char* outputNames[] = {"boxes", "masks", "scores", "presence_score"};
+
+    // --- 2. ENCODE IMAGE (once for all prompts) ---
+    const char* encoderInputNames[] = {"pixel_values"};
+    const char* encoderOutputNames[] = {"feat0", "feat1", "feat2", "feat3",
+                                        "pos0",  "pos1",  "pos2",  "pos3"};
+
+    std::vector<Ort::Value> encoderInputTensors;
+    encoderInputTensors.push_back(Ort::Value::CreateTensor<float>(
+        memoryInfo, pixelValues.data(), pixelValues.size(), inputShape.data(), inputShape.size()));
+
+    std::vector<Ort::Value> encoderOutputs;
+    try {
+        encoderOutputs = encoderSession_->Run(Ort::RunOptions{nullptr}, encoderInputNames,
+                                              encoderInputTensors.data(), 1, encoderOutputNames, 8);
+    } catch (const Ort::Exception& e) {
+        LOG_F(ERROR, "ONNX Encoder Inference Error: %s", e.what());
+        return results;
+    }
+
+    LOG_F(INFO, "Encoder produced %zu output tensors", encoderOutputs.size());
+
+    // --- 3. DECODE PER PROMPT ---
+    // Decoder only uses: feat0, feat1, feat2, pos2, input_ids (5 inputs)
+    const char* decoderInputNames[] = {"feat0", "feat1", "feat2", "pos2", "input_ids"};
+    const char* decoderOutputNames[] = {"boxes", "masks", "scores", "presence_score"};
+    const int decoderInputIndices[] = {0, 1, 2, 6};
 
     for (const auto& promptText : prompts) {
         std::vector<int64_t> inputIds = tokenize(promptText);
         std::vector<int64_t> tokenShape = {1, static_cast<int64_t>(inputIds.size())};
 
-        // --- 3. INFERENCE ---
-        std::vector<Ort::Value> inputTensors;
-        inputTensors.push_back(
-            Ort::Value::CreateTensor<float>(memoryInfo, pixelValues.data(), pixelValues.size(),
-                                            inputShape.data(), inputShape.size()));
-        inputTensors.push_back(Ort::Value::CreateTensor<int64_t>(
+        // Build decoder input tensors: 4 encoder outputs + 1 token tensor
+        std::vector<Ort::Value> decoderInputTensors;
+
+        // Re-feed the required encoder output tensors
+        for (int idx : decoderInputIndices) {
+            auto tensorInfo = encoderOutputs[idx].GetTensorTypeAndShapeInfo();
+            auto shape = tensorInfo.GetShape();
+            size_t elemCount = 1;
+            for (auto d : shape) elemCount *= d;
+
+            float* data = encoderOutputs[idx].GetTensorMutableData<float>();
+            decoderInputTensors.push_back(Ort::Value::CreateTensor<float>(
+                memoryInfo, data, elemCount, shape.data(), shape.size()));
+        }
+
+        // Add the token input
+        decoderInputTensors.push_back(Ort::Value::CreateTensor<int64_t>(
             memoryInfo, inputIds.data(), inputIds.size(), tokenShape.data(), tokenShape.size()));
 
         try {
-            auto outputs = session_->Run(Ort::RunOptions{nullptr}, inputNames, inputTensors.data(),
-                                         2, outputNames, 4);
+            auto outputs =
+                decoderSession_->Run(Ort::RunOptions{nullptr}, decoderInputNames,
+                                     decoderInputTensors.data(), 5, decoderOutputNames, 4);
 
             // --- 4. PARSE OUTPUTS ---
-            float* rawBoxes = outputs[0].GetTensorMutableData<float>();     // [1, N, 4]
-            float* rawScores = outputs[2].GetTensorMutableData<float>();    // [1, N, 1]
-            float* rawPresence = outputs[3].GetTensorMutableData<float>();  // [1, 1]
-
             auto boxesInfo = outputs[0].GetTensorTypeAndShapeInfo();
             int numQueries = boxesInfo.GetShape()[1];
 
-            // Global Presence Check (informational only)
-            float presenceProb = sigmoid(rawPresence[0]);
-            LOG_F(INFO, "Global Presence Score: %.4f (prompt=%s)", presenceProb,
-                  promptText.c_str());
+            float* rawBoxes = outputs[0].GetTensorMutableData<float>();
+            float* rawScores = outputs[2].GetTensorMutableData<float>();
 
             std::vector<Detection> rawDetections;
 
@@ -150,7 +183,7 @@ std::vector<Detection> SAM3::detect(cv::Mat& image, const std::vector<std::strin
             LOG_F(INFO, "Detected %zu objects for prompt '%s'", results.size(), promptText.c_str());
 
         } catch (const Ort::Exception& e) {
-            LOG_F(ERROR, "ONNX Inference Error: %s", e.what());
+            LOG_F(ERROR, "ONNX Decoder Inference Error: %s", e.what());
         }
     }
 
