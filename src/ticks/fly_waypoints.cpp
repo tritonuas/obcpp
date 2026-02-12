@@ -8,12 +8,14 @@
 #include "utilities/common.hpp"
 #include "pathing/environment.hpp"
 
+using namespace std::chrono_literals; // NOLINT
+
 FlyWaypointsTick::FlyWaypointsTick(std::shared_ptr<MissionState> state, Tick* next_tick)
     :Tick(state, TickID::FlyWaypoints), next_tick(next_tick) {}
 
 void FlyWaypointsTick::init() {
     state->getMav()->startMission();
-    //state->getCamera()->startStreaming();
+    state->getCamera()->startStreaming();
     this->last_photo_time = getUnixTime_ms();
 }
 
@@ -34,10 +36,11 @@ Tick* FlyWaypointsTick::tick() {
         Polygon airdrop_boundary = state->mission_params.getAirdropBoundary();
         // Check if we're inside the airdrop zone
         bool in_zone = Environment::isPointInPolygon(airdrop_boundary, current_xyz);
-        
+
         if (in_zone) {
-            for (int i = 0; i < this->state->config.pathing.coverage.hover.pictures_per_stop; i++) {
-                auto photo = this->state->getCamera()->takePicture(std::chrono::milliseconds(100), this->state->getMav());
+            auto now = getUnixTime_ms();
+            if ((now - this->last_photo_time) >= 300ms) {
+                auto photo = this->state->getCamera()->takePicture(100ms, this->state->getMav());
                 if (state->config.camera.save_images_to_file) {
                     photo->saveToFile(state->config.camera.save_dir);
                 }
