@@ -495,7 +495,6 @@ std::pair<std::pair<double, double>, std::pair<double, double>> Environment::fin
 }
 
 Polygon Environment::scaleFixedDistance(double distance, const Polygon& shape) const {
-    
     Polygon reduced_polygon;
 
     // square bounds of the polygon
@@ -508,22 +507,18 @@ Polygon Environment::scaleFixedDistance(double distance, const Polygon& shape) c
     double y_center = (y_max + y_min) / 2;
 
      for (const XYZCoord& point : shape) {
-
         double distance_x = (point.x - x_center);
         double distance_y = (point.y - y_center);
-
         if (distance_x > 0) {
             distance_x -= distance;
         } else {
             distance_x += distance;
         }
-
         if (distance_y > 0) {
             distance_y -= distance;
         } else {
             distance_y += distance;
         }
-
         double new_x_coord = x_center + distance_x;
         double new_y_coord = y_center + distance_y;
         reduced_polygon.push_back(XYZCoord(new_x_coord, new_y_coord, 0));
