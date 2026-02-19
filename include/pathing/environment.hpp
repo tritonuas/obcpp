@@ -23,7 +23,7 @@ class Environment {
  public:
     Environment(const Polygon& valid_region, const Polygon& airdrop_zone,
                 const Polygon& mapping_region, const std::vector<XYZCoord>& goals,
-                const std::vector<Polygon>& obstacles, double environment_offset);
+                const std::vector<Polygon>& obstacles, double environment_offset=0);
 
     /**
      * Check if a point is in the valid region
