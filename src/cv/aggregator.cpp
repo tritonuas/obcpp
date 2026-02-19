@@ -83,10 +83,11 @@ void CVAggregator::worker(ImageData image, int thread_num) {
         run.annotatedImage = pipeline_results.imageData.DATA.clone();
         run.bboxes.reserve(pipeline_results.targets.size());
         run.coords.reserve(pipeline_results.targets.size());
-
+        run.classes.reserve(pipeline_results.targets.size());
         for (auto& det : pipeline_results.targets) {
             run.bboxes.push_back(det.bbox);
             run.coords.push_back(det.coord);
+            run.classes.push_back(det.likely_airdrop);
         }
 
         {
