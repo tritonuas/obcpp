@@ -12,14 +12,15 @@
 
 Environment::Environment(const Polygon& valid_region, const Polygon& airdrop_zone,
                          const Polygon& mapping_region, const std::vector<XYZCoord>& goals,
-                         const std::vector<Polygon>& obstacles)
+                         const std::vector<Polygon>& obstacles, double environment_offset)
     : valid_region(valid_region),
       airdrop_zone(airdrop_zone),
       mapping_region(mapping_region),
       goals(goals),
       goals_found(0),
       bounds(findBounds(valid_region)),
-      obstacles(obstacles) {}
+      obstacles(obstacles),
+      environment_offset(environment_offset) {}
 
 bool Environment::isPointInBounds(const XYZCoord& point) const {
     if (!isPointInPolygon(valid_region, point)) {
@@ -493,48 +494,39 @@ std::pair<std::pair<double, double>, std::pair<double, double>> Environment::fin
     return {{min_x, max_x}, {min_y, max_y}};
 }
 
-XYZCoord Environment::findCentroid() const {
-
-    if (valid_region.size() < 3) {
-        throw std::invalid_argument("valid_region field must have at least 3 points.");
-    }
-
-    size_t n_verticies = valid_region.size();
-
-    double centroid_x = 0.0;
-    double centroid_y = 0.0;
-    double signed_area = 0.0;
-
-    for (size_t i = 0; i < n_verticies - 1; ++i) {
-        
-        double x0 = valid_region[i].x;
-        double y0 = valid_region[i].y;
-        double x1 = valid_region[i+1].x;
-        double y1 = valid_region[i+1].y;
-
-        double delta_area = (x0 * y1) - (x1 * y0);
-        signed_area += delta_area;
-        centroid_x += (x0 + x1) * delta_area;
-        centroid_y += (y0 + y1) * delta_area;
-    }
-
-    double x0 = valid_region[n_verticies - 1].x;
-    double y0 = valid_region[n_verticies - 1].y;
-    double x1 = valid_region[0].x;
-    double y1 = valid_region[0].y;
-
-    double delta_area = (x0 * y1) - (x1 * y0);
+Polygon Environment::scaleFixedDistance(double distance, const Polygon& shape) const {
     
-    signed_area += delta_area;
-    centroid_x += (x0 + x1) * delta_area;
-    centroid_y += (y0 + y1) * delta_area;
+    Polygon reduced_polygon;
 
-    if (signed_area == 0.0) {
-        throw std::runtime_error("The points are colinear. No centroid exists");
-    }
+    // square bounds of the polygon
+    auto bounds = findBounds(shape);
+    auto [x_min, x_max] = bounds.first;
+    auto [y_min, y_max] = bounds.second;
 
-    centroid_x /= (3.0*signed_area);
-    centroid_y /= (3.0*signed_area);
+    // finds the center of the polygon
+    double x_center = (x_max + x_min) / 2;
+    double y_center = (y_max + y_min) / 2;
 
-    return XYZCoord{centroid_x, centroid_y, 0};
+     for (const XYZCoord& point : shape) {
+
+        double distance_x = (point.x - x_center);
+        double distance_y = (point.y - y_center);
+
+        if (distance_x > 0) {
+            distance_x -= distance;
+        } else {
+            distance_x += distance;
+        }
+
+        if (distance_y > 0) {
+            distance_y -= distance;
+        } else {
+            distance_y += distance;
+        }
+
+        double new_x_coord = x_center + distance_x;
+        double new_y_coord = y_center + distance_y;
+        reduced_polygon.push_back(XYZCoord(new_x_coord, new_y_coord, 0));
+     }
+     return reduced_polygon;
 }
