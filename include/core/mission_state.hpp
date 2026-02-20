@@ -114,6 +114,8 @@ class MissionState {
 
     std::optional<airdrop_t> next_airdrop_to_drop;
 
+    // asio::io_context io_testies;
+
  private:
     std::mutex converter_mut;
     std::optional<CartesianConverter<GPSProtoVec>> converter;
@@ -142,6 +144,8 @@ class MissionState {
     // Gives an index into cv_detected_targets, and specifies that that bottle is matched
     // with the detected_target specified by the index
     std::array<size_t, NUM_AIRDROPS> cv_matches;
+
+    // boost::asio::io_context io_testies;
 
     bool mappingIsDone;
 

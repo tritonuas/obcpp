@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <future>
 
+#include "camera/rpi.hpp"
 #include "camera/mock.hpp"
 #include "camera/picamera.hpp"
 #include "core/obc.hpp"
@@ -15,6 +16,8 @@
 #include "network/airdrop_client.hpp"
 #include "utilities/logging.hpp"
 #include "utilities/obc_config.hpp"
+#include <boost/asio.hpp>
+#include "network/rpi_connection.hpp"
 extern "C" {
     #include "network/airdrop_sockets.h"
 }
@@ -47,6 +50,9 @@ OBC::OBC(OBCConfig config) {
             this->state->config.camera, 4956, 3040, 30));
     } else if (this->state->config.camera.type == "lucid") {
         LOG_F(FATAL, "ATTEMPTING TO CONNECT TO LUCID CAMERA: LUCID CAMERA NO LONGER EXISTS");
+    } else if(this->state->config.camera.type == "PiCamera"){
+        asio::io_context io_testies;
+        this->state->setCamera(std::make_shared<RPICamera>( config.camera, &io_testies)); 
     } else {
         // default to mock if it's neither "mock" or "lucid"
         this->state->setCamera(std::make_shared<MockCamera>(this->state->config.camera));

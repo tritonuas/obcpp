@@ -17,7 +17,8 @@
 
 RPICamera::RPICamera(CameraConfig config, asio::io_context* io_context_) 
     : CameraInterface(config), client(io_context_, SERVER_IP, SERVER_PORT) {
-    this->connected = false;
+    //this->connected = false;
+    LOG_F(INFO, "RPICamera exists");
 }
 
 void RPICamera::connect() {

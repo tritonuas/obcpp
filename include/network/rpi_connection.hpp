@@ -2,11 +2,13 @@
 #define INCLUDE_NETWORK_RPI_CONNECTION_HPP_
 
 #include <iostream>
+#pragma once 
+#include <cstdint>
 
 // Image Config
-const uint32_t IMG_WIDTH = 1456;
-const uint32_t IMG_HEIGHT = 1088;
-const uint32_t IMG_BUFFER = IMG_WIDTH * IMG_HEIGHT * 3 / 2;
+inline uint32_t IMG_WIDTH = 1456;
+inline uint32_t IMG_HEIGHT = 1088;
+inline uint32_t IMG_BUFFER = IMG_WIDTH * IMG_HEIGHT * 3 / 2;
 
 // Libcamera Strides/Padding
 const uint32_t STRIDE_Y = 1472;
