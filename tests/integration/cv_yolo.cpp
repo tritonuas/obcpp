@@ -4,7 +4,7 @@
 
 /**
  * Tests YOLO and some YOLO config settings on an image
- * 
+ *
  * arg 1 --> YoloModelPath
  * arg 2 --> ImagePath
  * arg 3 --> Confidence Threshold
@@ -12,10 +12,10 @@
  */
 int main(int argc, char** argv) {
     // Default file paths and parameters
-    std::string modelPath = "../models/yolo11x.onnx";
+    std::string modelPath = "../models/yolo-wittner-v2.onnx";
     std::string imagePath = "../tests/integration/images/image.png";
     std::string outputPath = "../tests/integration/output/output_yolo.png";
-    float confThreshold = 0.05f;
+    float confThreshold = 0.35f;
 
     if (argc > 1) {
         modelPath = argv[1];
@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
     }
 
     // Create the YOLO object and process the image
-    YOLO yolo(modelPath, confThreshold, 640, 640);
+    YOLO yolo(modelPath, confThreshold, 1024, 1024);
     yolo.processAndSaveImage(image, outputPath);
 
     return 0;

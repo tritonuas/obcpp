@@ -22,7 +22,7 @@ const double roll = 3;
  * arg 4 --> enable preprocessing ("true" or "false") - default true
  */
 int main(int argc, char** argv) {
-    std::string yoloModelPath = "../models/yolo11x.onnx";
+    std::string yoloModelPath = "../models/yolo-wittner-v2.onnx";
     std::string imagePath = "../tests/integration/images/image.png";
     std::string outputPath = "../tests/integration/output/output_pipeline.png";
 
@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
     ImageData imageData(image, 0, mockTelemetry);
 
     // Construct the pipeline with the given parameters.
-    PipelineParams params(yoloModelPath, outputPath, do_preprocess);
+    PipelineParams params(yoloModelPath, 0.35f, 1024, 1024, outputPath, do_preprocess);
     Pipeline pipeline(params);
 
     // Run pipeline
