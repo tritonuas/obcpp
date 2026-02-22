@@ -37,6 +37,15 @@ RPICamera::~RPICamera() {}
 
 std::optional<ImageData> RPICamera::takePicture(const std::chrono::milliseconds& timeout, std::shared_ptr<MavlinkClient> mavlinkClient) {
     
+    std::optional<ImageTelemetry> telemetryOpt = queryMavlinkImageTelemetry(mavlinkClient);
+
+    if (!telemetryOpt.has_value()) {
+        LOG_F(ERROR, "Could not grab telemetry data from mavlink");
+        return std::nullopt;
+    }
+
+    ImageTelemetry telemetry = telemetryOpt.value();
+
     // 1. Send Request
     if (!client.send(PICTURE_REQUEST)) {
         LOG_F(ERROR, "Failed to send picture request");
@@ -65,7 +74,7 @@ std::optional<ImageData> RPICamera::takePicture(const std::chrono::milliseconds&
     return ImageData {
         .DATA = mat.value(),
         .TIMESTAMP = timestamp,
-        .TELEMETRY = {} 
+        .TELEMETRY = telemetry 
     };
 }
 
