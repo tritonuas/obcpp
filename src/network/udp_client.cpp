@@ -37,7 +37,7 @@ bool UDPClient::send(std::uint8_t request) {
     int bytesSent = this->socket_.send_to(asio::buffer(&request, sizeof(request)), endpoint_, 0, ec);
 
     if (ec) {
-        LOG_F(ERROR, "Failed to send request: %s", ec.message().c_str());
+        LOG_F(WARNING, "Failed to send request: %s", ec.message().c_str());
         return false;
     }
 

@@ -273,7 +273,7 @@ DEF_GCS_HANDLE(Get, camera, capture) {
     std::string output;
     google::protobuf::util::MessageToJsonString(manual_image, &output);
 
-    LOG_RESPONSE(INFO, "Successfully captured image", OK, output.c_str(), mime::json);
+    LOG_RESPONSE_HD(INFO, "Successfully captured image", OK, output.c_str(), mime::json);
 }
 
 DEF_GCS_HANDLE(Post, dodropnow) {
