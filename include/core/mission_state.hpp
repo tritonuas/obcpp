@@ -11,6 +11,7 @@
 #include <queue>
 #include <unordered_set>
 #include <vector>
+#include <boost/asio.hpp>
 
 #include "camera/interface.hpp"
 #include "core/mission_parameters.hpp"
@@ -113,8 +114,7 @@ class MissionState {
     OBCConfig config;
 
     std::optional<airdrop_t> next_airdrop_to_drop;
-
-    // asio::io_context io_testies;
+    boost::asio::io_context raspy_io;
 
  private:
     std::mutex converter_mut;
