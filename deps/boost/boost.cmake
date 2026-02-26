@@ -10,7 +10,7 @@ function(target_add_boost target_name)
     # target_link_libraries(${target_name} PRIVATE
     #     boost
     # )
-    target_include_directories(${target_name} PRIVATE ${boost_SOURCE_DIR})
+    target_include_directories(${target_name} PUBLIC ${boost_SOURCE_DIR})
 
 
 endfunction()
