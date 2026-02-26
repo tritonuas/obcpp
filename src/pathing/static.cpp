@@ -631,7 +631,7 @@ MissionPath generateInitialPath(std::shared_ptr<MissionState> state) {
     // the other waypoitns is the goals
     if (state->mission_params.getWaypoints().size() < 2) {
         loguru::set_thread_name("Static Pathing");
-        LOG_F(ERROR, "Not enough waypoints to generate a path, requires >=2, existing waypoints: %s",
+        LOG_F(ERROR, "Not enough waypoints to generate a path, requires >=2, num waypoints: %s",
               std::to_string(state->mission_params.getWaypoints().size()).c_str());
         return {};
     }
@@ -640,7 +640,7 @@ MissionPath generateInitialPath(std::shared_ptr<MissionState> state) {
 
     // Copy elements from the second element to the last element of source into
     // destination all other methods of copying over crash???
-   for (int i = 1; i < state->mission_params.getWaypoints().size(); i++) {
+    for (int i = 1; i < state->mission_params.getWaypoints().size(); i++) {
         goals.emplace_back(state->mission_params.getWaypoints()[i]);
     }
 
