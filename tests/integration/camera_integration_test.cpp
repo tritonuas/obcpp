@@ -18,24 +18,24 @@ int main(int argc, char* argv[]) {
     const int NUM_IMAGES = 5;
     const std::chrono::milliseconds IMAGE_INTERVAL = std::chrono::milliseconds(250);
 
-    std::cout << "[Test] Initializing RPICamera..." << std::endl;
+    LOG_F(INFO, "[Test] Initializing RPICamera...");
     RPICamera camera(config, &io_context_);
 
-    std::cout << "[Test] Connecting..." << std::endl;
+    LOG_F(INFO, "[Test] Connecting...");
     camera.connect();
 
     if (!camera.isConnected()) {
-        std::cerr << "[Test] Failed to connect/bind socket" << std::endl;
+        LOG_F(ERROR, "[Test] Failed to connect/bind socket");
         return -1;
     }
 
     for (int i = 0; i < NUM_IMAGES; i++) {
-        std::cout << "[Test] Requesting Picture " << i + 1 << "/" << NUM_IMAGES << std::endl;
+        LOG_F(INFO, "[Test] Requesting Picture %d/%d", i + 1, NUM_IMAGES);
         std::this_thread::sleep_for(IMAGE_INTERVAL);
         std::optional<ImageData> img = camera.takePicture(std::chrono::milliseconds(3000), nullptr);
 
         if (img.has_value()) {
-            std::cout << "[Test] Image Received! Size: " << img.value().DATA.total() << " bytes." << std::endl;
+            LOG_F(INFO, "[Test] Image Received! Size: %ld bytes.", img.value().DATA.total());
             
             fs::path base_dir = "images";
             if (!fs::exists(base_dir)) {
@@ -45,12 +45,12 @@ int main(int argc, char* argv[]) {
             fs::path filepath = base_dir / (std::to_string(img.value().TIMESTAMP) + ".png");
             
             if (img.value().saveToFile(base_dir.string())) {
-                std::cout << "[Test] Saved successfully to " << base_dir << std::endl;
+                LOG_F(INFO, "[Test] Saved successfully to %s", base_dir.c_str());
             } else {
-                std::cerr << "[Test] Failed to save image file." << std::endl;
+                LOG_F(ERROR, "[Test] Failed to save image file.");
             }
         } else {
-            std::cerr << "[Test] FAILED: No image received (Timeout or Error)." << std::endl;
+            LOG_F(ERROR, "[Test] FAILED: No image received (Timeout or Error).");
             return 1;
         }
     }
