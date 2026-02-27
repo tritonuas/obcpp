@@ -23,6 +23,7 @@ class FlyWaypointsTick : public Tick {
     Tick* tick() override;
 
  private:
+    bool mission_started;
     Tick* next_tick;
 };
 
