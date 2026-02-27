@@ -637,8 +637,6 @@ MissionPath generateInitialPath(std::shared_ptr<MissionState> state) {
     }
 
     std::vector<XYZCoord> goals = state->mission_params.getWaypoints();
-    // Copy elements from the second element to the last element of source into
-    // destination all other methods of copying over crash???
 
     // update goals here
     if (state->config.pathing.rrt.generate_deviations) {
@@ -647,10 +645,6 @@ MissionPath generateInitialPath(std::shared_ptr<MissionState> state) {
     }
 
     RRTPoint start = getCurrentLoc(state);
-    double init_angle =
-        std::atan2(goals.front().y - start.coord.y,
-                   goals.front().x - start.coord.x);
-    start.psi = init_angle;
     start.coord.z = state->config.takeoff.altitude_m;
 
     RRT rrt(start, goals, SEARCH_RADIUS, state->mission_params.getFlightBoundary(), state->config,
@@ -661,10 +655,8 @@ MissionPath generateInitialPath(std::shared_ptr<MissionState> state) {
     std::vector<XYZCoord> path = rrt.getPointsToGoal();
 
     std::vector<GPSCoord> output_coords;
-    output_coords.push_back(
-        state->getCartesianConverter()->toLatLng(state->mission_params.getWaypoints().front()));
-    for (const XYZCoord &wpt : path) {
-        output_coords.push_back(state->getCartesianConverter()->toLatLng(wpt));
+    for (const XYZCoord &waypoint : path) {
+        output_coords.push_back(state->getCartesianConverter()->toLatLng(waypoint));
     }
 
     return MissionPath(MissionPath::Type::FORWARD, output_coords);
@@ -674,9 +666,8 @@ MissionPath generateSearchPath(std::shared_ptr<MissionState> state) {
     std::vector<GPSCoord> gps_coords;
     if (state->config.pathing.coverage.method == AirdropCoverageMethod::Enum::FORWARD) {
         RRTPoint start(state->mission_params.getWaypoints().back(), 0);
-        // TODO , change the starting point to be something closer to loiter
-        // region
         double scan_radius = state->config.pathing.coverage.camera_vision_m;
+
         ForwardCoveragePathing pathing(start, scan_radius,
                                        state->mission_params.getFlightBoundary(),
                                        state->mission_params.getAirdropBoundary(), state->config);
@@ -742,5 +733,3 @@ MissionPath generateAirdropApproach(std::shared_ptr<MissionState> state, const G
 
     return MissionPath(MissionPath::Type::FORWARD, gps_path);
 }
-
-
