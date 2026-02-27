@@ -629,20 +629,16 @@ MissionPath generateInitialPath(std::shared_ptr<MissionState> state) {
     // first waypoint is start
 
     // the other waypoitns is the goals
-    if (state->mission_params.getWaypoints().size() < 2) {
+    if (state->mission_params.getWaypoints().size() < 1) {
         loguru::set_thread_name("Static Pathing");
-        LOG_F(ERROR, "Not enough waypoints to generate a path, requires >=2, num waypoints: %s",
+        LOG_F(ERROR, "Not enough waypoints to generate a path, requires >=1, num waypoints: %s",
               std::to_string(state->mission_params.getWaypoints().size()).c_str());
         return {};
     }
 
-    std::vector<XYZCoord> goals;
-
+    std::vector<XYZCoord> goals = state->mission_params.getWaypoints();
     // Copy elements from the second element to the last element of source into
     // destination all other methods of copying over crash???
-    for (int i = 1; i < state->mission_params.getWaypoints().size(); i++) {
-        goals.emplace_back(state->mission_params.getWaypoints()[i]);
-    }
 
     // update goals here
     if (state->config.pathing.rrt.generate_deviations) {
@@ -650,10 +646,11 @@ MissionPath generateInitialPath(std::shared_ptr<MissionState> state) {
         goals = generateRankedNewGoalsList(goals, mapping_bounds)[0];
     }
 
+    RRTPoint start = getCurrentLoc(state);
     double init_angle =
-        std::atan2(goals.front().y - state->mission_params.getWaypoints().front().y,
-                   goals.front().x - state->mission_params.getWaypoints().front().x);
-    RRTPoint start(state->mission_params.getWaypoints().front(), init_angle);
+        std::atan2(goals.front().y - start.coord.y,
+                   goals.front().x - start.coord.x);
+    start.psi = init_angle;
     start.coord.z = state->config.takeoff.altitude_m;
 
     RRT rrt(start, goals, SEARCH_RADIUS, state->mission_params.getFlightBoundary(), state->config,
@@ -677,7 +674,6 @@ MissionPath generateSearchPath(std::shared_ptr<MissionState> state) {
     std::vector<GPSCoord> gps_coords;
     if (state->config.pathing.coverage.method == AirdropCoverageMethod::Enum::FORWARD) {
         RRTPoint start(state->mission_params.getWaypoints().back(), 0);
-
         // TODO , change the starting point to be something closer to loiter
         // region
         double scan_radius = state->config.pathing.coverage.camera_vision_m;
