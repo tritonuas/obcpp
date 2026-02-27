@@ -1,5 +1,6 @@
 #include "network/udp_client.hpp"
 #include <chrono>
+#include <sys/select.h>
 
 UDPClient::UDPClient(asio::io_context* io_context_, std::string ip, int port) : socket_(*io_context_) {
     this->ip = ip;
@@ -27,6 +28,35 @@ bool UDPClient::connect() {
     return true;
 }
 
+void UDPClient::setReceiveTimeout(int timeout_ms) {
+    this->current_timeout_ms_ = timeout_ms;
+    struct timeval read_timeout;
+    read_timeout.tv_sec = timeout_ms / 1000;
+    read_timeout.tv_usec = (timeout_ms % 1000) * 1000;
+    setsockopt(this->socket_.native_handle(), SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout));
+}
+
+bool UDPClient::waitForData() {
+    fd_set fds;
+    FD_ZERO(&fds);
+    FD_SET(this->socket_.native_handle(), &fds);
+
+    struct timeval tv;
+    tv.tv_sec = this->current_timeout_ms_ / 1000;
+    tv.tv_usec = (this->current_timeout_ms_ % 1000) * 1000;
+
+    int rv = select(this->socket_.native_handle() + 1, &fds, NULL, NULL, &tv);
+    
+    if (rv == -1) {
+        LOG_F(ERROR, "Select failed in waitForData.");
+        return false;
+    } else if (rv == 0) {
+        // Timeout
+        return false;
+    }
+    return true; 
+}
+
 // send a request to the server
 bool UDPClient::send(std::uint8_t request) {
     boost::system::error_code ec;
@@ -49,6 +79,11 @@ Header UDPClient::recvHeader() {
     boost::system::error_code ec;
     asio::ip::udp::endpoint sender_endpoint;
     Header header;
+
+    if (!this->waitForData()) {
+        LOG_F(WARNING, "Timeout waiting for header data.");
+        return {};
+    }
 
     int bytesRead = this->socket_.receive_from(asio::buffer(&header, sizeof(Header)), sender_endpoint, 0, ec);
 
@@ -80,6 +115,11 @@ std::vector<std::uint8_t> UDPClient::recvBody(const int mem_size, const int tota
     // But the socket timeout will break the loop eventually if data stops coming
     while (chunks_received_count < total_chunks) {
         
+        if (!this->waitForData()) {
+             LOG_F(WARNING, "Timeout waiting for body chunks.");
+             return {}; 
+        }
+
         size_t bytesRead = this->socket_.receive_from(asio::buffer(chunk_buf), sender_endpoint, 0, ec);
 
         if (ec) {

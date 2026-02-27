@@ -40,11 +40,13 @@ std::optional<ImageData> RPICamera::takePicture(const std::chrono::milliseconds&
     std::optional<ImageTelemetry> telemetryOpt = queryMavlinkImageTelemetry(mavlinkClient);
 
     if (!telemetryOpt.has_value()) {
-        LOG_F(ERROR, "Could not grab telemetry data from mavlink");
-        return std::nullopt;
+        LOG_F(WARNING, "Could not grab telemetry data from mavlink");
     }
 
-    ImageTelemetry telemetry = telemetryOpt.value();
+    // Set timeout dynamically
+    client.setReceiveTimeout(timeout.count());
+
+    auto start_time = std::chrono::steady_clock::now();
 
     // 1. Send Request
     if (!client.send(PICTURE_REQUEST)) {
@@ -55,8 +57,15 @@ std::optional<ImageData> RPICamera::takePicture(const std::chrono::milliseconds&
     // 2. Read 3 Planes
     std::vector<std::vector<uint8_t>> planes = readImage();
 
+    auto end_time = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+
     if (planes.size() != 3) {
-        LOG_F(ERROR, "Failed to read all 3 planes");
+        if (elapsed >= timeout - std::chrono::milliseconds(50)) {
+            LOG_F(ERROR, "Camera request timed out after %ld ms", timeout.count());
+        } else {
+            LOG_F(ERROR, "Failed to read all 3 planes");
+        }
         return {};
     }
 
@@ -74,7 +83,7 @@ std::optional<ImageData> RPICamera::takePicture(const std::chrono::milliseconds&
     return ImageData {
         .DATA = mat.value(),
         .TIMESTAMP = timestamp,
-        .TELEMETRY = telemetry 
+        .TELEMETRY = telemetryOpt 
     };
 }
 

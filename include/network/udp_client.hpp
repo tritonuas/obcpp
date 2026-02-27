@@ -14,12 +14,18 @@ class UDPClient {
         asio::ip::udp::socket socket_;
         std::string ip;
         int port;
+        int current_timeout_ms_ = 2000;
+
+        bool waitForData();
 
     public:
         UDPClient(asio::io_context* io_context_, std::string ip, int port);
 
         // there isnt really a notion of connect with connectionless udp sockets
         bool connect();
+        
+        // Set Timeout for Socket
+        void setReceiveTimeout(int timeout_ms);
 
         bool send(std::uint8_t request);
 
