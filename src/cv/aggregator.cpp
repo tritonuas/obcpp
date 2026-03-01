@@ -9,7 +9,7 @@ CVAggregator::CVAggregator(Pipeline&& p) : pipeline(std::move(p)) {
     this->num_worker_threads = 0;
     this->results = std::make_shared<CVResults>();
     this->matched_results = std::make_shared<MatchedResults>();
-
+    this->cv_record = std::make_shared<std::map<int, IdentifiedTarget>>();
     AirdropTarget dummy;  // Create one dummy template
 
     // Configure the coordinate part of the dummy
@@ -18,22 +18,13 @@ CVAggregator::CVAggregator(Pipeline&& p) : pipeline(std::move(p)) {
     coord_in_dummy->set_latitude(0.0);
     coord_in_dummy->set_longitude(0.0);
 
-    dummy.set_object(ODLCObjects::Undefined);  // Set common properties once
-
     // Now assign copies, each with its specific index
-    dummy.set_index(AirdropIndex::Kaz);
-    this->matched_results->matched_airdrop[AirdropIndex::Kaz] = dummy;
+    dummy.set_index(AirdropType::Water);
+    this->matched_results->matched_airdrop[AirdropType::Water] = dummy;
 
-    dummy.set_index(AirdropIndex::Kimi);
-    this->matched_results->matched_airdrop[AirdropIndex::Kimi] = dummy;
-
-    dummy.set_index(AirdropIndex::Chris);
-    this->matched_results->matched_airdrop[AirdropIndex::Chris] = dummy;
-
-    dummy.set_index(AirdropIndex::Daniel);
-    this->matched_results->matched_airdrop[AirdropIndex::Daniel] = dummy;
+    dummy.set_index(AirdropType::Beacon);
+    this->matched_results->matched_airdrop[AirdropType::Beacon] = dummy;
 }
-
 
 CVAggregator::~CVAggregator() {}
 
@@ -45,6 +36,19 @@ LockPtr<MatchedResults> CVAggregator::getMatchedResults() {
     return LockPtr<MatchedResults>(this->matched_results, &this->mut);
 }
 
+LockPtr<std::map<int, IdentifiedTarget>> CVAggregator::getCVRecord() {
+    return LockPtr<std::map<int, IdentifiedTarget>>(this->cv_record, &this->cv_record_mut);
+}
+void CVAggregator::updateRecords(std::vector<IdentifiedTarget>& new_values) {
+    LockPtr<std::map<int, IdentifiedTarget>> records = this->getCVRecord();
+    for (IdentifiedTarget id : new_values) {
+        if (records.data->contains(id.run_id())) {
+            records.data->at(id.run_id()).CopyFrom(id);
+        } else {
+            LOG_F(WARNING, "Tried to modify with an ID not inside CVRecord. ID: (%d)", id.run_id());
+        }
+    }
+}
 void CVAggregator::runPipeline(const ImageData& image) {
     Lock lock(this->mut);
 

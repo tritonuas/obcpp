@@ -17,6 +17,7 @@
 	"payload_size": 2
     },
     "pathing": {
+        "laps": 10,
         "dubins": {
             "turning_radius": 5.0,
             "point_separation": 20.0
@@ -52,9 +53,10 @@
         }
     },
     "cv": {
-        "yolo_model_dir": "/obcpp/models/yolo11x.onnx",
-        "not_stolen_addr": "localhost",
-        "not_stolen_port": 5069
+        "yolo_model_dir": "/obcpp/models/yolo-wittner-v2.onnx",
+        "detection_threshold": 0.35,
+        "input_width": 1024,
+        "input_height": 1024
     },
     "camera": {
         "_comment": "See CameraConfig struct in datatypes.hpp for detailed explanations",
@@ -62,7 +64,9 @@
         "save_dir": "/obcpp/images/",
         "save_images_to_file": true,
         "mock": {
-            "images_dir": "/obcpp/tests/integration/images/saliency/"
+            "not_stolen_port": 6060,
+            "runway": "right",
+            "num_targets": 2
         },
         "lucid": {
             "sensor_shutter_mode": "Rolling",

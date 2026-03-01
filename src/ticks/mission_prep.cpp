@@ -36,8 +36,9 @@ Tick* MissionPrepTick::tick() {
         LOG_F(INFO, "Yolo Model: %s", yolo_model_dir.c_str());
 
         // Make a CVAggregator instance and set it in the state
-        this->state->setCV(
-            std::make_shared<CVAggregator>(Pipeline(PipelineParams(yolo_model_dir))));
+        this->state->setCV(std::make_shared<CVAggregator>(Pipeline(PipelineParams(
+            yolo_model_dir, this->state->config.cv.detection_threshold,
+            this->state->config.cv.input_width, this->state->config.cv.input_height))));
 
         this->state->setMappingIsDone(false);
         return new PathGenTick(this->state);
@@ -46,12 +47,11 @@ Tick* MissionPrepTick::tick() {
     }
 }
 
-std::vector<std::pair<cv::Mat, AirdropIndex>> MissionPrepTick::generateReferenceImages(
+std::vector<std::pair<cv::Mat, AirdropType>> MissionPrepTick::generateReferenceImages(
     std::array<Airdrop, NUM_AIRDROPS> competitionObjectives) {
-    std::vector<std::pair<cv::Mat, AirdropIndex>> ref_imgs;
+    std::vector<std::pair<cv::Mat, AirdropType>> ref_imgs;
 
-    // Default is Kaz cuz we don't have Undefined anymore
-    int curr_airdrop_idx = AirdropIndex::Kaz;
+    int curr_airdrop_idx = AirdropType::Undefined;
     for (const auto& airdrop : competitionObjectives) {
         curr_airdrop_idx++;
 
@@ -80,7 +80,7 @@ std::vector<std::pair<cv::Mat, AirdropIndex>> MissionPrepTick::generateReference
         cv::Mat data_mat(vectordata, true);
         cv::Mat ref_img(cv::imdecode(data_mat, 1));  // put 0 if you want greyscale
 
-        ref_imgs.push_back({ref_img, (AirdropIndex)curr_airdrop_idx});
+        ref_imgs.push_back({ref_img, (AirdropType)curr_airdrop_idx});
     }
     return ref_imgs;
 }

@@ -37,16 +37,6 @@ int main(int argc, char** argv) {
         airdrop.send(makeDropNowPacket(airdrop_t::UDP2_B));
         std::this_thread::sleep_for(100ms);
     }
-    for (int i = 0; i < 16; i++) {
-        std::cout << "DROP C\n";
-        airdrop.send(makeDropNowPacket(airdrop_t::UDP2_C));
-        std::this_thread::sleep_for(100ms);
-    }
-    for (int i = 0; i < 16; i++) {
-        std::cout << "DROP D\n";
-        airdrop.send(makeDropNowPacket(airdrop_t::UDP2_D));
-        std::this_thread::sleep_for(100ms);
-    }
 
     airdrop.send(makeLatLngPacket(SEND_LATLNG, UDP2_A, OBC_NULL, 32.123, 76.321, 100));
     airdrop.send(makeLatLngPacket(SEND_LATLNG, UDP2_A, OBC_NULL, 32.123, 76.321, 100));

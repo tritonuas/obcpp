@@ -24,6 +24,7 @@ class FlyWaypointsTick : public Tick {
 
  private:
     Tick* next_tick;
+    std::chrono::milliseconds last_photo_time;
 };
 
 #endif  // INCLUDE_TICKS_FLY_WAYPOINTS_HPP_

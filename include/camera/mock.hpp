@@ -1,12 +1,15 @@
 #ifndef INCLUDE_CAMERA_MOCK_HPP_
 #define INCLUDE_CAMERA_MOCK_HPP_
 
+#include <httplib.h>
+
 #include <thread>
 #include <memory>
 #include <shared_mutex>
 #include <deque>
 #include <vector>
 #include <filesystem>
+#include <string>
 
 #include "camera/interface.hpp"
 #include "network/mavlink.hpp"
@@ -51,8 +54,6 @@ class MockCamera : public CameraInterface {
     void startStreaming() override;
 
  private:
-    std::vector<ImageData> mock_images;
-
     std::atomic_bool isTakingPictures;
 
     void captureEvery(const std::chrono::milliseconds& interval,
@@ -63,10 +64,9 @@ class MockCamera : public CameraInterface {
 
     std::thread captureThread;
 
-    // Get telemetry from JSON file adjacent to given image file.
-    // Ex: given path to "0003.jpg", telemetry will be looked for in
-    // "0003.json"
-    std::optional<ImageTelemetry> getTelemetryFromJsonFile(std::filesystem::path img_path);
+    httplib::Client cli;
+
+    std::string session_id;
 };
 
 #endif  // INCLUDE_CAMERA_MOCK_HPP_

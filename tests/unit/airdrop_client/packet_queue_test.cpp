@@ -24,7 +24,7 @@ TEST(PacketQueueTest, PushThenPopOne) {
     packet_queue_t q;
     pqueue_init(&q);
 
-    packet_t in_packet = makeModePacket(SET_MODE, UDP2_C, OBC_NULL, GUIDED);
+    packet_t in_packet = makeModePacket(SET_MODE, UDP2_B, OBC_NULL, GUIDED);
     pqueue_push(&q, in_packet);
     ASSERT_FALSE(pqueue_empty(&q));
     ASSERT_FALSE(pqueue_full(&q));
@@ -90,41 +90,41 @@ TEST(PacketQueueTest, SimulateNormalUse) {
 
     const int BURST = 10;
     for (int i = 0; i < BURST; i++) {
-        pqueue_push(&q, makeResetPacket(UDP2_D));
+        pqueue_push(&q, makeResetPacket(UDP2_B));
     }
 
     temp = pqueue_pop(&q);
     ASSERT_EQ(temp.header, RESET);
     uint8_t airdrop, state;
     parseID(temp.id, &airdrop, &state);
-    ASSERT_EQ(airdrop, UDP2_D);
+    ASSERT_EQ(airdrop, UDP2_B);
     temp = pqueue_pop(&q);
     ASSERT_EQ(temp.header, RESET);
     parseID(temp.id, &airdrop, &state);
-    ASSERT_EQ(airdrop, UDP2_D);
+    ASSERT_EQ(airdrop, UDP2_B);
 
     for (int i = BURST; i < BURST * 2; i++) {
-        pqueue_push(&q, makeResetPacket(UDP2_D));
+        pqueue_push(&q, makeResetPacket(UDP2_B));
     }
 
     temp = pqueue_pop(&q);
     ASSERT_EQ(temp.header, RESET);
     parseID(temp.id, &airdrop, &state);
-    ASSERT_EQ(airdrop, UDP2_D);
+    ASSERT_EQ(airdrop, UDP2_B);
     temp = pqueue_pop(&q);
     ASSERT_EQ(temp.header, RESET);
     parseID(temp.id, &airdrop, &state);
-    ASSERT_EQ(airdrop, UDP2_D);
+    ASSERT_EQ(airdrop, UDP2_B);
 
     for (int i = BURST * 2; i < BURST * 3; i++) {
-        pqueue_push(&q, makeResetPacket(UDP2_D));
+        pqueue_push(&q, makeResetPacket(UDP2_B));
     }
 
     for (int i = 4; i < BURST * 3; i++) {
         temp = pqueue_pop(&q);
         ASSERT_EQ(temp.header, RESET);
         parseID(temp.id, &airdrop, &state);
-        ASSERT_EQ(airdrop, UDP2_D);
+        ASSERT_EQ(airdrop, UDP2_B);
     }
 
     ASSERT_TRUE(pqueue_empty(&q));
@@ -146,7 +146,7 @@ TEST(PacketQueueTest, PopWaitMultiThreaded) {
         while (!go); // wait for other thread to run first
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-        pqueue_push(&q, makeResetPacket(UDP2_C));
+        pqueue_push(&q, makeResetPacket(UDP2_B));
     });
 
     go = true;
@@ -159,5 +159,5 @@ TEST(PacketQueueTest, PopWaitMultiThreaded) {
     ASSERT_EQ(p.header, RESET);
     uint8_t airdrop, state;
     parseID(p.id, &airdrop, &state);
-    ASSERT_EQ(airdrop, UDP2_C);
+    ASSERT_EQ(airdrop, UDP2_B);
 }

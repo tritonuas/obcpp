@@ -7,9 +7,19 @@
 
 // Pipeline constructor: initialize YOLO detector and the preprocess flag.
 Pipeline::Pipeline(const PipelineParams& p)
-    : yoloDetector(std::make_unique<YOLO>(p.yoloModelPath, 0.05f, 640, 640)),
-      outputPath(p.outputPath),
-      do_preprocess(p.do_preprocess) {}
+    : outputPath(p.outputPath),
+      do_preprocess(p.do_preprocess) {
+    if (p.yoloModelPath.has_value() && !p.yoloModelPath->empty()) {
+        yoloDetector = std::make_unique<YOLO>(
+            *p.yoloModelPath, p.detection_threshold, p.inputWidth, p.inputHeight);
+        LOG_F(INFO, "YOLO model loaded from path: %s", p.yoloModelPath->c_str());
+    } else {
+        yoloDetector.reset();
+        LOG_F(WARNING, "No CV models are loaded (no YOLO model path provided).");
+        LOG_F(WARNING, "CVAGGREGATOR WILL NOT BE WORKING AS INTENDED. USE AT YOUR OWN RISK.");
+        LOG_F(WARNING, "Provide a YOLO model path to enable detections.");
+    }
+}
 
 PipelineResults Pipeline::run(const ImageData& imageData) {
     LOG_F(INFO, "Running pipeline on an image");
@@ -76,12 +86,11 @@ PipelineResults Pipeline::run(const ImageData& imageData) {
             targetPosition = this->gsdLocalizer.localize(imageData.TELEMETRY.value(), box);
         }
 
-
         // Populate your DetectedTarget
         DetectedTarget detected;
         detected.bbox = box;
         detected.coord = targetPosition;
-        detected.likely_airdrop = static_cast<AirdropIndex>(det.class_id);
+        detected.likely_airdrop = static_cast<AirdropType>(det.class_id);
         detected.match_distance = (det.confidence > 0.f) ? (1.0 / det.confidence) : 9999.0;
 
         detectedTargets.push_back(detected);
@@ -89,7 +98,9 @@ PipelineResults Pipeline::run(const ImageData& imageData) {
 
     // 3) DRAW DETECTIONS ON THE IMAGE
     //    (this modifies processedImage in-place)
-    this->yoloDetector->drawAndPrintDetections(processedImage, yoloResults);
+    if (this->yoloDetector) {
+        this->yoloDetector->drawAndPrintDetections(processedImage, yoloResults);
+    }
 
     // Save the annotated image if an output path is specified
     if (!outputPath.empty()) {

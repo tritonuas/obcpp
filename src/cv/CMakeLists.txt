@@ -9,6 +9,7 @@ set(FILES
     mapping.cpp
     yolo.cpp
     preprocess.cpp
+    clustering.cpp
 )
 
 set(LIB_DEPS

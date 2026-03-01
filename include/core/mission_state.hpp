@@ -53,8 +53,8 @@ class MissionState {
     void setAirdropPath(const MissionPath& airdrop_path);
     MissionPath getAirdropPath();
 
-    void markAirdropAsDropped(AirdropIndex airdrop);
-    std::unordered_set<AirdropIndex> getDroppedAirdrops();
+    void markAirdropAsDropped(AirdropType airdrop);
+    std::unordered_set<AirdropType> getDroppedAirdrops();
 
     /*
      * Gets a locking reference to the underlying tick for the given tick subclass T.
@@ -129,7 +129,7 @@ class MissionState {
     MissionPath airdrop_path;
 
     std::mutex dropped_airdrops_mut;
-    std::unordered_set<AirdropIndex> dropped_airdrops;
+    std::unordered_set<AirdropType> dropped_airdrops;
 
     std::shared_ptr<MavlinkClient> mav;
     std::shared_ptr<AirdropClient> airdrop;

@@ -10,8 +10,9 @@
 #include "protos/obc.pb.h"
 #include "udp_squared/internal/enum.h"
 #include "utilities/constants.hpp"
+#include "utilities/jsonable.hpp"
 
-struct XYZCoord {
+struct XYZCoord: jsonable{
     XYZCoord(double x, double y, double z) : x(x), y(y), z(z) {}
 
     /**
@@ -54,6 +55,8 @@ struct XYZCoord {
 
     XYZCoord normalized() const;
 
+    nlohmann::json to_json();
+
     double x;
     double y;
     double z;
@@ -92,7 +95,7 @@ using Polyline = std::vector<XYZCoord>;
 
 using GPSProtoVec = google::protobuf::RepeatedPtrField<GPSCoord>;
 
-std::string ODLCObjectsToString(const ODLCObjects& object);
+std::string AirdropTypesToString(const AirdropType& object);
 
 
 #endif  // INCLUDE_UTILITIES_DATATYPES_HPP_

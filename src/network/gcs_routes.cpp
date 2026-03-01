@@ -24,6 +24,7 @@
 #include "utilities/http.hpp"
 #include "utilities/logging.hpp"
 #include "utilities/serialize.hpp"
+#include "cv/utilities.hpp"
 
 extern "C" {
 #include "udp_squared/protocol.h"
@@ -53,12 +54,10 @@ using json = nlohmann::json;
 DEF_GCS_HANDLE(Get, connections) {
     LOG_REQUEST_TRACE("GET", "/connections");
 
-    std::list<std::pair<AirdropIndex, std::chrono::milliseconds>> lost_airdrop_conns;
+    std::list<std::pair<AirdropType, std::chrono::milliseconds>> lost_airdrop_conns;
     if (state->getAirdrop() == nullptr) {
-        lost_airdrop_conns.push_back({AirdropIndex::Kaz, 99999ms});
-        lost_airdrop_conns.push_back({AirdropIndex::Kimi, 99999ms});
-        lost_airdrop_conns.push_back({AirdropIndex::Chris, 99999ms});
-        lost_airdrop_conns.push_back({AirdropIndex::Daniel, 99999ms});
+        lost_airdrop_conns.push_back({AirdropType::Water, 99999ms});
+        lost_airdrop_conns.push_back({AirdropType::Beacon, 99999ms});
     } else {
         lost_airdrop_conns = state->getAirdrop()->getLostConnections(3s);
     }
@@ -158,14 +157,10 @@ DEF_GCS_HANDLE(Post, targets, locations) {
         google::protobuf::util::JsonStringToMessage(waypoint.dump(), &airdrop_target);
 
         airdrop_t airdrop;
-        if (airdrop_target.index() == AirdropIndex::Kaz) {
+        if (airdrop_target.index() == AirdropType::Water) {
             airdrop = UDP2_A;
-        } else if (airdrop_target.index() == AirdropIndex::Kimi) {
+        } else if (airdrop_target.index() == AirdropType::Beacon) {
             airdrop = UDP2_B;
-        } else if (airdrop_target.index() == AirdropIndex::Chris) {
-            airdrop = UDP2_C;
-        } else if (airdrop_target.index() == AirdropIndex::Daniel) {
-            airdrop = UDP2_D;
         } else {
             LOG_RESPONSE(ERROR, "Invalid bottle index", BAD_REQUEST);
             return;
@@ -257,38 +252,11 @@ DEF_GCS_HANDLE(Get, camera, capture) {
     }
 
     std::optional<ImageTelemetry> telemetry = image->TELEMETRY;
-
-    // START COMPRESSION
-    // Compress the image before converting to base64
-    std::vector<uchar> compressed_data;
-    std::vector<int> compression_params;
-    compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
-    compression_params.push_back(85);  // Quality: 0-100, 85 is a good balance for transmission
-
-    cv::Mat compressed_image;
-    if (cv::imencode(".jpg", image->DATA, compressed_data, compression_params)) {
-        // Create compressed Mat from encoded data
-        compressed_image = cv::imdecode(compressed_data, cv::IMREAD_COLOR);
-
-        if (!compressed_image.empty()) {
-            LOG_F(INFO,
-                  "Compressed manual capture image from %d bytes to %d bytes (%.1f%% compression)",
-                  image->DATA.total() * image->DATA.elemSize(), compressed_data.size(),
-                  (1.0 - static_cast<double>(compressed_data.size()) /
-                             (image->DATA.total() * image->DATA.elemSize())) *
-                      100.0);
-        } else {
-            LOG_F(WARNING, "Failed to decode compressed manual capture image, using original");
-            compressed_image = image->DATA;
-        }
-    } else {
-        LOG_F(WARNING, "Failed to compress manual capture image, using original");
-        compressed_image = image->DATA;
-    }
-
+    std::optional<cv::Mat> optCompressedImg = compressImg(image->DATA);
+    cv::Mat compressed_image = optCompressedImg.has_value() ?
+    optCompressedImg->clone() : image->DATA;
     ManualImage manual_image;
     manual_image.set_img_b64(cvMatToBase64(compressed_image));
-    // END COMPRESSION
 
     manual_image.set_timestamp(image->TIMESTAMP);
     if (telemetry.has_value()) {
@@ -319,7 +287,7 @@ DEF_GCS_HANDLE(Post, dodropnow) {
 
     // Copied from the integration test
     std::optional<airdrop_t> next_airdrop_to_drop;
-    AirdropIndex next_airdrop = static_cast<AirdropIndex>(2);
+    AirdropType next_airdrop = static_cast<AirdropType>(2);
     next_airdrop_to_drop = static_cast<airdrop_t>(next_airdrop);
 
     // std::string message;
@@ -357,7 +325,6 @@ DEF_GCS_HANDLE(Post, takeoff, autonomous) {
 
 DEF_GCS_HANDLE(Get, targets, all) {
     LOG_REQUEST("GET", "/targets/all");
-
     auto aggregator = state->getCV();
     if (!aggregator) {
         LOG_RESPONSE(ERROR, "CV not connected yet", BAD_REQUEST);
@@ -376,48 +343,20 @@ DEF_GCS_HANDLE(Get, targets, all) {
     std::vector<IdentifiedTarget> out_data;
     out_data.reserve(new_runs.size());  // Reserve space for efficiency
 
+    // get aggregate to store a record of these results
+    LockPtr<std::map<int, IdentifiedTarget>> records = aggregator->getCVRecord();
+    std::shared_ptr<std::map<int, IdentifiedTarget>> records_ptr = records.data;
+
     for (const auto& run : new_runs) {
         // Create ONE IdentifiedTarget message per AggregatedRun
         IdentifiedTarget target;
-
         // Set the run ID
         target.set_run_id(run.run_id);
 
-        // START COMPRESSION
-
-        // Compress the annotated image before converting to base64
-        std::vector<uchar> compressed_data;
-        std::vector<int> compression_params;
-        compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
-        compression_params.push_back(85);
-        // Quality: 0-100, 85 is a good balance for transmission
-
-        cv::Mat compressed_image;
-        if (cv::imencode(".jpg", run.annotatedImage, compressed_data, compression_params)) {
-            // Create compressed Mat from encoded data
-            compressed_image = cv::imdecode(compressed_data, cv::IMREAD_COLOR);
-
-            if (!compressed_image.empty()) {
-                LOG_F(INFO, "Compressed image from %d bytes to %d bytes (%.1f%% compression)",
-                      run.annotatedImage.total() * run.annotatedImage.elemSize(),
-                      compressed_data.size(),
-                      (1.0 - static_cast<double>(compressed_data.size()) /
-                                 (run.annotatedImage.total() * run.annotatedImage.elemSize())) *
-                          100.0);
-            } else {
-                LOG_F(WARNING, "Failed to decode compressed image, using original");
-                compressed_image = run.annotatedImage;
-            }
-        } else {
-            LOG_F(WARNING, "Failed to compress image, using original");
-            compressed_image = run.annotatedImage;
-        }
-
-        // Convert the compressed image to base64 and set it (once per run)
+        std::optional<cv::Mat> optCompressedImg = compressImg(run.annotatedImage);
+        cv::Mat compressed_image = optCompressedImg.has_value() ?
+        optCompressedImg->clone() : run.annotatedImage;
         std::string b64 = cvMatToBase64(compressed_image);
-
-        // END COMPRESSION
-
         target.set_picture(b64);
 
         // Ensure coords and bboxes vectors are the same size (should be guaranteed by Aggregator
@@ -446,10 +385,15 @@ DEF_GCS_HANDLE(Get, targets, all) {
             proto_bbox->set_y2(run.bboxes[i].y2);
         }
 
+        // copy the target to a record object to store
+        IdentifiedTarget record;
+        record.CopyFrom(target);
+        // remove image
+        record.set_picture("");
+        records_ptr->insert_or_assign(run.run_id, target);
         // Add the completed IdentifiedTarget (representing the whole run) to the output list
         out_data.push_back(std::move(target));
     }  // End loop over AggregatedRuns
-
     // 3) Serialize the vector of IdentifiedTarget messages to JSON
     // Ensure messagesToJson can handle a vector or use iterators correctly
     std::string out_data_json = messagesToJson(out_data.begin(), out_data.end());
@@ -593,7 +537,9 @@ DEF_GCS_HANDLE(Post, camera, runpipeline) {
     LOG_F(INFO, "Yolo Model: %s", yolo_model_dir.c_str());
 
     // Make a CVAggregator instance and set it in the state
-    state->setCV(std::make_shared<CVAggregator>(Pipeline(PipelineParams(yolo_model_dir))));
+    state->setCV(std::make_shared<CVAggregator>(Pipeline(PipelineParams(
+        yolo_model_dir, state->config.cv.detection_threshold, state->config.cv.input_width,
+        state->config.cv.input_height))));
 
     if (!cam->isConnected()) {
         LOG_F(INFO, "Camera not connected. Attempting to connect...");

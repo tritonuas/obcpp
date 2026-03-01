@@ -40,7 +40,7 @@ void FlySearchTick::init() {
         LOG_F(ERROR, "Failed to reset Mission");
     }
 
-    LOG_F(INFO, "Total Waypoint #: %d", this->state->getMav()->totalWaypoints());
+    LOG_F(INFO, "Total Waypoint #: %zu", this->state->getMav()->totalWaypoints());
 }
 
 Tick* FlySearchTick::tick() {
@@ -64,7 +64,7 @@ Tick* FlySearchTick::tick() {
     auto curr_waypoint = this->state->getMav()->curr_waypoint();
 
     if (this->curr_mission_item != curr_waypoint) {
-    LOG_F(INFO, "FlySearch Area reached (%d, %d)", this->curr_mission_item, curr_waypoint);
+    LOG_F(INFO, "FlySearch Area reached (%zu, %d)", this->curr_mission_item, curr_waypoint);
         for (int i = 0; i < this->state->config.pathing.coverage.hover.pictures_per_stop; i++) {
         auto photo = this->state->getCamera()->takePicture(500ms, this->state->getMav());
             if (state->config.camera.save_images_to_file) {

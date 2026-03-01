@@ -73,7 +73,7 @@ int main() {
 
     LOG_F(WARNING, "Running Approach");
     std::vector<XYZCoord> path = approach.run();
-    LOG_F(INFO, "Path size: %d", path.size());
+    LOG_F(INFO, "Path size: %zu", path.size());
 
     // files to put path_coordinates to
     file.open("pathing_output/approach_coords.txt");

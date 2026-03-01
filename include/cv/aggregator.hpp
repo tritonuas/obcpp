@@ -11,6 +11,7 @@
 #include <thread>
 #include <unordered_map>
 #include <vector>
+#include <map>
 
 #include "cv/pipeline.hpp"
 #include "cv/utilities.hpp"
@@ -30,7 +31,7 @@ struct CVResults {
 };
 
 struct MatchedResults {
-    std::unordered_map<AirdropIndex, AirdropTarget> matched_airdrop;
+    std::unordered_map<AirdropType, AirdropTarget> matched_airdrop;
 };
 
 class CVAggregator {
@@ -50,7 +51,16 @@ class CVAggregator {
     // For the endpoint to reset the current list of structs
     std::vector<AggregatedRun> popAllRuns();
 
+    // gets the record of all cv results
+    LockPtr<std::map<int, IdentifiedTarget>> getCVRecord();
+
+    void updateRecords(std::vector<IdentifiedTarget>& new_values);
+
  private:
+    std::mutex cv_record_mut;
+
+    std::shared_ptr<std::map<int, IdentifiedTarget>> cv_record;
+
     void worker(ImageData image, int thread_num);
 
     Pipeline pipeline;

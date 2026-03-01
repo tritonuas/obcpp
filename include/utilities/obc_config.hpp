@@ -37,6 +37,9 @@ struct TakeoffConfig {
 
 struct CVConfig {
     std::string yolo_model_dir;
+    float detection_threshold;
+    int input_width;
+    int input_height;
     std::string not_stolen_addr;
     uint16_t not_stolen_port;
 };
@@ -102,6 +105,7 @@ struct AirdropApproachConfig {
 };
 
 struct PathingConfig {
+    int laps;
     DubinsConfig dubins;
     RRTConfig rrt;
     AirdropCoverageConfig coverage;
@@ -116,9 +120,13 @@ struct CameraConfig {
     // whether or not to save to save_dir
     bool save_images_to_file;
     struct {
-        // directory to randomly pick images from
-        // for the mock camera
-        std::string images_dir;
+        // port to query images from for the mock camera
+        int not_stolen_port;
+        // left | right
+        std::string runway;
+        int num_targets;
+        // maximum waiting time for not-stolen server response
+        int connection_timeout;
     } mock;
 };
 

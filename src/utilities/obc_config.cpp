@@ -58,6 +58,7 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
     SET_CONFIG_OPT(network, mavlink, telem_poll_rate);
     SET_CONFIG_OPT(network, gcs, port);
 
+    SET_CONFIG_OPT(pathing, laps);
     SET_CONFIG_OPT(pathing, rrt, iterations_per_waypoint);
     SET_CONFIG_OPT(pathing, rrt, rewire_radius);
     SET_CONFIG_OPT(pathing, rrt, optimize);
@@ -78,9 +79,9 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
     SET_CONFIG_OPT(pathing, coverage, forward, one_way);
 
     SET_CONFIG_OPT(cv, yolo_model_dir);
-    SET_CONFIG_OPT(cv, not_stolen_addr);
-    SET_CONFIG_OPT(cv, not_stolen_port);
-
+    SET_CONFIG_OPT(cv, detection_threshold);
+    SET_CONFIG_OPT(cv, input_width);
+    SET_CONFIG_OPT(cv, input_height);
     SET_CONFIG_OPT_VARIANT(AirdropDropMethod, pathing, approach, drop_method);
     SET_CONFIG_OPT(pathing, approach, drop_angle_rad);
     SET_CONFIG_OPT(pathing, approach, drop_altitude_m);
@@ -93,7 +94,10 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
     SET_CONFIG_OPT(camera, type);
     SET_CONFIG_OPT(camera, save_dir);
     SET_CONFIG_OPT(camera, save_images_to_file);
-    SET_CONFIG_OPT(camera, mock, images_dir);
+    SET_CONFIG_OPT(camera, mock, not_stolen_port);
+    SET_CONFIG_OPT(camera, mock, runway);
+    SET_CONFIG_OPT(camera, mock, num_targets);
+    SET_CONFIG_OPT(camera, mock, connection_timeout);
 
     SET_CONFIG_OPT(takeoff, altitude_m);
     SET_CONFIG_OPT(takeoff, payload_size);

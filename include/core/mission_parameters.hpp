@@ -30,7 +30,6 @@ class MissionParameters {
 
     Polygon getFlightBoundary();
     Polygon getAirdropBoundary();
-    Polygon getMappingBoundary();
     Polyline getWaypoints();
     // CHANGE: Return type is now std::vector<Airdrop>
     std::vector<Airdrop> getAirdrops();
@@ -40,7 +39,7 @@ class MissionParameters {
     // Important to use this instead of the singular getters
     // to avoid race conditions
     // CHANGE: Tuple element type is now std::vector<Airdrop>
-    std::tuple<Polygon, Polygon, Polygon, Polyline, std::vector<Airdrop>> getConfig();
+    std::tuple<Polygon, Polygon, Polyline, std::vector<Airdrop>> getConfig();
 
     // returns error string to be displayed back to the user
     // Ensure CartesianConverter<GPSProtoVec> template parameter matches usage
@@ -55,7 +54,6 @@ class MissionParameters {
 
     Polygon flightBoundary;
     Polygon airdropBoundary;
-    Polygon mappingBoundary;
     Polyline waypoints;
     // CHANGE: Member variable type is now std::vector<Airdrop>
     std::vector<Airdrop> airdrops;

@@ -16,8 +16,6 @@
 # target_include_directories(EXECUTABLE_NAME PRIVATE ${ImageMagick_INCLUDE_DIRS})
 # target_link_libraries(EXECUTABLE_NAME PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
-
-
 # playground
 add_executable(playground "playground.cpp")
 target_link_libraries(playground PRIVATE obcpp_lib)
@@ -40,6 +38,7 @@ target_link_libraries(playground PRIVATE -Wl,--copy-dt-needed-entries ${ImageMag
 add_executable(mavlink_client "mavlink_client.cpp")
 target_link_libraries(mavlink_client PRIVATE obcpp_lib)
 target_include_directories(mavlink_client PRIVATE ${INCLUDE_DIRECTORY})
+target_add_json(mavlink_client)
 target_add_mavsdk(mavlink_client)
 target_add_matplot(mavlink_client)
 target_add_loguru(mavlink_client)
@@ -86,6 +85,7 @@ add_executable(path_plotting "path_plotting.cpp")
 target_link_libraries(path_plotting PRIVATE obcpp_lib)
 target_include_directories(path_plotting PRIVATE ${INCLUDE_DIRECTORY})
 target_add_matplot(path_plotting)
+target_add_json(path_plotting)
 
 add_executable(path_planning "path_planning.cpp")
 target_link_libraries(path_planning PRIVATE obcpp_lib)
@@ -136,14 +136,6 @@ target_add_loguru(airdrop_packets)
 # add_executable(airdrop_sockets src/network/airdrop_sockets.c tests/integration/airdrop_sockets.c)
 # target_include_directories(airdrop_sockets PRIVATE ${INCLUDE_DIRECTORY})
 
-add_executable(camera_mock "camera_mock.cpp")
-target_link_libraries(camera_mock PRIVATE obcpp_lib)
-target_include_directories(camera_mock PRIVATE ${INCLUDE_DIRECTORY})
-target_add_json(camera_mock)
-target_add_mavsdk(camera_mock)
-target_add_matplot(camera_mock)
-target_add_loguru(camera_mock)
-
 # cuda_check
 add_executable(cuda_check ${SOURCES} cuda_check.cpp)
 target_add_torch(cuda_check)
@@ -163,3 +155,9 @@ target_add_json(picamera)
 target_add_mavsdk(picamera)
 target_add_matplot(picamera)
 target_add_loguru(picamera)
+
+add_executable(clustering "clustering.cpp")
+target_link_libraries(clustering PRIVATE obcpp_lib obcpp_camera)
+target_add_matplot(clustering) 
+target_add_json(clustering)
+target_add_protobuf(clustering)
