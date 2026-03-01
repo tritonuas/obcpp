@@ -23,6 +23,6 @@ namespace serialh {
         boost::archive::binary_iarchive ia(is);
         ia >> *response;
     }
-}
+}  // namespace serialh
 
-#endif
+#endif  // INCLUDE_NETWORK_SERIALIZE_HPP_

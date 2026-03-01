@@ -25,7 +25,7 @@ const std::uint8_t END_REQUEST = 'e';
 const std::uint8_t LOCK_REQUEST = 'l';
 
 class RPICamera : public CameraInterface {
-    private:
+ private:
         UDPClient client;
         asio::io_context io_context_;
         std::atomic_bool connected;
@@ -40,22 +40,24 @@ class RPICamera : public CameraInterface {
          */
         std::vector<std::vector<uint8_t>> readImage();
 
-    public:
+ public:
         explicit RPICamera(CameraConfig config, asio::io_context* io_context_);
         ~RPICamera();
-    
+
         void connect() override;
         bool isConnected() override;
 
         std::optional<ImageData> getLatestImage() override {return std::nullopt;}
         std::deque<ImageData> getAllImages() override {return std::deque<ImageData>();}
-        
-        std::optional<ImageData> takePicture(const std::chrono::milliseconds& timeout, std::shared_ptr<MavlinkClient> mavlinkClient) override;
 
-        void startTakingPictures(const std::chrono::milliseconds& interval, std::shared_ptr<MavlinkClient> mavlinkClient) override;
+        std::optional<ImageData> takePicture(const std::chrono::milliseconds& timeout,
+                                             std::shared_ptr<MavlinkClient> mavlinkClient) override;
+
+        void startTakingPictures(const std::chrono::milliseconds& interval,
+                                 std::shared_ptr<MavlinkClient> mavlinkClient) override;
         void stopTakingPictures() override;
         void startStreaming() override;
         void ping();
 };
 
-#endif
+#endif  // INCLUDE_CAMERA_RPI_HPP_

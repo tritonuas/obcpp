@@ -38,11 +38,12 @@ OBC::OBC(OBCConfig config) {
 
     if (this->state->config.camera.type == "mock") {
         this->state->setCamera(std::make_shared<MockCamera>(this->state->config.camera));
-    } else if(this->state->config.camera.type == "PiCamera"){
-        this->state->setCamera(std::make_shared<RPICamera>(config.camera, &(this->state->raspy_io))); 
+    } else if (this->state->config.camera.type == "PiCamera") {
+        this->state->setCamera(
+            std::make_shared<RPICamera>(config.camera, &(this->state->raspy_io)));
         LOG_F(INFO, "Starting Pi Camera Client");
     } else {
-        // default to mock 
+        // default to mock
         this->state->setCamera(std::make_shared<MockCamera>(this->state->config.camera));
         LOG_F(WARNING, "deafault camera config");
     }

@@ -1,7 +1,7 @@
 #include <filesystem>
 #include "network/udp_server.hpp"
 
-// TODO: Didn't touch this for the most part since its for mocking. 
+// TODO: Didn't touch this for the most part since its for mocking.
 
 cv::Mat UDPServer::createBGR() {
     std::cout << std::filesystem::current_path() << '\n';
@@ -20,13 +20,14 @@ cv::Mat UDPServer::createYUV() {
     cv::Mat image = cv::imread("/workspaces/obcpp/tests/integration/images/blurb.jpeg");
 
     // convert into yuv420
-    cv::Mat yuv_img(IMG_HEIGHT * 3 / 2, IMG_WIDTH, CV_8UC1); 
+    cv::Mat yuv_img(IMG_HEIGHT * 3 / 2, IMG_WIDTH, CV_8UC1);
     cv::cvtColor(image, yuv_img, cv::COLOR_BGR2YUV_I420);
 
     return yuv_img;
 }
 
-UDPServer::UDPServer(asio::io_context* io_context_, std::string ip, int port) : socket_(*io_context_){
+UDPServer::UDPServer(asio::io_context* io_context_, std::string ip, int port)
+    : socket_(*io_context_) {
     this->ip = ip;
     this->port = port;
 }
@@ -34,7 +35,8 @@ UDPServer::UDPServer(asio::io_context* io_context_, std::string ip, int port) : 
 bool UDPServer::start() {
     boost::system::error_code open_ec;
     boost::system::error_code bind_ec;
-    asio::ip::udp::endpoint endpoint_(asio::ip::udp::endpoint(asio::ip::make_address(this->ip), this->port));
+    asio::ip::udp::endpoint endpoint_(
+        asio::ip::udp::endpoint(asio::ip::make_address(this->ip), this->port));
 
     std::cout << "Attempting to connect to " << this->ip << " on port " <<  this->port << '\n';
 
@@ -45,11 +47,12 @@ bool UDPServer::start() {
         std::cout << "Failed to open socket: " << open_ec.message() << '\n';
         return false;
     }
-    
+
     // bind to this address and port
     this->socket_.bind(endpoint_, bind_ec);
-    
+
     std::cout << "Endpoint: " << endpoint_.address() << endpoint_.port() <<
+
     '\n';
 
     if (bind_ec) {
@@ -90,7 +93,8 @@ void UDPServer::send(asio::ip::udp::endpoint & endpoint) {
     header.total_chunks = htonl(total_chunks);
 
     // send header
-    int bytesSentHeader = this->socket_.send_to(asio::buffer(&header, sizeof(header)), endpoint, 0, header_ec);
+    int bytesSentHeader = this->socket_.send_to(asio::buffer(&header, sizeof(header)),
+                                                endpoint, 0, header_ec);
 
     if (header_ec) {
         std::cout << "Sending header failed: " << header_ec.message() << '\n';
@@ -130,7 +134,6 @@ void UDPServer::send(asio::ip::udp::endpoint & endpoint) {
             std::cout << "Sending body failed: " << body_ec.message()  << '\n';
             return;
         }
-
     }
 
     std::cout << "Finished sending " << totalBytesSent << " bytes" << '\n';
@@ -138,18 +141,17 @@ void UDPServer::send(asio::ip::udp::endpoint & endpoint) {
     // int bytesSentBody = this->socket_.send_to(asio::buffer(imgBuffer), endpoint, 0, body_ec);
 
     // std::cout << "Read bytes (body): " << bytesSentBody << '\n';
-
 }
 
 // expecting a request from the client
 void UDPServer::recv() {
-    // 
     boost::system::error_code ec;
     asio::ip::udp::endpoint client_endpoint;
 
     char request;
 
-    int bytesRead = this->socket_.receive_from(asio::buffer(&request, sizeof(request)), client_endpoint, 0, ec);
+    int bytesRead = this->socket_.receive_from(asio::buffer(&request, sizeof(request)),
+                                               client_endpoint, 0, ec);
 
     if (ec) {
         std::cout << "Failed to read request: " << ec.message() << '\n';
@@ -189,13 +191,14 @@ void UDPServer::shutdown() {
 //     cv::Mat image = cv::imread("blurb.jpeg");
 
 //     // convert into yuv420
-//     cv::Mat yuv_img(IMG_HEIGHT * 3 / 2, IMG_WIDTH, CV_8UC1); 
+//     cv::Mat yuv_img(IMG_HEIGHT * 3 / 2, IMG_WIDTH, CV_8UC1);
 //     cv::cvtColor(image, yuv_img, cv::COLOR_BGR2YUV_I420);
 
 //     return yuv_img;
 // }
 
-// UDPServer::UDPServer(asio::io_context* io_context_, std::string ip, int port) : socket_(*io_context_){
+// UDPServer::UDPServer(asio::io_context* io_context_, std::string ip, int port)
+//     : socket_(*io_context_) {
 //     this->ip = ip;
 //     this->port = port;
 // }
@@ -203,9 +206,11 @@ void UDPServer::shutdown() {
 // bool UDPServer::start() {
 //     boost::system::error_code open_ec;
 //     boost::system::error_code bind_ec;
-//     asio::ip::udp::endpoint endpoint_(asio::ip::udp::endpoint(asio::ip::make_address(this->ip), this->port));
+//     asio::ip::udp::endpoint endpoint_(
+//         asio::ip::udp::endpoint(asio::ip::make_address(this->ip), this->port));
 
-//     std::cout << ("Attempting to connect to %s on port %d", this->ip, this->port) << '\n';
+//     std::cout << ("Attempting to connect to %s on port %d", this->ip, this->port)
+//               << '\n';
 
 //     // open the udp socket
 //     this->socket_.open(asio::ip::udp::v4(), open_ec);
@@ -214,7 +219,7 @@ void UDPServer::shutdown() {
 //         std::cout << ("Failed to open socket: %s", open_ec.message()) << '\n';
 //         return false;
 //     }
-    
+
 //     // bind to this address and port
 //     this->socket_.bind(endpoint_, bind_ec);
 
@@ -254,7 +259,8 @@ void UDPServer::shutdown() {
 //     header.total_chunks = htonl(imgBuffer.size() / CHUNK_SIZE);
 
 //     // send header
-//     int bytesReadHeader = this->socket_.send_to(asio::buffer(&header, sizeof(header)), endpoint, 0, header_ec);
+//     int bytesReadHeader = this->socket_.send_to(asio::buffer(&header, sizeof(header)),
+//                                                 endpoint, 0, header_ec);
 
 //     if (header_ec) {
 //         std::cout << ("Sending header failed: %s", header_ec.message()) << '\n';
@@ -273,13 +279,13 @@ void UDPServer::shutdown() {
 
 // // expecting a request from the client
 // void UDPServer::recv() {
-//     // 
 //     boost::system::error_code ec;
 //     asio::ip::udp::endpoint client_endpoint;
 
 //     char request;
 
-//     int bytesRead = this->socket_.receive_from(asio::buffer(&request, sizeof(request)), client_endpoint, 0, ec);
+//     int bytesRead = this->socket_.receive_from(asio::buffer(&request, sizeof(request)),
+//                                                client_endpoint, 0, ec);
 
 //     if (ec) {
 //         std::cout << ("Failed to read request: %s", ec.message()) << '\n';

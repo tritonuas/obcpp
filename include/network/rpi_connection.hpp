@@ -2,7 +2,8 @@
 #define INCLUDE_NETWORK_RPI_CONNECTION_HPP_
 
 #include <iostream>
-#pragma once 
+#include <string>
+#pragma once
 #include <cstdint>
 
 // Image Config
@@ -15,7 +16,7 @@ const uint32_t STRIDE_Y = 1472;
 const uint32_t STRIDE_UV = 736;
 
 // Network Config
-const std::string SERVER_IP = "192.168.77.2";
+const char SERVER_IP[] = "192.168.77.2";
 const int SERVER_PORT = 25565;
 
 const int headerSize = 12;

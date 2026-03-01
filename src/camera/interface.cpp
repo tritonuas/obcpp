@@ -1,12 +1,13 @@
 #include "camera/interface.hpp"
 
 #include <filesystem>
-#include <loguru.hpp>
 #include <optional>
 #include <ostream>
 
-#include "network/mavlink.hpp"  // imported here but not in the header due to circular dependency
+#include <loguru.hpp>
 #include "nlohmann/json.hpp"
+
+#include "network/mavlink.hpp"  // imported here but not in the header due to circular dependency
 #include "utilities/base64.hpp"
 
 using json = nlohmann::json;
@@ -79,7 +80,7 @@ bool ImageData::saveToFile(std::string directory) const {
 
         LOG_F(INFO, "Saving image to %s", img_filepath.string().c_str());
         LOG_F(INFO, "Saving telemetry to %s", json_filepath.string().c_str());
-        
+
         saveImageToFile(this->DATA, img_filepath);
         if (this->TELEMETRY.has_value()) {
             saveImageTelemetryToFile(this->TELEMETRY.value(), json_filepath);

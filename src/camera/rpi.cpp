@@ -10,20 +10,20 @@
 #include <loguru.hpp>
 
 #include "camera/rpi.hpp"
-#include "network/rpi_connection.hpp" 
+#include "network/rpi_connection.hpp"
 
 // Setup Logging
 // ...
 
-RPICamera::RPICamera(CameraConfig config, asio::io_context* io_context_) 
+RPICamera::RPICamera(CameraConfig config, asio::io_context* io_context_)
     : CameraInterface(config), client(io_context_, SERVER_IP, SERVER_PORT) {
-    //this->connected = false;
+    // this->connected = false;
     LOG_F(INFO, "RPICamera exists");
 }
 
 void RPICamera::connect() {
     if (this->connected) return;
-    
+
     // Keep trying to connect/bind logic
     // For UDP, "connect" just means opening the socket which is fast
     if (client.connect()) {
@@ -35,8 +35,8 @@ void RPICamera::connect() {
 
 RPICamera::~RPICamera() {}
 
-std::optional<ImageData> RPICamera::takePicture(const std::chrono::milliseconds& timeout, std::shared_ptr<MavlinkClient> mavlinkClient) {
-    
+std::optional<ImageData> RPICamera::takePicture(
+    const std::chrono::milliseconds& timeout, std::shared_ptr<MavlinkClient> mavlinkClient) {
     std::optional<ImageTelemetry> telemetryOpt = queryMavlinkImageTelemetry(mavlinkClient);
 
     if (!telemetryOpt.has_value()) {
@@ -77,13 +77,12 @@ std::optional<ImageData> RPICamera::takePicture(const std::chrono::milliseconds&
     }
 
     uint64_t timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch()
-    ).count();
+        std::chrono::system_clock::now().time_since_epoch()).count();
 
     return ImageData {
         .DATA = mat.value(),
         .TIMESTAMP = timestamp,
-        .TELEMETRY = telemetryOpt 
+        .TELEMETRY = telemetryOpt
     };
 }
 
@@ -93,7 +92,7 @@ std::vector<std::vector<uint8_t>> RPICamera::readImage() {
     // We expect exactly 3 planes: Y, U, V
     for (int i = 0; i < 3; i++) {
         Header header = client.recvHeader();
-        
+
         // Convert endianness
         header.magic = ntohl(header.magic);
         header.mem_size = ntohl(header.mem_size);
@@ -109,7 +108,7 @@ std::vector<std::vector<uint8_t>> RPICamera::readImage() {
             LOG_F(ERROR, "Failed to receive body for plane %d", i);
             return {};
         }
-        
+
         planes.push_back(std::move(planeData));
     }
 
@@ -122,16 +121,19 @@ std::optional<cv::Mat> RPICamera::imgConvert(const std::vector<std::vector<uint8
 
     if (planes.size() != 3) return {};
 
-    const std::vector<uint8_t>& p0 = planes[0]; // Y
-    const std::vector<uint8_t>& p1 = planes[1]; // U
-    const std::vector<uint8_t>& p2 = planes[2]; // V
+    const std::vector<uint8_t>& p0 = planes[0];  // Y
+    const std::vector<uint8_t>& p1 = planes[1];  // U
+    const std::vector<uint8_t>& p2 = planes[2];  // V
 
     // Create wrappers around the raw data with specific stride (Step)
-    // Note: cv::Mat constructor with data pointer does not copy data, so we must be careful with lifetime
+    // Note: cv::Mat constructor with data pointer does not copy data, so careful with lifetime
     // But we copy immediately below.
-    cv::Mat y_src(IMG_HEIGHT, IMG_WIDTH, CV_8UC1, (void*)p0.data(), STRIDE_Y);
-    cv::Mat u_src(IMG_HEIGHT/2, IMG_WIDTH/2, CV_8UC1, (void*)p1.data(), STRIDE_UV);
-    cv::Mat v_src(IMG_HEIGHT/2, IMG_WIDTH/2, CV_8UC1, (void*)p2.data(), STRIDE_UV);
+    cv::Mat y_src(IMG_HEIGHT, IMG_WIDTH, CV_8UC1,
+                  reinterpret_cast<void*>(const_cast<uint8_t*>(p0.data())), STRIDE_Y);
+    cv::Mat u_src(IMG_HEIGHT/2, IMG_WIDTH/2, CV_8UC1,
+                  reinterpret_cast<void*>(const_cast<uint8_t*>(p1.data())), STRIDE_UV);
+    cv::Mat v_src(IMG_HEIGHT/2, IMG_WIDTH/2, CV_8UC1,
+                  reinterpret_cast<void*>(const_cast<uint8_t*>(p2.data())), STRIDE_UV);
 
     // Allocate continuous buffer for standard I420
     cv::Mat yuv_continuous(IMG_HEIGHT + IMG_HEIGHT/2, IMG_WIDTH, CV_8UC1);
@@ -173,7 +175,8 @@ std::optional<cv::Mat> RPICamera::imgConvert(const std::vector<std::vector<uint8
 }
 
 // Unused methods stubbed out
-void RPICamera::startTakingPictures(const std::chrono::milliseconds& timeout, std::shared_ptr<MavlinkClient> mavlinkClient) {}
+void RPICamera::startTakingPictures(const std::chrono::milliseconds& timeout,
+                                    std::shared_ptr<MavlinkClient> mavlinkClient) {}
 void RPICamera::stopTakingPictures() {}
 void RPICamera::startStreaming() {}
 void RPICamera::ping() {}
