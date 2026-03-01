@@ -4,7 +4,6 @@ set(FILES
     interface.cpp
     mock.cpp
     rpi.cpp
-    picamera.cpp
 )
 
 SET(LIB_DEPS

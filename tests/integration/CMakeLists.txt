@@ -146,26 +146,6 @@ target_add_loguru(airdrop_packets)
 
 
 
-add_executable(udp_client_mock "udp_client_mock.cpp")
-target_link_libraries(udp_client_mock PRIVATE 
-    obcpp_lib
-)
-target_include_directories(udp_client_mock PRIVATE ${INCLUDE_DIRECTORY})
-target_add_boost(udp_client_mock)
-target_add_protobuf(udp_client_mock)
-target_add_torch(udp_client_mock)
-target_add_torchvision(udp_client_mock)
-target_add_json(udp_client_mock)
-target_add_opencv(udp_client_mock)
-target_add_httplib(udp_client_mock)
-target_add_mavsdk(udp_client_mock)
-target_add_matplot(udp_client_mock)
-target_add_loguru(udp_client_mock)
-target_include_directories(udp_client_mock PRIVATE ${ImageMagick_INCLUDE_DIRS})
-target_link_libraries(udp_client_mock PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
-
-
-
 add_executable(udp_server_mock "udp_server_mock.cpp")
 target_link_libraries(udp_server_mock PRIVATE 
     obcpp_lib
@@ -191,14 +171,6 @@ target_add_json(drop_it_like_its_hot)
 target_add_mavsdk(drop_it_like_its_hot)
 target_add_matplot(drop_it_like_its_hot)
 target_add_loguru(drop_it_like_its_hot)
-
-add_executable(picamera "picamera.cpp")
-target_link_libraries(picamera PRIVATE obcpp_lib obcpp_camera obcpp_network)
-target_include_directories(picamera PRIVATE ${INCLUDE_DIRECTORY})
-target_add_json(picamera)
-target_add_mavsdk(picamera)
-target_add_matplot(picamera)
-target_add_loguru(picamera)
 
 add_executable(clustering "clustering.cpp")
 target_link_libraries(clustering PRIVATE obcpp_lib obcpp_camera)
