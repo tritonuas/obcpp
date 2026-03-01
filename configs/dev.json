@@ -60,7 +60,7 @@
     },
     "camera": {
         "_comment": "See CameraConfig struct in datatypes.hpp for detailed explanations",
-        "type": "PiCamera",
+        "type": "mock",
         "save_dir": "/workspaces/obcpp/images/mock",
         "save_images_to_file": true,
         "mock": {
