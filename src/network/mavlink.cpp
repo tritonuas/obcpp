@@ -26,7 +26,7 @@
 using namespace std::chrono_literals;  // NOLINT
 
 MavlinkClient::MavlinkClient(OBCConfig config)
-    : mavsdk(mavsdk::Mavsdk::Configuration(mavsdk::Mavsdk::ComponentType::CompanionComputer)) {
+    : mavsdk(mavsdk::Mavsdk::Configuration(mavsdk::ComponentType::CompanionComputer)) {
     std::string link = config.network.mavlink.connect;
 
     LOG_F(INFO, "Connecting to Mav at %s", link.c_str());
@@ -173,16 +173,16 @@ MavlinkClient::MavlinkClient(OBCConfig config)
         this->data.armed = armed;
     });
 
-    this->passthrough->subscribe_message(WIND_COV, [this](const mavlink_message_t& message) {
-        // LOG_F(INFO, "UNIX TIME: %lu", message.payload64[0]);
+    this->telemetry->subscribe_wind([this](mavsdk::Telemetry::Wind wind) {
+        VLOG_F(DEBUG, "Wind - North: %f, East: %f, Down: %f",
+               wind.wind_x_ned_m_s,
+               wind.wind_y_ned_m_s,
+               wind.wind_z_ned_m_s);
 
-        /*
-            NOT TESTED - don't actually know where the data is in thie uint64_t[]
-            TODO - test on actual pixhawk to make sure that the data makes sense
-        */
-        this->data.wind.x = (message.payload64[1] >> 56) & 0xFF;
-        this->data.wind.y = (message.payload64[1] >> 48) & 0xFF;
-        this->data.wind.z = (message.payload64[1] >> 40) & 0xFF;
+        Lock lock(this->data_mut);
+        this->data.wind.x = wind.wind_x_ned_m_s;
+        this->data.wind.y = wind.wind_y_ned_m_s;
+        this->data.wind.z = wind.wind_z_ned_m_s;
     });
     // this->telemetry->subscribe_attitude_euler(
     //     [this](mavsdk::Telemetry::EulerAngle attitude) {
