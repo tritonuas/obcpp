@@ -14,7 +14,7 @@
     },
     "takeoff": {
         "altitude_m": 60.0,
-	"payload_size": 2
+        "payload_size": 2
     },
     "pathing": {
         "laps": 10,
@@ -26,10 +26,10 @@
             "iterations_per_waypoint": 512,
             "rewire_radius": 256.0,
             "optimize": true,
-            "point_fetch_method": "nearest", 
+            "point_fetch_method": "nearest",
             "allowed_to_skip_waypoints": false,
             "generate_deviations": false
-	},
+        },
         "coverage": {
             "altitude_m": 30.0,
             "camera_vision_m": 6.0,
@@ -60,37 +60,13 @@
     },
     "camera": {
         "_comment": "See CameraConfig struct in datatypes.hpp for detailed explanations",
-        "type": "picamera",
+        "type": "PiCamera",
         "save_dir": "/obcpp/images/",
         "save_images_to_file": true,
         "mock": {
             "not_stolen_port": 6060,
             "runway": "right",
             "num_targets": 2
-        },
-        "lucid": {
-            "sensor_shutter_mode": "Rolling",
-
-            "acquisition_frame_rate_enable": true,
-            "target_brightness": 20,
-            "exposure_auto": "Continuous",
-            "exposure_time": 3000,
-            "exposure_auto_damping": 1,
-            "exposure_auto_algorithm": "Median",
-            "exposure_auto_upper_limit": 500,
-            "exposure_auto_lower_limit": 360,
-
-            "stream_auto_negotiate_packet_size": true,
-            "stream_packet_resend_enable": true,
-
-            "device_link_throughput_limit_mode": "On",
-            "device_link_throughput_limit": 125000000,
-
-            "gamma_enable": true,
-            "gamma": 0.5,
-            "gain_auto": "Continuous",
-            "gain_auto_upper_limit": 10,
-            "gain_auto_lower_limit": 1
         }
     },
     "mavlink": {
