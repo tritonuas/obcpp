@@ -28,8 +28,9 @@ void RPICamera::connect() {
     // For UDP, "connect" just means opening the socket which is fast
     if (client.connect()) {
         this->connected = true;
-        // Optionally send START_REQUEST if needed, but 'I' usually works standalone (i think)
-        // client.send(START_REQUEST);
+        // Optionally send CameraRequest::START if needed,
+        // but 'I' usually works standalone (i think)
+        // client.send(static_cast<std::uint8_t>(CameraRequest::START));
     }
 }
 
@@ -49,7 +50,7 @@ std::optional<ImageData> RPICamera::takePicture(
     auto start_time = std::chrono::steady_clock::now();
 
     // 1. Send Request
-    if (!client.send(PICTURE_REQUEST)) {
+    if (!client.send(static_cast<std::uint8_t>(CameraRequest::PICTURE))) {
         LOG_F(ERROR, "Failed to send picture request");
         return {};
     }
@@ -92,11 +93,6 @@ std::vector<std::vector<uint8_t>> RPICamera::readImage() {
     // We expect exactly 3 planes: Y, U, V
     for (int i = 0; i < 3; i++) {
         Header header = client.recvHeader();
-
-        // Convert endianness
-        header.magic = ntohl(header.magic);
-        header.mem_size = ntohl(header.mem_size);
-        header.total_chunks = ntohl(header.total_chunks);
 
         if (header.magic != EXPECTED_MAGIC) {
             LOG_F(ERROR, "Invalid Magic on plane %d: %x", i, header.magic);

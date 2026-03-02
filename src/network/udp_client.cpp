@@ -98,8 +98,10 @@ Header UDPClient::recvHeader() {
         return {};
     }
 
-    // Network to Host Byte Order conversion handled by caller or here?
-    // rpi.cpp expects to handle it, but todo
+    header.magic = ntohl(header.magic);
+    header.total_chunks = ntohl(header.total_chunks);
+    header.mem_size = ntohl(header.mem_size);
+
     return header;
 }
 
