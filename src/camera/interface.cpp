@@ -65,7 +65,7 @@ std::optional<ImageTelemetry> queryMavlinkImageTelemetry(
 }
 
 bool ImageData::saveToFile(std::string directory) const {
-    if (this->TIMESTAMP == 0) {
+    if (this->DATA.empty() || this->TIMESTAMP == 0) {
         LOG_F(ERROR, "Tried to save empty image");
         return false;
     }

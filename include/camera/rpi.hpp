@@ -19,10 +19,12 @@ using namespace std::chrono_literals; // NOLINT
 
 namespace asio = boost::asio;
 
-const std::uint8_t START_REQUEST = 's';
-const std::uint8_t PICTURE_REQUEST = 'I';
-const std::uint8_t END_REQUEST = 'e';
-const std::uint8_t LOCK_REQUEST = 'l';
+enum class CameraRequest : std::uint8_t {
+    START = 's',
+    PICTURE = 'I',
+    END = 'e',
+    LOCK = 'l'
+};
 
 class RPICamera : public CameraInterface {
  private:
