@@ -35,7 +35,6 @@ void saveImageTelemetryToFile(const ImageTelemetry& telemetry,
     std::ofstream telemetry_file(filepath);
     if (!telemetry_file.is_open()) {
         LOG_F(ERROR, "Failed to save telemetry json to %s", filepath.string().c_str());
-        // std::cout << "Failed to save telemetry json to " << filepath.string().c_str() << '\n';
         return;
     }
     telemetry_file << to_string(telemetry_json);

@@ -8,7 +8,6 @@
 */
 
 namespace serialh {
-    // TODO: make this so that it returns any struct
     template <typename T>
     void serialize(T* response, boost::asio::streambuf* buf) {
         std::ostream os(buf);
@@ -16,7 +15,6 @@ namespace serialh {
         oa << *response;
     }
 
-    // TODO: make this so that it returns any struct
     template <typename T>
     void deserialize(T* response, boost::asio::streambuf* buf) {
         std::istream is(buf);

@@ -141,11 +141,10 @@ class MissionState {
     std::mutex cv_mut;
     // Represents a single detected target used in pipeline
     std::vector<DetectedTarget> cv_detected_targets;
+    
     // Gives an index into cv_detected_targets, and specifies that that bottle is matched
     // with the detected_target specified by the index
     std::array<size_t, NUM_AIRDROPS> cv_matches;
-
-    // boost::asio::io_context io_testies;
 
     bool mappingIsDone;
 
