@@ -93,7 +93,7 @@ Tick* FlyWaypointsTick::tick() {
             count_ms -= wait_time_ms;
         }
 
-        if (count_ms < 0) {
+        if (count_ms <= 0) {
             LOG_F(ERROR, "Path generation took too long. Trying Again...");
             return nullptr;
         }
