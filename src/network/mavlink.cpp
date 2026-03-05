@@ -173,6 +173,13 @@ MavlinkClient::MavlinkClient(OBCConfig config)
         this->data.armed = armed;
     });
 
+    this->telemetry->subscribe_heading([this](mavsdk::Telemetry::Heading heading) {
+        VLOG_F(DEBUG, "Heading: %d", heading.heading_deg);
+        Lock lock(this->data_mut);
+        this->data.heading_deg = heading.heading_deg;
+    });
+
+    // TODO: AFTER UPDATING TO MAV 3, REPLACE WITH MAVSDK IMPLIMENTATION
     this->passthrough->subscribe_message(WIND_COV, [this](const mavlink_message_t& message) {
         // LOG_F(INFO, "UNIX TIME: %lu", message.payload64[0]);
 
@@ -184,16 +191,18 @@ MavlinkClient::MavlinkClient(OBCConfig config)
         this->data.wind.y = (message.payload64[1] >> 48) & 0xFF;
         this->data.wind.z = (message.payload64[1] >> 40) & 0xFF;
     });
-    // this->telemetry->subscribe_attitude_euler(
-    //     [this](mavsdk::Telemetry::EulerAngle attitude) {
-    //         VLOG_F(DEBUG, "Yaw: %f, Pitch: %f, Roll: %f)",
-    //             attitude.yaw_deg, attitude.pitch_deg, attitude.roll_deg);
 
-    //         Lock lock(this->data_mut);
-    //         this->data.yaw_deg = attitude.yaw_deg;
-    //         this->data.pitch_deg = attitude.pitch_deg;
-    //         this->data.roll_deg = attitude.roll_deg;
-    //     });
+
+    this->telemetry->subscribe_attitude_euler(
+        [this](mavsdk::Telemetry::EulerAngle attitude) {
+        VLOG_F(DEBUG, "Yaw: %f, Pitch: %f, Roll: %f)",
+            attitude.yaw_deg, attitude.pitch_deg, attitude.roll_deg);
+
+        Lock lock(this->data_mut);
+        this->data.yaw_deg = attitude.yaw_deg;
+        this->data.pitch_deg = attitude.pitch_deg;
+        this->data.roll_deg = attitude.roll_deg;
+    });
 }
 
 // Implement the triggerRelay method
