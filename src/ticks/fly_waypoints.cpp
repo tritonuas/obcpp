@@ -32,6 +32,8 @@ void FlyWaypointsTick::init() {
     if (!this->state->getMav()->setMissionItem(1)) {
         LOG_F(ERROR, "Failed to reset Mission");
     }
+
+    LOG_F(INFO, "Started FlyWaypointsTick, Laps Remaining: %d", state->getLapsRemaining());
 }
 
 std::chrono::milliseconds FlyWaypointsTick::getWait() const { return FLY_WAYPOINTS_TICK_WAIT; }
@@ -77,7 +79,8 @@ Tick* FlyWaypointsTick::tick() {
         return nullptr;
     }
 
-    state->config.pathing.laps--;
+    state->decrementLapsRemaining();
+
     if (state->config.pathing.laps > 0) {
         // regenerate path
         std::future<MissionPath> init_path;
