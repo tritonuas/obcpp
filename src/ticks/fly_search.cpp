@@ -43,6 +43,7 @@ void FlySearchTick::init() {
     LOG_F(INFO, "Total Waypoint #: %zu", this->state->getMav()->totalWaypoints());
 }
 
+
 Tick* FlySearchTick::tick() {
     if (!this->mission_started) {
         this->mission_started = this->state->getMav()->startMission();
@@ -56,32 +57,48 @@ Tick* FlySearchTick::tick() {
         // so we can just return a CVLoiterTick
         return new CVLoiterTick(this->state);
     }
+    auto [lat_deg, lng_deg] = state->getMav()->latlng_deg();
+    double altitude_agl_m = state->getMav()->altitude_agl_m();
+    GPSCoord current_pos = makeGPSCoord(lat_deg, lng_deg, altitude_agl_m);
+    auto converter = state->getCartesianConverter();
 
     // IMPORTANT: currently hardcoded to assume hover search pathing, so it
     // takes photos whenever it gets to a new waypoint (loiter position)
     // if we were doing forward pathing would probably want to make it
     // take photos at an interval but only when over the zone
-    auto curr_waypoint = this->state->getMav()->curr_waypoint();
+    // Convert GPS to local XYZ coords
+    if(converter){
+        XYZCoord current_xyz = converter->toXYZ(current_pos);
+        // Get the airdrop boundary polygon
+        Polygon airdrop_boundary = state->mission_params.getAirdropBoundary();
+        // Check if we're inside the airdrop zone
+        bool in_zone = Environment::isPointInPolygon(airdrop_boundary, current_xyz);
+        
+        if(in_zone){
+            auto curr_waypoint = this->state->getMav()->curr_waypoint();
 
-    if (this->curr_mission_item != curr_waypoint) {
-    LOG_F(INFO, "FlySearch Area reached (%zu, %d)", this->curr_mission_item, curr_waypoint);
-        for (int i = 0; i < this->state->config.pathing.coverage.hover.pictures_per_stop; i++) {
-        auto photo = this->state->getCamera()->takePicture(500ms, this->state->getMav());
-            if (state->config.camera.save_images_to_file) {
-                photo->saveToFile(state->config.camera.save_dir);
-            }
+            if (this->curr_mission_item != curr_waypoint) {
+                LOG_F(INFO, "FlySearch Area reached (%zu, %d)", this->curr_mission_item, curr_waypoint);
+                for (int i = 0; i < this->state->config.pathing.coverage.hover.pictures_per_stop; i++) {
+                auto photo = this->state->getCamera()->takePicture(500ms, this->state->getMav());
+                    if (state->config.camera.save_images_to_file) {
+                        photo->saveToFile(state->config.camera.save_dir);
+                    }
 
-            if (photo.has_value()) {
-                // Update the last photo time
-                this->last_photo_time = getUnixTime_ms();
-                // Run the pipeline on the photo
-                this->state->getCV()->runPipeline(photo.value());
+                    if (photo.has_value()) {
+                        // Update the last photo time
+                        this->last_photo_time = getUnixTime_ms();
+                        // Run the pipeline on the photo
+                        this->state->getCV()->runPipeline(photo.value());
+                    }
+                }
+                this->curr_mission_item = curr_waypoint;
+
+                return nullptr;
             }
         }
-        this->curr_mission_item = curr_waypoint;
-
-        return nullptr;
     }
+    
 
     return nullptr;
 }

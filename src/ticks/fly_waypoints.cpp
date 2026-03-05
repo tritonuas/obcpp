@@ -66,7 +66,6 @@ Tick* FlyWaypointsTick::tick() {
             state->getMav()->startMission();
             return nullptr;
         }
-
         return next_tick;
     }
 
