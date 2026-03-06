@@ -79,9 +79,8 @@ Tick* FlyWaypointsTick::tick() {
         return nullptr;
     }
 
-    state->decrementLapsRemaining();
 
-    if (state->getLapsRemaining() > 0) {
+    if (state->getLapsRemaining() > 1) {
         // regenerate path
         std::future<MissionPath> init_path;
         init_path = std::async(std::launch::async, generateInitialPath, this->state);
@@ -101,6 +100,7 @@ Tick* FlyWaypointsTick::tick() {
             return nullptr;
         }
 
+        state->decrementLapsRemaining();
         state->setInitPath(init_path.get());
 
         return new MavUploadTick(
