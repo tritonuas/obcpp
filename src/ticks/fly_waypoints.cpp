@@ -81,7 +81,7 @@ Tick* FlyWaypointsTick::tick() {
 
     state->decrementLapsRemaining();
 
-    if (state->config.pathing.laps > 0) {
+    if (state->getLapsRemaining() > 0) {
         // regenerate path
         std::future<MissionPath> init_path;
         init_path = std::async(std::launch::async, generateInitialPath, this->state);

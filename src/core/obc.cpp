@@ -25,7 +25,6 @@ OBC::OBC(OBCConfig config) {
 
     this->state = std::make_shared<MissionState>(config);
     this->state->setTick(new MissionPrepTick(this->state));
-    this->state->config = config;
     this->state->setLapsRemaining(config.pathing.laps);
     this->gcs_server = std::make_unique<GCSServer>(gcs_port, this->state);
 

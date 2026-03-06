@@ -115,7 +115,7 @@ class MissionState {
 
     MissionParameters mission_params;  // has its own mutex
 
-    OBCConfig config;
+    const OBCConfig config;
 
     std::optional<airdrop_t> next_airdrop_to_drop;
 
