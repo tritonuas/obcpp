@@ -24,6 +24,7 @@ struct AggregatedRun {
     cv::Mat annotatedImage;        // The "big image" with bounding boxes drawn
     std::vector<Bbox> bboxes;      // All bounding boxes in that image
     std::vector<GPSCoord> coords;  // Matching lat-longs for each bounding box
+    std::vector<AirdropType> classes; // The matching class for each bounding box 
 };
 
 struct CVResults {

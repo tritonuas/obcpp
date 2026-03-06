@@ -54,7 +54,7 @@
     },
     "cv": {
         "yolo_model_dir": "/workspaces/obcpp/models/yolo-wittner-v2.onnx",
-        "detection_threshold": 0.35,
+        "detection_threshold": 0.2,
         "input_width": 1024,
         "input_height": 1024
     },
