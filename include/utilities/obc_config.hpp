@@ -113,7 +113,7 @@ struct PathingConfig {
 };
 
 struct CameraConfig {
-    // "mock", "picamera", "picamera-1080p", "picamera-4k", "lucid"
+    // "mock", "PiCamera"
     std::string type;
     // directory to save images to
     std::string save_dir;

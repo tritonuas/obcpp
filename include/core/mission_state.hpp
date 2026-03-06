@@ -11,6 +11,7 @@
 #include <queue>
 #include <unordered_set>
 #include <vector>
+#include <boost/asio.hpp>
 
 #include "camera/interface.hpp"
 #include "core/mission_parameters.hpp"
@@ -113,6 +114,7 @@ class MissionState {
     OBCConfig config;
 
     std::optional<airdrop_t> next_airdrop_to_drop;
+    boost::asio::io_context raspy_io;
 
  private:
     std::mutex converter_mut;
@@ -139,6 +141,7 @@ class MissionState {
     std::mutex cv_mut;
     // Represents a single detected target used in pipeline
     std::vector<DetectedTarget> cv_detected_targets;
+
     // Gives an index into cv_detected_targets, and specifies that that bottle is matched
     // with the detected_target specified by the index
     std::array<size_t, NUM_AIRDROPS> cv_matches;

@@ -43,7 +43,9 @@ target_link_libraries(obcpp_lib_mock INTERFACE
 
 add_executable(${PROJECT_NAME} main.cpp)
 target_include_directories(${PROJECT_NAME} PRIVATE ${INCLUDE_DIRECTORY} ${GEN_PROTOS_DIRECTORY})
-target_link_libraries(${PROJECT_NAME} PRIVATE obcpp_lib)
+target_link_libraries(${PROJECT_NAME} PRIVATE 
+    obcpp_lib
+)
 target_add_protobuf(${PROJECT_NAME})
 target_add_torch(${PROJECT_NAME})
 target_add_torchvision(${PROJECT_NAME})
@@ -53,6 +55,7 @@ target_add_mavsdk(${PROJECT_NAME})
 target_add_opencv(${PROJECT_NAME})
 target_add_httplib(${PROJECT_NAME})
 target_add_loguru(${PROJECT_NAME})
+target_add_boost(${PROJECT_NAME})
 target_add_onnxruntime(${PROJECT_NAME})
 # for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
 # target_add_imagemagick(${PROJECT_NAME})

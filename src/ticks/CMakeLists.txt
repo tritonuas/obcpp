@@ -37,6 +37,7 @@ target_link_libraries(${LIB_NAME} PRIVATE
 
 set_unity_for_target(${LIB_NAME})
 
+target_add_boost(${LIB_NAME})
 target_add_protobuf(${LIB_NAME})
 target_add_torch(${LIB_NAME})
 target_add_torchvision(${LIB_NAME})
