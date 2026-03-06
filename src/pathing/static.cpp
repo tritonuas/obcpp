@@ -619,12 +619,6 @@ RRTPoint getCurrentLoc(std::shared_ptr<MissionState> state) {
     return RRTPoint(start_xyz, start_angle);
 }
 
-/* TODO - doesn't match compeition spec 
-   
-    1. First waypoint is not home
-    2. we omit the first waypoint (FATAL) - this means we never tell the computer to hit it
-    3. We don't know where home location is - we rely on geofencing to not fly out of bounds
-*/
 MissionPath generateInitialPath(std::shared_ptr<MissionState> state) {
     // first waypoint is start
 
