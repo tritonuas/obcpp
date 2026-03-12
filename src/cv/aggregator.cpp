@@ -87,6 +87,7 @@ void CVAggregator::worker(ImageData image, int thread_num) {
         for (auto& det : pipeline_results.targets) {
             run.bboxes.push_back(det.bbox);
             run.coords.push_back(det.coord);
+            run.targetTypes.push_back(det.likely_airdrop);
         }
 
         {
