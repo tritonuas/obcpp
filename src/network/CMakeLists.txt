@@ -46,7 +46,6 @@ target_add_httplib(${LIB_NAME})
 target_add_mavsdk(${LIB_NAME})
 target_add_matplot(${LIB_NAME})
 target_add_loguru(${LIB_NAME})
-target_add_boost(${LIB_NAME})
 target_add_onnxruntime(${LIB_NAME})
 
 target_include_directories(${LIB_NAME} PRIVATE ${ImageMagick_INCLUDE_DIRS})
@@ -73,7 +72,6 @@ target_add_httplib(${LIB_NAME})
 target_add_mavsdk(${LIB_NAME})
 target_add_matplot(${LIB_NAME})
 target_add_loguru(${LIB_NAME})
-target_add_boost(${LIB_NAME})
 
 
 target_include_directories(${LIB_NAME} PRIVATE ${ImageMagick_INCLUDE_DIRS})

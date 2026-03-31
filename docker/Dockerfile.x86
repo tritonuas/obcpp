@@ -78,6 +78,15 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
       && rm /tmp/cmake-install.sh \
       && ln -s /opt/cmake-3.24.1/bin/* /usr/local/bin
 
+# Download and install Boost 1.87.0
+RUN wget https://github.com/boostorg/boost/releases/download/boost-1.87.0/boost-1.87.0-b2-nodocs.tar.gz \
+    && tar -xzf boost-1.87.0-b2-nodocs.tar.gz \
+    && cd boost-1.87.0 \
+    && ./bootstrap.sh \
+    && ./b2 install \
+    && cd .. \
+    && rm -rf boost-1.87.0 boost-1.87.0-b2-nodocs.tar.gz
+
 # the official docs say also these
 # https://docs.opencv.org/4.x/d7/d9f/tutorial_linux_install.html
 # cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev
