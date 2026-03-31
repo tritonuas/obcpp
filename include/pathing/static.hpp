@@ -294,6 +294,14 @@ class AirdropApproachPathing {
     XYZCoord wind;
 };
 
+/**
+ * Helper function to get the current location of the plane for pathing
+ * 
+ * @param state ==> the mission state to get the mavlink client from
+ * @return      ==> RRTPoint representing the current location
+ */
+RRTPoint getCurrentLoc(std::shared_ptr<MissionState> state);
+
 MissionPath generateInitialPath(std::shared_ptr<MissionState> state);
 
 MissionPath generateSearchPath(std::shared_ptr<MissionState> state);

@@ -184,16 +184,24 @@ MavlinkClient::MavlinkClient(OBCConfig config)
         this->data.wind.y = wind.wind_y_ned_m_s;
         this->data.wind.z = wind.wind_z_ned_m_s;
     });
-    // this->telemetry->subscribe_attitude_euler(
-    //     [this](mavsdk::Telemetry::EulerAngle attitude) {
-    //         VLOG_F(DEBUG, "Yaw: %f, Pitch: %f, Roll: %f)",
-    //             attitude.yaw_deg, attitude.pitch_deg, attitude.roll_deg);
 
-    //         Lock lock(this->data_mut);
-    //         this->data.yaw_deg = attitude.yaw_deg;
-    //         this->data.pitch_deg = attitude.pitch_deg;
-    //         this->data.roll_deg = attitude.roll_deg;
-    //     });
+    this->telemetry->subscribe_heading([this](mavsdk::Telemetry::Heading heading) {
+        VLOG_F(DEBUG, "Heading: %d", heading.heading_deg);
+        Lock lock(this->data_mut);
+        this->data.heading_deg = heading.heading_deg;
+    });
+
+
+    this->telemetry->subscribe_attitude_euler(
+        [this](mavsdk::Telemetry::EulerAngle attitude) {
+        VLOG_F(DEBUG, "Yaw: %f, Pitch: %f, Roll: %f)",
+            attitude.yaw_deg, attitude.pitch_deg, attitude.roll_deg);
+
+        Lock lock(this->data_mut);
+        this->data.yaw_deg = attitude.yaw_deg;
+        this->data.pitch_deg = attitude.pitch_deg;
+        this->data.roll_deg = attitude.roll_deg;
+    });
 }
 
 // Implement the triggerRelay method

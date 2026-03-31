@@ -129,4 +129,17 @@ bool MissionState::getMappingIsDone() { return this->mappingIsDone; }
 
 void MissionState::setMappingIsDone(bool isDone) { this->mappingIsDone = isDone; }
 
+int MissionState::getLapsRemaining() {
+    Lock lock(this->laps_remaining_mut);
+    return this->laps_remaining;
+}
 
+void MissionState::setLapsRemaining(int laps) {
+    Lock lock(this->laps_remaining_mut);
+    this->laps_remaining = laps;
+}
+
+void MissionState::decrementLapsRemaining() {
+    Lock lock(this->laps_remaining_mut);
+    this->laps_remaining--;
+}

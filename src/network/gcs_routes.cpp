@@ -273,7 +273,7 @@ DEF_GCS_HANDLE(Get, camera, capture) {
     std::string output;
     google::protobuf::util::MessageToJsonString(manual_image, &output);
 
-    LOG_RESPONSE(INFO, "Successfully captured image", OK, output.c_str(), mime::json);
+    LOG_RESPONSE_HD(INFO, "Successfully captured image", OK, output.c_str(), mime::json);
 }
 
 DEF_GCS_HANDLE(Post, dodropnow) {
@@ -363,7 +363,7 @@ DEF_GCS_HANDLE(Get, targets, all) {
         // logic)
         if (run.coords.size() != run.bboxes.size()) {
             LOG_F(ERROR,
-                  "Mismatch between coordinates (%ld) and bboxes (%ld) count in run_id %d. "
+                  "Mismatch between coordinates (%zu) and bboxes (%zu) count in run_id %d. "
                   "Skipping this run.",
                   run.coords.size(), run.bboxes.size(), run.run_id);
             continue;  // Skip this problematic run
