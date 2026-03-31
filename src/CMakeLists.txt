@@ -1,6 +1,7 @@
 add_library(obcpp_protos STATIC 
     ${PROJECT_SOURCE_DIR}/build/gen_protos/protos/obc.pb.cc 
 )
+target_add_protobuf(obcpp_protos)
 
 add_library(obcpp_udp2 STATIC
     ${PROJECT_SOURCE_DIR}/include/udp_squared/internal/helper.c
