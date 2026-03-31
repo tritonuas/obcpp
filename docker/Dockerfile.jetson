@@ -27,7 +27,6 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
                            vim \
                            curl \
                            unzip \
-                           protobuf-compiler \
                            # Need these to install Python 3.11 from pyenv
                            python3-pip \
                            libssl-dev \

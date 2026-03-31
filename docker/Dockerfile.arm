@@ -27,8 +27,6 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
                            vim \
                            curl \
                            unzip \
-                           protobuf-compiler \
-                           libprotobuf-dev \
                            libopencv-dev \
                            # Need these to install Python 3.11 from pyenv
                            python3-pip \
@@ -130,7 +128,6 @@ RUN cd pytorch-build && \
     -DUSE_NNPACK=1 \
     -DBUILD_CAFFE2_OPS=0 \
     -DBUILD_CAFFE2=0 \
-    -DBUILD_CUSTOM_PROTOBUF=OFF \
     -D_GLIBCXX_USE_CXX11_ABI=1 \
     -DBUILD_SHARED_LIBS:BOOL=ON \
     -DCMAKE_BUILD_TYPE:STRING=Release \
@@ -148,7 +145,8 @@ RUN cd pytorch-build && \
     USE_NNPACK=1 \
     BUILD_CAFFE2_OPS=0 \
     BUILD_CAFFE2=0 \
-    cmake --build . -j4 --target install
+    cmake --build . -j4 --target install \
+    && ln -s ${LIBTORCH_INSTALL_DIR}/libtorch/bin/protoc /usr/local/bin/protoc
 
 ENV CMAKE_PREFIX_PATH="${LIBTORCH_INSTALL_DIR}/libtorch"
 
