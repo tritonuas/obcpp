@@ -87,7 +87,7 @@ class RRT {
      * @param tries ==> number of points it attempts to sample
      * @return      ==> whether or not the goal was reached
      */
-    bool RRTIteration(int tries, int current_goal_index);
+    bool RRTIteration(int tries, int current_goal_index, int retry_count = 0);
 
     /**
      * Evaluates a certain interval to determine if the algorithm is making
