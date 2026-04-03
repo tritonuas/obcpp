@@ -170,10 +170,34 @@ std::optional<cv::Mat> RPICamera::imgConvert(const std::vector<std::vector<uint8
     return bgr_img;
 }
 
+bool RPICamera::ping(const std::chrono::milliseconds& timeout) {
+    // this can be anything except for 111 ('I'), 145 ('e'), 154 ('l'), 163 ('s')
+    const std::uint8_t pingId = 67;
+
+    client.setReceiveTimeout(timeout.count());
+
+    if (!client.send(pingId)) {
+        LOG_F(ERROR, "Failed to send ping request");
+        return false;
+    }
+
+    char pingData = client.recvPing();
+    if (pingData == 0) {
+        LOG_F(ERROR, "Failed to receive ping");
+        return false;
+    }
+
+    if (pingData != pingId) {
+        LOG_F(ERROR, "Got back incorrect ping id");
+        return false;
+    }
+
+    return true;
+}
+
 // Unused methods stubbed out
 void RPICamera::startTakingPictures(const std::chrono::milliseconds& timeout,
                                     std::shared_ptr<MavlinkClient> mavlinkClient) {}
 void RPICamera::stopTakingPictures() {}
 void RPICamera::startStreaming() {}
-void RPICamera::ping() {}
 bool RPICamera::isConnected() { return connected; }

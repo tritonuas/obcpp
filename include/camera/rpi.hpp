@@ -59,7 +59,7 @@ class RPICamera : public CameraInterface {
                                  std::shared_ptr<MavlinkClient> mavlinkClient) override;
         void stopTakingPictures() override;
         void startStreaming() override;
-        void ping();
+        bool ping(const std::chrono::milliseconds& timeout);
 };
 
 #endif  // INCLUDE_CAMERA_RPI_HPP_
