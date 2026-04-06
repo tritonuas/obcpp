@@ -29,9 +29,12 @@ class SAM3 {
      * @param tokenizerPath Path to tokenizer.json
      * @param min_confidence threshold to filter weak detections (default 0.30)
      * @param nms_iou threshold for Non-Maximum Suppression (default 0.2)
+     * @param use_tensorrt Enable TensorRT Execution Provider for GPU acceleration (default false)
+     *                     Requires ONNXRUNTIME_USE_GPU=ON at compile time and TensorRT installed
      */
     SAM3(const std::string& encoderPath, const std::string& decoderPath,
-         const std::string& tokenizerPath, double min_confidence = 0.30, double nms_iou = 0.2);
+         const std::string& tokenizerPath, double min_confidence = 0.30, double nms_iou = 0.2,
+         bool use_tensorrt = false);
 
     /**
      * @brief Run inference on an image (draws boxes on the provided image)

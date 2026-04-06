@@ -596,7 +596,8 @@ DEF_GCS_HANDLE(Post, camera, runpipeline) {
                             {state->config.cv.prompt},
                             "",    // outputPath
                             true,  // do_preprocess
-                            state->config.cv.confidence_threshold, state->config.cv.nms_iou);
+                            state->config.cv.confidence_threshold, state->config.cv.nms_iou,
+                            state->config.cv.use_tensorrt);
     auto pipeline = Pipeline(std::move(cvParams));
     state->setCV(std::make_shared<CVAggregator>(std::move(pipeline)));
 

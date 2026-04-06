@@ -15,7 +15,7 @@ Pipeline::Pipeline(const PipelineParams& p)
     if (p.encoderPath && !p.encoderPath->empty() && p.decoderPath && !p.decoderPath->empty() &&
         p.tokenizerPath && !p.tokenizerPath->empty()) {
         sam3Detector = std::make_unique<SAM3>(*p.encoderPath, *p.decoderPath, *p.tokenizerPath,
-                                              p.min_confidence, p.nms_iou);
+                                              p.min_confidence, p.nms_iou, p.use_tensorrt);
         LOG_F(INFO, "SAM3 encoder loaded from: %s", p.encoderPath->c_str());
         LOG_F(INFO, "SAM3 decoder loaded from: %s", p.decoderPath->c_str());
         LOG_F(INFO, "Tokenizer loaded from: %s", p.tokenizerPath->c_str());

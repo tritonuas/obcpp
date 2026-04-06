@@ -12,16 +12,46 @@
 inline float sigmoid(float x) { return 1.0f / (1.0f + std::exp(-x)); }
 
 SAM3::SAM3(const std::string& encoderPath, const std::string& decoderPath,
-           const std::string& tokenizerPath, double min_confidence, double nms_iou) {
+           const std::string& tokenizerPath, double min_confidence, double nms_iou,
+           bool use_tensorrt) {
     try {
         min_confidence_ = min_confidence;
         nms_iou_ = nms_iou;
         // 1. Initialize Environment
-        env_ = std::make_shared<Ort::Env>(ORT_LOGGING_LEVEL_WARNING, "SAM3_Detector");
+        env_ = std::make_shared<Ort::Env>(ORT_LOGPGING_LEVEL_WARNING, "SAM3_Detector");
 
         // 2. Session Options
         sessionOptions_.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
         sessionOptions_.SetIntraOpNumThreads(4);
+
+#ifdef ONNXRUNTIME_USE_GPU
+        if (use_tensorrt) {
+            // Configure TensorRT Execution Provider
+            OrtTensorRTProviderOptions trt_options{};
+            trt_options.device_id = 0;
+            trt_options.trt_fp16_enable = 1;  // Enable FP16 for faster inference
+            trt_options.trt_int8_enable = 0;  // Disable INT8 (requires calibration table)
+            trt_options.trt_max_workspace_size = 1ULL << 30;  // 1 GB workspace
+            trt_options.trt_engine_cache_enable =
+                1;  // Cache TRT engines for faster subsequent loads
+            trt_options.trt_engine_cache_path = "/tmp/trt_cache";
+
+            sessionOptions_.AppendExecutionProvider_TensorRT(trt_options);
+            LOG_F(INFO, "TensorRT Execution Provider enabled (FP16)");
+
+            // Add CUDA EP as fallback for unsupported ops
+            OrtCUDAProviderOptions cuda_options{};
+            cuda_options.device_id = 0;
+            sessionOptions_.AppendExecutionProvider_CUDA(cuda_options);
+            LOG_F(INFO, "CUDA Execution Provider added as fallback");
+        }
+#else
+        if (use_tensorrt) {
+            LOG_F(WARNING,
+                  "TensorRT requested but ONNXRUNTIME_USE_GPU not enabled at compile time. "
+                  "Falling back to CPU execution.");
+        }
+#endif
 
         // 3. Load Encoder Model
         encoderSession_ =

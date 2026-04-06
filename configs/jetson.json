@@ -14,7 +14,8 @@
             "tokenizer_path": "/obcpp/configs/sam3/tokenizer.json",
             "prompt": "person",
             "confidence_threshold": 0.30,
-            "nms_iou": 0.20
+            "nms_iou": 0.20,
+            "use_tensorrt": true
         }
     },
     "pathing": {

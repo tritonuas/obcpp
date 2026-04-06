@@ -37,7 +37,8 @@ struct PipelineParams {
                             std::optional<std::string> tokenizerPath,
                             std::vector<std::string> prompts = {"person"},
                             std::string outputPath = "", bool do_preprocess = true,
-                            double min_confidence = 0.30, double nms_iou = 0.2)
+                            double min_confidence = 0.30, double nms_iou = 0.2,
+                            bool use_tensorrt = false)
         : encoderPath{std::move(encoderPath)},
           decoderPath{std::move(decoderPath)},
           tokenizerPath{std::move(tokenizerPath)},
@@ -45,7 +46,8 @@ struct PipelineParams {
           outputPath(std::move(outputPath)),
           do_preprocess(do_preprocess),
           min_confidence(min_confidence),
-          nms_iou(nms_iou) {}
+          nms_iou(nms_iou),
+          use_tensorrt(use_tensorrt) {}
 
     std::optional<std::string> encoderPath;
     std::optional<std::string> decoderPath;
@@ -55,6 +57,7 @@ struct PipelineParams {
     bool do_preprocess;
     double min_confidence;  // Minimum confidence threshold for detections
     double nms_iou;         // IoU threshold for Non-Max Suppression
+    bool use_tensorrt;      // Enable TensorRT Execution Provider
 };
 
 // Forward declare Ort::Env

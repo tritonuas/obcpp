@@ -84,6 +84,7 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
     SET_CONFIG_OPT(cv, prompt);
     SET_CONFIG_OPT(cv, confidence_threshold);
     SET_CONFIG_OPT(cv, nms_iou);
+    SET_CONFIG_OPT(cv, use_tensorrt);
     SET_CONFIG_OPT_VARIANT(AirdropDropMethod, pathing, approach, drop_method);
     SET_CONFIG_OPT(pathing, approach, drop_angle_rad);
     SET_CONFIG_OPT(pathing, approach, drop_altitude_m);

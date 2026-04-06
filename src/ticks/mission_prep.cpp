@@ -43,7 +43,8 @@ Tick* MissionPrepTick::tick() {
                                 "",    // outputPath
                                 true,  // do_preprocess
                                 this->state->config.cv.confidence_threshold,
-                                this->state->config.cv.nms_iou);
+                                this->state->config.cv.nms_iou,
+                                this->state->config.cv.use_tensorrt);
         auto pipeline = Pipeline(std::move(cvParams));
         this->state->setCV(std::make_shared<CVAggregator>(std::move(pipeline)));
 

@@ -42,6 +42,7 @@ struct CVConfig {
     std::string prompt;           // Text prompt (e.g., "person")
     double confidence_threshold;  // Minimum confidence for detections (0.0-1.0)
     double nms_iou;               // IoU threshold for NMS (0.0-1.0)
+    bool use_tensorrt = false;    // Enable TensorRT Execution Provider (requires GPU build)
     std::string not_stolen_addr;
     uint16_t not_stolen_port;
 };
