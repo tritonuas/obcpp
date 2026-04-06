@@ -187,6 +187,8 @@ bool RPICamera::ping(const std::chrono::milliseconds& timeout) {
         return false;
     }
 
+    LOG_F(INFO, "Received back %c", pingData);
+
     if (pingData != pingId) {
         LOG_F(ERROR, "Got back incorrect ping id");
         return false;
