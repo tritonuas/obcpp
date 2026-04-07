@@ -27,7 +27,7 @@ void RPICamera::connect() {
     // Keep trying to connect/bind logic
     // For UDP, "connect" just means opening the socket which is fast
     if (client.connect()) {
-        this->connected = true;
+        this->connected = ping(std::chrono::milliseconds(50));
         // Optionally send CameraRequest::START if needed,
         // but 'I' usually works standalone (i think)
         // client.send(static_cast<std::uint8_t>(CameraRequest::START));
@@ -202,4 +202,4 @@ void RPICamera::startTakingPictures(const std::chrono::milliseconds& timeout,
                                     std::shared_ptr<MavlinkClient> mavlinkClient) {}
 void RPICamera::stopTakingPictures() {}
 void RPICamera::startStreaming() {}
-bool RPICamera::isConnected() { return connected; }
+bool RPICamera::isConnected() { return ping(std::chrone::milliseconds(50)); }
