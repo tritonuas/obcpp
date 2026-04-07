@@ -202,4 +202,4 @@ void RPICamera::startTakingPictures(const std::chrono::milliseconds& timeout,
                                     std::shared_ptr<MavlinkClient> mavlinkClient) {}
 void RPICamera::stopTakingPictures() {}
 void RPICamera::startStreaming() {}
-bool RPICamera::isConnected() { return ping(std::chrone::milliseconds(50)); }
+bool RPICamera::isConnected() { return ping(std::chrono::milliseconds(50)); }
