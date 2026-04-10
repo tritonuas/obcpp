@@ -108,6 +108,7 @@ Tick* FlyWaypointsTick::tick() {
             state->getInitPath(), false);
     }
 
+    state->decrementLapsRemaining();
     return new MavUploadTick(
         this->state, new FlySearchTick(this->state),
         state->getCoveragePath(), false);
