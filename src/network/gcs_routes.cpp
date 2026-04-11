@@ -522,7 +522,7 @@ DEF_GCS_HANDLE(Get, tickstate) {
     TickID tickID = state->getTickID();
     std::string tick_state = TICK_ID_TO_STR(tickID);
     
-    auto num_current_lap = state->config.pathing.coverage.num_laps - state->getLapsRemaining();
+    auto num_current_lap = state->config.pathing.laps - state->getLapsRemaining();
 
     // LOG_RESPONSE(INFO, "Returning tick state", OK, tick_state, mime::plaintext);
     response.set_content(tick_state + "," + std::to_string(num_current_lap), mime::plaintext);
