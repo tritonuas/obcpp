@@ -524,7 +524,8 @@ DEF_GCS_HANDLE(Get, obcstate) {
     auto num_current_lap = state->config.pathing.laps - state->getLapsRemaining();
 
     // LOG_RESPONSE(INFO, "Returning tick state", OK, tick_state, mime::plaintext);
-    response.set_content(tick_state + "," + std::to_string(num_current_lap) + "/" + std::to_string(state->config.pathing.laps), mime::plaintext);
+    response.set_content(tick_state + "," + std::to_string(num_current_lap)
+        + "/" + std::to_string(state->config.pathing.laps), mime::plaintext);
     response.status = OK;
 }
 
