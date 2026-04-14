@@ -22,13 +22,9 @@ void PathGenTick::init() {
 }
 
 Tick* PathGenTick::tick() {
-    auto init_status = this->init_path.wait_for(0ms);
-    auto search_status = this->coverage_path.wait_for(0ms);
-    if (init_status == std::future_status::ready &&
-        search_status == std::future_status::ready) {
+    auto status = this->paths_future.wait_for(0ms);
+    if (status == std::future_status::ready) {
         LOG_F(INFO, "Initial and Coverage paths generated");
-        state->setInitPath(this->init_path.get());
-        state->setCoveragePath(this->coverage_path.get());
         return new PathValidateTick(this->state);
     }
 
@@ -36,6 +32,17 @@ Tick* PathGenTick::tick() {
 }
 
 void PathGenTick::startPathGeneration() {
-    this->init_path = std::async(std::launch::async, generateInitialPath, this->state);
-    this->coverage_path = std::async(std::launch::async, generateSearchPath, this->state);
+    this->paths_future = std::async(std::launch::async, [this]() {
+        MissionPath init = generateInitialPath(this->state);
+        double angle1 = calculateFinalAngle(init, this->state);
+        
+        MissionPath next = generateNextWaypointPath(this->state, angle1);
+        double angle2 = calculateFinalAngle(next, this->state);
+        
+        MissionPath coverage = generateSearchPath(this->state, angle2);
+        
+        this->state->setInitPath(init);
+        this->state->setNextWaypointPath(next);
+        this->state->setCoveragePath(coverage);
+    });
 }

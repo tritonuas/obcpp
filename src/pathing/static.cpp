@@ -656,10 +656,54 @@ MissionPath generateInitialPath(std::shared_ptr<MissionState> state) {
     return MissionPath(MissionPath::Type::FORWARD, output_coords);
 }
 
-MissionPath generateSearchPath(std::shared_ptr<MissionState> state) {
+MissionPath generateNextWaypointPath(std::shared_ptr<MissionState> state, double start_angle) {
+    if (state->mission_params.getWaypoints().size() < 1) {
+        loguru::set_thread_name("Static Pathing");
+        LOG_F(ERROR, "Not enough waypoints to generate a path, requires >=1, num waypoints: %s",
+              std::to_string(state->mission_params.getWaypoints().size()).c_str());
+        return {};
+    }
+
+    std::vector<XYZCoord> goals = state->mission_params.getWaypoints();
+
+    if (state->config.pathing.rrt.generate_deviations) {
+        Environment mapping_bounds(state->mission_params.getAirdropBoundary(), {}, {}, goals, {});
+        goals = generateRankedNewGoalsList(goals, mapping_bounds)[0];
+    }
+
+    RRTPoint start(goals.back(), start_angle);
+
+    RRT rrt(start, goals, SEARCH_RADIUS, state->mission_params.getFlightBoundary(), state->config,
+            {}, {});
+
+    rrt.run();
+
+    std::vector<XYZCoord> path = rrt.getPointsToGoal();
+
+    std::vector<GPSCoord> output_coords;
+    for (const XYZCoord &waypoint : path) {
+        output_coords.push_back(state->getCartesianConverter()->toLatLng(waypoint));
+    }
+
+    return MissionPath(MissionPath::Type::FORWARD, output_coords);
+}
+
+double calculateFinalAngle(const MissionPath& path, std::shared_ptr<MissionState> state) {
+    const auto& coords = path.get();
+    if (coords.size() < 2) {
+        return 0.0;
+    }
+
+    XYZCoord pt1 = state->getCartesianConverter()->toXYZ(coords[coords.size() - 2]);
+    XYZCoord pt2 = state->getCartesianConverter()->toXYZ(coords[coords.size() - 1]);
+
+    return std::atan2(pt2.y - pt1.y, pt2.x - pt1.x);
+}
+
+MissionPath generateSearchPath(std::shared_ptr<MissionState> state, double start_angle) {
     std::vector<GPSCoord> gps_coords;
     if (state->config.pathing.coverage.method == AirdropCoverageMethod::Enum::FORWARD) {
-        RRTPoint start(state->mission_params.getWaypoints().back(), 0);
+        RRTPoint start(state->mission_params.getWaypoints().back(), start_angle);
         double scan_radius = state->config.pathing.coverage.camera_vision_m;
 
         ForwardCoveragePathing pathing(start, scan_radius,

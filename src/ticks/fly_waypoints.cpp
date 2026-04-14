@@ -81,31 +81,11 @@ Tick* FlyWaypointsTick::tick() {
 
 
     if (state->getLapsRemaining() > 1) {
-        // regenerate path
-        std::future<MissionPath> init_path;
-        init_path = std::async(std::launch::async, generateInitialPath, this->state);
-        auto init_status = init_path.wait_for(std::chrono::milliseconds(0));
-        int count_ms = 2500;
-        const int wait_time_ms = 100;
-
-        while (init_status != std::future_status::ready && count_ms > 0) {
-            LOG_F(WARNING, "Waiting for path to be generated...");
-            std::this_thread::sleep_for(std::chrono::milliseconds(wait_time_ms));
-            init_status = init_path.wait_for(std::chrono::milliseconds(0));
-            count_ms -= wait_time_ms;
-        }
-
-        if (count_ms <= 0) {
-            LOG_F(ERROR, "Path generation took too long. Trying Again...");
-            return nullptr;
-        }
-
         state->decrementLapsRemaining();
-        state->setInitPath(init_path.get());
 
         return new MavUploadTick(
             this->state, new FlyWaypointsTick(this->state, new FlySearchTick(this->state)),
-            state->getInitPath(), false);
+            state->getNextWaypointPath(), false);
     }
 
     return new MavUploadTick(

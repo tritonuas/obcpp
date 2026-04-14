@@ -48,6 +48,9 @@ class MissionState {
     void setInitPath(const MissionPath& init_path);
     MissionPath getInitPath();
 
+    void setNextWaypointPath(const MissionPath& next_waypoint_path);
+    MissionPath getNextWaypointPath();
+
     void setCoveragePath(const MissionPath& coverage_path);
     MissionPath getCoveragePath();
 
@@ -130,6 +133,8 @@ class MissionState {
 
     std::mutex init_path_mut;  // for reading/writing the initial path
     MissionPath init_path;
+    std::mutex next_waypoint_path_mut;  // for reading/writing the next waypoint path
+    MissionPath next_waypoint_path;
     std::mutex coverage_path_mut;  // for reading/writing the coverage path
     MissionPath coverage_path;
     std::mutex airdrop_path_mut;

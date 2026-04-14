@@ -304,7 +304,11 @@ RRTPoint getCurrentLoc(std::shared_ptr<MissionState> state);
 
 MissionPath generateInitialPath(std::shared_ptr<MissionState> state);
 
-MissionPath generateSearchPath(std::shared_ptr<MissionState> state);
+MissionPath generateNextWaypointPath(std::shared_ptr<MissionState> state, double start_angle);
+
+MissionPath generateSearchPath(std::shared_ptr<MissionState> state, double start_angle);
+
+double calculateFinalAngle(const MissionPath& path, std::shared_ptr<MissionState> state);
 
 MissionPath generateAirdropApproach(std::shared_ptr<MissionState> state, const GPSCoord &goal);
 
