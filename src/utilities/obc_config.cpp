@@ -60,6 +60,7 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
 
     SET_CONFIG_OPT(pathing, laps);
     SET_CONFIG_OPT(pathing, rrt, iterations_per_waypoint);
+    SET_CONFIG_OPT(pathing, upload_distance_buffer_m);
     SET_CONFIG_OPT(pathing, rrt, rewire_radius);
     SET_CONFIG_OPT(pathing, rrt, optimize);
     SET_CONFIG_OPT(pathing, rrt, generate_deviations);

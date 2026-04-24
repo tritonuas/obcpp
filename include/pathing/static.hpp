@@ -302,15 +302,18 @@ class AirdropApproachPathing {
  */
 RRTPoint getCurrentLoc(std::shared_ptr<MissionState> state);
 
-MissionPath generateInitialPath(std::shared_ptr<MissionState> state);
+std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state);
 
-MissionPath generateNextWaypointPath(std::shared_ptr<MissionState> state, double start_angle);
+std::vector<GPSCoord>
+generateNextWaypointPath(std::shared_ptr<MissionState> state, double start_angle);
 
-MissionPath generateSearchPath(std::shared_ptr<MissionState> state, double start_angle);
+std::vector<GPSCoord>
+generateSearchPath(std::shared_ptr<MissionState> state, double start_angle);
 
 double calculateFinalAngle(const MissionPath& path, std::shared_ptr<MissionState> state);
 
-MissionPath generateAirdropApproach(std::shared_ptr<MissionState> state, const GPSCoord &goal);
+std::vector<GPSCoord>
+generateAirdropApproach(std::shared_ptr<MissionState> state, const GPSCoord &goal);
 
 std::pair<double, double> estimateAreaCoveredAndPathLength(const std::vector<XYZCoord> &goals,
                                                            const Environment &airspace);

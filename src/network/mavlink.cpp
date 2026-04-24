@@ -174,7 +174,7 @@ MavlinkClient::MavlinkClient(OBCConfig config)
     });
 
     this->telemetry->subscribe_heading([this](mavsdk::Telemetry::Heading heading) {
-        VLOG_F(DEBUG, "Heading: %d", heading.heading_deg);
+        VLOG_F(DEBUG, "Heading: %f deg", heading.heading_deg);
         Lock lock(this->data_mut);
         this->data.heading_deg = heading.heading_deg;
     });

@@ -67,7 +67,8 @@ Tick* AirdropPrepTick::tick() {
           target.coordinate().latitude(), target.coordinate().longitude(),
           target.coordinate().altitude());
 
-    state->setAirdropPath(generateAirdropApproach(state, target.coordinate()));
+    state->setAirdropPath(MissionPath(MissionPath::Type::FORWARD,
+                            generateAirdropApproach(state, target.coordinate())));
 
     LOG_F(INFO, "Generated approach path");
 
