@@ -56,6 +56,12 @@ class MissionState {
     void markAirdropAsDropped(AirdropType airdrop);
     std::unordered_set<AirdropType> getDroppedAirdrops();
 
+    void zoneHandler(const std::chrono::milliseconds& interval,
+                        std::shared_ptr<MavlinkClient> mavlinkClient);
+    void initThread(const std::chrono::milliseconds& interval,
+                        std::shared_ptr<MavlinkClient> mavlinkClient);
+    void stopThread();
+
     /*
      * Gets a locking reference to the underlying tick for the given tick subclass T.
      *
@@ -108,6 +114,7 @@ class MissionState {
     bool getMappingIsDone();
     void setMappingIsDone(bool isDone);
 
+
     MissionParameters mission_params;  // has its own mutex
 
     OBCConfig config;
@@ -136,12 +143,17 @@ class MissionState {
     std::shared_ptr<CVAggregator> cv;
     std::shared_ptr<CameraInterface> camera;
 
+    std::thread captureThread;
+
     std::mutex cv_mut;
     // Represents a single detected target used in pipeline
     std::vector<DetectedTarget> cv_detected_targets;
     // Gives an index into cv_detected_targets, and specifies that that bottle is matched
     // with the detected_target specified by the index
     std::array<size_t, NUM_AIRDROPS> cv_matches;
+
+    bool cameraThreadActive = true;
+
 
     bool mappingIsDone;
 
