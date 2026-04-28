@@ -206,7 +206,7 @@ DEF_GCS_HANDLE(Post, rtl);
 
 DEF_GCS_HANDLE(Get, oh, shit);
 
-DEF_GCS_HANDLE(Get, tickstate);
+DEF_GCS_HANDLE(Get, obcstate);
 DEF_GCS_HANDLE(Post, camera, runpipeline);
 
 
