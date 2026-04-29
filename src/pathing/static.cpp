@@ -25,8 +25,9 @@ RRT::RRT(RRTPoint start, std::vector<XYZCoord> goals, double search_radius, Poly
     : iterations_per_waypoint(config.pathing.rrt.iterations_per_waypoint),
       search_radius(search_radius),
       rewire_radius(config.pathing.rrt.rewire_radius),
-      tree(start, Environment(bounds, {}, {}, goals, obstacles),
-           Dubins(config.pathing.dubins.turning_radius, config.pathing.dubins.point_separation)),
+      tree(start, Environment(bounds, {}, {}, goals, obstacles,
+        config.pathing.rrt.environment_offset),
+        Dubins(config.pathing.dubins.turning_radius, config.pathing.dubins.point_separation)),
       config(config.pathing.rrt) {
     if (angles.size() != 0) {
         this->angles = angles;

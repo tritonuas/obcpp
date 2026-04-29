@@ -28,7 +28,8 @@
             "optimize": true,
             "point_fetch_method": "nearest",
             "allowed_to_skip_waypoints": false,
-            "generate_deviations": false
+            "generate_deviations": false,
+            "environment_offset": 10
         },
         "coverage": {
             "altitude_m": 30.0,

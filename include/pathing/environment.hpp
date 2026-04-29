@@ -23,7 +23,7 @@ class Environment {
  public:
     Environment(const Polygon& valid_region, const Polygon& airdrop_zone,
                 const Polygon& mapping_region, const std::vector<XYZCoord>& goals,
-                const std::vector<Polygon>& obstacles);
+                const std::vector<Polygon>& obstacles, double environment_offset = 0);
 
     /**
      * Check if a point is in the valid region
@@ -259,6 +259,15 @@ class Environment {
         const std::vector<XYZCoord>& goals) const;
 
     /**
+     * Find the centroid of a given valid region. 
+     * This rests on the assumption that the region
+     * is in an non-intersecting order.
+     * 
+     * @return the centroid coordinate
+     */
+    Polygon scaleFixedDistance(double distance, const Polygon& shape) const;
+
+    /**
      * Returns a new polygon that is scaled by a given factor
      *
      * @param scale the factor to scale the polygon by
@@ -273,6 +282,7 @@ class Environment {
     const Polygon mapping_region;       // boundary of the mapping region (subset of valid_region)
     const std::vector<XYZCoord> goals;  // goal point
     const std::vector<Polygon> obstacles;  // obstacles in the map
+    const double environment_offset;
 
     int goals_found;  // whether or not the goal has been found, once it becomes ture, it will never
                       // be false again
