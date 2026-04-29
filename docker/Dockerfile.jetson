@@ -48,14 +48,27 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
                            # needed for pytorch 
                            libopenblas-dev \
                            ninja-build \
-                           libopencv-dev
+                           libopencv-dev \
+                           protobuf-compiler \
+                           libprotobuf-dev
 
-RUN pip3 install typing-extensions PyYAML cpplint
+# RUN pip3 install typing-extensions PyYAML cpplint
+RUN pip3 install --no-cache-dir --index-url https://pypi.org/simple typing-extensions PyYAML cpplint
 
 RUN echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME
 
+# Download and install Boost 1.87.0
+RUN wget https://github.com/boostorg/boost/releases/download/boost-1.87.0/boost-1.87.0-b2-nodocs.tar.gz \
+    && tar -xzf boost-1.87.0-b2-nodocs.tar.gz \
+    && cd boost-1.87.0 \
+    && ./bootstrap.sh \
+    && ./b2 install \
+    && cd .. \
+    && rm -rf boost-1.87.0 boost-1.87.0-b2-nodocs.tar.gz
+
 # install MAVSDK from source
+ENV PIP_INDEX_URL=https://pypi.org/simple
 RUN git clone --depth 1 https://github.com/mavlink/MAVSDK.git --branch v3.15.0 --single-branch \
     && cd MAVSDK \
     && git submodule update --init --recursive \
@@ -64,7 +77,7 @@ RUN git clone --depth 1 https://github.com/mavlink/MAVSDK.git --branch v3.15.0 -
 
 # pull and build torchvision
 # refer to this page for version compatibilty with pytorch (libtorch) https://github.com/pytorch/pytorch/wiki/PyTorch-Versions
-ARG TORCHVISION_VERSION=0.19.0
+ARG TORCHVISION_VERSION=0.18.1
 # Space separated list of CUDA architecture versions.
 # The version nubmers depend on the NVIDIA GPU model we're using and the installed CUDA version. 
 # For the Jetson Orin Nano with the "Ampere" architecture and CUDA 12.1 we can use version 8.6 (written as 86 in CUDA_ARCH_LIST).
@@ -72,6 +85,7 @@ ARG TORCHVISION_VERSION=0.19.0
 # See https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#gpu-feature-list
 # and https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/
 # and https://stackoverflow.com/a/74962874
+ARG TORCHVISION_INSTALL_DIR=/tmp/torchvision
 ARG CUDA_ARCH_LIST="5.0 5.2 5.3 6.0 6.1 6.2 7.0 7.2 7.5 8.0 8.6 8.7 8.9 9.0"
 WORKDIR ${TORCHVISION_INSTALL_DIR} 
 RUN wget "https://github.com/pytorch/vision/archive/refs/tags/v${TORCHVISION_VERSION}.zip" \
@@ -81,7 +95,8 @@ RUN wget "https://github.com/pytorch/vision/archive/refs/tags/v${TORCHVISION_VER
     && cd build \
     && cmake -DWITH_CUDA=1 -DTORCH_CUDA_ARCH_LIST="${CUDA_ARCH_LIST}" -DCUDA_HAS_FP16=1 -DCUDA_NO_HALF_OPERATORS=1 -DCUDA_NO_HALF_CONVERSIONS=1 -DCUDA_NO_HALF2_OPERATORS=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/usr/local/lib/python3.10/dist-packages/torch/share/cmake/Torch" .. \
     && make -j`nproc` \
-    && make install
+    && make install \
+    && ln -s ${LIBTORCH_INSTALL_DIR}/libtorch/bin/protoc /usr/local/bin/protoc
 
 RUN pip3 install gdown
 ENV PATH="${PATH}:${HOME}/.local/bin"

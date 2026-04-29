@@ -46,7 +46,9 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
                            gnuplot \ 
                            # imagemagick with c++ dependency
                            libmagick++-dev \
-                           ninja-build
+                           ninja-build \
+                           protobuf-compiler \
+                           libprotobuf-dev
 
 RUN apt-add-repository universe
 RUN apt-get install -y cpplint
@@ -92,7 +94,9 @@ RUN wget https://archives.boost.io/release/1.87.0/source/boost_1_87_0.tar.gz \
 
 # pull pre-built libtorch
 
-ARG LIBTORCH_VERSION=2.4.0
+# Make sure to install the same version of torchvision as the version of
+# libtorch we built in the Jetson
+ARG LIBTORCH_VERSION=2.3.1
 ARG LIBTORCH_INSTALL_DIR=/libtorch-tmp
 WORKDIR ${LIBTORCH_INSTALL_DIR}
 RUN git clone --recursive --branch v${LIBTORCH_VERSION} https://github.com/pytorch/pytorch.git
@@ -140,7 +144,7 @@ RUN cd pytorch-build && \
     BUILD_CAFFE2_OPS=0 \
     BUILD_CAFFE2=0 \
     cmake --build . -j$(nproc) --target install \
-    && ln -s ${LIBTORCH_INSTALL_DIR}/libtorch/bin/protoc /usr/local/bin/protoc
+    && rm -f ${LIBTORCH_INSTALL_DIR}/libtorch/bin/protoc
 
 ENV CMAKE_PREFIX_PATH="${LIBTORCH_INSTALL_DIR}/libtorch"
 
