@@ -131,6 +131,7 @@ RUN cd pytorch-build && \
     -DCMAKE_BUILD_TYPE:STRING=Release \
     -DPYTHON_EXECUTABLE:PATH=$(which python3) \
     -DCMAKE_INSTALL_PREFIX=${LIBTORCH_INSTALL_DIR}/libtorch \
+    -DBUILD_CUSTOM_PROTOBUF=OFF \
     ../pytorch
 RUN cd pytorch-build && \
     USE_CUDA=0 \
@@ -144,13 +145,16 @@ RUN cd pytorch-build && \
     BUILD_CAFFE2_OPS=0 \
     BUILD_CAFFE2=0 \
     cmake --build . -j$(nproc) --target install \
-    && rm -f ${LIBTORCH_INSTALL_DIR}/libtorch/bin/protoc
+    && rm -f ${LIBTORCH_INSTALL_DIR}/libtorch/bin/protoc \
+    && rm -rf ${LIBTORCH_INSTALL_DIR}/libtorch/lib/libprotobuf* \
+    && rm -rf ${LIBTORCH_INSTALL_DIR}/libtorch/lib/libprotoc* \
+    && rm -rf ${LIBTORCH_INSTALL_DIR}/libtorch/include/google/protobuf
 
 ENV CMAKE_PREFIX_PATH="${LIBTORCH_INSTALL_DIR}/libtorch"
 
 # pull and build torchvision
 # refer to this page for version compatibilty with pytorch (libtorch) https://github.com/pytorch/pytorch/wiki/PyTorch-Versions
-ARG TORCHVISION_VERSION=0.19.0
+ARG TORCHVISION_VERSION=0.18.1
 ARG TORCHVISION_INSTALL_DIR=/torchvision-tmp
 WORKDIR ${TORCHVISION_INSTALL_DIR} 
 RUN wget "https://github.com/pytorch/vision/archive/refs/tags/v${TORCHVISION_VERSION}.zip" \
