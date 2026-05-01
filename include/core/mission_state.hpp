@@ -109,9 +109,14 @@ class MissionState {
     bool getMappingIsDone();
     void setMappingIsDone(bool isDone);
 
+    // Getter and Setter for laps
+    int getLapsRemaining();
+    void setLapsRemaining(int laps);
+    void decrementLapsRemaining();
+
     MissionParameters mission_params;  // has its own mutex
 
-    OBCConfig config;
+    const OBCConfig config;
 
     std::optional<airdrop_t> next_airdrop_to_drop;
     boost::asio::io_context raspy_io;
@@ -132,6 +137,9 @@ class MissionState {
 
     std::mutex dropped_airdrops_mut;
     std::unordered_set<AirdropType> dropped_airdrops;
+
+    std::mutex laps_remaining_mut;
+    int laps_remaining;
 
     std::shared_ptr<MavlinkClient> mav;
     std::shared_ptr<AirdropClient> airdrop;

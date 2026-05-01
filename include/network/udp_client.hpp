@@ -36,6 +36,7 @@ class UDPClient {
         Header recvHeader();
 
         std::vector<std::uint8_t> recvBody(const int mem_size, const int total_chunks);
+        char recvPing();
 };
 
 #endif  // INCLUDE_NETWORK_UDP_CLIENT_HPP_
