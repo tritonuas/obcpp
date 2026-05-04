@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
 
-project(obcpp VERSION 1.0)
+# COMPILER SETTINGS MUST BE SET BEFORE THE PROJECT() COMMAND
+set(CMAKE_C_COMPILER gcc)
+set(CMAKE_CXX_COMPILER g++)
+
+project(obcpp VERSION 2026.0)
 
 # Make sure that we are using the C++11 ABI, if not then there are some weird
 # inconsistencies with our precompiled headers
@@ -23,9 +27,7 @@ if(CCACHE)
     set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE})
 endif(CCACHE)
 
-# set(CMAKE_CXX_COMPILER g++)
 set(CMAKE_CXX_STANDARD 20)
-# set(CMAKE_C_COMPILER gcc)
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/bin)
@@ -34,10 +36,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS True)
 # set(CMAKE_POSITION_INDEPENDENT_CODE True)
 
 SET(GCC_COMPILE_FLAGS "")
-# SET(GCC_LINK_FLAGS    "-lprotobuf -lopencv_core -lopencv_highgui -lopencv_features2d -lopencv_flann -lopencv_imgcodecs -lopencv_dnn -lopencv_videoio -lopencv_imgproc -lopencv_ml -lopencv_photo -lprotobuf")
+SET(GCC_LINK_FLAGS    "-lprotobuf -lopencv_core -lopencv_highgui -lopencv_features2d -lopencv_flann -lopencv_imgcodecs -lopencv_dnn -lopencv_videoio -lopencv_imgproc -lopencv_ml -lopencv_photo -lprotobuf")
 
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COMPILE_FLAGS}")
-# SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${GCC_LINK_FLAGS}")
+SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${GCC_LINK_FLAGS}")
 
 SET(CMAKE_C_FLAGS "-D_GNU_SOURCE")
 
