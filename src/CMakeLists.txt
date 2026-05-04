@@ -1,6 +1,7 @@
 add_library(obcpp_protos STATIC 
     ${PROJECT_SOURCE_DIR}/build/gen_protos/protos/obc.pb.cc 
 )
+target_add_protobuf(obcpp_protos)
 
 add_library(obcpp_udp2 STATIC
     ${PROJECT_SOURCE_DIR}/include/udp_squared/internal/helper.c
@@ -55,7 +56,6 @@ target_add_mavsdk(${PROJECT_NAME})
 target_add_opencv(${PROJECT_NAME})
 target_add_httplib(${PROJECT_NAME})
 target_add_loguru(${PROJECT_NAME})
-target_add_boost(${PROJECT_NAME})
 target_add_onnxruntime(${PROJECT_NAME})
 # for some reason calling target_add_imagemagick here conflicts with, so we are including/linking without the function call
 # target_add_imagemagick(${PROJECT_NAME})
