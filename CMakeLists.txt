@@ -1,11 +1,5 @@
 cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
 
-# COMPILER SETTINGS MUST BE SET BEFORE THE PROJECT() COMMAND
-set(CMAKE_C_COMPILER gcc)
-set(CMAKE_CXX_COMPILER g++)
-
-project(obcpp VERSION 2026.0)
-
 # Make sure that we are using the C++11 ABI, if not then there are some weird
 # inconsistencies with our precompiled headers
 add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=1)
@@ -27,7 +21,9 @@ if(CCACHE)
     set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE})
 endif(CCACHE)
 
+set(CMAKE_CXX_COMPILER g++)
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_C_COMPILER gcc)
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/bin)
@@ -55,6 +51,8 @@ SET(CMAKE_C_FLAGS "-D_GNU_SOURCE")
 # endif()
 # set(CMAKE_JOB_POOL_COMPILE j)
 # set(CMAKE_JOB_POOL_LINK    j)
+
+project(obcpp VERSION 1.0)
 
 set(LOGURU_WITH_STREAMS TRUE)
 
