@@ -414,21 +414,25 @@ DEF_GCS_HANDLE(Post, targets, matched) {
 
     LOG_S(INFO) << j_root;
 
-    LockPtr<MatchedResults> matched_results = state->getCV()->getMatchedResults();
+    state->getCV()->terminate();
 
-    if (matched_results.data == nullptr) {
-        LOG_S(ERROR) << "lockptr is null";
-    }
+    {
+        LockPtr<MatchedResults> matched_results = state->getCV()->getMatchedResults();
 
-    AirdropTarget returned_matched_result;
+        if (matched_results.data == nullptr) {
+            LOG_S(ERROR) << "lockptr is null";
+        }
 
-    for (const auto& instance : j_root) {
-        LOG_S(INFO) << returned_matched_result.index();
-        google::protobuf::util::JsonStringToMessage(instance.dump(), &returned_matched_result);
-        LOG_S(WARNING) << returned_matched_result.index();
-        matched_results.data->matched_airdrop[returned_matched_result.index()] =
-            returned_matched_result;
-        LOG_S(ERROR) << returned_matched_result.index();
+        AirdropTarget returned_matched_result;
+
+        for (const auto& instance : j_root) {
+            LOG_S(INFO) << returned_matched_result.index();
+            google::protobuf::util::JsonStringToMessage(instance.dump(), &returned_matched_result);
+            LOG_S(WARNING) << returned_matched_result.index();
+            matched_results.data->matched_airdrop[returned_matched_result.index()] =
+                returned_matched_result;
+            LOG_S(ERROR) << returned_matched_result.index();
+        }
     }
 
     auto lock_ptr = state->getTickLockPtr<CVLoiterTick>();
