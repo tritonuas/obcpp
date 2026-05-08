@@ -122,6 +122,9 @@ std::vector<XYZCoord> Dubins::generatePointsStraight(const RRTPoint &start, cons
 
     double distance_straight = initial_terminal_point.distanceTo(final_terminal_point);
 
+    bool added_start_straight = false;
+    bool added_end_straight = false;
+
     //  generates the points for the entire curve.
     std::vector<XYZCoord> points_list;
     for (double current_distance = 0; current_distance < total_distance;
@@ -147,15 +150,20 @@ std::vector<XYZCoord> Dubins::generatePointsStraight(const RRTPoint &start, cons
             points_list.emplace_back(
                 circleArc(end, path.beta_2, center_2, current_distance - total_distance));
         } else {  // Straignt Section
-            // coefficient is the ratio of the straight distance that has been traversed.
-            // (current_distance_traved - (LENGTH_OF_FIRST_TURN_CURVED_PATH)) /
-            // length_of_the_straight_path
-            double coefficient =
-                (current_distance - (std::abs(path.beta_0) * _radius)) / distance_straight;
-            // convex linear combination to find the vector along the straight path between the
-            // initial and final point https://en.wikiversity.org/wiki/Convex_combination
-            points_list.emplace_back(coefficient * final_terminal_point +
-                                     (1 - coefficient) * initial_terminal_point);
+            // adds start of straight section exactly once
+            if (!added_start_straight) {
+                points_list.emplace_back(initial_terminal_point);
+                added_start_straight = true;
+            }
+
+            //Checks to make sure this is the end of straight section and adds terminal point once
+            double next_distance = current_distance + _point_separation;
+            if (next_distance > total_distance - std::abs(path.beta_2) * _radius) {
+                if (!added_end_straight) {
+                    points_list.emplace_back(final_terminal_point);
+                    added_end_straight = true;
+                }
+            }
         }
     }
     points_list.emplace_back(XYZCoord{end.coord.x, end.coord.y, 0});
