@@ -72,7 +72,6 @@ include(${DEPS_DIRECTORY}/matplot/matplot.cmake)
 include(${DEPS_DIRECTORY}/protobuf/protobuf.cmake)
 include(${DEPS_DIRECTORY}/loguru/loguru.cmake)
 include(${DEPS_DIRECTORY}/imagemagick/imagemagick.cmake)
-include(${DEPS_DIRECTORY}/boost/boost.cmake)
 # =============================
 
 # =============================

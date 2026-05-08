@@ -159,3 +159,22 @@ std::vector<std::uint8_t> UDPClient::recvBody(const int mem_size, const int tota
     LOG_F(INFO, "Successfully reconstructed plane: %lu bytes", buf.size());
     return buf;
 }
+
+char UDPClient::recvPing() {
+    boost::system::error_code ec;
+    asio::ip::udp::endpoint sender_endpoint;
+    char c = 0;
+
+    if (!this->waitForData()) {
+        LOG_F(WARNING, "Timeout waiting for ping response");
+        return 0;
+    }
+
+    size_t n = this->socket_.receive_from(asio::buffer(&c, 1), sender_endpoint, 0, ec);
+    if (ec || n != 1) {
+        LOG_F(ERROR, "Failed to receive ping byte: %s", ec.message().c_str());
+        return 0;
+    }
+
+    return c;
+}

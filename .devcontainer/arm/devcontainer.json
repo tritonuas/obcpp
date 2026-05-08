@@ -1,0 +1,36 @@
+// See this page for reference of options: https://containers.dev/implementors/json_reference
+{
+	"name": "obcpp:arm",
+	"image": "ghcr.io/tritonuas/obcpp:arm",
+	// enable when need to connect over USB to pixhawk
+	// also: need to run obcpp with sudo or add tuas user to dialout group with
+	// 	   `sudo usermod -aG dialout tuas && newgrp && bash`
+	// "runArgs": ["--device=/dev/ttyACM0"], 
+
+	// Enable network mode host if on Linux and testing airdrop connectivity
+    // "appPort": [ "45906:45906/udp", "45907:45907/udp" ], // port forward airdrop ports for local testing
+	"runArgs": [
+		"--network=host"
+        // "--device=/dev/ttyACM0"
+	],
+
+	"extensions.verifySignature": false,
+
+	"customizations": {
+		"vscode": {
+			"settings": {
+				// Use bash instead of sh
+				"terminal.integrated.defaultProfile.linux": "bash"
+			},
+			"extensions": [
+				"ms-vscode.cpptools",
+				"twxs.cmake",
+				"me-dutour-mathieu.vscode-github-actions"
+			],
+      "C_Cpp.clang_format_style": "file"
+		}
+	}
+
+	// Use 'postCreateCommand' to run commands after the container is created.
+	// "postCreateCommand": ""
+}

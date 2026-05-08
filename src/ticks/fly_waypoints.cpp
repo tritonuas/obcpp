@@ -33,6 +33,7 @@ void FlyWaypointsTick::init() {
         LOG_F(ERROR, "Failed to reset Mission");
     }
 
+    state->decrementLapsRemaining();
     LOG_F(INFO, "Started FlyWaypointsTick, Laps Remaining: %d", state->getLapsRemaining());
 }
 
