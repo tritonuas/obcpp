@@ -34,12 +34,15 @@ Tick* PathGenTick::tick() {
 void PathGenTick::startPathGeneration() {
     this->paths_future = std::async(std::launch::async, [this]() {
         std::vector<GPSCoord> init_gps = generateInitialPath(this->state);
-        MissionPath init = MissionPath(MissionPath::Type::FORWARD, init_gps);
-        double angle1 = calculateFinalAngle(init, this->state);
-
+        
+        double angle1 = calculateFinalAngle(init_gps, this->state);
+        
         std::vector<GPSCoord> next_gps = generateNextWaypointPath(this->state, angle1);
-        MissionPath next = MissionPath(MissionPath::Type::FORWARD, next_gps);
-        double angle2 = calculateFinalAngle(next, this->state);
+        init_gps.reserve(init_gps.size() + (state->config.pathing.laps-1) * next_gps.size());
+        for (int i = 0; i < state->config.pathing.laps-1; i++) {
+            init_gps.insert(init_gps.end(), next_gps.begin(), next_gps.end());
+        }
+        double angle2 = calculateFinalAngle(next_gps, this->state);
 
         int num_waypoints_to_remove =
             std::ceil(this->state->config.pathing.upload_distance_buffer_m /
@@ -54,9 +57,9 @@ void PathGenTick::startPathGeneration() {
             coverage = MissionPath(MissionPath::Type::HOVER, coverage_gps,
                                    this->state->config.pathing.coverage.hover.hover_time_s);
         }
-
-        this->state->setInitPath(init);
-        this->state->setNextWaypointPath(next);
+        MissionPath waypoint = MissionPath(MissionPath::Type::FORWARD, init_gps);
+        this->state->setInitPath(waypoint);
+        this->state->setNextWaypointPath(waypoint); // TO DO: DELETE NEXT WAYPOINT PATH
         this->state->setCoveragePath(coverage);
     });
 }
