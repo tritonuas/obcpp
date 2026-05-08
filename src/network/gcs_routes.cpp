@@ -436,11 +436,13 @@ DEF_GCS_HANDLE(Post, targets, matched) {
     }
 
     auto lock_ptr = state->getTickLockPtr<CVLoiterTick>();
-    if (!lock_ptr.has_value()) {
-        LOG_RESPONSE(WARNING, "Not currently in Loiter Tick", BAD_REQUEST);
-        return;
+    if (lock_ptr.has_value()) {
+        lock_ptr->data->setStatus(CVLoiterTick::Status::Validated);
+    } else {
+        CVLoiterTick* cv_loiter_tick = new CVLoiterTick(state);
+        cv_loiter_tick->setStatus(CVLoiterTick::Status::Validated);
+        state->setTick(cv_loiter_tick);
     }
-    lock_ptr->data->setStatus(CVLoiterTick::Status::Validated);
 
     LOG_RESPONSE(INFO, "Finished setting targets (and thus loitering)", OK);
 }
