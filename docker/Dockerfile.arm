@@ -1,6 +1,12 @@
 FROM arm64v8/ubuntu:22.04
 
 ARG USERNAME=tuas USER_UID=1000 USER_GID=1000 DEBIAN_FRONTEND=noninteractive
+ARG PYTHON_VERSION
+ARG CMAKE_VERSION
+ARG BOOST_VERSION
+ARG LIBTORCH_VERSION
+ARG TORCHVISION_VERSION
+ARG MAVSDK_VERSION
 
 # Needed to spawn up a GUI in headless mode for matplotplus to work
 ENV QT_QPA_PLATFORM="vnc"
@@ -59,8 +65,8 @@ RUN apt-get install -y cpplint
 ENV PYENV_ROOT="/.pyenv"
 ENV PATH="$PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH"
 RUN curl https://pyenv.run | bash
-RUN pyenv install 3.11
-RUN pyenv global 3.11
+RUN pyenv install ${PYTHON_VERSION}
+RUN pyenv global ${PYTHON_VERSION}
 RUN pip3 install typing-extensions PyYAML cpplint numpy
 
 RUN echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
@@ -71,29 +77,33 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
     --mount=target=/var/cache/apt,type=cache,sharing=locked \
     rm -f /etc/apt/apt.conf.d/docker-clean \ 
     && apt-get update \
-    && wget https://github.com/Kitware/CMake/releases/download/v3.27.7/cmake-3.27.7-linux-aarch64.sh \
+    && wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-aarch64.sh \
       -q -O /tmp/cmake-install.sh \
       && chmod u+x /tmp/cmake-install.sh \
-      && mkdir /opt/cmake-3.24.1 \
-      && /tmp/cmake-install.sh --skip-license --prefix=/opt/cmake-3.24.1 \
+      && mkdir /opt/cmake-${CMAKE_VERSION} \
+      && /tmp/cmake-install.sh --skip-license --prefix=/opt/cmake-${CMAKE_VERSION} \
       && rm /tmp/cmake-install.sh \
-      && ln -s /opt/cmake-3.24.1/bin/* /usr/local/bin
+      && ln -s /opt/cmake-${CMAKE_VERSION}/bin/* /usr/local/bin
 
-# Download and install Boost 1.87.0
-RUN wget https://github.com/boostorg/boost/releases/download/boost-1.87.0/boost-1.87.0-b2-nodocs.tar.gz \
-    && tar -xzf boost-1.87.0-b2-nodocs.tar.gz \
-    && cd boost-1.87.0 \
+# Download and install Boost
+WORKDIR /tmp
+RUN wget https://github.com/boostorg/boost/releases/download/boost-${BOOST_VERSION}/boost-${BOOST_VERSION}-b2-nodocs.tar.gz \
+    && tar -xzf boost-${BOOST_VERSION}-b2-nodocs.tar.gz \
+    && cd boost-${BOOST_VERSION} \
     && ./bootstrap.sh \
     && ./b2 install \
-    && cd .. \
-    && rm -rf boost-1.87.0 boost-1.87.0-b2-nodocs.tar.gz
+    && cd /tmp \
+    && rm -rf boost-${BOOST_VERSION} boost-${BOOST_VERSION}-b2-nodocs.tar.gz
 
 # install MAVSDK from source
-RUN git clone --depth 1 https://github.com/mavlink/MAVSDK.git --branch v3.17.1 --single-branch \
+WORKDIR /tmp
+RUN git clone --depth 1 https://github.com/mavlink/MAVSDK.git --branch v${MAVSDK_VERSION} --single-branch \
     && cd MAVSDK \
     && git submodule update --init --recursive \
     && cmake -DCMAKE_BUILD_TYPE=Release -Bbuild/default -H. \
-    && cmake --build build/default -j4 --target install
+    && cmake --build build/default -j4 --target install \
+    && cd /tmp \
+    && rm -rf MAVSDK
 
 # the official docs say also these
 # https://docs.opencv.org/4.x/d7/d9f/tutorial_linux_install.html
@@ -102,13 +112,12 @@ RUN git clone --depth 1 https://github.com/mavlink/MAVSDK.git --branch v3.17.1 -
 
 # Make sure to install the same version of torchvision as the version of
 # libtorch we built in the Jetson
-ARG LIBTORCH_VERSION=2.3.1
-ARG LIBTORCH_INSTALL_DIR=/libtorch-tmp
-WORKDIR ${LIBTORCH_INSTALL_DIR}
-RUN git clone --recursive --branch v${LIBTORCH_VERSION} https://github.com/pytorch/pytorch.git
-RUN mkdir pytorch-build
-RUN cd pytorch-build && \
-    USE_CUDA=0 \
+WORKDIR /tmp
+RUN git clone --recursive --branch v${LIBTORCH_VERSION} https://github.com/pytorch/pytorch.git \
+    && cd pytorch \
+    && mkdir build \
+    && cd build \
+    && USE_CUDA=0 \
     USE_CUDNN=0 \
     USE_NCCL=0 \
     BUILD_TORCH=ON \
@@ -136,11 +145,10 @@ RUN cd pytorch-build && \
     -DBUILD_SHARED_LIBS:BOOL=ON \
     -DCMAKE_BUILD_TYPE:STRING=Release \
     -DPYTHON_EXECUTABLE:PATH=$(which python3) \
-    -DCMAKE_INSTALL_PREFIX=${LIBTORCH_INSTALL_DIR}/libtorch \
+    -DCMAKE_INSTALL_PREFIX=/opt/libtorch \
     -DBUILD_CUSTOM_PROTOBUF=OFF \
-    ../pytorch
-RUN cd pytorch-build && \
-    USE_CUDA=0 \
+    .. \
+    && USE_CUDA=0 \
     USE_CUDNN=0 \
     USE_NCCL=0 \
     BUILD_TORCH=ON \
@@ -151,28 +159,31 @@ RUN cd pytorch-build && \
     BUILD_CAFFE2_OPS=0 \
     BUILD_CAFFE2=0 \
     cmake --build . -j4 --target install \
-    && rm -f ${LIBTORCH_INSTALL_DIR}/libtorch/bin/protoc \
-    && rm -rf ${LIBTORCH_INSTALL_DIR}/libtorch/lib/libprotobuf* \
-    && rm -rf ${LIBTORCH_INSTALL_DIR}/libtorch/lib/libprotoc* \
-    && rm -rf ${LIBTORCH_INSTALL_DIR}/libtorch/include/google/protobuf
+    && rm -f /opt/libtorch/bin/protoc \
+    && rm -rf /opt/libtorch/lib/libprotobuf* \
+    && rm -rf /opt/libtorch/lib/libprotoc* \
+    && rm -rf /opt/libtorch/include/google/protobuf \
+    && cd /tmp \
+    && rm -rf pytorch
 
-ENV CMAKE_PREFIX_PATH="${LIBTORCH_INSTALL_DIR}/libtorch"
+ENV CMAKE_PREFIX_PATH="/opt/libtorch"
 
-ARG TORCHVISION_VERSION=0.18.1
-ARG TORCHVISION_INSTALL_DIR=/torchvision-tmp
-WORKDIR ${TORCHVISION_INSTALL_DIR} 
+WORKDIR /tmp 
 RUN wget "https://github.com/pytorch/vision/archive/refs/tags/v${TORCHVISION_VERSION}.zip" \
     && unzip "v${TORCHVISION_VERSION}.zip" \
-    && mkdir -p "${TORCHVISION_INSTALL_DIR}/vision-${TORCHVISION_VERSION}/build" \
-    && cd "${TORCHVISION_INSTALL_DIR}/vision-${TORCHVISION_VERSION}/build" \
+    && cd vision-${TORCHVISION_VERSION} \
+    && mkdir build \
+    && cd build \
     && cmake -DWITH_CUDA=off -D_GLIBCXX_USE_CXX11_ABI=1 -DCMAKE_BUILD_TYPE=Release .. \
     && make -j4 \
-    && make install
+    && make install \
+    && cd /tmp \
+    && rm -rf vision-${TORCHVISION_VERSION} v${TORCHVISION_VERSION}.zip
 
 RUN pip3 install gdown
 ENV PATH="${PATH}:/root/.local/bin"
 
 # login as non-root user
 USER $USERNAME
-
-ENV PATH="${PATH}:/home/${USERNAME}/.local/bin"
+ENV HOME="/home/${USERNAME}"
+ENV PATH="${PATH}:${HOME}/.local/bin"

@@ -2,8 +2,18 @@
 all: 
 	echo "select one of the other targets"
 
+include versions.env
+export
+
+BUILD_ARGS = --build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
+             --build-arg CMAKE_VERSION=$(CMAKE_VERSION) \
+             --build-arg BOOST_VERSION=$(BOOST_VERSION) \
+             --build-arg LIBTORCH_VERSION=$(LIBTORCH_VERSION) \
+             --build-arg TORCHVISION_VERSION=$(TORCHVISION_VERSION) \
+             --build-arg MAVSDK_VERSION=$(MAVSDK_VERSION)
+
 build-x86-image:
-	docker buildx build --platform linux/amd64 --tag ghcr.io/tritonuas/obcpp:x86 --file Dockerfile.x86 --load ..
+	docker buildx build --platform linux/amd64 --tag ghcr.io/tritonuas/obcpp:x86 $(BUILD_ARGS) --file Dockerfile.x86 --load ..
 
 # NOTE: the jetson Docker image is based on a custom base image we generate from  
 # https://github.com/dusty-nv/jetson-containers/
@@ -12,10 +22,10 @@ build-x86-image:
 # - Push that image to dockerhub as whatever tag the FROM line in our Dockerfile.jetson is
 # - Run the following build-jeston-image target
 build-jetson-image:
-	docker buildx build --platform linux/arm64 --tag ghcr.io/tritonuas/obcpp:jetson --file Dockerfile.jetson --load ..
+	docker buildx build --platform linux/arm64 --tag ghcr.io/tritonuas/obcpp:jetson $(BUILD_ARGS) --file Dockerfile.jetson --load ..
 
 build-arm-image:
-	docker buildx build --platform linux/arm64 --tag ghcr.io/tritonuas/obcpp:arm --file Dockerfile.arm --load ..
+	docker buildx build --platform linux/arm64 --tag ghcr.io/tritonuas/obcpp:arm $(BUILD_ARGS) --file Dockerfile.arm --load ..
 
 push-jetson-image:
 	docker push ghcr.io/tritonuas/obcpp:jetson
