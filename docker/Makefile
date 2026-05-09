@@ -3,7 +3,7 @@ all:
 	echo "select one of the other targets"
 
 build-x86-image:
-	docker buildx build --platform linux/amd64 --tag ghcr.io/tritonuas/obcpp:x86 --file Dockerfile.x86 ..
+	docker buildx build --platform linux/amd64 --tag ghcr.io/tritonuas/obcpp:x86 --file Dockerfile.x86 --load ..
 
 # NOTE: the jetson Docker image is based on a custom base image we generate from  
 # https://github.com/dusty-nv/jetson-containers/
@@ -12,10 +12,10 @@ build-x86-image:
 # - Push that image to dockerhub as whatever tag the FROM line in our Dockerfile.jetson is
 # - Run the following build-jeston-image target
 build-jetson-image:
-	docker buildx build --platform linux/arm64 --tag ghcr.io/tritonuas/obcpp:jetson --file Dockerfile.jetson ..
+	docker buildx build --platform linux/arm64 --tag ghcr.io/tritonuas/obcpp:jetson --file Dockerfile.jetson --load ..
 
 build-arm-image:
-	docker buildx build --platform linux/arm64 --tag ghcr.io/tritonuas/obcpp:arm --file Dockerfile.arm ..
+	docker buildx build --platform linux/arm64 --tag ghcr.io/tritonuas/obcpp:arm --file Dockerfile.arm --load ..
 
 push-jetson-image:
 	docker push ghcr.io/tritonuas/obcpp:jetson
