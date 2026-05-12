@@ -23,32 +23,17 @@ std::chrono::milliseconds FlySearchTick::getWait() const {
 }
 
 void FlySearchTick::init() {
+    // TODO: can we delete the following camera lines?
     this->state->getCamera()->startStreaming();
     this->airdrop_boundary = this->state->mission_params.getAirdropBoundary();
     this->last_photo_time = getUnixTime_ms();
 
-    // note: I didn't get around to testing if 1 would be a better value than 0
-    // to see if the mission start can be forced.
-    if (!this->state->getMav()->setMissionItem(1)) {
-        LOG_F(ERROR, "Failed to reset Mission");
-    }
-
     this->mission_started = this->state->getMav()->startMission();
-
-    // I have another one here because idk how startmIssion behaves exactly
-    if (!this->state->getMav()->setMissionItem(1)) {
-        LOG_F(ERROR, "Failed to reset Mission");
-    }
 
     LOG_F(INFO, "Total Waypoint #: %zu", this->state->getMav()->totalWaypoints());
 }
 
 Tick* FlySearchTick::tick() {
-    if (!this->mission_started) {
-        this->mission_started = this->state->getMav()->startMission();
-        return nullptr;
-    }
-
     bool isMissionFinished = state->getMav()->isMissionFinished();
 
     if (isMissionFinished) {

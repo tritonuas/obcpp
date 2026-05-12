@@ -18,22 +18,9 @@ FlyWaypointsTick::FlyWaypointsTick(std::shared_ptr<MissionState> state, Tick* ne
     : Tick(state, TickID::FlyWaypoints), next_tick(next_tick) {}
 
 void FlyWaypointsTick::init() {
-    // note: I didn't get around to testing if 1 would be a better value than 0
-    // to see if the mission start can be forced.
-    if (!this->state->getMav()->setMissionItem(1)) {
-        LOG_F(ERROR, "Failed to reset Mission");
-    }
-
     this->mission_started = this->state->getMav()->startMission();
-    state->getCamera()->startStreaming();
-    this->last_photo_time = getUnixTime_ms();
-
-    // I have another one here because idk how startmIssion behaves exactly
-    if (!this->state->getMav()->setMissionItem(1)) {
-        LOG_F(ERROR, "Failed to reset Mission");
-    }
-
     state->decrementLapsRemaining();
+
     LOG_F(INFO, "Started FlyWaypointsTick, Laps Remaining: %d", state->getLapsRemaining());
 }
 
@@ -80,7 +67,7 @@ Tick* FlyWaypointsTick::tick() {
         return nullptr;
     }
 
-    if (state->getLapsRemaining() > 1) {
+    if (state->getLapsRemaining() > 0) {
         return new MavUploadTick(
             this->state, new FlyWaypointsTick(this->state, new FlySearchTick(this->state)),
             state->getNextWaypointPath(), false);
