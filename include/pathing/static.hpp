@@ -310,7 +310,7 @@ generateNextWaypointPath(std::shared_ptr<MissionState> state, double start_angle
 std::vector<GPSCoord>
 generateSearchPath(std::shared_ptr<MissionState> state, double start_angle);
 
-double calculateFinalAngle(const std::vector<GPSCoord>& path, std::shared_ptr<MissionState> state);
+double calculateFinalAngle(const MissionPath& path, std::shared_ptr<MissionState> state);
 
 std::vector<GPSCoord>
 generateAirdropApproach(std::shared_ptr<MissionState> state, const GPSCoord &goal);

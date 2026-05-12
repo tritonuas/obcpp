@@ -81,13 +81,13 @@ Tick* FlyWaypointsTick::tick() {
     }
 
 
-    // if (state->getLapsRemaining() > 1) {
-    //     state->decrementLapsRemaining();
+    if (state->getLapsRemaining() > 1) {
+        state->decrementLapsRemaining();
 
-    //     return new MavUploadTick(
-    //         this->state, new FlyWaypointsTick(this->state, new FlySearchTick(this->state)),
-    //         state->getNextWaypointPath(), false);
-    // }
+        return new MavUploadTick(
+            this->state, new FlyWaypointsTick(this->state, new FlySearchTick(this->state)),
+            state->getNextWaypointPath(), false);
+    }
 
     return new MavUploadTick(
         this->state, new FlySearchTick(this->state),

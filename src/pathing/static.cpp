@@ -696,14 +696,14 @@ generateNextWaypointPath(std::shared_ptr<MissionState> state, double start_angle
     return output_coords;
 }
 
-double calculateFinalAngle(const std::vector<GPSCoord>& path, std::shared_ptr<MissionState> state) {
-    
-    if (path.size() < 2) {
+double calculateFinalAngle(const MissionPath& path, std::shared_ptr<MissionState> state) {
+    const auto& coords = path.get();
+    if (coords.size() < 2) {
         return 0.0;
     }
 
-    XYZCoord pt1 = state->getCartesianConverter()->toXYZ(path[path.size() - 2]);
-    XYZCoord pt2 = state->getCartesianConverter()->toXYZ(path[path.size() - 1]);
+    XYZCoord pt1 = state->getCartesianConverter()->toXYZ(coords[coords.size() - 2]);
+    XYZCoord pt2 = state->getCartesianConverter()->toXYZ(coords[coords.size() - 1]);
 
     return std::atan2(pt2.y - pt1.y, pt2.x - pt1.x);
 }
