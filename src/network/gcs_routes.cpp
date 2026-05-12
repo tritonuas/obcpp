@@ -7,7 +7,6 @@
 #include <string>
 #include <vector>
 
-
 #include <nlohmann/json.hpp>
 
 #include "core/mission_state.hpp"
@@ -16,7 +15,6 @@
 #include "pathing/mission_path.hpp"
 #include "protos/obc.pb.h"
 #include "ticks/airdrop_approach.hpp"
-#include "ticks/cv_loiter.hpp"
 #include "ticks/path_gen.hpp"
 #include "ticks/path_validate.hpp"
 #include "ticks/tick.hpp"
@@ -421,6 +419,7 @@ DEF_GCS_HANDLE(Post, targets, matched) {
 
         if (matched_results.data == nullptr) {
             LOG_S(ERROR) << "lockptr is null";
+            return;
         }
 
         AirdropTarget returned_matched_result;
@@ -435,14 +434,7 @@ DEF_GCS_HANDLE(Post, targets, matched) {
         }
     }
 
-    auto lock_ptr = state->getTickLockPtr<CVLoiterTick>();
-    if (lock_ptr.has_value()) {
-        lock_ptr->data->setStatus(CVLoiterTick::Status::Validated);
-    } else {
-        CVLoiterTick* cv_loiter_tick = new CVLoiterTick(state);
-        cv_loiter_tick->setStatus(CVLoiterTick::Status::Validated);
-        state->setTick(cv_loiter_tick);
-    }
+    state->setCVStatus(MissionState::CVStatus::Validated);
 
     LOG_RESPONSE(INFO, "Finished setting targets (and thus loitering)", OK);
 }

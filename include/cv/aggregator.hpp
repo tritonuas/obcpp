@@ -3,7 +3,6 @@
 
 #include <atomic>
 #include <cmath>
-#include <condition_variable>
 #include <functional>
 #include <future>
 #include <map>
@@ -70,9 +69,9 @@ class CVAggregator {
     Pipeline pipeline;
 
     std::mutex mut;
-    int num_worker_threads;
-    bool terminating;
-    std::condition_variable workers_done_cv;
+    std::atomic<int> num_worker_threads;
+    std::atomic<bool> accepting_images;
+    std::vector<std::thread> worker_threads;
 
     // For when too many pipelines are active at once
     std::queue<ImageData> overflow_queue;

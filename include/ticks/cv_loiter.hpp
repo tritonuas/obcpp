@@ -22,24 +22,10 @@
 
 class CVLoiterTick : public Tick {
  public:
-    /* 
-     * Status of the CV processing
-     * (Will be) Modified through GCS Manual Control
-    */
-    enum class Status {
-        None = 0,
-        Validated = 1,
-        Rejected = 2,
-    };
-
     explicit CVLoiterTick(std::shared_ptr<MissionState> state);
     std::chrono::milliseconds getWait() const override;
 
-    void setStatus(Status status);
     Tick* tick() override;
-
- private:
-    Status status;
 };
 
 #endif  // INCLUDE_TICKS_CV_LOITER_HPP_

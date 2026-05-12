@@ -98,6 +98,15 @@ class MissionState {
     std::shared_ptr<CVAggregator> getCV();
     void setCV(std::shared_ptr<CVAggregator> cv);
 
+    enum class CVStatus {
+        None = 0,
+        Validated = 1,
+        Rejected = 2,
+    };
+
+    CVStatus getCVStatus();
+    void setCVStatus(CVStatus status);
+
     /*
      * Gets a shared_ptr to the camera client, which lets you
      * take photos of ground targets.
@@ -144,6 +153,10 @@ class MissionState {
     std::shared_ptr<MavlinkClient> mav;
     std::shared_ptr<AirdropClient> airdrop;
     std::shared_ptr<CVAggregator> cv;
+
+    std::mutex cv_status_mut;
+    CVStatus cv_status = CVStatus::None;
+
     std::shared_ptr<CameraInterface> camera;
 
     std::mutex cv_mut;

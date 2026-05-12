@@ -8,8 +8,8 @@
 #include "utilities/logging.hpp"
 
 CVAggregator::CVAggregator(Pipeline&& p) : pipeline(std::move(p)) {
-    this->num_worker_threads = 0;
-    this->terminating = false;
+    this->num_worker_threads.store(0);
+    this->accepting_images.store(true);
     this->results = std::make_shared<CVResults>();
     this->matched_results = std::make_shared<MatchedResults>();
     this->cv_record = std::make_shared<std::map<int, IdentifiedTarget>>();
@@ -55,51 +55,54 @@ void CVAggregator::updateRecords(std::vector<IdentifiedTarget>& new_values) {
 void CVAggregator::runPipeline(const ImageData& image) {
     Lock lock(this->mut);
 
-    if (this->terminating) {
-        LOG_F(WARNING, "Terminating CVAggregator. Rejecting new pipeline run.");
+    if (!this->accepting_images.load()) {
+        LOG_F(WARNING, "CVAggregator is not accepting new images. Dropping pipeline run.");
         return;
     }
 
-    if (this->num_worker_threads >= MAX_CV_PIPELINES) {
+    const int active_workers = this->num_worker_threads.load();
+    if (active_workers >= MAX_CV_PIPELINES) {
         // If we have too many running workers, just queue the new image
         LOG_F(WARNING, "Too many CVAggregator workers (%d). Pushing to overflow queue...",
-              this->num_worker_threads);
+              active_workers);
         this->overflow_queue.push(image);
         LOG_F(WARNING, "Overflow queue size is now %ld", this->overflow_queue.size());
         return;
     }
 
     static int thread_counter = 0;
-    ++this->num_worker_threads;
+    this->num_worker_threads.fetch_add(1);
     try {
-        std::thread worker_thread(&CVAggregator::worker, this, image, ++thread_counter);
-        worker_thread.detach();
+        this->worker_threads.emplace_back(&CVAggregator::worker, this, image, ++thread_counter);
     } catch (const std::exception& err) {
-        --this->num_worker_threads;
-        if (this->num_worker_threads == 0) {
-            this->workers_done_cv.notify_all();
-        }
+        this->num_worker_threads.fetch_sub(1);
         LOG_F(ERROR, "Failed to spawn CVAggregator worker: %s", err.what());
     }
 }
 
 void CVAggregator::terminate() {
-    Lock lock(this->mut);
+    std::vector<std::thread> threads;
+    {
+        Lock lock(this->mut);
+        this->accepting_images.store(false);
+        const std::size_t dropped_images = this->overflow_queue.size();
+        std::queue<ImageData> empty_queue;
+        this->overflow_queue.swap(empty_queue);
 
-    if (this->terminating && this->num_worker_threads == 0) {
-        return;
+        if (this->worker_threads.empty()) {
+            return;
+        }
+
+        LOG_F(INFO, "Dropped %zu queued images. Waiting for %zu CVAggregator worker threads.",
+              dropped_images, this->worker_threads.size());
+        threads.swap(this->worker_threads);
     }
 
-    this->terminating = true;
-    const std::size_t dropped_images = this->overflow_queue.size();
-    std::queue<ImageData> empty_queue;
-    this->overflow_queue.swap(empty_queue);
-
-    LOG_F(INFO,
-          "Terminating CVAggregator. Dropped %zu queued images, waiting for %d active workers.",
-          dropped_images, this->num_worker_threads);
-
-    this->workers_done_cv.wait(lock, [this] { return this->num_worker_threads == 0; });
+    for (std::thread& worker_thread : threads) {
+        if (worker_thread.joinable()) {
+            worker_thread.join();
+        }
+    }
 }
 
 static std::atomic<int> global_run_id{0};
@@ -109,13 +112,6 @@ void CVAggregator::worker(ImageData image, int thread_num) {
     LOG_F(INFO, "New CVAggregator worker #%d spawned.", thread_num);
 
     while (true) {
-        {
-            Lock lock(this->mut);
-            if (this->terminating) {
-                break;
-            }
-        }
-
         // 1) Run the pipeline
         auto pipeline_results = this->pipeline.run(image);
 
@@ -133,15 +129,13 @@ void CVAggregator::worker(ImageData image, int thread_num) {
 
         {
             Lock lock(this->mut);
-            if (!this->terminating) {
-                this->results->runs.push_back(std::move(run));
-            }
+            this->results->runs.push_back(std::move(run));
         }
 
         // 3) If no more queued images, break
         {
             Lock lock(this->mut);
-            if (this->terminating || this->overflow_queue.empty()) {
+            if (this->overflow_queue.empty()) {
                 break;
             }
             image = std::move(this->overflow_queue.front());
@@ -151,13 +145,9 @@ void CVAggregator::worker(ImageData image, int thread_num) {
 
     // 4) Mark ourselves as finished
     {
-        Lock lock(this->mut);
+        const int active_workers = this->num_worker_threads.fetch_sub(1);
         LOG_F(INFO, "CVAggregator worker #%d terminating. Active threads: %d -> %d", thread_num,
-              this->num_worker_threads, this->num_worker_threads - 1);
-        --this->num_worker_threads;
-        if (this->num_worker_threads == 0) {
-            this->workers_done_cv.notify_all();
-        }
+              active_workers, active_workers - 1);
     }
 }
 
