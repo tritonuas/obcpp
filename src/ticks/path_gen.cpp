@@ -59,7 +59,7 @@ void PathGenTick::startPathGeneration() {
         }
         MissionPath waypoint = MissionPath(MissionPath::Type::FORWARD, init_gps);
         this->state->setInitPath(waypoint);
-        this->state->setNextWaypointPath(waypoint); // TO DO: DELETE NEXT WAYPOINT PATH
+        
         this->state->setCoveragePath(coverage);
     });
 }
