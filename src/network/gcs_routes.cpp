@@ -7,7 +7,6 @@
 #include <string>
 #include <vector>
 
-
 #include <nlohmann/json.hpp>
 
 #include "core/mission_state.hpp"
@@ -16,7 +15,6 @@
 #include "pathing/mission_path.hpp"
 #include "protos/obc.pb.h"
 #include "ticks/airdrop_approach.hpp"
-#include "ticks/cv_loiter.hpp"
 #include "ticks/path_gen.hpp"
 #include "ticks/path_validate.hpp"
 #include "ticks/tick.hpp"
@@ -414,29 +412,29 @@ DEF_GCS_HANDLE(Post, targets, matched) {
 
     LOG_S(INFO) << j_root;
 
-    LockPtr<MatchedResults> matched_results = state->getCV()->getMatchedResults();
+    state->getCV()->terminate();
 
-    if (matched_results.data == nullptr) {
-        LOG_S(ERROR) << "lockptr is null";
+    {
+        LockPtr<MatchedResults> matched_results = state->getCV()->getMatchedResults();
+
+        if (matched_results.data == nullptr) {
+            LOG_S(ERROR) << "lockptr is null";
+            return;
+        }
+
+        AirdropTarget returned_matched_result;
+
+        for (const auto& instance : j_root) {
+            LOG_S(INFO) << returned_matched_result.index();
+            google::protobuf::util::JsonStringToMessage(instance.dump(), &returned_matched_result);
+            LOG_S(WARNING) << returned_matched_result.index();
+            matched_results.data->matched_airdrop[returned_matched_result.index()] =
+                returned_matched_result;
+            LOG_S(ERROR) << returned_matched_result.index();
+        }
     }
 
-    AirdropTarget returned_matched_result;
-
-    for (const auto& instance : j_root) {
-        LOG_S(INFO) << returned_matched_result.index();
-        google::protobuf::util::JsonStringToMessage(instance.dump(), &returned_matched_result);
-        LOG_S(WARNING) << returned_matched_result.index();
-        matched_results.data->matched_airdrop[returned_matched_result.index()] =
-            returned_matched_result;
-        LOG_S(ERROR) << returned_matched_result.index();
-    }
-
-    auto lock_ptr = state->getTickLockPtr<CVLoiterTick>();
-    if (!lock_ptr.has_value()) {
-        LOG_RESPONSE(WARNING, "Not currently in Loiter Tick", BAD_REQUEST);
-        return;
-    }
-    lock_ptr->data->setStatus(CVLoiterTick::Status::Validated);
+    state->setCVStatus(MissionState::CVStatus::Validated);
 
     LOG_RESPONSE(INFO, "Finished setting targets (and thus loitering)", OK);
 }

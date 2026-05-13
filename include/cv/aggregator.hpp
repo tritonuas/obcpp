@@ -5,13 +5,13 @@
 #include <cmath>
 #include <functional>
 #include <future>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <queue>
 #include <thread>
 #include <unordered_map>
 #include <vector>
-#include <map>
 
 #include "cv/pipeline.hpp"
 #include "cv/utilities.hpp"
@@ -42,6 +42,9 @@ class CVAggregator {
     // Spawn a thread to run the pipeline on the given imageData
     void runPipeline(const ImageData& image);
 
+    // Stop accepting work, discard queued images, and wait for active workers to finish
+    void terminate();
+
     // Lockable pointer to retrieve aggregator results
     LockPtr<CVResults> getResults();
 
@@ -66,7 +69,9 @@ class CVAggregator {
     Pipeline pipeline;
 
     std::mutex mut;
-    int num_worker_threads;
+    std::atomic<int> num_worker_threads;
+    std::atomic<bool> accepting_images;
+    std::vector<std::thread> worker_threads;
 
     // For when too many pipelines are active at once
     std::queue<ImageData> overflow_queue;
