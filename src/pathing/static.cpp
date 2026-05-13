@@ -619,13 +619,14 @@ RRTPoint getCurrentLoc(std::shared_ptr<MissionState> state) {
     return RRTPoint(start_xyz, start_angle);
 }
 
-double calculateFinalAngle(const MissionPath& path,
-                           const std::optional<CartesianConverter<GPSProtoVec>> cartesianConverter) {
+double calculateFinalAngle(
+    const MissionPath& path,
+    const std::optional<CartesianConverter<GPSProtoVec>> cartesianConverter) {
 
     const auto& coords = path.get();
     if (coords.size() < 2) {
-        return 0.0; // should probably either have angle between now and point
-                    // or use assert for force size >=2
+        return 0.0;     // should probably either have angle between now and point
+                        // or use assert for force size >=2
     }
 
     XYZCoord pt1 = cartesianConverter->toXYZ(coords[coords.size() - 2]);
