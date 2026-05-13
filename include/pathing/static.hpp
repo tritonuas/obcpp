@@ -302,6 +302,16 @@ class AirdropApproachPathing {
  */
 RRTPoint getCurrentLoc(std::shared_ptr<MissionState> state);
 
+/**
+ * Calculates the approximate angle of exit out of a waypoint path
+ * 
+ * @param path  ==> the waypoint path
+ * @param state ==> mission state
+ * @return          angle of exit (+x-axis is 0 deg, ccw is positive)
+ */
+double calculateFinalAngle(const MissionPath& path,
+                           const std::optional<CartesianConverter<GPSProtoVec>> cartesianConverter);
+
 std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state);
 
 std::vector<GPSCoord>
@@ -309,8 +319,6 @@ generateNextWaypointPath(std::shared_ptr<MissionState> state, double start_angle
 
 std::vector<GPSCoord>
 generateSearchPath(std::shared_ptr<MissionState> state, double start_angle);
-
-double calculateFinalAngle(const MissionPath& path, std::shared_ptr<MissionState> state);
 
 std::vector<GPSCoord>
 generateAirdropApproach(std::shared_ptr<MissionState> state, const GPSCoord &goal);

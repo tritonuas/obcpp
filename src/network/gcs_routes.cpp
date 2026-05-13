@@ -122,6 +122,7 @@ DEF_GCS_HANDLE(Post, mission) {
     state->setCartesianConverter(CartesianConverter(mission.flightboundary()));
 
     auto err = state->mission_params.setMission(mission, state->getCartesianConverter().value());
+    std::cout << "Hello" << std::endl;
     if (err.has_value()) {
         LOG_RESPONSE(WARNING, err.value().c_str(), BAD_REQUEST);
     } else {

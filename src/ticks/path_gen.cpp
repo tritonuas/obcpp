@@ -35,11 +35,11 @@ void PathGenTick::startPathGeneration() {
     this->paths_future = std::async(std::launch::async, [this]() {
         std::vector<GPSCoord> init_gps = generateInitialPath(this->state);
         MissionPath init = MissionPath(MissionPath::Type::FORWARD, init_gps);
-        double angle1 = calculateFinalAngle(init, this->state);
+        double angle1 = calculateFinalAngle(init, this->state->getCartesianConverter());
 
         std::vector<GPSCoord> next_gps = generateNextWaypointPath(this->state, angle1);
         MissionPath next = MissionPath(MissionPath::Type::FORWARD, next_gps);
-        double angle2 = calculateFinalAngle(next, this->state);
+        double angle2 = calculateFinalAngle(next, this->state->getCartesianConverter());
 
         int num_waypoints_to_remove =
             std::ceil(this->state->config.pathing.upload_distance_buffer_m /

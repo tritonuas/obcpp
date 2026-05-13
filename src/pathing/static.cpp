@@ -619,6 +619,21 @@ RRTPoint getCurrentLoc(std::shared_ptr<MissionState> state) {
     return RRTPoint(start_xyz, start_angle);
 }
 
+double calculateFinalAngle(const MissionPath& path,
+                           const std::optional<CartesianConverter<GPSProtoVec>> cartesianConverter) {
+
+    const auto& coords = path.get();
+    if (coords.size() < 2) {
+        return 0.0; // should probably either have angle between now and point
+                    // or use assert for force size >=2
+    }
+
+    XYZCoord pt1 = cartesianConverter->toXYZ(coords[coords.size() - 2]);
+    XYZCoord pt2 = cartesianConverter->toXYZ(coords[coords.size() - 1]);
+
+    return std::atan2(pt2.y - pt1.y, pt2.x - pt1.x);
+}
+
 std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
     // first waypoint is start
 
@@ -694,18 +709,6 @@ generateNextWaypointPath(std::shared_ptr<MissionState> state, double start_angle
     }
 
     return output_coords;
-}
-
-double calculateFinalAngle(const MissionPath& path, std::shared_ptr<MissionState> state) {
-    const auto& coords = path.get();
-    if (coords.size() < 2) {
-        return 0.0;
-    }
-
-    XYZCoord pt1 = state->getCartesianConverter()->toXYZ(coords[coords.size() - 2]);
-    XYZCoord pt2 = state->getCartesianConverter()->toXYZ(coords[coords.size() - 1]);
-
-    return std::atan2(pt2.y - pt1.y, pt2.x - pt1.x);
 }
 
 std::vector<GPSCoord> generateSearchPath(std::shared_ptr<MissionState> state, double start_angle) {
