@@ -115,6 +115,8 @@ class MissionState {
     void setMappingIsDone(bool isDone);
 
 
+
+
     MissionParameters mission_params;  // has its own mutex
 
     OBCConfig config;
@@ -142,6 +144,8 @@ class MissionState {
     std::shared_ptr<AirdropClient> airdrop;
     std::shared_ptr<CVAggregator> cv;
     std::shared_ptr<CameraInterface> camera;
+
+    std::chrono::milliseconds most_recent_picture;
 
     std::thread captureThread;
 

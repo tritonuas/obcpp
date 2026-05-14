@@ -79,8 +79,9 @@ Tick* FlySearchTick::tick() {
 
             if (this->curr_mission_item != curr_waypoint) {
                 LOG_F(INFO, "FlySearch Area reached (%zu, %d)", this->curr_mission_item, curr_waypoint);
+                /*
                 for (int i = 0; i < this->state->config.pathing.coverage.hover.pictures_per_stop; i++) {
-                auto photo = this->state->getCamera()->takePicture(500ms, this->state->getMav());
+                    auto photo = this->state->getCamera()->takePicture(500ms, this->state->getMav());
                     if (state->config.camera.save_images_to_file) {
                         photo->saveToFile(state->config.camera.save_dir);
                     }
@@ -92,6 +93,7 @@ Tick* FlySearchTick::tick() {
                         this->state->getCV()->runPipeline(photo.value());
                     }
                 }
+                */
                 this->curr_mission_item = curr_waypoint;
 
                 return nullptr;

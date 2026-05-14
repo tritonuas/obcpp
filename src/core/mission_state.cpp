@@ -99,6 +99,8 @@ void MissionState::setAirdropPath(const MissionPath& airdrop_path) {
     this->airdrop_path = airdrop_path;
 }
 
+
+
 void MissionState::zoneHandler(const std::chrono::milliseconds& interval,
                         std::shared_ptr<MavlinkClient> mavlinkClient){
     //TODO: find a way to handle stopping the while loop when stopThread hits
@@ -134,13 +136,16 @@ void MissionState::zoneHandler(const std::chrono::milliseconds& interval,
                 }
             }
         }
+        std::this_thread::sleep_for(interval);
     }
 }
 void MissionState::initThread(const std::chrono::milliseconds& interval,
     std::shared_ptr<MavlinkClient> mavlinkClient){
     this->cameraThreadActive=true;
-    this->captureThread = std::thread(zoneHandler, interval,
-        mavlinkClient);
+    this->captureThread = std::thread([this, interval, mavlinkClient]() {
+        this->zoneHandler(interval, mavlinkClient);
+    });
+
 }
 void MissionState::stopThread(){
     this->captureThread.join();

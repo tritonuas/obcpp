@@ -24,6 +24,8 @@ std::chrono::milliseconds FlyWaypointsTick::getWait() const {
 }
 
 Tick* FlyWaypointsTick::tick() {
+
+    /*
     auto [lat_deg, lng_deg] = state->getMav()->latlng_deg();
     double altitude_agl_m = state->getMav()->altitude_agl_m();
     GPSCoord current_pos = makeGPSCoord(lat_deg, lng_deg, altitude_agl_m);
@@ -56,6 +58,7 @@ Tick* FlyWaypointsTick::tick() {
             // Stop camera/CV operations
         }
     }
+    */
 
     // TODO: Eventually implement dynamic avoidance so we dont crash brrr
     bool isMissionFinished = state->getMav()->isMissionFinished();
