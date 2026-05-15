@@ -82,6 +82,9 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
     SET_CONFIG_OPT(cv, detection_threshold);
     SET_CONFIG_OPT(cv, input_width);
     SET_CONFIG_OPT(cv, input_height);
+    SET_CONFIG_OPT(cv, sample_every_n_images);
+    SET_CONFIG_OPT(cv, image_listener_poll_interval_ms);
+    SET_CONFIG_OPT(cv, image_listener_settle_time_ms);
     SET_CONFIG_OPT_VARIANT(AirdropDropMethod, pathing, approach, drop_method);
     SET_CONFIG_OPT(pathing, approach, drop_angle_rad);
     SET_CONFIG_OPT(pathing, approach, drop_altitude_m);

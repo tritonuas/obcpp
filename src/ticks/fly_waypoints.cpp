@@ -57,15 +57,12 @@ Tick* FlyWaypointsTick::tick() {
             auto now = getUnixTime_ms();
             if ((now - this->last_photo_time) >= 300ms) {
                 auto photo = this->state->getCamera()->takePicture(100ms, this->state->getMav());
-                if (state->config.camera.save_images_to_file) {
-                    photo->saveToFile(state->config.camera.save_dir);
-                }
-
                 if (photo.has_value()) {
                     // Update the last photo time
                     this->last_photo_time = getUnixTime_ms();
-                    // Run the pipeline on the photo
-                    this->state->getCV()->runPipeline(photo.value());
+                    if (state->config.camera.save_images_to_file) {
+                        photo->saveToFile(state->config.camera.save_dir);
+                    }
                 }
             }
         } else {

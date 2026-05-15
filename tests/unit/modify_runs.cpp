@@ -1,4 +1,6 @@
 #include <gtest/gtest.h>
+#include <filesystem>
+
 #include "cv/aggregator.hpp"
 TEST(ModifyRuns, OverWriteData)
 {
@@ -9,7 +11,11 @@ TEST(ModifyRuns, OverWriteData)
                           "",
                           false);
     Pipeline pipeline(params);
-    CVAggregator aggregator(std::move(pipeline));
+    CVAggregator aggregator(std::move(pipeline),
+                            std::filesystem::temp_directory_path().string(),
+                            1,
+                            500,
+                            500);
 
     std::vector<IdentifiedTarget> updated;
     {

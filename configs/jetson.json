@@ -56,7 +56,10 @@
         "yolo_model_dir": "/obcpp/models/yolo-wittner-v2.onnx",
         "detection_threshold": 0.35,
         "input_width": 1024,
-        "input_height": 1024
+        "input_height": 1024,
+        "sample_every_n_images": 10,
+        "image_listener_poll_interval_ms": 500,
+        "image_listener_settle_time_ms": 200
     },
     "camera": {
         "_comment": "See CameraConfig struct in datatypes.hpp for detailed explanations",
