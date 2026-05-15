@@ -57,7 +57,7 @@
         "detection_threshold": 0.0001,
         "input_width": 1024,
         "input_height": 1024,
-        "sample_every_n_images": 1,
+        "sample_every_n_images": 10,
         "image_listener_poll_interval_ms": 500,
         "image_listener_settle_time_ms": 200
     },
