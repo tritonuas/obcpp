@@ -74,15 +74,12 @@ Tick* FlySearchTick::tick() {
     LOG_F(INFO, "FlySearch Area reached (%zu, %d)", this->curr_mission_item, curr_waypoint);
         for (int i = 0; i < this->state->config.pathing.coverage.hover.pictures_per_stop; i++) {
         auto photo = this->state->getCamera()->takePicture(500ms, this->state->getMav());
-            if (state->config.camera.save_images_to_file) {
-                photo->saveToFile(state->config.camera.save_dir);
-            }
-
             if (photo.has_value()) {
                 // Update the last photo time
                 this->last_photo_time = getUnixTime_ms();
-                // Run the pipeline on the photo
-                this->state->getCV()->runPipeline(photo.value());
+                if (state->config.camera.save_images_to_file) {
+                    photo->saveToFile(state->config.camera.save_dir);
+                }
             }
         }
         this->curr_mission_item = curr_waypoint;

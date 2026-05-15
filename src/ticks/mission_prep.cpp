@@ -36,9 +36,13 @@ Tick* MissionPrepTick::tick() {
         LOG_F(INFO, "Yolo Model: %s", yolo_model_dir.c_str());
 
         // Make a CVAggregator instance and set it in the state
-        this->state->setCV(std::make_shared<CVAggregator>(Pipeline(PipelineParams(
+        auto aggregator = std::make_shared<CVAggregator>(Pipeline(PipelineParams(
             yolo_model_dir, this->state->config.cv.detection_threshold,
-            this->state->config.cv.input_width, this->state->config.cv.input_height))));
+            this->state->config.cv.input_width, this->state->config.cv.input_height)),
+            this->state->config.camera.save_dir, this->state->config.cv.sample_every_n_images,
+            this->state->config.cv.image_listener_poll_interval_ms,
+            this->state->config.cv.image_listener_settle_time_ms);
+        this->state->setCV(aggregator);
 
         this->state->setMappingIsDone(false);
         return new PathGenTick(this->state);

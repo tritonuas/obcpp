@@ -3,12 +3,15 @@
 
 #include <atomic>
 #include <cmath>
+#include <filesystem>
 #include <functional>
 #include <future>
 #include <map>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <queue>
+#include <string>
 #include <thread>
 #include <unordered_map>
 #include <vector>
@@ -36,11 +39,23 @@ struct MatchedResults {
 
 class CVAggregator {
  public:
+    // Integration-test constructor
     explicit CVAggregator(Pipeline&& p);
+
+    // Mission constructor
+    CVAggregator(Pipeline&& p, const std::string& image_dir, int sample_every_n_images,
+                 int image_listener_poll_interval_ms, int image_listener_settle_time_ms);
     ~CVAggregator();
 
     // Spawn a thread to run the pipeline on the given imageData
     void runPipeline(const ImageData& image);
+
+    // Watch a camera save directory and submit every nth saved image to the pipeline
+    void startListening(const std::string& image_dir, int sample_every_n_images,
+                        int image_listener_poll_interval_ms, int image_listener_settle_time_ms);
+
+    // Stop watching the camera save directory
+    void stopListening();
 
     // Stop accepting work, discard queued images, and wait for active workers to finish
     void terminate();
@@ -65,13 +80,20 @@ class CVAggregator {
     std::shared_ptr<std::map<int, IdentifiedTarget>> cv_record;
 
     void worker(ImageData image, int thread_num);
+    void listenForImages(std::filesystem::path image_dir, int sample_every_n_images,
+                         int image_listener_poll_interval_ms, int image_listener_settle_time_ms);
+    std::optional<ImageData> loadImageData(const std::filesystem::path& image_path) const;
+    std::optional<ImageTelemetry> loadTelemetry(
+        const std::filesystem::path& telemetry_path) const;
 
     Pipeline pipeline;
 
     std::mutex mut;
     std::atomic<int> num_worker_threads;
     std::atomic<bool> accepting_images;
+    std::atomic<bool> listening_images;
     std::vector<std::thread> worker_threads;
+    std::thread listener_thread;
 
     // For when too many pipelines are active at once
     std::queue<ImageData> overflow_queue;
