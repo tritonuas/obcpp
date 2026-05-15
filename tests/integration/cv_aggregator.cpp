@@ -42,7 +42,7 @@ int main() {
     Pipeline pipeline(params);
 
     // Build the aggregator by transferring ownership of the pipeline
-    CVAggregator aggregator(std::move(pipeline));
+    CVAggregator aggregator(std::move(pipeline), imagesDirectory, 1, 500, 500);
 
     // Create a mock telemetry object (using the same telemetry for simplicity)
     ImageTelemetry mockTelemetry{38.31568, 76.55006, 75, 20, 100, 5, 3};

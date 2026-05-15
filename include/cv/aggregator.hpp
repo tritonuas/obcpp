@@ -39,10 +39,6 @@ struct MatchedResults {
 
 class CVAggregator {
  public:
-    // Integration-test constructor
-    explicit CVAggregator(Pipeline&& p);
-
-    // Mission constructor
     CVAggregator(Pipeline&& p, const std::string& image_dir, int sample_every_n_images,
                  int image_listener_poll_interval_ms, int image_listener_settle_time_ms);
     ~CVAggregator();

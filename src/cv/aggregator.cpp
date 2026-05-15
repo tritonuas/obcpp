@@ -38,7 +38,10 @@ std::vector<std::filesystem::path> listImageFiles(const std::filesystem::path& i
 
 }  // namespace
 
-CVAggregator::CVAggregator(Pipeline&& p) : pipeline(std::move(p)) {
+CVAggregator::CVAggregator(
+    Pipeline&& p, const std::string& image_dir, int sample_every_n_images,
+    int image_listener_poll_interval_ms, int image_listener_settle_time_ms)
+    : pipeline(std::move(p)) {
     this->num_worker_threads.store(0);
     this->accepting_images.store(true);
     this->listening_images.store(false);
@@ -59,12 +62,7 @@ CVAggregator::CVAggregator(Pipeline&& p) : pipeline(std::move(p)) {
 
     dummy.set_index(AirdropType::Beacon);
     this->matched_results->matched_airdrop[AirdropType::Beacon] = dummy;
-}
 
-CVAggregator::CVAggregator(
-    Pipeline&& p, const std::string& image_dir, int sample_every_n_images,
-    int image_listener_poll_interval_ms, int image_listener_settle_time_ms)
-    : CVAggregator(std::move(p)) {
     this->startListening(image_dir, sample_every_n_images, image_listener_poll_interval_ms,
                          image_listener_settle_time_ms);
 }
