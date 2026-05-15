@@ -3,6 +3,7 @@
 #include <chrono>
 #include <future>
 #include <memory>
+#include <thread>
 
 #include "pathing/static.hpp"
 #include "ticks/fly_search.hpp"
@@ -18,7 +19,10 @@ FlyWaypointsTick::FlyWaypointsTick(std::shared_ptr<MissionState> state, Tick* ne
     : Tick(state, TickID::FlyWaypoints), next_tick(next_tick) {}
 
 void FlyWaypointsTick::init() {
-    this->mission_started = this->state->getMav()->startMission();
+    while (!this->mission_started) {
+        this->mission_started = this->state->getMav()->startMission();
+        std::this_thread::sleep_for(100ms);
+    }
     state->decrementLapsRemaining();
 
     LOG_F(INFO, "Started FlyWaypointsTick, Laps Remaining: %d", state->getLapsRemaining());

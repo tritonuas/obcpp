@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <chrono>
+#include <thread>
 
 #include "ticks/ids.hpp"
 #include "utilities/common.hpp"
@@ -23,17 +24,20 @@ std::chrono::milliseconds FlySearchTick::getWait() const {
 }
 
 void FlySearchTick::init() {
-    // TODO: can we delete the following camera lines?
     this->state->getCamera()->startStreaming();
     this->airdrop_boundary = this->state->mission_params.getAirdropBoundary();
     this->last_photo_time = getUnixTime_ms();
 
-    this->mission_started = this->state->getMav()->startMission();
+    while (!this->mission_started) {
+        this->mission_started = this->state->getMav()->startMission();
+        std::this_thread::sleep_for(100ms);
+    }
 
     LOG_F(INFO, "Total Waypoint #: %zu", this->state->getMav()->totalWaypoints());
 }
 
 Tick* FlySearchTick::tick() {
+
     bool isMissionFinished = state->getMav()->isMissionFinished();
 
     if (isMissionFinished) {
