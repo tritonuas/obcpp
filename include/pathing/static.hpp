@@ -309,8 +309,9 @@ RRTPoint getCurrentLoc(std::shared_ptr<MissionState> state);
  * @param state ==> mission state
  * @return          angle of exit (+x-axis is 0 deg, ccw is positive)
  */
-double calculateFinalAngle(const MissionPath& path,
-                           const std::optional<CartesianConverter<GPSProtoVec>> cartesianConverter);
+double calculateFinalAngle(
+    const MissionPath& path,
+    const std::optional<CartesianConverter<GPSProtoVec>>& cartesianConverter);
 
 std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state);
 

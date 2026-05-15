@@ -621,7 +621,7 @@ RRTPoint getCurrentLoc(std::shared_ptr<MissionState> state) {
 
 double calculateFinalAngle(
     const MissionPath& path,
-    const std::optional<CartesianConverter<GPSProtoVec>> cartesianConverter) {
+    const std::optional<CartesianConverter<GPSProtoVec>>& cartesianConverter) {
 
     const auto& coords = path.get();
     if (coords.size() < 2) {
