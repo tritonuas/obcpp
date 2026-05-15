@@ -18,6 +18,7 @@ PathGenTick::PathGenTick(std::shared_ptr<MissionState> state) : Tick(state, Tick
 std::chrono::milliseconds PathGenTick::getWait() const { return PATH_GEN_TICK_WAIT; }
 
 void PathGenTick::init() {
+    assert(this->state->getCartesianConverter().has_value());
     startPathGeneration();
 }
 
