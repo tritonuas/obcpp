@@ -33,19 +33,24 @@ Tick* PathGenTick::tick() {
 
 void PathGenTick::startPathGeneration() {
     this->paths_future = std::async(std::launch::async, [this]() {
+        const int NUM_WAYPOINTS_TO_REMOVE =
+            std::floor(this->state->config.pathing.upload_distance_buffer_m /
+                      this->state->config.pathing.dubins.point_separation);
+
         std::vector<GPSCoord> init_gps = generateInitialPath(this->state);
         MissionPath init = MissionPath(MissionPath::Type::FORWARD, init_gps);
         double angle1 = calculateFinalAngle(init, this->state->getCartesianConverter());
 
         std::vector<GPSCoord> next_gps = generateNextWaypointPath(this->state, angle1);
+        assert(next_gps.size() >= NUM_WAYPOINTS_TO_REMOVE);
+        next_gps.erase(next_gps.begin(), next_gps.begin() + NUM_WAYPOINTS_TO_REMOVE);;
         MissionPath next = MissionPath(MissionPath::Type::FORWARD, next_gps);
         double angle2 = calculateFinalAngle(next, this->state->getCartesianConverter());
 
-        int num_waypoints_to_remove =
-            std::ceil(this->state->config.pathing.upload_distance_buffer_m /
-                      this->state->config.pathing.dubins.point_separation);
-         std::vector<GPSCoord> coverage_gps = generateSearchPath(this->state, angle2);
-         coverage_gps.erase(coverage_gps.begin(), coverage_gps.begin() + num_waypoints_to_remove);;
+
+        std::vector<GPSCoord> coverage_gps = generateSearchPath(this->state, angle2);
+        assert(coverage_gps.size() >= NUM_WAYPOINTS_TO_REMOVE);
+        coverage_gps.erase(coverage_gps.begin(), coverage_gps.begin() + NUM_WAYPOINTS_TO_REMOVE);;
 
         MissionPath coverage;
         if (this->state->config.pathing.coverage.method == AirdropCoverageMethod::Enum::FORWARD) {
