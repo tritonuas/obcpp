@@ -24,7 +24,6 @@ std::chrono::milliseconds FlyWaypointsTick::getWait() const {
 }
 
 Tick* FlyWaypointsTick::tick() {
-
     /*
     auto [lat_deg, lng_deg] = state->getMav()->latlng_deg();
     double altitude_agl_m = state->getMav()->altitude_agl_m();

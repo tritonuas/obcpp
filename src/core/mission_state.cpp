@@ -102,11 +102,11 @@ void MissionState::setAirdropPath(const MissionPath& airdrop_path) {
 
 
 void MissionState::zoneHandler(const std::chrono::milliseconds& interval,
-                        std::shared_ptr<MavlinkClient> mavlinkClient){
-    //TODO: find a way to handle stopping the while loop when stopThread hits
+                        std::shared_ptr<MavlinkClient> mavlinkClient) {
+    // TODO: find a way to handle stopping the while loop when stopThread hits
     std::chrono::milliseconds last_photo_time = getUnixTime_ms();
-    while(this->cameraThreadActive){
-        auto [lat_deg, lng_deg] =this->getMav()->latlng_deg();
+    while (this->cameraThreadActive) {
+        auto [lat_deg, lng_deg] = this->getMav()->latlng_deg();
         double altitude_agl_m = this->getMav()->altitude_agl_m();
         GPSCoord current_pos = makeGPSCoord(lat_deg, lng_deg, altitude_agl_m);
         // Get the CartesianConverter (which is already initialized from mission boundaries)
@@ -118,7 +118,7 @@ void MissionState::zoneHandler(const std::chrono::milliseconds& interval,
             Polygon airdrop_boundary = this->mission_params.getAirdropBoundary();
             // Check if we're inside the airdrop zone
             bool in_zone = Environment::isPointInPolygon(airdrop_boundary, current_xyz);
-            if(in_zone){
+            if (in_zone) {
                 auto now = getUnixTime_ms();
                 if ((now - last_photo_time) >= 300ms) {
                     auto photo = this->getCamera()->takePicture(100ms, this->getMav());
@@ -126,8 +126,8 @@ void MissionState::zoneHandler(const std::chrono::milliseconds& interval,
                         photo->saveToFile(this->config.camera.save_dir);
                     }
 
-                    if (photo.has_value()&&((this->getTickID()==TickID::FlySearch)||
-                        (this->getTickID()==TickID::CVLoiter))) {
+                    if (photo.has_value()&&((this->getTickID() == TickID::FlySearch)||
+                        (this->getTickID() == TickID::CVLoiter))) {
                         // Update the last photo time
                         // Run the pipeline on the photo
                         this->getCV()->runPipeline(photo.value());
@@ -140,14 +140,13 @@ void MissionState::zoneHandler(const std::chrono::milliseconds& interval,
     }
 }
 void MissionState::initThread(const std::chrono::milliseconds& interval,
-    std::shared_ptr<MavlinkClient> mavlinkClient){
-    this->cameraThreadActive=true;
+    std::shared_ptr<MavlinkClient> mavlinkClient) {
+    this->cameraThreadActive = true;
     this->captureThread = std::thread([this, interval, mavlinkClient]() {
         this->zoneHandler(interval, mavlinkClient);
     });
-
 }
-void MissionState::stopThread(){
+void MissionState::stopThread() {
     this->captureThread.join();
     this->cameraThreadActive = false;
 }

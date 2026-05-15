@@ -67,18 +67,18 @@ Tick* FlySearchTick::tick() {
     // if we were doing forward pathing would probably want to make it
     // take photos at an interval but only when over the zone
     // Convert GPS to local XYZ coords
-    if(converter){
+    if (converter) {
         XYZCoord current_xyz = converter->toXYZ(current_pos);
         // Get the airdrop boundary polygon
         Polygon airdrop_boundary = state->mission_params.getAirdropBoundary();
         // Check if we're inside the airdrop zone
         bool in_zone = Environment::isPointInPolygon(airdrop_boundary, current_xyz);
-        
-        if(in_zone){
+        if (in_zone) {
             auto curr_waypoint = this->state->getMav()->curr_waypoint();
 
             if (this->curr_mission_item != curr_waypoint) {
-                LOG_F(INFO, "FlySearch Area reached (%zu, %d)", this->curr_mission_item, curr_waypoint);
+                LOG_F(INFO, "FlySearch Area reached (%zu, %d)",
+                    this->curr_mission_item, curr_waypoint);
                 /*
                 for (int i = 0; i < this->state->config.pathing.coverage.hover.pictures_per_stop; i++) {
                     auto photo = this->state->getCamera()->takePicture(500ms, this->state->getMav());
@@ -100,7 +100,6 @@ Tick* FlySearchTick::tick() {
             }
         }
     }
-    
 
     return nullptr;
 }
