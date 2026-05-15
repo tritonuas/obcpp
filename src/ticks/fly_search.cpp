@@ -37,7 +37,6 @@ void FlySearchTick::init() {
 }
 
 Tick* FlySearchTick::tick() {
-
     bool isMissionFinished = state->getMav()->isMissionFinished();
 
     if (isMissionFinished) {
