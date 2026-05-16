@@ -186,7 +186,7 @@ MavlinkClient::MavlinkClient(OBCConfig config)
     });
 
     this->telemetry->subscribe_heading([this](mavsdk::Telemetry::Heading heading) {
-        VLOG_F(DEBUG, "Heading: %d", heading.heading_deg);
+        VLOG_F(DEBUG, "Heading: %f deg", heading.heading_deg);
         Lock lock(this->data_mut);
         this->data.heading_deg = heading.heading_deg;
     });
@@ -511,12 +511,27 @@ bool MavlinkClient::startMission() {
     return true;
 }
 
+/**
+ * Clears the existng mission
+ */
+bool MavlinkClient::clearMission() {
+    LOG_F(INFO, "Sending clear mission command");
+    auto start_result = this->mission->clear_mission();
+    if (start_result != mavsdk::MissionRaw::Result::Success) {
+        LOG_S(ERROR) << "FAIL: Mission could not be cleared " << start_result;
+        return false;
+    }
+
+    LOG_F(INFO, "Mission Cleared!");
+    return true;
+}
+
 void MavlinkClient::KILL_THE_PLANE_DO_NOT_CALL_THIS_ACCIDENTALLY() {
     LOG_F(ERROR, "KILLING THE PLANE: SETTING AFS_TERMINATE TO 1");
     auto result = this->param->set_param_int("AFS_TERMINATE", 1);
     LOG_S(ERROR) << "KILL RESULT: " << result;
 }
 
-void MavlinkClient::rtl() {
+void MavlinkClient::returnToLaunch() {
     this->action->return_to_launch();
 }

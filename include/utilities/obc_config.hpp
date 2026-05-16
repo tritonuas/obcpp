@@ -106,6 +106,7 @@ struct AirdropApproachConfig {
 
 struct PathingConfig {
     int laps;
+    double upload_distance_buffer_m;
     DubinsConfig dubins;
     RRTConfig rrt;
     AirdropCoverageConfig coverage;

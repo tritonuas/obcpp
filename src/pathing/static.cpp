@@ -619,7 +619,23 @@ RRTPoint getCurrentLoc(std::shared_ptr<MissionState> state) {
     return RRTPoint(start_xyz, start_angle);
 }
 
-MissionPath generateInitialPath(std::shared_ptr<MissionState> state) {
+double calculateFinalAngle(
+    const MissionPath& path,
+    const std::optional<CartesianConverter<GPSProtoVec>>& cartesianConverter) {
+
+    const auto& coords = path.get();
+    if (coords.size() < 2) {
+        return 0.0;     // should probably either have angle between now and point
+                        // or use assert for force size >=2
+    }
+
+    XYZCoord pt1 = cartesianConverter->toXYZ(coords[coords.size() - 2]);
+    XYZCoord pt2 = cartesianConverter->toXYZ(coords[coords.size() - 1]);
+
+    return std::atan2(pt2.y - pt1.y, pt2.x - pt1.x);
+}
+
+std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
     // first waypoint is start
 
     // the other waypoitns is the goals
@@ -653,13 +669,53 @@ MissionPath generateInitialPath(std::shared_ptr<MissionState> state) {
         output_coords.push_back(state->getCartesianConverter()->toLatLng(waypoint));
     }
 
-    return MissionPath(MissionPath::Type::FORWARD, output_coords);
+    return output_coords;
 }
 
-MissionPath generateSearchPath(std::shared_ptr<MissionState> state) {
+std::vector<GPSCoord>
+generateNextWaypointPath(std::shared_ptr<MissionState> state, double start_angle) {
+    if (state->mission_params.getWaypoints().size() < 1) {
+        loguru::set_thread_name("Static Pathing");
+        LOG_F(ERROR, "Not enough waypoints to generate a path, requires >=1, num waypoints: %s",
+              std::to_string(state->mission_params.getWaypoints().size()).c_str());
+        return {};
+    }
+
+    std::vector<XYZCoord> goals = state->mission_params.getWaypoints();
+
+    if (state->config.pathing.rrt.generate_deviations) {
+        Environment mapping_bounds(state->mission_params.getAirdropBoundary(), {}, {}, goals, {});
+        goals = generateRankedNewGoalsList(goals, mapping_bounds)[0];
+    }
+
+    RRTPoint start(goals.back(), start_angle);
+
+    // add buffer to the start point so that we dont loopty loop
+    double buffer_m = state->config.pathing.upload_distance_buffer_m;
+    if (buffer_m > 0.0) {
+        start.coord.x += buffer_m * std::cos(start_angle);
+        start.coord.y += buffer_m * std::sin(start_angle);
+    }
+
+    RRT rrt(start, goals, SEARCH_RADIUS, state->mission_params.getFlightBoundary(), state->config,
+            {}, {});
+
+    rrt.run();
+
+    std::vector<XYZCoord> path = rrt.getPointsToGoal();
+
+    std::vector<GPSCoord> output_coords;
+    for (const XYZCoord &waypoint : path) {
+        output_coords.push_back(state->getCartesianConverter()->toLatLng(waypoint));
+    }
+
+    return output_coords;
+}
+
+std::vector<GPSCoord> generateSearchPath(std::shared_ptr<MissionState> state, double start_angle) {
     std::vector<GPSCoord> gps_coords;
     if (state->config.pathing.coverage.method == AirdropCoverageMethod::Enum::FORWARD) {
-        RRTPoint start(state->mission_params.getWaypoints().back(), 0);
+        RRTPoint start(state->mission_params.getWaypoints().back(), start_angle);
         double scan_radius = state->config.pathing.coverage.camera_vision_m;
 
         ForwardCoveragePathing pathing(start, scan_radius,
@@ -670,19 +726,19 @@ MissionPath generateSearchPath(std::shared_ptr<MissionState> state) {
             gps_coords.push_back(state->getCartesianConverter()->toLatLng(coord));
         }
 
-        return MissionPath(MissionPath::Type::FORWARD, gps_coords);
+        return gps_coords;
     } else {  // hover
         HoverCoveragePathing pathing(state);
 
         for (const auto &coord : pathing.run()) {
             gps_coords.push_back(state->getCartesianConverter()->toLatLng(coord));
         }
-        return MissionPath(MissionPath::Type::HOVER, gps_coords,
-                           state->config.pathing.coverage.hover.hover_time_s);
+        return gps_coords;
     }
 }
 
-MissionPath generateAirdropApproach(std::shared_ptr<MissionState> state, const GPSCoord &goal) {
+std::vector<GPSCoord>
+generateAirdropApproach(std::shared_ptr<MissionState> state, const GPSCoord &goal) {
     std::shared_ptr<MavlinkClient> mav = state->getMav();
     /*
         Note: this function was neutered right before we attempted to fly at the 2024 competition
@@ -725,5 +781,5 @@ MissionPath generateAirdropApproach(std::shared_ptr<MissionState> state, const G
     // gps_path.push_back(goal);
     // gps_path.push_back(goal);
 
-    return MissionPath(MissionPath::Type::FORWARD, gps_path);
+    return gps_path;
 }

@@ -571,7 +571,7 @@ DEF_GCS_HANDLE(Post, camera, runpipeline) {
 
 DEF_GCS_HANDLE(Post, rtl) {
     LOG_REQUEST("POST", "/rtl");
-    state->getMav()->rtl();
+    state->getMav()->returnToLaunch();
     LOG_RESPONSE(INFO, "RTL activated", OK);
 }
 
