@@ -7,13 +7,9 @@
 #include "ticks/ids.hpp"
 #include "utilities/constants.hpp"
 
-CVLoiterTick::CVLoiterTick(std::shared_ptr<MissionState> state) : Tick(state, TickID::CVLoiter) {
-    this->status = CVLoiterTick::Status::None;
-}
+CVLoiterTick::CVLoiterTick(std::shared_ptr<MissionState> state) : Tick(state, TickID::CVLoiter) {}
 
 std::chrono::milliseconds CVLoiterTick::getWait() const { return CV_LOITER_TICK_WAIT; }
-
-void CVLoiterTick::setStatus(Status status) { this->status = status; }
 
 Tick* CVLoiterTick::tick() {
     // Tick is called if Search Zone coverage path is finished
@@ -32,8 +28,10 @@ Tick* CVLoiterTick::tick() {
     //     }
     // }
 
+    MissionState::CVStatus status = this->state->getCVStatus();
+
     // Check status of the CV Results
-    if (status == Status::Validated) {
+    if (status == MissionState::CVStatus::Validated) {
         /*
         const std::array<AirdropType, NUM_AIRDROPS> ALL_AIRDROPS = {
             AirdropType::Water, AirdropType::Beacon,
@@ -74,7 +72,7 @@ Tick* CVLoiterTick::tick() {
         // }
 
         return new AirdropPrepTick(this->state);
-    } else if (status == Status::Rejected) {
+    } else if (status == MissionState::CVStatus::Rejected) {
         // TODO: Tell Mav to restart Search Mission
         return new FlySearchTick(this->state);
     }

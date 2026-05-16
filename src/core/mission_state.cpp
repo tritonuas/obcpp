@@ -131,6 +131,16 @@ std::shared_ptr<CVAggregator> MissionState::getCV() { return this->cv; }
 
 void MissionState::setCV(std::shared_ptr<CVAggregator> cv) { this->cv = cv; }
 
+MissionState::CVStatus MissionState::getCVStatus() {
+    Lock lock(this->cv_status_mut);
+    return this->cv_status;
+}
+
+void MissionState::setCVStatus(CVStatus status) {
+    Lock lock(this->cv_status_mut);
+    this->cv_status = status;
+}
+
 std::shared_ptr<CameraInterface> MissionState::getCamera() { return this->camera; }
 
 void MissionState::setCamera(std::shared_ptr<CameraInterface> camera) { this->camera = camera; }

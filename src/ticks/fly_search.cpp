@@ -4,10 +4,11 @@
 #include <chrono>
 #include <thread>
 
+#include "pathing/environment.hpp"
+#include "ticks/airdrop_prep.hpp"
+#include "ticks/cv_loiter.hpp"
 #include "ticks/ids.hpp"
 #include "utilities/common.hpp"
-#include "ticks/cv_loiter.hpp"
-#include "pathing/environment.hpp"
 
 using namespace std::chrono_literals; // NOLINT
 
@@ -37,6 +38,12 @@ void FlySearchTick::init() {
 }
 
 Tick* FlySearchTick::tick() {
+    MissionState::CVStatus status = this->state->getCVStatus();
+    if (status == MissionState::CVStatus::Validated) {
+        this->state->setCVStatus(MissionState::CVStatus::None);
+        return new AirdropPrepTick(this->state);
+    }
+
     bool isMissionFinished = state->getMav()->isMissionFinished();
 
     if (isMissionFinished) {
