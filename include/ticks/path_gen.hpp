@@ -27,8 +27,7 @@ class PathGenTick : public Tick {
     void init() override;
     Tick* tick() override;
  private:
-    std::future<MissionPath> init_path;
-    std::future<MissionPath> coverage_path;
+    std::future<void> paths_future;
 
     void startPathGeneration();
 };

@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <chrono>
+#include <thread>
 
 #include "pathing/environment.hpp"
 #include "ticks/airdrop_prep.hpp"
@@ -28,17 +29,9 @@ void FlySearchTick::init() {
     this->airdrop_boundary = this->state->mission_params.getAirdropBoundary();
     this->last_photo_time = getUnixTime_ms();
 
-    // note: I didn't get around to testing if 1 would be a better value than 0
-    // to see if the mission start can be forced.
-    if (!this->state->getMav()->setMissionItem(1)) {
-        LOG_F(ERROR, "Failed to reset Mission");
-    }
-
-    this->mission_started = this->state->getMav()->startMission();
-
-    // I have another one here because idk how startmIssion behaves exactly
-    if (!this->state->getMav()->setMissionItem(1)) {
-        LOG_F(ERROR, "Failed to reset Mission");
+    while (!this->mission_started) {
+        this->mission_started = this->state->getMav()->startMission();
+        std::this_thread::sleep_for(100ms);
     }
 
     LOG_F(INFO, "Total Waypoint #: %zu", this->state->getMav()->totalWaypoints());
@@ -49,11 +42,6 @@ Tick* FlySearchTick::tick() {
     if (status == MissionState::CVStatus::Validated) {
         this->state->setCVStatus(MissionState::CVStatus::None);
         return new AirdropPrepTick(this->state);
-    }
-
-    if (!this->mission_started) {
-        this->mission_started = this->state->getMav()->startMission();
-        return nullptr;
     }
 
     bool isMissionFinished = state->getMav()->isMissionFinished();
