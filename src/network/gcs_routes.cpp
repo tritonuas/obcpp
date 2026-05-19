@@ -415,7 +415,7 @@ DEF_GCS_HANDLE(Post, targets, matched) {
     state->getCV()->terminate();
 
     {
-        LockPtr<MatchedResults> matched_results = state->getCV()->getMatchedResults();
+        LockPtr<MissionState::MatchedResults> matched_results = state->getMatchedResults();
 
         if (matched_results.data == nullptr) {
             LOG_S(ERROR) << "lockptr is null";
@@ -534,19 +534,6 @@ DEF_GCS_HANDLE(Post, camera, runpipeline) {
     std::shared_ptr<CameraInterface> cam = state->getCamera();
 
     std::shared_ptr<CVAggregator> aggregator = state->getCV();
-    if (!aggregator) {
-        std::string yolo_model_dir = state->config.cv.yolo_model_dir;
-        LOG_F(INFO, "Instantiating CV Aggregator with the following models:");
-        LOG_F(INFO, "Yolo Model: %s", yolo_model_dir.c_str());
-
-        aggregator = std::make_shared<CVAggregator>(Pipeline(PipelineParams(
-            yolo_model_dir, state->config.cv.detection_threshold, state->config.cv.input_width,
-            state->config.cv.input_height)),
-            state->config.camera.save_dir, state->config.cv.sample_every_n_images,
-            state->config.cv.image_listener_poll_interval_ms,
-            state->config.cv.image_listener_settle_time_ms);
-        state->setCV(aggregator);
-    }
 
     if (!cam->isConnected()) {
         LOG_F(INFO, "Camera not connected. Attempting to connect...");

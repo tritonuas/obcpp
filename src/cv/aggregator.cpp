@@ -46,22 +46,7 @@ CVAggregator::CVAggregator(
     this->accepting_images.store(true);
     this->listening_images.store(false);
     this->results = std::make_shared<CVResults>();
-    this->matched_results = std::make_shared<MatchedResults>();
     this->cv_record = std::make_shared<std::map<int, IdentifiedTarget>>();
-    AirdropTarget dummy;  // Create one dummy template
-
-    // Configure the coordinate part of the dummy
-    GPSCoord* coord_in_dummy = dummy.mutable_coordinate();  // Let dummy own its coordinate
-    coord_in_dummy->set_altitude(0.0);
-    coord_in_dummy->set_latitude(0.0);
-    coord_in_dummy->set_longitude(0.0);
-
-    // Now assign copies, each with its specific index
-    dummy.set_index(AirdropType::Water);
-    this->matched_results->matched_airdrop[AirdropType::Water] = dummy;
-
-    dummy.set_index(AirdropType::Beacon);
-    this->matched_results->matched_airdrop[AirdropType::Beacon] = dummy;
 
     this->startListening(image_dir, sample_every_n_images, image_listener_poll_interval_ms,
                          image_listener_settle_time_ms);
@@ -73,21 +58,20 @@ void CVAggregator::startListening(
     const std::string& image_dir, int sample_every_n_images,
     int image_listener_poll_interval_ms, int image_listener_settle_time_ms) {
     if (sample_every_n_images <= 0) {
-        LOG_F(ERROR, "cv.sample_every_n_images must be greater than 0.");
+        LOG_F(FATAL, "cv.sample_every_n_images must be greater than 0.");
     }
 
     if (image_listener_poll_interval_ms <= 0) {
-        LOG_F(ERROR, "cv.image_listener_poll_interval_ms must be greater than 0.");
+        LOG_F(FATAL, "cv.image_listener_poll_interval_ms must be greater than 0.");
     }
 
     if (image_listener_settle_time_ms <= 0) {
-        LOG_F(ERROR, "cv.image_listener_settle_time_ms must be greater than 0.");
+        LOG_F(FATAL, "cv.image_listener_settle_time_ms must be greater than 0.");
     }
 
     std::filesystem::path image_path = image_dir;
     if (!std::filesystem::is_directory(image_path)) {
-        LOG_F(ERROR, "CV image directory does not exist: %s", image_path.string().c_str());
-        return;
+        LOG_F(FATAL, "CV image directory does not exist: %s", image_path.string().c_str());
     }
 
     if (this->listening_images.exchange(true)) {
@@ -113,10 +97,6 @@ void CVAggregator::stopListening() {
 
 LockPtr<CVResults> CVAggregator::getResults() {
     return LockPtr<CVResults>(this->results, &this->mut);
-}
-
-LockPtr<MatchedResults> CVAggregator::getMatchedResults() {
-    return LockPtr<MatchedResults>(this->matched_results, &this->mut);
 }
 
 LockPtr<std::map<int, IdentifiedTarget>> CVAggregator::getCVRecord() {
@@ -280,14 +260,12 @@ void CVAggregator::listenForImages(
             }
 
             std::optional<ImageData> image = this->loadImageData(image_path);
-            if (!image.has_value()) {
-                seen_images.insert(image_path);
-                iter = pending_images.erase(iter);
-                continue;
-            }
-
             seen_images.insert(image_path);
             iter = pending_images.erase(iter);
+
+            if (!image.has_value()) {
+                continue;
+            }
 
             ++image_count;
             if (image_count % static_cast<std::size_t>(sample_every_n_images) != 0) {

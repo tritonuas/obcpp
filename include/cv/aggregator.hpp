@@ -13,7 +13,6 @@
 #include <queue>
 #include <string>
 #include <thread>
-#include <unordered_map>
 #include <vector>
 
 #include "cv/pipeline.hpp"
@@ -31,10 +30,6 @@ struct AggregatedRun {
 
 struct CVResults {
     std::vector<AggregatedRun> runs;  // Each pipeline invocation => 1 run
-};
-
-struct MatchedResults {
-    std::unordered_map<AirdropType, AirdropTarget> matched_airdrop;
 };
 
 class CVAggregator {
@@ -58,9 +53,6 @@ class CVAggregator {
 
     // Lockable pointer to retrieve aggregator results
     LockPtr<CVResults> getResults();
-
-    // Lockable pointer to retrieve matched results (after manual match)
-    LockPtr<MatchedResults> getMatchedResults();
 
     // For the endpoint to reset the current list of structs
     std::vector<AggregatedRun> popAllRuns();
@@ -97,8 +89,6 @@ class CVAggregator {
     // Shared aggregator results
     std::shared_ptr<CVResults> results;
 
-    // Shared matched results
-    std::shared_ptr<MatchedResults> matched_results;
 };
 
 #endif  // INCLUDE_CV_AGGREGATOR_HPP_

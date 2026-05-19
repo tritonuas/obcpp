@@ -16,7 +16,21 @@
 #include "utilities/logging.hpp"
 #include "utilities/obc_config.hpp"
 
-MissionState::MissionState(OBCConfig config) : config(config) {}
+MissionState::MissionState(OBCConfig config) : config(config) {
+    this->matched_results = std::make_shared<MissionState::MatchedResults>();
+
+    AirdropTarget dummy;
+    GPSCoord* coord_in_dummy = dummy.mutable_coordinate();
+    coord_in_dummy->set_altitude(0.0);
+    coord_in_dummy->set_latitude(0.0);
+    coord_in_dummy->set_longitude(0.0);
+
+    dummy.set_index(AirdropType::Water);
+    this->matched_results->matched_airdrop[AirdropType::Water] = dummy;
+
+    dummy.set_index(AirdropType::Beacon);
+    this->matched_results->matched_airdrop[AirdropType::Beacon] = dummy;
+}
 
 // Need to explicitly define now that Tick is no longer an incomplete class
 // See:
@@ -130,6 +144,11 @@ void MissionState::setAirdrop(std::shared_ptr<AirdropClient> airdrop) { this->ai
 std::shared_ptr<CVAggregator> MissionState::getCV() { return this->cv; }
 
 void MissionState::setCV(std::shared_ptr<CVAggregator> cv) { this->cv = cv; }
+
+LockPtr<MissionState::MatchedResults> MissionState::getMatchedResults() {
+    return LockPtr<MissionState::MatchedResults>(this->matched_results,
+                                                &this->matched_results_mut);
+}
 
 MissionState::CVStatus MissionState::getCVStatus() {
     Lock lock(this->cv_status_mut);

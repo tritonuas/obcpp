@@ -9,6 +9,7 @@
 #include <mutex>
 #include <optional>
 #include <queue>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 #include <boost/asio.hpp>
@@ -101,6 +102,13 @@ class MissionState {
     std::shared_ptr<CVAggregator> getCV();
     void setCV(std::shared_ptr<CVAggregator> cv);
 
+
+    struct MatchedResults {
+        std::unordered_map<AirdropType, AirdropTarget> matched_airdrop;
+    };
+
+    LockPtr<MatchedResults> getMatchedResults();
+
     enum class CVStatus {
         None = 0,
         Validated = 1,
@@ -158,6 +166,9 @@ class MissionState {
     std::shared_ptr<MavlinkClient> mav;
     std::shared_ptr<AirdropClient> airdrop;
     std::shared_ptr<CVAggregator> cv;
+
+    std::mutex matched_results_mut;
+    std::shared_ptr<MatchedResults> matched_results;
 
     std::mutex cv_status_mut;
     CVStatus cv_status = CVStatus::None;
