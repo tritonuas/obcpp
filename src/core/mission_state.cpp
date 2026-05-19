@@ -79,6 +79,16 @@ MissionPath MissionState::getInitPath() {
     return this->init_path;
 }
 
+void MissionState::setNextWaypointPath(const MissionPath& next_waypoint_path) {
+    Lock lock(this->next_waypoint_path_mut);
+    this->next_waypoint_path = next_waypoint_path;
+}
+
+MissionPath MissionState::getNextWaypointPath() {
+    Lock lock(this->next_waypoint_path_mut);
+    return this->next_waypoint_path;
+}
+
 void MissionState::setCoveragePath(const MissionPath& coverage_path) {
     Lock lock(this->coverage_path_mut);
     this->coverage_path = coverage_path;

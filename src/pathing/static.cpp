@@ -21,7 +21,7 @@
 #include "utilities/rng.hpp"
 
 RRT::RRT(RRTPoint start, std::vector<XYZCoord> goals, double search_radius, Polygon bounds,
-         const OBCConfig &config, std::vector<Polygon> obstacles, std::vector<double> angles)
+         const OBCConfig& config, std::vector<Polygon> obstacles, std::vector<double> angles)
     : iterations_per_waypoint(config.pathing.rrt.iterations_per_waypoint),
       search_radius(search_radius),
       rewire_radius(config.pathing.rrt.rewire_radius),
@@ -34,7 +34,7 @@ RRT::RRT(RRTPoint start, std::vector<XYZCoord> goals, double search_radius, Poly
 }
 
 RRT::RRT(RRTPoint start, std::vector<XYZCoord> goals, double search_radius, Environment airspace,
-         const OBCConfig &config, std::vector<double> angles)
+         const OBCConfig& config, std::vector<double> angles)
     : iterations_per_waypoint(config.pathing.rrt.iterations_per_waypoint),
       search_radius(search_radius),
       rewire_radius(config.pathing.rrt.rewire_radius),
@@ -96,7 +96,7 @@ bool RRT::RRTIteration(int tries, int current_goal_index) {
         const RRTPoint sample = generateSamplePoint();
 
         // returns all dubins options from the tree to the sample
-        const std::vector<std::pair<std::shared_ptr<RRTNode>, RRTOption>> &options =
+        const std::vector<std::pair<std::shared_ptr<RRTNode>, RRTOption>>& options =
             tree.pathingOptions(sample, config.point_fetch_method);
 
         // returns true if the node is successfully added to the tree
@@ -126,22 +126,19 @@ bool RRT::RRTIteration(int tries, int current_goal_index) {
     return true;
 }
 
-bool RRT::epochEvaluation(std::shared_ptr<RRTNode> goal_node,
-                          std::shared_ptr<RRTNode> goal_parent,
+bool RRT::epochEvaluation(std::shared_ptr<RRTNode> goal_node, std::shared_ptr<RRTNode> goal_parent,
                           int current_goal_index) {
     // If a single epoch has not been passed, mark this goal as the first
     // benchmark.
     if (goal_node == nullptr) {
-        goal_node = sampleToGoal(current_goal_index,
-                                 TOTAL_OPTIONS_FOR_GOAL_CONNECTION,
-                                 goal_parent);
+        goal_node =
+            sampleToGoal(current_goal_index, TOTAL_OPTIONS_FOR_GOAL_CONNECTION, goal_parent);
         return false;
     }
 
     std::shared_ptr<RRTNode> new_parent = nullptr;
-    std::shared_ptr<RRTNode> new_node = sampleToGoal(current_goal_index,
-                                                     TOTAL_OPTIONS_FOR_GOAL_CONNECTION,
-                                                     new_parent);
+    std::shared_ptr<RRTNode> new_node =
+        sampleToGoal(current_goal_index, TOTAL_OPTIONS_FOR_GOAL_CONNECTION, new_parent);
 
     if (new_node == nullptr) {
         return false;
@@ -174,7 +171,7 @@ RRT::getOptionsToGoal(int current_goal_index, int total_options) const {
     // Generates goal specific points based on current Waypoints and list og
     // Angles
     for (const double angle : angles) {
-        const XYZCoord &goal = tree.getAirspace().getGoal(current_goal_index);
+        const XYZCoord& goal = tree.getAirspace().getGoal(current_goal_index);
         goal_points.push_back(RRTPoint(goal, angle));
     }
 
@@ -188,36 +185,35 @@ RRT::getOptionsToGoal(int current_goal_index, int total_options) const {
 
     // gets all options for each of the goals, and puts them into a unified list
     // TODO ? maybe better for a max heap?
-    for (const RRTPoint &goal : goal_points) {
-        const std::vector<std::pair<std::shared_ptr<RRTNode>, RRTOption>> &options =
+    for (const RRTPoint& goal : goal_points) {
+        const std::vector<std::pair<std::shared_ptr<RRTNode>, RRTOption>>& options =
             // For now, we use optimal pathing
             tree.pathingOptions(goal, PointFetchMethod::Enum::NONE, NUMBER_OPTIONS_EACH);
 
-        for (const auto &[node, option] : options) {
+        for (const auto& [node, option] : options) {
             all_options.push_back({goal, {node, option}});
         }
     }
 
-    std::sort(all_options.begin(), all_options.end(), [](const auto &a, const auto &b) {
-        auto &[a_goal, a_paths] = a;
-        auto &[a_node, a_option] = a_paths;
-        auto &[b_goal, b_paths] = b;
-        auto &[b_node, b_option] = b_paths;
+    std::sort(all_options.begin(), all_options.end(), [](const auto& a, const auto& b) {
+        auto& [a_goal, a_paths] = a;
+        auto& [a_node, a_option] = a_paths;
+        auto& [b_goal, b_paths] = b;
+        auto& [b_node, b_option] = b_paths;
         return a_option.length + a_node->getCost() < b_option.length + b_node->getCost();
     });
 
     return all_options;
 }
 
-std::shared_ptr<RRTNode> RRT::sampleToGoal(int current_goal_index,
-                                           int total_options,
+std::shared_ptr<RRTNode> RRT::sampleToGoal(int current_goal_index, int total_options,
                                            std::shared_ptr<RRTNode>& parent) const {
     // gets all options for each of the goals
-    const auto &all_options = getOptionsToGoal(current_goal_index, total_options);
+    const auto& all_options = getOptionsToGoal(current_goal_index, total_options);
 
     // <RRTPoint GOAL, {RRTNode* ANCHOR, RRTOption} >
-    for (const auto &[goal, pair] : all_options) {
-        auto &[anchor_node, option] = pair;
+    for (const auto& [goal, pair] : all_options) {
+        auto& [anchor_node, option] = pair;
 
         std::shared_ptr<RRTNode> new_node = tree.generateNode(anchor_node, goal, option);
 
@@ -242,8 +238,7 @@ bool RRT::connectToGoal(int current_goal_index, int total_options) {
     return true;
 }
 
-void RRT::addNodeToTree(std::shared_ptr<RRTNode> goal_node,
-                        std::shared_ptr<RRTNode> parent,
+void RRT::addNodeToTree(std::shared_ptr<RRTNode> goal_node, std::shared_ptr<RRTNode> parent,
                         int current_goal_index) {
     // add the node to the tree
     tree.addNode(parent, goal_node);
@@ -261,7 +256,7 @@ void RRT::addNodeToTree(std::shared_ptr<RRTNode> goal_node,
     double height_difference = tree.getAirspace().getGoal(current_goal_index).z - start_height;
     double height_increment = height_difference / local_path.size();
 
-    for (XYZCoord &point : local_path) {
+    for (XYZCoord& point : local_path) {
         point.z = start_height;
         start_height += height_increment;
     }
@@ -272,9 +267,9 @@ void RRT::addNodeToTree(std::shared_ptr<RRTNode> goal_node,
 }
 
 std::shared_ptr<RRTNode> RRT::parseOptions(
-                        const std::vector<std::pair<std::shared_ptr<RRTNode>, RRTOption>> &options,
-                        const RRTPoint &sample) {
-    for (auto &[node, option] : options) {
+    const std::vector<std::pair<std::shared_ptr<RRTNode>, RRTOption>>& options,
+    const RRTPoint& sample) {
+    for (auto& [node, option] : options) {
         /*
          *  stop if
          *  1. the node is null
@@ -301,9 +296,9 @@ std::shared_ptr<RRTNode> RRT::parseOptions(
 
 void RRT::optimizeTree(std::shared_ptr<RRTNode> sample) { tree.RRTStar(sample, rewire_radius); }
 
-ForwardCoveragePathing::ForwardCoveragePathing(const RRTPoint &start, double scan_radius,
+ForwardCoveragePathing::ForwardCoveragePathing(const RRTPoint& start, double scan_radius,
                                                Polygon bounds, Polygon airdrop_zone,
-                                               const OBCConfig &config,
+                                               const OBCConfig& config,
                                                std::vector<Polygon> obstacles)
     : start(start),
       scan_radius(scan_radius),
@@ -348,7 +343,7 @@ std::vector<XYZCoord> ForwardCoveragePathing::coverageOptimal() const {
 
     // generates the endpoints for the lines (including headings)
     for (int i = 0; i < configs.size(); i++) {
-        const auto &config = configs[i];
+        const auto& config = configs[i];
 
         std::vector<RRTPoint> waypoints =
             airspace.getAirdropWaypoints(scan_radius, config.first, config.second);
@@ -385,7 +380,7 @@ std::vector<XYZCoord> ForwardCoveragePathing::coverageOptimal() const {
 }
 
 std::vector<XYZCoord> ForwardCoveragePathing::generatePath(
-    const std::vector<RRTOption> &dubins_options, const std::vector<RRTPoint> &waypoints) const {
+    const std::vector<RRTOption>& dubins_options, const std::vector<RRTPoint>& waypoints) const {
     std::vector<XYZCoord> path;
 
     // height adjustement
@@ -397,7 +392,7 @@ std::vector<XYZCoord> ForwardCoveragePathing::generatePath(
 
     double height_increment = height_difference / path_coordinates.size();
 
-    for (XYZCoord &coord : path_coordinates) {
+    for (XYZCoord& coord : path_coordinates) {
         coord.z = height;
         height += height_increment;
     }
@@ -410,7 +405,7 @@ std::vector<XYZCoord> ForwardCoveragePathing::generatePath(
             dubins.generatePoints(waypoints[i], waypoints[i + 1], dubins_options[i].dubins_path,
                                   dubins_options[i].has_straight);
 
-        for (XYZCoord &coord : path_coordinates) {
+        for (XYZCoord& coord : path_coordinates) {
             coord.z = config.altitude_m;
         }
 
@@ -426,9 +421,9 @@ HoverCoveragePathing::HoverCoveragePathing(std::shared_ptr<MissionState> state)
       state{state} {}
 
 // Function to calculate the center of the polygon
-XYZCoord calculateCenter(const std::vector<XYZCoord> &polygon) {
+XYZCoord calculateCenter(const std::vector<XYZCoord>& polygon) {
     XYZCoord center(0.0, 0.0, 0.0);
-    for (const auto &point : polygon) {
+    for (const auto& point : polygon) {
         center.x += point.x;
         center.y += point.y;
     }
@@ -438,24 +433,24 @@ XYZCoord calculateCenter(const std::vector<XYZCoord> &polygon) {
 }
 
 // Function to scale the polygon
-void scalePolygon(std::vector<XYZCoord> &polygon, double scaleFactor) {
+void scalePolygon(std::vector<XYZCoord>& polygon, double scaleFactor) {
     // Step 1: Calculate the center of the polygon
     XYZCoord center = calculateCenter(polygon);
 
     // Step 2: Translate the polygon to the origin
-    for (auto &point : polygon) {
+    for (auto& point : polygon) {
         point.x -= center.x;
         point.y -= center.y;
     }
 
     // Step 3: Scale the polygon
-    for (auto &point : polygon) {
+    for (auto& point : polygon) {
         point.x *= scaleFactor;
         point.y *= scaleFactor;
     }
 
     // Step 4: Translate the polygon back to its original center
-    for (auto &point : polygon) {
+    for (auto& point : polygon) {
         point.x += center.x;
         point.y += center.y;
     }
@@ -508,9 +503,9 @@ std::vector<XYZCoord> HoverCoveragePathing::run() {
     return hover_points;
 }
 
-AirdropApproachPathing::AirdropApproachPathing(const RRTPoint &start, const XYZCoord &goal,
+AirdropApproachPathing::AirdropApproachPathing(const RRTPoint& start, const XYZCoord& goal,
                                                XYZCoord wind, Polygon bounds,
-                                               const OBCConfig &config,
+                                               const OBCConfig& config,
                                                std::vector<Polygon> obstacles)
     : start(start),
       goal(goal),
@@ -552,7 +547,7 @@ RRTPoint AirdropApproachPathing::getDropLocation() const {
     return RRTPoint(drop_location, angle);
 }
 
-std::vector<std::vector<XYZCoord>> generateGoalListDeviations(const std::vector<XYZCoord> &goals,
+std::vector<std::vector<XYZCoord>> generateGoalListDeviations(const std::vector<XYZCoord>& goals,
                                                               XYZCoord deviation_point) {
     std::vector<std::vector<XYZCoord>> goal_list_deviations;
     for (int i = 0; i < goals.size() + 1; i++) {
@@ -564,8 +559,8 @@ std::vector<std::vector<XYZCoord>> generateGoalListDeviations(const std::vector<
     return goal_list_deviations;
 }
 
-std::vector<std::vector<XYZCoord>> generateRankedNewGoalsList(const std::vector<XYZCoord> &goals,
-                                                              const Environment &mapping_bounds) {
+std::vector<std::vector<XYZCoord>> generateRankedNewGoalsList(const std::vector<XYZCoord>& goals,
+                                                              const Environment& mapping_bounds) {
     // generate deviation points randomly in the mapping region
     std::vector<XYZCoord> deviation_points;
     for (int i = 0; i < 200; i++) {
@@ -574,7 +569,7 @@ std::vector<std::vector<XYZCoord>> generateRankedNewGoalsList(const std::vector<
 
     // each deviation point can be inserted between any two goals
     std::vector<std::vector<XYZCoord>> new_goals_list;
-    for (const XYZCoord &deviation_point : deviation_points) {
+    for (const XYZCoord& deviation_point : deviation_points) {
         std::vector<std::vector<XYZCoord>> goal_list_deviations =
             generateGoalListDeviations(goals, deviation_point);
         new_goals_list.insert(new_goals_list.end(), goal_list_deviations.begin(),
@@ -583,7 +578,7 @@ std::vector<std::vector<XYZCoord>> generateRankedNewGoalsList(const std::vector<
 
     // run each goal list and get the area covered and the length of the path
     std::vector<std::pair<double, double>> area_length_pairs;
-    for (const std::vector<XYZCoord> &new_goals : new_goals_list) {
+    for (const std::vector<XYZCoord>& new_goals : new_goals_list) {
         area_length_pairs.push_back(mapping_bounds.estimateAreaCoveredAndPathLength(new_goals));
     }
 
@@ -595,11 +590,11 @@ std::vector<std::vector<XYZCoord>> generateRankedNewGoalsList(const std::vector<
     }
 
     std::sort(ranked_new_goals_list.begin(), ranked_new_goals_list.end(),
-              [](const auto &a, const auto &b) { return a.first > b.first; });
+              [](const auto& a, const auto& b) { return a.first > b.first; });
 
     // return the ranked list of new goals lists
     std::vector<std::vector<XYZCoord>> ranked_goals;
-    for (const auto &pair : ranked_new_goals_list) {
+    for (const auto& pair : ranked_new_goals_list) {
         ranked_goals.push_back(pair.second);
     }
 
@@ -619,7 +614,22 @@ RRTPoint getCurrentLoc(std::shared_ptr<MissionState> state) {
     return RRTPoint(start_xyz, start_angle);
 }
 
-MissionPath generateInitialPath(std::shared_ptr<MissionState> state) {
+double calculateFinalAngle(
+    const MissionPath& path,
+    const std::optional<CartesianConverter<GPSProtoVec>>& cartesianConverter) {
+    const auto& coords = path.get();
+    if (coords.size() < 2) {
+        return 0.0;  // should probably either have angle between now and point
+                     // or use assert for force size >=2
+    }
+
+    XYZCoord pt1 = cartesianConverter->toXYZ(coords[coords.size() - 2]);
+    XYZCoord pt2 = cartesianConverter->toXYZ(coords[coords.size() - 1]);
+
+    return std::atan2(pt2.y - pt1.y, pt2.x - pt1.x);
+}
+
+std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
     // first waypoint is start
 
     // the other waypoitns is the goals
@@ -649,40 +659,87 @@ MissionPath generateInitialPath(std::shared_ptr<MissionState> state) {
     std::vector<XYZCoord> path = rrt.getPointsToGoal();
 
     std::vector<GPSCoord> output_coords;
-    for (const XYZCoord &waypoint : path) {
+    for (const XYZCoord& waypoint : path) {
         output_coords.push_back(state->getCartesianConverter()->toLatLng(waypoint));
     }
 
-    return MissionPath(MissionPath::Type::FORWARD, output_coords);
+    return output_coords;
 }
 
-MissionPath generateSearchPath(std::shared_ptr<MissionState> state) {
+std::vector<GPSCoord> generateNextWaypointPath(std::shared_ptr<MissionState> state,
+                                               double start_angle) {
+    if (state->mission_params.getWaypoints().size() < 1) {
+        loguru::set_thread_name("Static Pathing");
+        LOG_F(ERROR, "Not enough waypoints to generate a path, requires >=1, num waypoints: %s",
+              std::to_string(state->mission_params.getWaypoints().size()).c_str());
+        return {};
+    }
+
+    std::vector<XYZCoord> goals = state->mission_params.getWaypoints();
+
+    if (state->config.pathing.rrt.generate_deviations) {
+        Environment mapping_bounds(state->mission_params.getAirdropBoundary(), {}, {}, goals, {});
+        goals = generateRankedNewGoalsList(goals, mapping_bounds)[0];
+    }
+
+    RRTPoint start(goals.back(), start_angle);
+
+    // add buffer to the start point so that we dont loopty loop
+    double buffer_m = state->config.pathing.upload_distance_buffer_m;
+    if (buffer_m > 0.0) {
+        start.coord.x += buffer_m * std::cos(start_angle);
+        start.coord.y += buffer_m * std::sin(start_angle);
+    }
+
+    RRT rrt(start, goals, SEARCH_RADIUS, state->mission_params.getFlightBoundary(), state->config,
+            {}, {});
+
+    rrt.run();
+
+    std::vector<XYZCoord> path = rrt.getPointsToGoal();
+
+    std::vector<GPSCoord> output_coords;
+    for (const XYZCoord& waypoint : path) {
+        output_coords.push_back(state->getCartesianConverter()->toLatLng(waypoint));
+    }
+
+    return output_coords;
+}
+
+std::vector<GPSCoord> generateSearchPath(std::shared_ptr<MissionState> state, double start_angle) {
     std::vector<GPSCoord> gps_coords;
     if (state->config.pathing.coverage.method == AirdropCoverageMethod::Enum::FORWARD) {
-        RRTPoint start(state->mission_params.getWaypoints().back(), 0);
+        if (state->mission_params.getWaypoints().size() < 1) {
+            loguru::set_thread_name("Static Pathing");
+            LOG_F(ERROR,
+                "Waypoint path is empty. Failed to generate search path");
+            return {};
+        }
+        RRTPoint start(state->mission_params.getWaypoints().back(), start_angle);
+
         double scan_radius = state->config.pathing.coverage.camera_vision_m;
 
         ForwardCoveragePathing pathing(start, scan_radius,
                                        state->mission_params.getFlightBoundary(),
                                        state->mission_params.getAirdropBoundary(), state->config);
 
-        for (const auto &coord : pathing.run()) {
+        for (const auto& coord : pathing.run()) {
             gps_coords.push_back(state->getCartesianConverter()->toLatLng(coord));
         }
 
-        return MissionPath(MissionPath::Type::FORWARD, gps_coords);
+        return gps_coords;
     } else {  // hover
         HoverCoveragePathing pathing(state);
 
-        for (const auto &coord : pathing.run()) {
+        for (const auto& coord : pathing.run()) {
             gps_coords.push_back(state->getCartesianConverter()->toLatLng(coord));
         }
-        return MissionPath(MissionPath::Type::HOVER, gps_coords,
-                           state->config.pathing.coverage.hover.hover_time_s);
+        return gps_coords;
     }
 }
 
-MissionPath generateAirdropApproach(std::shared_ptr<MissionState> state, const GPSCoord &goal) {
+std::vector<GPSCoord> generateAirdropApproach(std::shared_ptr<MissionState> state,
+                                              const GPSCoord& goal) {
     std::shared_ptr<MavlinkClient> mav = state->getMav();
     /*
         Note: this function was neutered right before we attempted to fly at the 2024 competition
@@ -709,7 +766,7 @@ MissionPath generateAirdropApproach(std::shared_ptr<MissionState> state, const G
     std::vector<GPSCoord> gps_path;
     // XYZCoord pt = state->getCartesianConverter().value().toXYZ(goal);
 
-    for (const XYZCoord &wpt : xyz_path) {
+    for (const XYZCoord& wpt : xyz_path) {
         gps_path.push_back(state->getCartesianConverter().value().toLatLng(wpt));
     }
 
@@ -725,5 +782,5 @@ MissionPath generateAirdropApproach(std::shared_ptr<MissionState> state, const G
     // gps_path.push_back(goal);
     // gps_path.push_back(goal);
 
-    return MissionPath(MissionPath::Type::FORWARD, gps_path);
+    return gps_path;
 }

@@ -18,6 +18,7 @@
     },
     "pathing": {
         "laps": 2,
+        "upload_distance_buffer_m": 50.0,
         "dubins": {
             "turning_radius": 30.0,
             "point_separation": 20.0
