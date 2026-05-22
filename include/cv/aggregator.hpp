@@ -88,7 +88,6 @@ class CVAggregator {
 
     // Shared aggregator results
     std::shared_ptr<CVResults> results;
-
 };
 
 #endif  // INCLUDE_CV_AGGREGATOR_HPP_

@@ -71,7 +71,7 @@ bool triggerAirdrop(std::shared_ptr<MavlinkClient> mav, airdrop_t airdrop_index)
 void AirdropApproachTick::dropAirdrop() {
     airdrop_t next_airdrop = state->next_airdrop_to_drop.value();
     LOG_F(INFO, "Dropping airdrop %d", next_airdrop);
-    
+
     this->airdrop_triggered = true;
     state->markAirdropAsDropped(static_cast<AirdropType>(next_airdrop));
     state->next_airdrop_to_drop.reset();
