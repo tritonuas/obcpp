@@ -1,5 +1,6 @@
 #include <google/protobuf/util/json_util.h>
 #include <httplib.h>
+#include <iostream>
 
 #include <filesystem>
 #include <memory>
@@ -21,6 +22,7 @@
 #include "ticks/path_validate.hpp"
 #include "ticks/tick.hpp"
 #include "ticks/wait_for_takeoff.hpp"
+#include "utilities/common.hpp"
 #include "utilities/http.hpp"
 #include "utilities/logging.hpp"
 #include "utilities/serialize.hpp"
@@ -118,9 +120,20 @@ DEF_GCS_HANDLE(Post, mission) {
     Mission mission;
     google::protobuf::util::JsonStringToMessage(request.body, &mission);
 
+    state->setCartesianConverter(CartesianConverter(mission.waypoints()));
+
+    std::vector<GPSCoord> coord_Vector(
+        mission.flightboundary().begin(),
+        mission.flightboundary().end()
+    );
+
+    if(checkCounterClockwise(coord_Vector) == 0){
+        LOG_RESPONSE(ERROR, "Not CounterClockwise", BAD_REQUEST);
+    }
+
     // Update the cartesian converter to be centered around the new flight boundary
     state->setCartesianConverter(CartesianConverter(mission.flightboundary()));
-
+    
     auto err = state->mission_params.setMission(mission, state->getCartesianConverter().value());
     if (err.has_value()) {
         LOG_RESPONSE(WARNING, err.value().c_str(), BAD_REQUEST);
@@ -128,7 +141,6 @@ DEF_GCS_HANDLE(Post, mission) {
         LOG_RESPONSE(INFO, "Mission uploaded", OK);
     }
 }
-
 DEF_GCS_HANDLE(Post, targets, locations) {
     LOG_REQUEST("POST", "/targets/locations");
 

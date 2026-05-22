@@ -1,17 +1,56 @@
 #include "pathing/tree.hpp"
-
+#include <iostream> 
 #include <gtest/gtest.h>
 
 #include "pathing/dubins.hpp"
 #include "pathing/environment.hpp"
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
+#include "utilities/common.hpp"
 
 /*
  *   very bad tests, was too lazy to check if every parameter was correct, aka didn't bother to find
  *   the hardcoded values for the expected values.
  */
 #include <iostream>
+
+TEST(CheckCounterClockwiseTest, CounterClockwiseTest){
+    // testing if flightbounds counter clockwise returns correctly 
+    GPSCoord GPS4 = makeGPSCoord(0,0,0);
+    GPSCoord GPS3 = makeGPSCoord(10,0,0);
+    GPSCoord GPS2 = makeGPSCoord(10,10,0);
+    GPSCoord GPS1 = makeGPSCoord(0,10,0);
+
+    std::vector<GPSCoord> coords_Test1 = {GPS1, GPS2, GPS3, GPS4}; 
+
+    int expected_val1 = checkCounterClockwise(coords_Test1);
+    
+    EXPECT_TRUE(expected_val1 == 0);
+    //test with actual coords
+    GPSCoord GEISEL = makeGPSCoord(32.88146, -117.23772,0);
+    std::cout << "If this appears coordinate1 was created propely" << std::endl; 
+    GPSCoord PINES = makeGPSCoord(32.87886,-117.24249,0);
+    std::cout << "If this appears coordinate2 was created propely" << std::endl; 
+    GPSCoord FAH = makeGPSCoord(32.88354,-117.23496,0);
+    std::cout << "If this appears coordinate3 was created propely" << std::endl;
+    GPSCoord SUNGOD = makeGPSCoord(32.87864,-117.23977,0);
+    std::cout << "If this appears coordinate4 was created propely" << std::endl;
+
+    std::vector<GPSCoord> coords_Test2 = {GEISEL, PINES, SUNGOD, FAH}; 
+
+    std::cout << "If this appears coord list was created properly" << std::endl;
+
+    int expected_val2 = checkCounterClockwise(coords_Test2);
+    std::cout << "If this appears Triple C ran" << std::endl;
+    
+    EXPECT_TRUE(expected_val2 == 0);
+
+    std::vector<GPSCoord> coords_Test3 = {GEISEL, SUNGOD, PINES, FAH};
+
+    int expected_val3 = checkCounterClockwise(coords_Test3);
+    
+    EXPECT_TRUE(expected_val3 == 1);
+}
 
 TEST(SimpleTreeTest, addNodeTest) {
     Dubins dubins{5, 0.1};
