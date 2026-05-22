@@ -31,6 +31,61 @@ void RPICamera::connect() {
         // Optionally send CameraRequest::START if needed,
         // but 'I' usually works standalone (i think)
         // client.send(static_cast<std::uint8_t>(CameraRequest::START));
+
+        if (!requestCameraConfig()) {
+            LOG_F(WARNING, "Failed to request camera config");
+            this->connected = false;
+            return;
+        }
+    }
+}
+
+bool RPICamera::requestCameraConfig() {
+    client.setReceiveTimeout(2000);
+
+    if (!client.send(static_cast<std::uint8_t>(CameraRequest::CONFIG))) {
+        LOG_F(ERROR, "Failed to send config request");
+        return false;
+    }
+
+    Header header = client.recvHeader();
+    if (header.magic != EXPECTED_MAGIC) {
+        LOG_F(ERROR, "Invalid config header magic: %x", header.magic);
+        return false;
+    }
+
+    std::vector<std::uint8_t> payload = client.recvBody(header.mem_size, header.total_chunks);
+    if (payload.empty()) {
+        LOG_F(ERROR, "Failed to receive camera config payload");
+        return false;
+    }
+
+    std::string jsonString(payload.begin(), payload.end());
+    return applyCameraConfig(jsonString);
+}
+
+bool RPICamera::applyCameraConfig(const std::string& configPayload) {
+    try {
+        auto cfg = nlohmann::json::parse(configPayload);
+
+        if (!cfg.contains("width") || !cfg.contains("height")) {
+            LOG_F(ERROR, "Camera config missing width/height fields");
+            return false;
+        }
+
+        IMG_WIDTH = cfg["width"].get<uint32_t>();
+        IMG_HEIGHT = cfg["height"].get<uint32_t>();
+        STRIDE_Y = cfg.value("stride_y", STRIDE_Y);
+        STRIDE_UV = cfg.value("stride_uv", STRIDE_UV);
+        CHUNK_SIZE = cfg.value("chunk_size", CHUNK_SIZE);
+
+        LOG_F(INFO, "Camera config received: width=%u height=%u stride_y=%u stride_uv=%u chunk_size=%zu",
+              IMG_WIDTH, IMG_HEIGHT, STRIDE_Y, STRIDE_UV, CHUNK_SIZE);
+
+        return true;
+    } catch (const std::exception& ex) {
+        LOG_F(ERROR, "Failed to parse camera config JSON: %s", ex.what());
+        return false;
     }
 }
 

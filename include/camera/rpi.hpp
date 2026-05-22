@@ -21,6 +21,7 @@ namespace asio = boost::asio;
 
 enum class CameraRequest : std::uint8_t {
     START = 's',
+    CONFIG = 'C',
     PICTURE = 'I',
     END = 'e',
     LOCK = 'l'
@@ -41,6 +42,9 @@ class RPICamera : public CameraInterface {
          * Reads the 3 planes (Y, U, V) from the camera
          */
         std::vector<std::vector<uint8_t>> readImage();
+
+        bool requestCameraConfig();
+        bool applyCameraConfig(const std::string& configPayload);
 
  public:
         explicit RPICamera(CameraConfig config, asio::io_context* io_context_);

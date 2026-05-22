@@ -115,8 +115,8 @@ std::vector<std::uint8_t> UDPClient::recvBody(const int mem_size, const int tota
 
     int chunks_received_count = 0;
 
-    // Use raw buffer? hopefully no mem leaks
-    char chunk_buf[CHUNK_SIZE + sizeof(uint32_t)];
+    // Use dynamically sized buffer so runtime-configurable chunk sizes are supported.
+    std::vector<char> chunk_buf(CHUNK_SIZE + sizeof(uint32_t));
 
     // Loop until all chunks received
     // Note: we prolly want to add a max retry count or timeout check inside the loop
@@ -138,7 +138,7 @@ std::vector<std::uint8_t> UDPClient::recvBody(const int mem_size, const int tota
 
         if (bytesRead < sizeof(uint32_t)) continue;
 
-        uint32_t chunk_idx = ntohl(*reinterpret_cast<uint32_t*>(chunk_buf));
+        uint32_t chunk_idx = ntohl(*reinterpret_cast<uint32_t*>(chunk_buf.data()));
         size_t data_size = bytesRead - sizeof(uint32_t);
         size_t offset = chunk_idx * CHUNK_SIZE;
 
@@ -148,7 +148,7 @@ std::vector<std::uint8_t> UDPClient::recvBody(const int mem_size, const int tota
         }
 
         // copy into buffer
-        memcpy(buf.data() + offset, chunk_buf + sizeof(uint32_t), data_size);
+        memcpy(buf.data() + offset, chunk_buf.data() + sizeof(uint32_t), data_size);
 
         if (!received_chunks[chunk_idx]) {
             received_chunks[chunk_idx] = true;

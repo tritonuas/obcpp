@@ -1,4 +1,5 @@
 #include <filesystem>
+#include <nlohmann/json.hpp>
 #include "network/udp_server.hpp"
 
 // TODO: Didn't touch this for the most part since its for mocking.
@@ -79,8 +80,8 @@ void UDPServer::send(asio::ip::udp::endpoint & endpoint) {
     cv::Mat flatten = img.reshape(1, img.total() * img.channels());
     std::vector<std::uint8_t> imgBuffer = img.isContinuous() ? flatten : flatten.clone();
 
-    if (imgBuffer.size() != IMG_BUFFER) {
-        std::cout << "size: " << imgBuffer.size() << " expected: " << IMG_BUFFER << '\n';
+    if (imgBuffer.size() != IMG_BUFFER()) {
+        std::cout << "size: " << imgBuffer.size() << " expected: " << IMG_BUFFER() << '\n';
         return;
     }
 
@@ -143,6 +144,52 @@ void UDPServer::send(asio::ip::udp::endpoint & endpoint) {
     // std::cout << "Read bytes (body): " << bytesSentBody << '\n';
 }
 
+void UDPServer::sendConfig(asio::ip::udp::endpoint & endpoint) {
+    boost::system::error_code header_ec;
+    boost::system::error_code body_ec;
+
+    nlohmann::json configJson = {
+        {"width", IMG_WIDTH},
+        {"height", IMG_HEIGHT},
+        {"stride_y", STRIDE_Y},
+        {"stride_uv", STRIDE_UV},
+        {"pixel_format", "YUV420"},
+        {"header_size", headerSize},
+        {"chunk_size", CHUNK_SIZE}
+    };
+
+    std::string payload = configJson.dump();
+    uint32_t total_chunks = static_cast<uint32_t>((payload.size() + CHUNK_SIZE - 1) / CHUNK_SIZE);
+
+    Header header;
+    header.magic = htonl(EXPECTED_MAGIC);
+    header.mem_size = htonl(static_cast<uint32_t>(payload.size()));
+    header.total_chunks = htonl(total_chunks);
+
+    int bytesSentHeader = this->socket_.send_to(asio::buffer(&header, sizeof(header)), endpoint, 0, header_ec);
+    if (header_ec) {
+        std::cout << "Sending config header failed: " << header_ec.message() << '\n';
+        return;
+    }
+
+    for (uint32_t i = 0; i < total_chunks; ++i) {
+        const size_t offset = i * CHUNK_SIZE;
+        const size_t remaining = payload.size() - offset;
+        const size_t data_size = std::min(CHUNK_SIZE, remaining);
+
+        std::vector<char> packet(sizeof(uint32_t) + data_size);
+        uint32_t* index_ptr = reinterpret_cast<uint32_t*>(packet.data());
+        *index_ptr = htonl(i);
+        memcpy(packet.data() + sizeof(uint32_t), payload.data() + offset, data_size);
+
+        int bytesSentBody = this->socket_.send_to(asio::buffer(packet), endpoint, 0, body_ec);
+        if (body_ec) {
+            std::cout << "Sending config body failed: " << body_ec.message() << '\n';
+            return;
+        }
+    }
+}
+
 // expecting a request from the client
 void UDPServer::recv() {
     boost::system::error_code ec;
@@ -165,6 +212,8 @@ void UDPServer::recv() {
 void UDPServer::handleRequest(char request, asio::ip::udp::endpoint & endpoint) {
     if (request == 'I') {
         this->send(endpoint);
+    } else if (request == 'C') {
+        this->sendConfig(endpoint);
     } else if (request == 'e') {
         this->shutdown();
     } else {

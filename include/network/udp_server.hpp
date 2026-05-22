@@ -21,6 +21,8 @@ class UDPServer {
 
         cv::Mat createYUV();
 
+        void sendConfig(asio::ip::udp::endpoint & endpoint);
+
  public:
         UDPServer(asio::io_context* io_context_, std::string ip, int port);
 
