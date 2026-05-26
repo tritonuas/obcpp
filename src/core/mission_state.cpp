@@ -103,50 +103,65 @@ void MissionState::setAirdropPath(const MissionPath& airdrop_path) {
 
 void MissionState::zoneHandler(const std::chrono::milliseconds& interval,
                         std::shared_ptr<MavlinkClient> mavlinkClient) {
-    // TODO: find a way to handle stopping the while loop when stopThread hits
     std::chrono::milliseconds last_photo_time = getUnixTime_ms();
     while (this->cameraThreadActive) {
         auto [lat_deg, lng_deg] = this->getMav()->latlng_deg();
         double altitude_agl_m = this->getMav()->altitude_agl_m();
         GPSCoord current_pos = makeGPSCoord(lat_deg, lng_deg, altitude_agl_m);
-        // Get the CartesianConverter (which is already initialized from mission boundaries)
         auto converter = this->getCartesianConverter();
-        if (converter) {
-            // Convert GPS to local XYZ coords
-            XYZCoord current_xyz = converter->toXYZ(current_pos);
-            // Get the airdrop boundary polygon
-            Polygon airdrop_boundary = this->mission_params.getAirdropBoundary();
-            // Check if we're inside the airdrop zone
-            bool in_zone = Environment::isPointInPolygon(airdrop_boundary, current_xyz);
-            if (in_zone) {
-                auto now = getUnixTime_ms();
-                if ((now - last_photo_time) >= 300ms) {
-                    auto photo = this->getCamera()->takePicture(100ms, this->getMav());
-                    if (this->config.camera.save_images_to_file) {
-                        photo->saveToFile(this->config.camera.save_dir);
-                    }
+        if (!converter) {
+            std::this_thread::sleep_for(interval);
+            continue;
+        }
+        XYZCoord current_xyz = converter->toXYZ(current_pos);
+        Polygon airdrop_boundary = this->mission_params.getAirdropBoundary();
+        bool in_zone = Environment::isPointInPolygon(airdrop_boundary, current_xyz);
+        if (!in_zone) {
+            std::this_thread::sleep_for(interval);
+            continue;
+        }
+        auto curr_waypoint = this->getMav()->curr_waypoint();
+        if (this->curr_mission_item != curr_waypoint) {
+            LOG_F(INFO, "FlySearch Area reached (%zu, %d)",
+                this->curr_mission_item, curr_waypoint);
+            for (int i = 0; i < this->config.pathing.coverage.hover.pictures_per_stop; i++) {
+                auto photo = this->getCamera()->takePicture(500ms, this->getMav());
+                if (this->config.camera.save_images_to_file) {
+                    photo->saveToFile(this->config.camera.save_dir);
+                }
 
-                    if (photo.has_value()&&((this->getTickID() == TickID::FlySearch)||
-                        (this->getTickID() == TickID::CVLoiter))) {
-                        // Update the last photo time
-                        // Run the pipeline on the photo
-                        this->getCV()->runPipeline(photo.value());
-                    }
+                if (photo.has_value()) {
                     last_photo_time = getUnixTime_ms();
+                    this->getCV()->runPipeline(photo.value());
                 }
             }
+            this->curr_mission_item = curr_waypoint;
+        }
+        auto now = getUnixTime_ms();
+        if ((now - last_photo_time) >= std::chrono::milliseconds(this->config.camera.photo_delay)) {
+            auto photo = this->getCamera()->takePicture(100ms, this->getMav());
+            if (this->config.camera.save_images_to_file) {
+                photo->saveToFile(this->config.camera.save_dir);
+            }
+
+            if (photo.has_value()&&((this->getTickID() == TickID::FlySearch)||
+                (this->getTickID() == TickID::CVLoiter))) {
+                this->getCV()->runPipeline(photo.value());
+            }
+            last_photo_time = getUnixTime_ms();
         }
         std::this_thread::sleep_for(interval);
     }
 }
-void MissionState::initThread(const std::chrono::milliseconds& interval,
+void MissionState::initCameraThread(const std::chrono::milliseconds& interval,
     std::shared_ptr<MavlinkClient> mavlinkClient) {
     this->cameraThreadActive = true;
     this->captureThread = std::thread([this, interval, mavlinkClient]() {
         this->zoneHandler(interval, mavlinkClient);
     });
+    this->curr_mission_item = 1;
 }
-void MissionState::stopThread() {
+void MissionState::stopCameraThread() {
     this->captureThread.join();
     this->cameraThreadActive = false;
 }

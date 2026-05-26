@@ -30,6 +30,10 @@
             "allowed_to_skip_waypoints": false,
             "generate_deviations": false
         },
+        "camera timing":{
+            "timeout":100,
+            "new_photo_time":300
+        },
         "coverage": {
             "altitude_m": 30.0,
             "camera_vision_m": 20.0,
@@ -62,6 +66,7 @@
         "_comment": "See CameraConfig struct in datatypes.hpp for detailed explanations",
         "type": "mock",
         "save_dir": "/workspaces/obcpp/images/mock",
+        "photo_delay":300,
         "save_images_to_file": true,
         "mock": {
             "not_stolen_port": 6060,

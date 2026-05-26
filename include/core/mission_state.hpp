@@ -58,9 +58,9 @@ class MissionState {
 
     void zoneHandler(const std::chrono::milliseconds& interval,
                         std::shared_ptr<MavlinkClient> mavlinkClient);
-    void initThread(const std::chrono::milliseconds& interval,
+    void initCameraThread(const std::chrono::milliseconds& interval,
                         std::shared_ptr<MavlinkClient> mavlinkClient);
-    void stopThread();
+    void stopCameraThread();
 
     /*
      * Gets a locking reference to the underlying tick for the given tick subclass T.
@@ -145,9 +145,8 @@ class MissionState {
     std::shared_ptr<CVAggregator> cv;
     std::shared_ptr<CameraInterface> camera;
 
-    std::chrono::milliseconds most_recent_picture;
-
     std::thread captureThread;
+    std::size_t curr_mission_item;
 
     std::mutex cv_mut;
     // Represents a single detected target used in pipeline

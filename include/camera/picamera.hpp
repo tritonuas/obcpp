@@ -56,6 +56,8 @@ class PiCamera : public CameraInterface {
                                          std::shared_ptr<MavlinkClient> mavlinkClient) override;
     void startStreaming() override;
 
+    bool getIsTakingPictures();
+
  private:
     /**
      * Takes an image and sleeps for the specified interval before
