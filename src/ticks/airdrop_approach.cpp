@@ -17,20 +17,12 @@
 
 
 AirdropApproachTick::AirdropApproachTick(std::shared_ptr<MissionState> state)
-    : Tick(state, TickID::AirdropApproach), airdrop_triggered(false) {}
+    : Tick(state, TickID::AirdropApproach), mission_started(false) {}
 
 void AirdropApproachTick::init() {
     LOG_F(INFO, "start mission airdrop");
-
-    bool mission_reset = false;
-    while (!mission_reset) {
-        mission_reset = this->state->getMav()->setMissionItem(0);
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
-
-    bool mission_started = false;
-    while (!mission_started) {
-        mission_started = this->state->getMav()->startMission();
+    while (!this->mission_started) {
+        this->mission_started = this->state->getMav()->startMission();
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
@@ -68,32 +60,27 @@ bool triggerAirdrop(std::shared_ptr<MavlinkClient> mav, airdrop_t airdrop_index)
     return success;
 }
 
-void AirdropApproachTick::dropAirdrop() {
-    airdrop_t next_airdrop = state->next_airdrop_to_drop.value();
-    LOG_F(INFO, "Dropping airdrop %d", next_airdrop);
-
-    this->airdrop_triggered = true;
-    state->markAirdropAsDropped(static_cast<AirdropType>(next_airdrop));
-    state->next_airdrop_to_drop.reset();
-}
-
 Tick* AirdropApproachTick::tick() {
-    bool at_final_waypoint = state->getMav()->isAtFinalWaypoint();
-    bool mission_finished = state->getMav()->isMissionFinished();
+    if (state->getMav()->isAtFinalWaypoint()) {
+        if (state->next_airdrop_to_drop.has_value()) {
+            LOG_F(INFO, "Dropping airdrop %d", state->next_airdrop_to_drop.value());
 
-    if (!this->airdrop_triggered && (at_final_waypoint || mission_finished)) {
-        if (mission_finished && !at_final_waypoint) {
-            LOG_F(WARNING, "Airdrop approach mission finished before final waypoint tick");
+            // Trigger the airdrop relay
+            triggerAirdrop(state->getMav(), state->next_airdrop_to_drop.value());
+
+            // Mark as dropped so AirdropPrep goes to the next
+            // target instead of re-routing to the same one.
+            state->markAirdropAsDropped(
+                static_cast<AirdropType>(state->next_airdrop_to_drop.value()));
+            // Clear so we don't re-trigger on subsequent ticks before isMissionFinished.
+            state->next_airdrop_to_drop = std::nullopt;
+
+        } else {
+            LOG_F(ERROR, "Cannot drop bottle because no bottle to drop");
         }
-        this->dropAirdrop();
     }
 
-    if (mission_finished) {
-        if (!this->airdrop_triggered) {
-            LOG_F(WARNING, "Airdrop approach mission finished before airdrop was triggered");
-            return nullptr;
-        }
-
+    if (state->getMav()->isMissionFinished()) {
         if (state->getDroppedAirdrops().size() >= NUM_AIRDROPS) {
             return new ManualLandingTick(state, nullptr);
         } else {
