@@ -138,18 +138,20 @@ void MissionState::zoneHandler(const std::chrono::milliseconds& interval,
             this->curr_mission_item = curr_waypoint;
         }
         auto now = getUnixTime_ms();
-        if ((now - last_photo_time) >= std::chrono::milliseconds(this->config.camera.photo_delay)) {
-            auto photo = this->getCamera()->takePicture(100ms, this->getMav());
-            if (this->config.camera.save_images_to_file) {
-                photo->saveToFile(this->config.camera.save_dir);
-            }
-
-            if (photo.has_value()&&((this->getTickID() == TickID::FlySearch)||
-                (this->getTickID() == TickID::CVLoiter))) {
-                this->getCV()->runPipeline(photo.value());
-            }
-            last_photo_time = getUnixTime_ms();
+        if ((now - last_photo_time) < std::chrono::milliseconds(this->config.camera.photo_delay)) {
+            std::this_thread::sleep_for(interval);
+            continue;
         }
+        auto photo = this->getCamera()->takePicture(100ms, this->getMav());
+        if (this->config.camera.save_images_to_file) {
+            photo->saveToFile(this->config.camera.save_dir);
+        }
+
+        if (photo.has_value()&&((this->getTickID() == TickID::FlySearch)||
+            (this->getTickID() == TickID::CVLoiter))) {
+            this->getCV()->runPipeline(photo.value());
+        }
+        last_photo_time = getUnixTime_ms();
         std::this_thread::sleep_for(interval);
     }
 }
