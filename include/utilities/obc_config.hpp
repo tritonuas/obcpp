@@ -40,6 +40,9 @@ struct CVConfig {
     float detection_threshold;
     int input_width;
     int input_height;
+    int sample_every_n_images;
+    int image_listener_poll_interval_ms;
+    int image_listener_settle_time_ms;
     std::string not_stolen_addr;
     uint16_t not_stolen_port;
 };

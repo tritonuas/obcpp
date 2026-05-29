@@ -17,11 +17,14 @@
 
 
 AirdropApproachTick::AirdropApproachTick(std::shared_ptr<MissionState> state)
-    : Tick(state, TickID::AirdropApproach) {}
+    : Tick(state, TickID::AirdropApproach), mission_started(false) {}
 
 void AirdropApproachTick::init() {
     LOG_F(INFO, "start mission airdrop");
-    this->state->getMav()->startMission();
+    while (!this->mission_started) {
+        this->mission_started = this->state->getMav()->startMission();
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
 }
 
 std::chrono::milliseconds AirdropApproachTick::getWait() const {
@@ -62,17 +65,15 @@ Tick* AirdropApproachTick::tick() {
         if (state->next_airdrop_to_drop.has_value()) {
             LOG_F(INFO, "Dropping airdrop %d", state->next_airdrop_to_drop.value());
 
-            // Trigger the airdrop servo/relay
+            // Trigger the airdrop relay
             triggerAirdrop(state->getMav(), state->next_airdrop_to_drop.value());
 
-            // markAirdropAsDropped() has already been called in airdrop_prep, so don't update here
-            // Lowkey kinda bad design but I didn't write this so don't blame me
-            // If you want to uncomment the following lines to test if this shit works, make sure
-            // to comment the ones in airdrop_prep
-
-            // Convert airdrop_t to AirdropType when calling markAirdropAsDropped
-            // state->markAirdropAsDropped(
-                // static_cast<AirdropType>(state->next_airdrop_to_drop.value() - 1));
+            // Mark as dropped so AirdropPrep goes to the next
+            // target instead of re-routing to the same one.
+            state->markAirdropAsDropped(
+                static_cast<AirdropType>(state->next_airdrop_to_drop.value()));
+            // Clear so we don't re-trigger on subsequent ticks before isMissionFinished.
+            state->next_airdrop_to_drop = std::nullopt;
 
         } else {
             LOG_F(ERROR, "Cannot drop bottle because no bottle to drop");

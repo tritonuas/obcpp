@@ -20,6 +20,9 @@ class AirdropApproachTick : public Tick {
     std::chrono::milliseconds getWait() const override;
 
     Tick* tick() override;
+
+ private:
+    bool mission_started;
 };
 
 bool triggerAirdrop(std::shared_ptr<MavlinkClient> mav, airdrop_t airdrop_index);

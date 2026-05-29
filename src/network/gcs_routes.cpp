@@ -240,13 +240,13 @@ DEF_GCS_HANDLE(Get, camera, capture) {
 
     std::optional<ImageData> image = cam->takePicture(1000ms, state->getMav());
 
-    if (state->config.camera.save_images_to_file) {
-        image->saveToFile(state->config.camera.save_dir);
-    }
-
     if (!image.has_value()) {
         LOG_RESPONSE(ERROR, "Failed to capture image", INTERNAL_SERVER_ERROR);
         return;
+    }
+
+    if (state->config.camera.save_images_to_file) {
+        image->saveToFile(state->config.camera.save_dir);
     }
 
     std::optional<ImageTelemetry> telemetry = image->TELEMETRY;
@@ -415,7 +415,7 @@ DEF_GCS_HANDLE(Post, targets, matched) {
     state->getCV()->terminate();
 
     {
-        LockPtr<MatchedResults> matched_results = state->getCV()->getMatchedResults();
+        LockPtr<MissionState::MatchedResults> matched_results = state->getMatchedResults();
 
         if (matched_results.data == nullptr) {
             LOG_S(ERROR) << "lockptr is null";
@@ -425,12 +425,9 @@ DEF_GCS_HANDLE(Post, targets, matched) {
         AirdropTarget returned_matched_result;
 
         for (const auto& instance : j_root) {
-            LOG_S(INFO) << returned_matched_result.index();
             google::protobuf::util::JsonStringToMessage(instance.dump(), &returned_matched_result);
-            LOG_S(WARNING) << returned_matched_result.index();
             matched_results.data->matched_airdrop[returned_matched_result.index()] =
                 returned_matched_result;
-            LOG_S(ERROR) << returned_matched_result.index();
         }
     }
 
@@ -528,18 +525,12 @@ DEF_GCS_HANDLE(Get, obcstate) {
 }
 
 DEF_GCS_HANDLE(Post, camera, runpipeline) {
+    // This is only used from the shitty debug OBC page from the GCS
     LOG_REQUEST("POST", "/camera/runpipeline");
 
     std::shared_ptr<CameraInterface> cam = state->getCamera();
 
-    std::string yolo_model_dir = state->config.cv.yolo_model_dir;
-    LOG_F(INFO, "Instantiating CV Aggregator with the following models:");
-    LOG_F(INFO, "Yolo Model: %s", yolo_model_dir.c_str());
-
-    // Make a CVAggregator instance and set it in the state
-    state->setCV(std::make_shared<CVAggregator>(Pipeline(PipelineParams(
-        yolo_model_dir, state->config.cv.detection_threshold, state->config.cv.input_width,
-        state->config.cv.input_height))));
+    std::shared_ptr<CVAggregator> aggregator = state->getCV();
 
     if (!cam->isConnected()) {
         LOG_F(INFO, "Camera not connected. Attempting to connect...");
@@ -556,13 +547,10 @@ DEF_GCS_HANDLE(Post, camera, runpipeline) {
 
     for (int i = 0; i < state->config.pathing.coverage.hover.pictures_per_stop; i++) {
         auto photo = state->getCamera()->takePicture(500ms, state->getMav());
-        if (state->config.camera.save_images_to_file) {
-            photo->saveToFile(state->config.camera.save_dir);
-        }
-
         if (photo.has_value()) {
-            // Run the pipeline on the photo
-            state->getCV()->runPipeline(photo.value());
+            if (state->config.camera.save_images_to_file) {
+                photo->saveToFile(state->config.camera.save_dir);
+            }
         }
     }
 

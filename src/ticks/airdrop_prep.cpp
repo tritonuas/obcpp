@@ -26,7 +26,7 @@ Tick* AirdropPrepTick::tick() {
         return new ManualLandingTick(state, nullptr);
     }
 
-    LockPtr<MatchedResults> results = state->getCV()->getMatchedResults();
+    LockPtr<MissionState::MatchedResults> results = state->getMatchedResults();
 
     for (int i = AirdropType::Water; i <= AirdropType::Beacon; i++) {
         if (dropped_airdrops.contains(static_cast<AirdropType>(i))) {
@@ -46,8 +46,6 @@ Tick* AirdropPrepTick::tick() {
 
         break;
     }
-    state->markAirdropAsDropped(next_airdrop);
-
     // The or condition here shouldn't be met because above we check for value
     // before setting next_bottle.
     // But just in case we default to whatever location target 0 was found at.
@@ -70,7 +68,7 @@ Tick* AirdropPrepTick::tick() {
     state->setAirdropPath(MissionPath(MissionPath::Type::FORWARD,
                             generateAirdropApproach(state, target.coordinate())));
 
-    LOG_F(INFO, "Generated approach path");
+    LOG_F(INFO, "Generated approach path: size: %ld", state->getAirdropPath().get().size());
 
     state->next_airdrop_to_drop = static_cast<airdrop_t>(next_airdrop);
 

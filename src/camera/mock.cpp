@@ -133,9 +133,12 @@ std::optional<ImageData> MockCamera::takePicture(const std::chrono::milliseconds
         return std::nullopt;
     }
 
+    uint64_t timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
+
     ImageData img_data(
         img,
-        0,
+        timestamp,
         telemetry);
 
     return img_data;

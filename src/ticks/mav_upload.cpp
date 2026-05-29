@@ -31,6 +31,7 @@ void MavUploadTick::init() {
                                     this->state,
                                     upload_geofence,
                                     waypoints);
+    this->state->getMav()->setMissionItem(0);
 }
 
 Tick* MavUploadTick::tick() {
