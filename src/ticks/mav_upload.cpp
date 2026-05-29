@@ -24,13 +24,13 @@ std::chrono::milliseconds MavUploadTick::getWait() const {
 }
 
 void MavUploadTick::init() {
-    this->state->getMav()->clearMission();
     this->mav_uploaded = std::async(std::launch::async,
                                     &MavlinkClient::uploadMissionUntilSuccess,
                                     this->state->getMav(),
                                     this->state,
                                     upload_geofence,
                                     waypoints);
+    this->state->getMav()->setMissionItem(0);
 }
 
 Tick* MavUploadTick::tick() {
