@@ -212,7 +212,7 @@ void UDPServer::recv() {
 void UDPServer::handleRequest(char request, asio::ip::udp::endpoint & endpoint) {
     if (request == 'I') {
         this->send(endpoint);
-    } else if (request == 'C') {
+    } else if (request == 'c') {
         this->sendConfig(endpoint);
     } else if (request == 'e') {
         this->shutdown();

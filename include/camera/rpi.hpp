@@ -21,7 +21,7 @@ namespace asio = boost::asio;
 
 enum class CameraRequest : std::uint8_t {
     START = 's',
-    CONFIG = 'C',
+    CONFIG = 'c',
     PICTURE = 'I',
     END = 'e',
     LOCK = 'l'
