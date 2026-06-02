@@ -84,13 +84,11 @@ void CVAggregator::worker(ImageData image, int thread_num) {
         run.bboxes.reserve(pipeline_results.targets.size());
         run.coords.reserve(pipeline_results.targets.size());
         run.targetTypes.reserve(pipeline_results.targets.size());
-        
         for (auto& det : pipeline_results.targets) {
             run.bboxes.push_back(det.bbox);
             run.coords.push_back(det.coord);
-            run.targetTypes.push_back(det.likely_airdrop);  
+            run.targetTypes.push_back(det.likely_airdrop);
         }
-
         {
             Lock lock(this->mut);
             this->results->runs.push_back(std::move(run));
