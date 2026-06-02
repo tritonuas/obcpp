@@ -381,6 +381,8 @@ DEF_GCS_HANDLE(Get, targets, all) {
             proto_bbox->set_y1(run.bboxes[i].y1);
             proto_bbox->set_x2(run.bboxes[i].x2);
             proto_bbox->set_y2(run.bboxes[i].y2);
+            // Add a target type
+            target.add_target_type(run.targetTypes[i]);
         }
 
         // copy the target to a record object to store
