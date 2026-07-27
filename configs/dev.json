@@ -4,7 +4,7 @@
     },
     "network": {
         "mavlink": {
-            "connect": "tcp://localhost:14552",
+            "connect": "tcp://127.0.0.1:14552",
             "log_params": false,
             "telem_poll_rate": 2.0
         },
