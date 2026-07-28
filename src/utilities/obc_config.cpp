@@ -6,6 +6,7 @@
 #include <string>
 
 #include "nlohmann/json.hpp"
+#include "pathing/dubins.hpp"
 #include "udp_squared/internal/enum.h"
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
@@ -131,4 +132,7 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
         // were previously set in the common file
         this->mavlink_parameters.param_map[param] = val;
     }
+
+    Dubins::_radius = this->pathing.dubins.turning_radius;
+    Dubins::_point_separation = this->pathing.dubins.point_separation;
 }

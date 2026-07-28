@@ -1,5 +1,6 @@
 #include "pathing/tree.hpp"
 
+#include <algorithm>
 #include <queue>
 #include <stack>
 #include <unordered_map>
@@ -71,8 +72,8 @@ void RRTNode::setPathLength(double new_path_length) { this->path_length = new_pa
 
 */
 
-RRTTree::RRTTree(RRTPoint root_point, Environment airspace, Dubins dubins)
-    : airspace(airspace), dubins(dubins), tree_size(1) {
+RRTTree::RRTTree(RRTPoint root_point, Environment airspace)
+    : airspace(airspace), tree_size(1) {
     std::shared_ptr<RRTNode> new_node =
         std::make_shared<RRTNode>(root_point, 0, 0, std::vector<XYZCoord>{});
     root = new_node;
@@ -90,7 +91,7 @@ bool RRTTree::validatePath(const std::vector<XYZCoord>& path, const RRTOption& o
 std::shared_ptr<RRTNode> RRTTree::generateNode(std::shared_ptr<RRTNode> anchor_node,
                                                const RRTPoint& new_point,
                                                const RRTOption& option) const {
-    const std::vector<XYZCoord>& path = dubins.generatePoints(
+    const std::vector<XYZCoord>& path = Dubins::generatePoints(
         anchor_node->getPoint(), new_point, option.dubins_path, option.has_straight);
 
     if (!validatePath(path, option)) {
@@ -217,7 +218,7 @@ void RRTTree::fillOptionsNodes(std::vector<std::pair<std::shared_ptr<RRTNode>, R
                                const std::vector<std::shared_ptr<RRTNode>>& nodes,
                                const RRTPoint& sample) const {
     for (std::shared_ptr<RRTNode> node : nodes) {
-        const std::vector<RRTOption>& local_options = dubins.allOptions(node->getPoint(), sample);
+        const std::vector<RRTOption>& local_options = Dubins::allOptions(node->getPoint(), sample);
 
         for (const RRTOption& option : local_options) {
             if (std::isnan(option.length) ||
@@ -306,7 +307,7 @@ void RRTTree::fillOptions(std::vector<std::pair<std::shared_ptr<RRTNode>, RRTOpt
     }
 
     // gets all dubins curves from the current node to the end point
-    const std::vector<RRTOption>& local_options = dubins.allOptions(node->getPoint(), end);
+    const std::vector<RRTOption>& local_options = Dubins::allOptions(node->getPoint(), end);
 
     // filters out the options that are not valid
     for (const RRTOption& option : local_options) {
@@ -435,8 +436,10 @@ void RRTTree::RRTStarRecursive(std::shared_ptr<RRTNode> current_node,
         }
 
         // get the dubins options (sorted)
-        const std::vector<RRTOption>& options =
-            dubins.allOptions(sample->getPoint(), child->getPoint(), true);
+        std::vector<RRTOption> options =
+            Dubins::allOptions(sample->getPoint(), child->getPoint());
+        std::sort(options.begin(), options.end(), compareRRTOptionLength);
+
 
         // for each option
         for (const RRTOption& option : options) {
@@ -455,8 +458,11 @@ void RRTTree::RRTStarRecursive(std::shared_ptr<RRTNode> current_node,
 
             // if the new cost is less than the current cost
             // check if new path is valid
-            const std::vector<XYZCoord>& path = dubins.generatePoints(
-                sample->getPoint(), child->getPoint(), option.dubins_path, option.has_straight);
+            const std::vector<XYZCoord>& path =
+                Dubins::generatePoints(sample->getPoint(),
+                                       child->getPoint(),
+                                       option.dubins_path,
+                                       option.has_straight);
 
             if (!validatePath(path, option)) {
                 continue;
