@@ -241,7 +241,6 @@ class ForwardCoveragePathing {
                                  // between search lines)
     const RRTPoint start;        // start location (doesn't have to be near polygon)
     const Environment airspace;  // information aobut the airspace
-    const Dubins dubins;         // dubins object to generate paths
     const AirdropCoverageConfig config;
 };
 
@@ -288,7 +287,6 @@ class AirdropApproachPathing {
     const XYZCoord goal;
     const RRTPoint start;
     const Environment airspace;
-    const Dubins dubins;
     const OBCConfig config;
 
     XYZCoord wind;

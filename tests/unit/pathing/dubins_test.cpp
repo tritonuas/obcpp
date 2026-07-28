@@ -8,6 +8,11 @@
 
 typedef XYZCoord Vector;
 
+static inline void setDubins(double r, double sep) {
+    Dubins::_radius = r;
+    Dubins::_point_separation = sep;
+}
+
 /*
  *   NOTE: the use of () and {} constructors is non-staandard
  *   i.e. I originally wrote it using () and was too lazy to
@@ -118,27 +123,27 @@ TEST(DubinsUtilTest, HalfDisplacement) {
  *   tests Dubins::findCenter()
  */
 TEST(DubinsTest, FindCenter) {
-    Dubins dubins1(5, 10);
+    setDubins(5, 10);
 
     // points towards e1
     RRTPoint origin_x{Vector{0, 0, 0}, 0};
-    Vector result1 = dubins1.findCenter(origin_x, 'L');
+    Vector result1 = Dubins::findCenter(origin_x, 'L');
     Vector expected_result1{0.0, 5.0, 0};
-    Vector result2 = dubins1.findCenter(origin_x, 'R');
+    Vector result2 = Dubins::findCenter(origin_x, 'R');
     Vector expected_result2{0.0, -5.0, 0};
 
     // points towards e2
     RRTPoint origin_y{Vector{0, 0, 0}, M_PI / 2};
-    Vector result3 = dubins1.findCenter(origin_y, 'L');
+    Vector result3 = Dubins::findCenter(origin_y, 'L');
     Vector expected_result3{-5.0, 0.0, 0};
-    Vector result4 = dubins1.findCenter(origin_y, 'R');
+    Vector result4 = Dubins::findCenter(origin_y, 'R');
     Vector expected_result4{5.0, 0.0, 0};
 
     RRTPoint arbitrary{Vector{12, 156, 100}, 1.3};
-    Vector result5 = dubins1.findCenter(arbitrary, 'L');
+    Vector result5 = Dubins::findCenter(arbitrary, 'L');
     // [-4.817, 1.341] ==> magnitude 5 * e1 vector rotated 2.87 [1.3 + pi/2] raidans
     Vector expected_result5{12 - 4.817, 156 + 1.341, 0};
-    Vector result6 = dubins1.findCenter(arbitrary, 'R');
+    Vector result6 = Dubins::findCenter(arbitrary, 'R');
     Vector expected_result6{12 + 4.817, 156 - 1.341, 0};
 
     EXPECT_NEAR(result1.x, expected_result1.x, 0.01);
@@ -166,7 +171,7 @@ TEST(DubinsTest, FindCenter) {
  *
  */
 TEST(DubinsTest, CircleArc) {
-    Dubins dubins1(5, 10);
+    setDubins(5, 10);
 
     // points towards e1
     RRTPoint origin_x{Vector{0, 0, 0}, 0};
@@ -176,19 +181,19 @@ TEST(DubinsTest, CircleArc) {
     // plane is facing x+, turning left/ccw with a turning radius of 5,
     // this should be the point where it turns 90deg (1/4 of the circle)
     Vector result1 =
-        dubins1.circleArc(origin_x, 1, dubins1.findCenter(origin_x, 'L'), M_PI / 2 * 5);
+        Dubins::circleArc(origin_x, 1, Dubins::findCenter(origin_x, 'L'), M_PI / 2 * 5);
     Vector expected_result1{5.0, 5.0, 0};
 
     // plance facing x+, turning right/cw with a turning radius of 5
     // turning 2.97 rad
-    Vector result2 = dubins1.circleArc(origin_x, -1, dubins1.findCenter(origin_x, 'R'), 2.97 * 5);
+    Vector result2 = Dubins::circleArc(origin_x, -1, Dubins::findCenter(origin_x, 'R'), 2.97 * 5);
     Vector expected_result2{0.850, -9.927, 0};
 
-    Vector result3 = dubins1.circleArc(arbitrary_position1, 1,
-                                       dubins1.findCenter(arbitrary_position1, 'L'), 5.12 * 5);
+    Vector result3 = Dubins::circleArc(arbitrary_position1, 1,
+                                       Dubins::findCenter(arbitrary_position1, 'L'), 5.12 * 5);
     Vector expected_result3{78.28441936, 42.50134993, 0};
 
-    Vector result4 = dubins1.circleArc(origin_y, 1, dubins1.findCenter(origin_y, 'L'), M_PI * 5);
+    Vector result4 = Dubins::circleArc(origin_y, 1, Dubins::findCenter(origin_y, 'L'), M_PI * 5);
     Vector expected_result4{-10.0, 0.0, 0};
 
     EXPECT_NEAR(result1.x, expected_result1.x, 0.01);
@@ -209,7 +214,7 @@ TEST(DubinsTest, CircleArc) {
  *      fails at last turn
  */
 TEST(DubinsTest, GenPointsStraight) {
-    Dubins dubins1{5, 1};
+    setDubins(5, 1);
     // points towards e1
     RRTPoint origin_x{Vector{0, 0, 0}, 0};
     RRTPoint arbitrary_position1{Vector{9, 6, 0}, 4.00};
@@ -218,7 +223,7 @@ TEST(DubinsTest, GenPointsStraight) {
     DubinsPath path{6.107586558274035, 4.175598748905551, 12.983673916464376};
 
     std::vector<Vector> result1 =
-        dubins1.generatePointsStraight(origin_x, arbitrary_position1, path);
+        Dubins::generatePointsStraight(origin_x, arbitrary_position1, path);
     std::vector<Vector> expected_result1 = {Vector{6.123233995736766e-16, 0.0, 0},
                                             Vector{0.9933466539753065, 0.09966711079379209, 0},
                                             Vector{1.9470917115432524, 0.3946950299855745, 0},
@@ -299,7 +304,7 @@ TEST(DubinsTest, GenPointsStraight) {
  *   tests Dubins::generatePointsCurve()
  */
 TEST(DubinsTest, GenPointsCurve) {
-    Dubins dubins1{5, 1};
+    setDubins(5, 1);
     // points towards e1
     RRTPoint origin_x{Vector{0, 0, 0}, 0};
     RRTPoint arbitrary_position1{Vector{9, 6, 0}, 4.00};
@@ -307,7 +312,7 @@ TEST(DubinsTest, GenPointsCurve) {
     // lrl  origin_x ==> arbitrary_position
     DubinsPath path{2.25948315258286, 0.3274953432143759, 4.870163802976823};
 
-    std::vector<Vector> result1 = dubins1.generatePointsCurve(origin_x, arbitrary_position1, path);
+    std::vector<Vector> result1 = Dubins::generatePointsCurve(origin_x, arbitrary_position1, path);
     std::vector<Vector> expected_result1 = {Vector{6.123233995736766e-16, 0.0, 0},
                                             Vector{0.9933466539753065, 0.09966711079379209, 0},
                                             Vector{1.9470917115432524, 0.3946950299855745, 0},
@@ -361,7 +366,7 @@ TEST(DubinsTest, GenPointsCurve) {
  *   tests Dubins::generatePoints()
  */
 TEST(DubinsTest, GenPoints) {
-    Dubins dubins1{5, 1};
+    setDubins(5, 1);
     // points towards e1
     RRTPoint origin_x{Vector{0, 0, 0}, 0};
     RRTPoint arbitrary_position1{Vector{9, 6, 0}, 4.00};
@@ -374,9 +379,9 @@ TEST(DubinsTest, GenPoints) {
                   DubinsPath{2.25948315258286, 0.3274953432143759, -4.870163802976823}, false};
 
     std::vector<Vector> result1 =
-        dubins1.generatePoints(origin_x, arbitrary_position1, lsl.dubins_path, lsl.has_straight);
+        Dubins::generatePoints(origin_x, arbitrary_position1, lsl.dubins_path, lsl.has_straight);
     std::vector<Vector> result2 =
-        dubins1.generatePoints(origin_x, arbitrary_position1, lrl.dubins_path, lrl.has_straight);
+        Dubins::generatePoints(origin_x, arbitrary_position1, lrl.dubins_path, lrl.has_straight);
 
     std::vector<Vector> expected_result1 = {Vector{6.123233995736766e-16, 0.0, 0},
                                             Vector{0.9933466539753065, 0.09966711079379209, 0},
@@ -505,7 +510,7 @@ TEST(DubinsTest, GenPoints) {
  *   tests Dubins::lsl()
  */
 TEST(DubinsTest, LSL) {
-    Dubins dubins1(5, 10);
+    setDubins(5, 10);
 
     // points towards e1
     RRTPoint origin_x{Vector{0, 0, 0}, 0};
@@ -514,8 +519,8 @@ TEST(DubinsTest, LSL) {
     RRTPoint arbitrary_position2{Vector{5, 100, 0}, M_PI / 2};
 
     RRTOption result1 =
-        dubins1.lsl(origin_x, arbitrary_position1, dubins1.findCenter(origin_x, 'L'),
-                    dubins1.findCenter(arbitrary_position1, 'L'));
+        Dubins::lsl(origin_x, arbitrary_position1, Dubins::findCenter(origin_x, 'L'),
+                    Dubins::findCenter(arbitrary_position1, 'L'));
     RRTOption expected_result1{103.46948015930067,
                                DubinsPath{0.40295754, 3.5970424510, 83.46948015930067}, true};
 
@@ -525,8 +530,8 @@ TEST(DubinsTest, LSL) {
     EXPECT_NEAR(result1.dubins_path.straight_dist, result1.dubins_path.straight_dist, 0.01);
     EXPECT_EQ(result1.has_straight, expected_result1.has_straight);
 
-    RRTOption result2 = dubins1.lsl(origin_x, plus_x100, dubins1.findCenter(origin_x, 'L'),
-                                    dubins1.findCenter(plus_x100, 'L'));
+    RRTOption result2 = Dubins::lsl(origin_x, plus_x100, Dubins::findCenter(origin_x, 'L'),
+                                    Dubins::findCenter(plus_x100, 'L'));
     RRTOption expected_result2{100, DubinsPath{0, 0, 100}, true};
 
     EXPECT_NEAR(result2.length, expected_result2.length, 0.01);
@@ -536,8 +541,8 @@ TEST(DubinsTest, LSL) {
     EXPECT_EQ(result2.has_straight, expected_result2.has_straight);
 
     RRTOption result3 =
-        dubins1.lsl(origin_x, arbitrary_position2, dubins1.findCenter(origin_x, 'L'),
-                    dubins1.findCenter(arbitrary_position2, 'L'));
+        Dubins::lsl(origin_x, arbitrary_position2, Dubins::findCenter(origin_x, 'L'),
+                    Dubins::findCenter(arbitrary_position2, 'L'));
     RRTOption expected_result3{102.85398163397448, DubinsPath{M_PI / 2, 0, 95}, true};
 
     EXPECT_NEAR(result3.length, expected_result3.length, 0.01);
@@ -551,7 +556,7 @@ TEST(DubinsTest, LSL) {
  *   tests Dubins::rsr()
  */
 TEST(DubinsTest, RSR) {
-    Dubins dubins1(5, 10);
+    setDubins(5, 10);
     // points towards e1
     RRTPoint origin_x{Vector{0, 0, 0}, 0};
     RRTPoint arbitrary_position1{Vector{73, 41, 0}, 4.00};
@@ -559,8 +564,8 @@ TEST(DubinsTest, RSR) {
     RRTPoint arbitrary_position2{Vector{5, -100, 0}, -M_PI / 2};
 
     RRTOption result1 =
-        dubins1.rsr(origin_x, arbitrary_position1, dubins1.findCenter(origin_x, 'R'),
-                    dubins1.findCenter(arbitrary_position1, 'R'));
+        Dubins::rsr(origin_x, arbitrary_position1, Dubins::findCenter(origin_x, 'R'),
+                    Dubins::findCenter(arbitrary_position1, 'R'));
     RRTOption expected_result1(
         127.792, DubinsPath(-5.664581035483313, -2.9017895788758596, 84.96005087111514), true);
 
@@ -570,8 +575,8 @@ TEST(DubinsTest, RSR) {
     EXPECT_NEAR(result1.dubins_path.straight_dist, result1.dubins_path.straight_dist, 0.01);
     EXPECT_EQ(result1.has_straight, expected_result1.has_straight);
 
-    RRTOption result2 = dubins1.rsr(origin_x, plus_x100, dubins1.findCenter(origin_x, 'R'),
-                                    dubins1.findCenter(plus_x100, 'R'));
+    RRTOption result2 = Dubins::rsr(origin_x, plus_x100, Dubins::findCenter(origin_x, 'R'),
+                                    Dubins::findCenter(plus_x100, 'R'));
     RRTOption expected_result2(100, DubinsPath(0, 0, 100), true);
 
     EXPECT_NEAR(result2.length, expected_result2.length, 0.01);
@@ -581,8 +586,8 @@ TEST(DubinsTest, RSR) {
     EXPECT_EQ(result2.has_straight, expected_result2.has_straight);
 
     RRTOption result3 =
-        dubins1.rsr(origin_x, arbitrary_position2, dubins1.findCenter(origin_x, 'R'),
-                    dubins1.findCenter(arbitrary_position2, 'R'));
+        Dubins::rsr(origin_x, arbitrary_position2, Dubins::findCenter(origin_x, 'R'),
+                    Dubins::findCenter(arbitrary_position2, 'R'));
     RRTOption expected_result3(102.85398163397448, DubinsPath(-M_PI / 2, 0, 95), true);
 
     EXPECT_NEAR(result3.length, expected_result3.length, 0.01);
@@ -596,7 +601,7 @@ TEST(DubinsTest, RSR) {
  *   tests Dubins::rsl()
  */
 TEST(DubinsTest, RSL) {
-    Dubins dubins1(5, 10);
+    setDubins(5, 10);
     // points towards e1
     RRTPoint origin_x{Vector{0, 0, 0}, 0};
     RRTPoint arbitrary_position1{Vector{73, 41, 0}, 4.00};
@@ -604,8 +609,8 @@ TEST(DubinsTest, RSL) {
     RRTPoint arbitrary_position2{Vector{10, -100, 0}, 0};
 
     RRTOption result1 =
-        dubins1.rsl(origin_x, arbitrary_position1, dubins1.findCenter(origin_x, 'R'),
-                    dubins1.findCenter(arbitrary_position1, 'L'));
+        Dubins::rsl(origin_x, arbitrary_position1, Dubins::findCenter(origin_x, 'R'),
+                    Dubins::findCenter(arbitrary_position1, 'L'));
     RRTOption expected_result1(
         134.78090998278276, DubinsPath(-5.8893974274779834, 3.606212120298397, 87.30286224390085),
         true);
@@ -616,8 +621,8 @@ TEST(DubinsTest, RSL) {
     EXPECT_NEAR(result1.dubins_path.straight_dist, result1.dubins_path.straight_dist, 0.01);
     EXPECT_EQ(result1.has_straight, expected_result1.has_straight);
 
-    RRTOption result2 = dubins1.rsl(origin_x, plus_x100, dubins1.findCenter(origin_x, 'R'),
-                                    dubins1.findCenter(plus_x100, 'L'));
+    RRTOption result2 = Dubins::rsl(origin_x, plus_x100, Dubins::findCenter(origin_x, 'R'),
+                                    Dubins::findCenter(plus_x100, 'L'));
     RRTOption expected_result2(100, DubinsPath(0, 0, 100), true);
 
     EXPECT_NEAR(result2.length, expected_result2.length, 0.01);
@@ -627,8 +632,8 @@ TEST(DubinsTest, RSL) {
     EXPECT_EQ(result2.has_straight, expected_result2.has_straight);
 
     RRTOption result3 =
-        dubins1.rsl(origin_x, arbitrary_position2, dubins1.findCenter(origin_x, 'R'),
-                    dubins1.findCenter(arbitrary_position2, 'L'));
+        Dubins::rsl(origin_x, arbitrary_position2, Dubins::findCenter(origin_x, 'R'),
+                    Dubins::findCenter(arbitrary_position2, 'L'));
     RRTOption expected_result3(105.70796326794898, DubinsPath(-M_PI / 2, M_PI / 2, 90), true);
 
     EXPECT_NEAR(result3.length, expected_result3.length, 0.01);
@@ -642,7 +647,7 @@ TEST(DubinsTest, RSL) {
  *   tests Dubins::lsr()
  */
 TEST(DubinsTest, LSR) {
-    Dubins dubins1(5, 10);
+    setDubins(5, 10);
     // points towards e1
     RRTPoint origin_x{Vector{0, 0, 0}, 0};
     RRTPoint arbitrary_position1{Vector{73, 41, 0}, 4.00};
@@ -650,8 +655,8 @@ TEST(DubinsTest, LSR) {
     RRTPoint arbitrary_position2{Vector{10, 100, 0}, 0};
 
     RRTOption result1 =
-        dubins1.lsr(origin_x, arbitrary_position1, dubins1.findCenter(origin_x, 'L'),
-                    dubins1.findCenter(arbitrary_position1, 'R'));
+        Dubins::lsr(origin_x, arbitrary_position1, Dubins::findCenter(origin_x, 'L'),
+                    Dubins::findCenter(arbitrary_position1, 'R'));
     RRTOption expected_result1(
         96.78474229907584, DubinsPath(0.6420440973470476, -2.925229404526634, 78.94837478970744),
         true);
@@ -662,8 +667,8 @@ TEST(DubinsTest, LSR) {
     EXPECT_NEAR(result1.dubins_path.straight_dist, result1.dubins_path.straight_dist, 0.01);
     EXPECT_EQ(result1.has_straight, expected_result1.has_straight);
 
-    RRTOption result2 = dubins1.lsr(origin_x, plus_x100, dubins1.findCenter(origin_x, 'L'),
-                                    dubins1.findCenter(plus_x100, 'R'));
+    RRTOption result2 = Dubins::lsr(origin_x, plus_x100, Dubins::findCenter(origin_x, 'L'),
+                                    Dubins::findCenter(plus_x100, 'R'));
     RRTOption expected_result2(100, DubinsPath(0, 0, 100), true);
 
     EXPECT_NEAR(result2.length, expected_result2.length, 0.01);
@@ -673,8 +678,8 @@ TEST(DubinsTest, LSR) {
     EXPECT_EQ(result2.has_straight, expected_result2.has_straight);
 
     RRTOption result3 =
-        dubins1.lsr(origin_x, arbitrary_position2, dubins1.findCenter(origin_x, 'L'),
-                    dubins1.findCenter(arbitrary_position2, 'R'));
+        Dubins::lsr(origin_x, arbitrary_position2, Dubins::findCenter(origin_x, 'L'),
+                    Dubins::findCenter(arbitrary_position2, 'R'));
     RRTOption expected_result3(105.70796326794898, DubinsPath(M_PI / 2, -M_PI / 2, 90), true);
     EXPECT_NEAR(result3.length, expected_result3.length, 0.01);
     EXPECT_NEAR(result3.dubins_path.beta_0, expected_result3.dubins_path.beta_0, 0.01);
@@ -687,14 +692,14 @@ TEST(DubinsTest, LSR) {
  *   tests Dubins::lrl()
  */
 TEST(DubinsTest, LRL) {
-    Dubins dubins1(5, 10);
+    setDubins(5, 10);
     // points towards e1
     RRTPoint origin_x{Vector{0, 0, 0}, 0};
     RRTPoint arbitrary_position1{Vector{9, 6, 0}, 4.00};
 
     RRTOption result1 =
-        dubins1.lrl(origin_x, arbitrary_position1, dubins1.findCenter(origin_x, 'L'),
-                    dubins1.findCenter(arbitrary_position1, 'L'));
+        Dubins::lrl(origin_x, arbitrary_position1, Dubins::findCenter(origin_x, 'L'),
+                    Dubins::findCenter(arbitrary_position1, 'L'));
     RRTOption expected_result1(37.28571149387029,
                                DubinsPath(2.25948315258286, 0.3274953432143759, 4.870163802976823),
                                false);
@@ -710,14 +715,14 @@ TEST(DubinsTest, LRL) {
  *   tests Dubins::rlr()
  */
 TEST(DubinsTest, RLR) {
-    Dubins dubins1(5, 10);
+    setDubins(5, 10);
     // points towards e1
     RRTPoint origin_x{Vector{0, 0, 0}, 0};
     RRTPoint arbitrary_position1{Vector{9, 6, 0}, 4.00};
 
     RRTOption result1 =
-        dubins1.rlr(origin_x, arbitrary_position1, dubins1.findCenter(origin_x, 'R'),
-                    dubins1.findCenter(arbitrary_position1, 'R'));
+        Dubins::rlr(origin_x, arbitrary_position1, Dubins::findCenter(origin_x, 'R'),
+                    Dubins::findCenter(arbitrary_position1, 'R'));
     RRTOption expected_result1(
         56.99424154724155, DubinsPath(-1.0585943958426456, -5.782422412471302, 4.557831501134362),
         false);
@@ -733,13 +738,13 @@ TEST(DubinsTest, RLR) {
  *   tests Dubins::allOptions()
  */
 TEST(DubinsTest, AllOptions) {
-    Dubins dubins1(5, 10);
+    setDubins(5, 10);
     // points towards e1
     RRTPoint origin_x{Vector{0, 0, 0}, 0};
     RRTPoint arbitrary_position1{Vector{9, 6, 0}, 4.00};
     RRTPoint arbitrary_position2{Vector{3, -1, 0}, 2.36};
 
-    std::vector<RRTOption> result1 = dubins1.allOptions(origin_x, arbitrary_position1);
+    std::vector<RRTOption> result1 = Dubins::allOptions(origin_x, arbitrary_position1);
     std::vector<RRTOption> expected_result1 = {
         RRTOption(64.39960045236231,
                   DubinsPath(6.107586558274035, 4.175598748905551, 12.983673916464376), true),
@@ -754,7 +759,7 @@ TEST(DubinsTest, AllOptions) {
                   DubinsPath(2.25948315258286, 0.3274953432143759, -4.870163802976823), false),
     };
 
-    std::vector<RRTOption> result2 = dubins1.allOptions(arbitrary_position1, arbitrary_position2);
+    std::vector<RRTOption> result2 = Dubins::allOptions(arbitrary_position1, arbitrary_position2);
     std::vector<RRTOption> expected_result2 = {
         RRTOption(69.79960318782443,
                   DubinsPath(5.92544955425334, 5.000921060105833, 15.167750116028579), true),
@@ -811,12 +816,12 @@ TEST(DubinsTest, AllOptions) {
  *   tests Dubins::dubinsPath()
  */
 TEST(DubinsTest, DubinsPath) {
-    Dubins dubins1{5, 1};
+    setDubins(5, 1);
     // points towards e1
     RRTPoint origin_x{Vector{0, 0, 0}, 0};
     RRTPoint arbitrary_position1{Vector{9, 6, 0}, 4.00};
 
-    std::vector<Vector> result1 = dubins1.dubinsPath(origin_x, arbitrary_position1);
+    std::vector<Vector> result1 = Dubins::dubinsPath(origin_x, arbitrary_position1);
     std::vector<Vector> expected_result1 = {Vector{6.123233995736766e-16, 0.0, 0},
                                             Vector{0.993400836368525, -0.09938973742323216, 0},
                                             Vector{1.975524298544812, -0.2876276322341959, 0},

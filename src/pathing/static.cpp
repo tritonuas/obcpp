@@ -25,8 +25,7 @@ RRT::RRT(RRTPoint start, std::vector<XYZCoord> goals, double search_radius, Poly
     : iterations_per_waypoint(config.pathing.rrt.iterations_per_waypoint),
       search_radius(search_radius),
       rewire_radius(config.pathing.rrt.rewire_radius),
-      tree(start, Environment(bounds, {}, {}, goals, obstacles),
-           Dubins(config.pathing.dubins.turning_radius, config.pathing.dubins.point_separation)),
+      tree(start, Environment(bounds, {}, {}, goals, obstacles)),
       config(config.pathing.rrt) {
     if (angles.size() != 0) {
         this->angles = angles;
@@ -38,8 +37,7 @@ RRT::RRT(RRTPoint start, std::vector<XYZCoord> goals, double search_radius, Envi
     : iterations_per_waypoint(config.pathing.rrt.iterations_per_waypoint),
       search_radius(search_radius),
       rewire_radius(config.pathing.rrt.rewire_radius),
-      tree(start, airspace,
-           Dubins(config.pathing.dubins.turning_radius, config.pathing.dubins.point_separation)),
+      tree(start, airspace),
       config(config.pathing.rrt) {
     if (angles.size() != 0) {
         this->angles = angles;
@@ -303,7 +301,6 @@ ForwardCoveragePathing::ForwardCoveragePathing(const RRTPoint& start, double sca
     : start(start),
       scan_radius(scan_radius),
       airspace(Environment(bounds, airdrop_zone, {}, {}, obstacles)),
-      dubins(Dubins(config.pathing.dubins.turning_radius, config.pathing.dubins.point_separation)),
       config(config.pathing.coverage) {}
 
 std::vector<XYZCoord> ForwardCoveragePathing::run() const {
@@ -320,7 +317,7 @@ std::vector<XYZCoord> ForwardCoveragePathing::coverageDefault() const {
     // generates the path connecting the q
     std::vector<RRTOption> dubins_options;
     for (int i = 0; i < waypoints.size() - 1; i++) {
-        dubins_options.push_back(dubins.bestOption(waypoints[i], waypoints[i + 1]));
+        dubins_options.push_back(Dubins::bestOption(waypoints[i], waypoints[i + 1]));
     }
 
     return generatePath(dubins_options, waypoints);
@@ -352,7 +349,7 @@ std::vector<XYZCoord> ForwardCoveragePathing::coverageOptimal() const {
         std::vector<RRTOption> current_dubins_path;
 
         for (int i = 0; i < waypoints.size() - 1; i++) {
-            RRTOption dubins_path = dubins.bestOption(waypoints[i], waypoints[i + 1]);
+            RRTOption dubins_path = Dubins::bestOption(waypoints[i], waypoints[i + 1]);
             lengths[i] += dubins_path.length;
             current_dubins_path.push_back(dubins_path);
         }
@@ -387,7 +384,7 @@ std::vector<XYZCoord> ForwardCoveragePathing::generatePath(
     double height = waypoints[0].coord.z;
     double height_difference = config.altitude_m - waypoints[0].coord.z;
 
-    std::vector<XYZCoord> path_coordinates = dubins.generatePoints(
+    std::vector<XYZCoord> path_coordinates = Dubins::generatePoints(
         waypoints[0], waypoints[1], dubins_options[0].dubins_path, dubins_options[0].has_straight);
 
     double height_increment = height_difference / path_coordinates.size();
@@ -402,7 +399,7 @@ std::vector<XYZCoord> ForwardCoveragePathing::generatePath(
     // main loop
     for (int i = 1; i < dubins_options.size(); i++) {
         path_coordinates =
-            dubins.generatePoints(waypoints[i], waypoints[i + 1], dubins_options[i].dubins_path,
+            Dubins::generatePoints(waypoints[i], waypoints[i + 1], dubins_options[i].dubins_path,
                                   dubins_options[i].has_straight);
 
         for (XYZCoord& coord : path_coordinates) {
@@ -511,7 +508,6 @@ AirdropApproachPathing::AirdropApproachPathing(const RRTPoint& start, const XYZC
       goal(goal),
       wind(wind),
       airspace(Environment(bounds, {}, {}, {goal}, obstacles)),
-      dubins(Dubins(config.pathing.dubins.turning_radius, config.pathing.dubins.point_separation)),
       config(config) {}
 
 std::vector<XYZCoord> AirdropApproachPathing::run() const {

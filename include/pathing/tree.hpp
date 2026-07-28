@@ -104,7 +104,7 @@ class RRTNode {
 
 class RRTTree {
  public:
-    RRTTree(RRTPoint root_point, Environment airspace, Dubins dubins);
+    RRTTree(RRTPoint root_point, Environment airspace);
     ~RRTTree();
 
     /**
@@ -284,7 +284,6 @@ class RRTTree {
     std::shared_ptr<RRTNode> root;
     std::shared_ptr<RRTNode> current_head;
     Environment airspace;
-    Dubins dubins;
     int tree_size;
 
     /**
