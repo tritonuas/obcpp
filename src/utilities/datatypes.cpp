@@ -1,6 +1,8 @@
 #include "utilities/datatypes.hpp"
 
 #include <cmath>
+#include <limits>
+#include <string>
 
 #include "pathing/cartesian.hpp"
 #include "protos/obc.pb.h"

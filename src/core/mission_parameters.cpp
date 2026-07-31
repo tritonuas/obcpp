@@ -5,8 +5,10 @@
 #include <mutex>
 #include <optional>
 #include <shared_mutex>
+#include <string>
 #include <tuple>
 #include <unordered_map>
+#include <vector>
 
 #include "pathing/cartesian.hpp"
 #include "protos/obc.pb.h"

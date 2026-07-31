@@ -184,7 +184,7 @@ if(CPPLINT)
     # also don't check for runtime/references since Google's public style guidelines are behind https://github.com/cpplint/cpplint/issues/148
     --exclude=../include/udp_squared
     --exclude=../src/utilities/base64.cpp
-    --filter=-legal,-readability/todo,-build/c++11,-runtime/references
+    --filter=-legal,-readability/todo,-build/c++11,-build/c++17,-runtime/references
     --linelength=100
     --recursive
     ../src

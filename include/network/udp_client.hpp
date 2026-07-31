@@ -8,7 +8,7 @@
 #include <boost/asio.hpp>
 #include <opencv2/opencv.hpp>
 #include <loguru.hpp>
-#include "rpi_connection.hpp"
+#include "network/rpi_connection.hpp"
 
 namespace asio = boost::asio;
 

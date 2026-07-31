@@ -13,8 +13,13 @@
  */
 #include <iostream>
 
+static inline void setDubins(double r, double sep) {
+    Dubins::_radius = r;
+    Dubins::_point_separation = sep;
+}
+
 TEST(SimpleTreeTest, addNodeTest) {
-    Dubins dubins{5, 0.1};
+    setDubins(5, 0.1);
     Polygon valid_region;
     valid_region.emplace_back(XYZCoord(0, 0, 0));
     valid_region.emplace_back(XYZCoord(100, 0, 0));
@@ -28,9 +33,9 @@ TEST(SimpleTreeTest, addNodeTest) {
     Environment env = Environment(valid_region, {}, {}, {XYZCoord(0, 0, 0)}, obstacles);
     RRTPoint point1 = RRTPoint(XYZCoord(25, 25, 0), 0);
     RRTPoint point2 = RRTPoint(XYZCoord(50, 75, 0), 0);
-    RRTOption option = dubins.allOptions(point1, point2, true)[0];
+    RRTOption option = Dubins::bestOption(point1, point2);
 
-    RRTTree simple_tree = RRTTree(point1, env, dubins);
+    RRTTree simple_tree = RRTTree(point1, env);
 
     std::shared_ptr<RRTNode> root = simple_tree.getRoot();
 
@@ -43,7 +48,7 @@ TEST(SimpleTreeTest, addNodeTest) {
 }
 
 TEST(SimpleTreeTest, rewireEdgeTest) {
-    Dubins dubins{5, 0.1};
+    setDubins(5, 0.1);
     Polygon valid_region;
     valid_region.emplace_back(XYZCoord(0, 0, 0));
     valid_region.emplace_back(XYZCoord(100, 0, 0));
@@ -59,12 +64,12 @@ TEST(SimpleTreeTest, rewireEdgeTest) {
     RRTPoint point3 = RRTPoint(XYZCoord(50, 80, 1.5), HALF_PI);
     RRTPoint point4 = RRTPoint(XYZCoord(50, 60, 0.9), HALF_PI);
 
-    RRTOption option1 = dubins.allOptions(point1, point2, true)[0];
-    RRTOption option2 = dubins.allOptions(point2, point3, true)[0];
-    RRTOption option3 = dubins.allOptions(point1, point4, true)[0];
-    RRTOption new_option = dubins.allOptions(point4, point3, true)[0];
+    RRTOption option1 = Dubins::allOptions(point1, point2)[0];
+    RRTOption option2 = Dubins::allOptions(point2, point3)[0];
+    RRTOption option3 = Dubins::allOptions(point1, point4)[0];
+    RRTOption new_option = Dubins::allOptions(point4, point3)[0];
 
-    RRTTree simple_tree = RRTTree(point1, env, dubins);
+    RRTTree simple_tree = RRTTree(point1, env);
 
     std::shared_ptr<RRTNode> root = simple_tree.getRoot();
 

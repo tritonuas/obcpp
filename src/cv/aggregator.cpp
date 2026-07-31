@@ -1,6 +1,11 @@
 #include "cv/aggregator.hpp"
 
 #include <exception>
+#include <map>
+#include <memory>
+#include <queue>
+#include <utility>
+#include <vector>
 
 #include "utilities/constants.hpp"
 #include "utilities/lockptr.hpp"

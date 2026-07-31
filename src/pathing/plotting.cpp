@@ -1,10 +1,12 @@
-#include <vector>
-#include <string>
-#include <cmath>
 #include <chrono>
+#include <cmath>
+#include <filesystem>
+#include <limits>
+#include <memory>
+#include <string>
 #include <thread>
 #include <utility>
-#include <filesystem>
+#include <vector>
 
 // NOTE: this is very dumb but this #include <assert.h> is needed
 // before we #include <Magick++.h>. This is because ImageMagick

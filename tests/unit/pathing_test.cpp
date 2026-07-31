@@ -24,6 +24,11 @@
 
 #include "handler_params.hpp"
 
+static inline void setDubins(double r, double sep) {
+    Dubins::_radius = r;
+    Dubins::_point_separation = sep;
+}
+
 // TODO: fails fom the tick ever switching
 // copies over code verbatim from the gcs test, and then generates a path
 // TEST(StaticPathingTest, RRTTest) {
@@ -184,12 +189,12 @@ TEST(StaticPathingTest, FinalAngleDubinsPath) {
 
     const double EXPECTED_END_ANGLE = M_PI / 2.0;
 
-    Dubins dubins(30.0, 30.0);
+    setDubins(30.0, 30.0);
     RRTPoint start_pt(XYZCoord(0.0, 0.0, 0.0), 0.0);
     RRTPoint end_pt(XYZCoord(300.0, 300.0, 0.0), EXPECTED_END_ANGLE);
 
     // Dubins Path
-    std::vector<XYZCoord> dubins_xyz = dubins.dubinsPath(start_pt, end_pt);
+    std::vector<XYZCoord> dubins_xyz = Dubins::dubinsPath(start_pt, end_pt);
     std::vector<GPSCoord> dubins_gps;
     for (const auto& xyz : dubins_xyz) {
         dubins_gps.push_back(converter.toLatLng(xyz));
