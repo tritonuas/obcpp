@@ -14,31 +14,31 @@ TEST(EnvironmentTest, PointInBounds) {
     test.emplace_back(XYZCoord{0, 1, 0});
     test.emplace_back(XYZCoord{0, 0, 0});
     test.emplace_back(XYZCoord{1, 0, 0});
-    Environment test_env = {test, {}, {}, {XYZCoord(0, 0, 0)}, {}};
+    Environment::init(test, {}, {});
 
-    EXPECT_EQ(true, test_env.isPointInPolygon(test, XYZCoord{0.5, 0.5, 0}));
-    EXPECT_EQ(true, test_env.isPointInPolygon(test, XYZCoord{0.5, 0.5, 99999999}));
+    EXPECT_EQ(true, Environment::isPointInPolygon(test, XYZCoord{0.5, 0.5, 0}));
+    EXPECT_EQ(true, Environment::isPointInPolygon(test, XYZCoord{0.5, 0.5, 99999999}));
 
-    EXPECT_EQ(false, test_env.isPointInPolygon(test, XYZCoord{1, 0.5, 0}));   // edge is outside
-    EXPECT_EQ(false, test_env.isPointInPolygon(test, XYZCoord{2, 0.5, 0}));   // right
-    EXPECT_EQ(false, test_env.isPointInPolygon(test, XYZCoord{0.5, 2, 0}));   // top
-    EXPECT_EQ(false, test_env.isPointInPolygon(test, XYZCoord{-1, 0.5, 0}));  // left
-    EXPECT_EQ(false, test_env.isPointInPolygon(test, XYZCoord{0.5, -1, 0}));  // down
+    EXPECT_EQ(false, Environment::isPointInPolygon(test, XYZCoord{1, 0.5, 0}));   // edge is outside
+    EXPECT_EQ(false, Environment::isPointInPolygon(test, XYZCoord{2, 0.5, 0}));   // right
+    EXPECT_EQ(false, Environment::isPointInPolygon(test, XYZCoord{0.5, 2, 0}));   // top
+    EXPECT_EQ(false, Environment::isPointInPolygon(test, XYZCoord{-1, 0.5, 0}));  // left
+    EXPECT_EQ(false, Environment::isPointInPolygon(test, XYZCoord{0.5, -1, 0}));  // down
 
     Polygon no_point = {};
-    Environment no_point_env = {no_point, {}, {}, {XYZCoord(0, 0, 0)}, {}};
+    Environment::init(no_point, {}, {});
 
-    EXPECT_EQ(false, no_point_env.isPointInPolygon(no_point, XYZCoord{1, 1, 1}));
-    EXPECT_EQ(false, no_point_env.isPointInPolygon(no_point, XYZCoord{1, 0, 1}));
-    EXPECT_EQ(false, no_point_env.isPointInPolygon(no_point, XYZCoord{0, 1, 1}));
+    EXPECT_EQ(false, Environment::isPointInPolygon(no_point, XYZCoord{1, 1, 1}));
+    EXPECT_EQ(false, Environment::isPointInPolygon(no_point, XYZCoord{1, 0, 1}));
+    EXPECT_EQ(false, Environment::isPointInPolygon(no_point, XYZCoord{0, 1, 1}));
 
     Polygon point;
     point.emplace_back(XYZCoord{1, 1, 1});
-    Environment point_env = {point, {}, {}, {XYZCoord(0, 0, 0)}, {}};
+    Environment::init(point, {}, {});
 
-    EXPECT_EQ(false, point_env.isPointInPolygon(point, XYZCoord{1, 1, 1}));
-    EXPECT_EQ(false, point_env.isPointInPolygon(point, XYZCoord{1, 0, 1}));
-    EXPECT_EQ(false, point_env.isPointInPolygon(point, XYZCoord{0, 1, 1}));
+    EXPECT_EQ(false, Environment::isPointInPolygon(point, XYZCoord{1, 1, 1}));
+    EXPECT_EQ(false, Environment::isPointInPolygon(point, XYZCoord{1, 0, 1}));
+    EXPECT_EQ(false, Environment::isPointInPolygon(point, XYZCoord{0, 1, 1}));
 
     // tests close to diagonals
     Polygon quadrilateral;
@@ -46,17 +46,17 @@ TEST(EnvironmentTest, PointInBounds) {
     quadrilateral.emplace_back(XYZCoord{2, 1, 0});
     quadrilateral.emplace_back(XYZCoord{4, 4, 0});
     quadrilateral.emplace_back(XYZCoord{1, 2, 0});
-    Environment quadrilateral_env = {quadrilateral, {}, {}, {XYZCoord(0, 0, 0)}, {}};
+    Environment::init(quadrilateral, {}, {});
 
-    EXPECT_EQ(true, quadrilateral_env.isPointInPolygon(quadrilateral, XYZCoord{1.5, 1.00, 0}));
-    EXPECT_EQ(true, quadrilateral_env.isPointInPolygon(quadrilateral, XYZCoord{0.5, 0.90, 0}));
-    EXPECT_EQ(true, quadrilateral_env.isPointInPolygon(quadrilateral, XYZCoord{2.5, 2.00, 0}));
-    EXPECT_EQ(true, quadrilateral_env.isPointInPolygon(quadrilateral, XYZCoord{1.5, 2.25, 0}));
+    EXPECT_EQ(true, Environment::isPointInPolygon(quadrilateral, XYZCoord{1.5, 1.00, 0}));
+    EXPECT_EQ(true, Environment::isPointInPolygon(quadrilateral, XYZCoord{0.5, 0.90, 0}));
+    EXPECT_EQ(true, Environment::isPointInPolygon(quadrilateral, XYZCoord{2.5, 2.00, 0}));
+    EXPECT_EQ(true, Environment::isPointInPolygon(quadrilateral, XYZCoord{1.5, 2.25, 0}));
 
-    EXPECT_EQ(false, quadrilateral_env.isPointInPolygon(quadrilateral, XYZCoord{1.5, 0.75, 0}));
-    EXPECT_EQ(false, quadrilateral_env.isPointInPolygon(quadrilateral, XYZCoord{0.5, 1.10, 0}));
-    EXPECT_EQ(false, quadrilateral_env.isPointInPolygon(quadrilateral, XYZCoord{2.5, 1.30, 0}));
-    EXPECT_EQ(false, quadrilateral_env.isPointInPolygon(quadrilateral, XYZCoord{1.5, 2.50, 0}));
+    EXPECT_EQ(false, Environment::isPointInPolygon(quadrilateral, XYZCoord{1.5, 0.75, 0}));
+    EXPECT_EQ(false, Environment::isPointInPolygon(quadrilateral, XYZCoord{0.5, 1.10, 0}));
+    EXPECT_EQ(false, Environment::isPointInPolygon(quadrilateral, XYZCoord{2.5, 1.30, 0}));
+    EXPECT_EQ(false, Environment::isPointInPolygon(quadrilateral, XYZCoord{1.5, 2.50, 0}));
 }
 
 /*
@@ -76,32 +76,32 @@ TEST(EnvironmentTest, PointOutOfBoundsTest) {
         {XYZCoord(10, 10, 0), XYZCoord(20, 10, 0), XYZCoord(20, 20, 0), XYZCoord(10, 20, 0)}};
 
     std::vector<Polygon> obstacles = {obs1};
-    Environment test{small_square, {}, {}, {XYZCoord(0, 0, 0)}, obstacles};
+    Environment::init(small_square, {}, {}, obstacles);
 
-    EXPECT_EQ(true, test.isPointInBounds(XYZCoord{0.5, 0.5, 0}));
-    EXPECT_EQ(true, test.isPointInBounds(XYZCoord{0.5, 0.5, 99999999}));
+    EXPECT_EQ(true, Environment::isPointInBounds(XYZCoord{0.5, 0.5, 0}));
+    EXPECT_EQ(true, Environment::isPointInBounds(XYZCoord{0.5, 0.5, 99999999}));
 
-    EXPECT_EQ(false, test.isPointInBounds(XYZCoord{1, 0.5, 0}));   // edge is outside
-    EXPECT_EQ(false, test.isPointInBounds(XYZCoord{2, 0.5, 0}));   // right
-    EXPECT_EQ(false, test.isPointInBounds(XYZCoord{0.5, 2, 0}));   // top
-    EXPECT_EQ(false, test.isPointInBounds(XYZCoord{-1, 0.5, 0}));  // left
-    EXPECT_EQ(false, test.isPointInBounds(XYZCoord{0.5, -1, 0}));  // down
+    EXPECT_EQ(false, Environment::isPointInBounds(XYZCoord{1, 0.5, 0}));   // edge is outside
+    EXPECT_EQ(false, Environment::isPointInBounds(XYZCoord{2, 0.5, 0}));   // right
+    EXPECT_EQ(false, Environment::isPointInBounds(XYZCoord{0.5, 2, 0}));   // top
+    EXPECT_EQ(false, Environment::isPointInBounds(XYZCoord{-1, 0.5, 0}));  // left
+    EXPECT_EQ(false, Environment::isPointInBounds(XYZCoord{0.5, -1, 0}));  // down
 
     Polygon no_point_polygon;
-    Environment no_point = {no_point_polygon, {}, {}, {XYZCoord(0, 0, 0)}, obstacles};
+    Environment::init(no_point_polygon, {}, {}, obstacles);
 
-    EXPECT_EQ(false, no_point.isPointInBounds(XYZCoord{1, 1, 1}));
-    EXPECT_EQ(false, no_point.isPointInBounds(XYZCoord{1, 0, 1}));
-    EXPECT_EQ(false, no_point.isPointInBounds(XYZCoord{0, 1, 1}));
+    EXPECT_EQ(false, Environment::isPointInBounds(XYZCoord{1, 1, 1}));
+    EXPECT_EQ(false, Environment::isPointInBounds(XYZCoord{1, 0, 1}));
+    EXPECT_EQ(false, Environment::isPointInBounds(XYZCoord{0, 1, 1}));
 
     Polygon point_polygon;
     point_polygon.emplace_back(XYZCoord{1, 1, 1});
 
-    Environment point = {point_polygon, {}, {}, {XYZCoord(0, 0, 0)}, obstacles};
+    Environment::init(point_polygon, {}, {}, obstacles);
 
-    EXPECT_EQ(false, point.isPointInBounds(XYZCoord{1, 1, 1}));
-    EXPECT_EQ(false, point.isPointInBounds(XYZCoord{1, 0, 1}));
-    EXPECT_EQ(false, point.isPointInBounds(XYZCoord{0, 1, 1}));
+    EXPECT_EQ(false, Environment::isPointInBounds(XYZCoord{1, 1, 1}));
+    EXPECT_EQ(false, Environment::isPointInBounds(XYZCoord{1, 0, 1}));
+    EXPECT_EQ(false, Environment::isPointInBounds(XYZCoord{0, 1, 1}));
 
     // tests close to diagonals
     Polygon quadrateral_polygon;
@@ -110,17 +110,17 @@ TEST(EnvironmentTest, PointOutOfBoundsTest) {
     quadrateral_polygon.emplace_back(XYZCoord{4, 4, 0});
     quadrateral_polygon.emplace_back(XYZCoord{1, 2, 0});
 
-    Environment quadrilateral = {quadrateral_polygon, {}, {}, {XYZCoord(0, 0, 0)}, obstacles};
+    Environment::init(quadrateral_polygon, {}, {}, obstacles);
 
-    EXPECT_EQ(true, quadrilateral.isPointInBounds(XYZCoord{1.5, 1.00, 0}));
-    EXPECT_EQ(true, quadrilateral.isPointInBounds(XYZCoord{0.5, 0.90, 0}));
-    EXPECT_EQ(true, quadrilateral.isPointInBounds(XYZCoord{2.5, 2.00, 0}));
-    EXPECT_EQ(true, quadrilateral.isPointInBounds(XYZCoord{1.5, 2.25, 0}));
+    EXPECT_EQ(true, Environment::isPointInBounds(XYZCoord{1.5, 1.00, 0}));
+    EXPECT_EQ(true, Environment::isPointInBounds(XYZCoord{0.5, 0.90, 0}));
+    EXPECT_EQ(true, Environment::isPointInBounds(XYZCoord{2.5, 2.00, 0}));
+    EXPECT_EQ(true, Environment::isPointInBounds(XYZCoord{1.5, 2.25, 0}));
 
-    EXPECT_EQ(false, quadrilateral.isPointInBounds(XYZCoord{1.5, 0.75, 0}));
-    EXPECT_EQ(false, quadrilateral.isPointInBounds(XYZCoord{0.5, 1.10, 0}));
-    EXPECT_EQ(false, quadrilateral.isPointInBounds(XYZCoord{2.5, 1.30, 0}));
-    EXPECT_EQ(false, quadrilateral.isPointInBounds(XYZCoord{1.5, 2.50, 0}));
+    EXPECT_EQ(false, Environment::isPointInBounds(XYZCoord{1.5, 0.75, 0}));
+    EXPECT_EQ(false, Environment::isPointInBounds(XYZCoord{0.5, 1.10, 0}));
+    EXPECT_EQ(false, Environment::isPointInBounds(XYZCoord{2.5, 1.30, 0}));
+    EXPECT_EQ(false, Environment::isPointInBounds(XYZCoord{1.5, 2.50, 0}));
 }
 
 /*
@@ -142,7 +142,7 @@ TEST(EnvironmentTest, PathOutOfBoundsTest) {
 
     std::vector<Polygon> obstacles = {obs1};
 
-    Environment test{small_square, {}, {XYZCoord(0, 0, 0)}, {}, obstacles};
+    Environment::init(small_square, {}, {}, obstacles);
 
     // TODO --> REALLY SHIT TEST
     std::vector<XYZCoord> path_in_bounds{XYZCoord{0.5, 0.5, 0}, XYZCoord{0.5, 0.5, 99999999},
@@ -154,8 +154,8 @@ TEST(EnvironmentTest, PathOutOfBoundsTest) {
                                              XYZCoord{0.5, 0.5, 0}, XYZCoord{0.5, 0.5, 99999999},
                                              XYZCoord{0.5, 0.5, 0}, XYZCoord{0.5, 0.5, 99999999}};
 
-    EXPECT_EQ(true, test.isPathInBounds(path_in_bounds));
-    EXPECT_EQ(false, test.isPathInBounds(path_out_of_bounds));
+    EXPECT_EQ(true, Environment::isPathInBounds(path_in_bounds));
+    EXPECT_EQ(false, Environment::isPathInBounds(path_out_of_bounds));
 }
 
 /*
@@ -173,21 +173,21 @@ TEST(EnvironmentTest, InsideObstacleTest) {
 
     std::vector<Polygon> obstacles = {obs1};
 
-    Environment test{square, {}, {}, {XYZCoord(0, 0, 0)}, obstacles};
+    Environment::init(square, {}, {}, obstacles);
 
-    EXPECT_FALSE(test.isPointInBounds(XYZCoord{15, 15, 0}));
-    EXPECT_FALSE(test.isPointInBounds(XYZCoord{10, 10, 0}));
-    EXPECT_FALSE(test.isPointInBounds(XYZCoord{15, 10, 0}));
+    EXPECT_FALSE(Environment::isPointInBounds(XYZCoord{15, 15, 0}));
+    EXPECT_FALSE(Environment::isPointInBounds(XYZCoord{10, 10, 0}));
+    EXPECT_FALSE(Environment::isPointInBounds(XYZCoord{15, 10, 0}));
 
     // for sanity
-    EXPECT_TRUE(test.isPointInBounds(XYZCoord{1, 1, 0}));
+    EXPECT_TRUE(Environment::isPointInBounds(XYZCoord{1, 1, 0}));
 }
 
 /*
  *   tests Environment::intersect()
  */
 TEST(EnvironmentTest, IntersectTest) {
-    Environment test({}, {}, {}, {}, {});
+    Environment::init({}, {}, {});
 
     // test intersect
     std::vector<XYZCoord> path1 = {XYZCoord{0, 0, 0}, XYZCoord{100, 100, 0}};
@@ -196,14 +196,14 @@ TEST(EnvironmentTest, IntersectTest) {
     std::vector<XYZCoord> path3 = {XYZCoord{0, 0, 0}, XYZCoord{15, 15, 0}};
     std::vector<XYZCoord> path4 = {XYZCoord{2, 1, 0}, XYZCoord{1, 2, 0}};
 
-    EXPECT_TRUE(test.intersect(path1[0], path1[1], path2[0], path2[1]));
-    EXPECT_TRUE(test.intersect(path1[0], path1[1], path1_5[0], path1_5[1]));
+    EXPECT_TRUE(Environment::intersect(path1[0], path1[1], path2[0], path2[1]));
+    EXPECT_TRUE(Environment::intersect(path1[0], path1[1], path1_5[0], path1_5[1]));
 
-    EXPECT_TRUE(test.intersect(path1[0], path1[1], path3[0], path3[1]));
-    EXPECT_TRUE(test.intersect(path2[0], path2[1], path3[0], path3[1]));
+    EXPECT_TRUE(Environment::intersect(path1[0], path1[1], path3[0], path3[1]));
+    EXPECT_TRUE(Environment::intersect(path2[0], path2[1], path3[0], path3[1]));
 
-    EXPECT_TRUE(test.intersect(path1[0], path1[1], path4[0], path4[1]));
-    EXPECT_FALSE(test.intersect(path1_5[0], path1_5[1], path4[0], path4[1]));
+    EXPECT_TRUE(Environment::intersect(path1[0], path1[1], path4[0], path4[1]));
+    EXPECT_FALSE(Environment::intersect(path1_5[0], path1_5[1], path4[0], path4[1]));
 }
 
 /*
@@ -213,36 +213,36 @@ TEST(EnvironmentTest, VerticalRayIntersectsEdge) {
     Polygon airdrop_zone = {
         {XYZCoord(0, 0, 0), XYZCoord(100, 0, 0), XYZCoord(100, 100, 0), XYZCoord(50, 100, 0)}};
 
-    Environment test{{}, airdrop_zone, {}, {}, {}};
+    Environment::init({}, airdrop_zone, {});
 
     std::pair<XYZCoord, XYZCoord> edge1 = {XYZCoord(75, 9999, 0), XYZCoord(75, -9999, 0)};
     XYZCoord intersect1(0, 0, 0);
     XYZCoord expect1(75, 0, 0);
     XYZCoord expect2(75, 100, 0);
 
-    EXPECT_TRUE(test.verticalRayIntersectsEdge(airdrop_zone[0], airdrop_zone[1], edge1.first,
+    EXPECT_TRUE(Environment::verticalRayIntersectsEdge(airdrop_zone[0], airdrop_zone[1], edge1.first,
                                                edge1.second, intersect1));
     EXPECT_EQ(intersect1, expect1);
-    EXPECT_FALSE(test.verticalRayIntersectsEdge(airdrop_zone[1], airdrop_zone[2], edge1.first,
+    EXPECT_FALSE(Environment::verticalRayIntersectsEdge(airdrop_zone[1], airdrop_zone[2], edge1.first,
                                                 edge1.second, intersect1));
-    EXPECT_TRUE(test.verticalRayIntersectsEdge(airdrop_zone[2], airdrop_zone[3], edge1.first,
+    EXPECT_TRUE(Environment::verticalRayIntersectsEdge(airdrop_zone[2], airdrop_zone[3], edge1.first,
                                                edge1.second, intersect1));
     EXPECT_EQ(intersect1, expect2);
-    EXPECT_FALSE(test.verticalRayIntersectsEdge(airdrop_zone[3], airdrop_zone[0], edge1.first,
+    EXPECT_FALSE(Environment::verticalRayIntersectsEdge(airdrop_zone[3], airdrop_zone[0], edge1.first,
                                                 edge1.second, intersect1));
 
     std::pair<XYZCoord, XYZCoord> edge2 = {XYZCoord(25, 9999, 0), XYZCoord(25, -9999, 0)};
     XYZCoord intersect2(0, 0, 0);
     XYZCoord expect3(25, 0, 0);
     XYZCoord expect4(25, 50, 0);
-    EXPECT_TRUE(test.verticalRayIntersectsEdge(airdrop_zone[0], airdrop_zone[1], edge2.first,
+    EXPECT_TRUE(Environment::verticalRayIntersectsEdge(airdrop_zone[0], airdrop_zone[1], edge2.first,
                                                edge2.second, intersect2));
     EXPECT_EQ(intersect2, expect3);
-    EXPECT_FALSE(test.verticalRayIntersectsEdge(airdrop_zone[1], airdrop_zone[2], edge2.first,
+    EXPECT_FALSE(Environment::verticalRayIntersectsEdge(airdrop_zone[1], airdrop_zone[2], edge2.first,
                                                 edge2.second, intersect2));
-    EXPECT_FALSE(test.verticalRayIntersectsEdge(airdrop_zone[2], airdrop_zone[3], edge2.first,
+    EXPECT_FALSE(Environment::verticalRayIntersectsEdge(airdrop_zone[2], airdrop_zone[3], edge2.first,
                                                 edge2.second, intersect2));
-    EXPECT_TRUE(test.verticalRayIntersectsEdge(airdrop_zone[3], airdrop_zone[0], edge2.first,
+    EXPECT_TRUE(Environment::verticalRayIntersectsEdge(airdrop_zone[3], airdrop_zone[0], edge2.first,
                                                edge2.second, intersect2));
     EXPECT_EQ(intersect2, expect4);
 }
@@ -253,41 +253,41 @@ TEST(EnvironmentTest, VerticalRayIntersectsEdge) {
 TEST(EnvironmentTest, FindIntersectionsWithPolygon) {
     Polygon mapping_region1 = {
         {XYZCoord(10, 10, 0), XYZCoord(100, 10, 0), XYZCoord(100, 100, 0), XYZCoord(50, 100, 0)}};
-    Environment test_env1({}, {}, mapping_region1, {}, {});
+    Environment::init({}, {}, mapping_region1);
 
     XYZCoord start1(0.0, 0.0, 0.0);
     XYZCoord end1(120.0, 50.0, 0.0);
 
     std::vector<XYZCoord> expect1 = {XYZCoord(24.0, 10.0, 0.0), XYZCoord(100.0, 500.0 / 12, 0)};
     std::vector<XYZCoord> result1 =
-        test_env1.findIntersectionsWithPolygon(mapping_region1, start1, end1);
+        Environment::findIntersectionsWithPolygon(mapping_region1, start1, end1);
     EXPECT_EQ(expect1, result1);
 
     XYZCoord start2(20.0, 20.0, 0.0);
     XYZCoord end2(120.0, 50.0, 0.0);
     std::vector<XYZCoord> expect2 = {XYZCoord(100.0, 44.0, 0.0)};
     std::vector<XYZCoord> result2 =
-        test_env1.findIntersectionsWithPolygon(mapping_region1, start2, end2);
+        Environment::findIntersectionsWithPolygon(mapping_region1, start2, end2);
     EXPECT_EQ(expect2, result2);
 
     XYZCoord start3(0.0, 0.0, 0.0);
     XYZCoord end3(50.0, 50.0, 0.0);
     std::vector<XYZCoord> expect3 = {XYZCoord(10.0, 10.0, 0.0)};
     std::vector<XYZCoord> result3 =
-        test_env1.findIntersectionsWithPolygon(mapping_region1, start3, end3);
+        Environment::findIntersectionsWithPolygon(mapping_region1, start3, end3);
     EXPECT_EQ(expect3, result3);
 
     Polygon mapping_region2 = {{XYZCoord(0.0, 0.0, 0.0), XYZCoord(50.0, 100.0, 0.0),
                                 XYZCoord(100.0, 0.0, 0.0), XYZCoord(150.0, 100.0, 0.0),
                                 XYZCoord(200.0, 0.0, 0.0)}};
-    Environment test_env2({}, {}, mapping_region2, {}, {});
+    Environment::init({}, {}, mapping_region2);
 
     XYZCoord start4(0.0, 50.0, 0.0);
     XYZCoord end4(200.0, 50.0, 0.0);
     std::vector<XYZCoord> expect4 = {XYZCoord(25.0, 50.0, 0.0), XYZCoord(75.0, 50.0, 0.0),
                                      XYZCoord(125.0, 50.0, 0.0), XYZCoord(175.0, 50.0, 0.0)};
     std::vector<XYZCoord> result4 =
-        test_env2.findIntersectionsWithPolygon(mapping_region2, start4, end4);
+        Environment::findIntersectionsWithPolygon(mapping_region2, start4, end4);
     EXPECT_EQ(expect4, result4);
 
     // test with start point and end point on the edge; they should be included in the intersections
@@ -296,6 +296,6 @@ TEST(EnvironmentTest, FindIntersectionsWithPolygon) {
     std::vector<XYZCoord> expect5 = {XYZCoord(25.0, 50.0, 0.0), XYZCoord(75.0, 50.0, 0.0),
                                      XYZCoord(125.0, 50.0, 0.0), XYZCoord(175.0, 50.0, 0.0)};
     std::vector<XYZCoord> result5 =
-        test_env2.findIntersectionsWithPolygon(mapping_region2, start5, end5);
+        Environment::findIntersectionsWithPolygon(mapping_region2, start5, end5);
     EXPECT_EQ(expect5, result5);
 }

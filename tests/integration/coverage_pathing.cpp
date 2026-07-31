@@ -67,8 +67,7 @@ int main() {
     RRTPoint start = RRTPoint(state->mission_params.getWaypoints()[0], 0);
     int scan_radius = 10;
 
-    ForwardCoveragePathing search(start, scan_radius, state->mission_params.getFlightBoundary(),
-                                  state->mission_params.getAirdropBoundary(), state->config, {});
+    ForwardCoveragePathing search(start, scan_radius, state->config);
 
     LOG_F(WARNING, "Running Search");
     std::vector<XYZCoord> path = search.run();

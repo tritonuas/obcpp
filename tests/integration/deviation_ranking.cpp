@@ -56,12 +56,12 @@ int main() {
     // create the environment with custome mapping region
     Polygon mapping_region = {XYZCoord(-200, 150, 0), XYZCoord(100, 75, 0), XYZCoord(-125, 300, 0),
                               XYZCoord(-300, 300, 0)};
-    Environment env(state->mission_params.getFlightBoundary(),
-                    state->mission_params.getAirdropBoundary(), mapping_region, {}, {});
+    Environment::init(state->mission_params.getFlightBoundary(),
+                      state->mission_params.getAirdropBoundary(), mapping_region);
     std::vector<XYZCoord> goals = state->mission_params.getWaypoints();
 
     auto start_time = std::chrono::high_resolution_clock::now();
-    std::vector<std::vector<XYZCoord>> rank_new_goals_list = generateRankedNewGoalsList(goals, env);
+    std::vector<std::vector<XYZCoord>> rank_new_goals_list = generateRankedNewGoalsList(goals);
     auto end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end_time - start_time;
     LOG_F(INFO, "Time to run: %f s", elapsed.count());
@@ -73,8 +73,7 @@ int main() {
 
     double search_radius = 9999;
 
-    RRT rrt = RRT(start, new_goals, search_radius, state->mission_params.getFlightBoundary(),
-                  state->config, {}, {});
+    RRT rrt = RRT(start, new_goals, search_radius, state->config);
 
     // run the rrt algorithm
     rrt.run();

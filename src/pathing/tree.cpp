@@ -74,8 +74,7 @@ void RRTNode::setPathLength(double new_path_length) { this->path_length = new_pa
 
 */
 
-RRTTree::RRTTree(RRTPoint root_point, Environment airspace)
-    : airspace(airspace), tree_size(1) {
+RRTTree::RRTTree(RRTPoint root_point) : tree_size(1) {
     std::shared_ptr<RRTNode> new_node =
         std::make_shared<RRTNode>(root_point, 0, 0, std::vector<XYZCoord>{});
     root = new_node;
@@ -86,8 +85,7 @@ RRTTree::RRTTree(RRTPoint root_point, Environment airspace)
 RRTTree::~RRTTree() { }
 
 bool RRTTree::validatePath(const std::vector<XYZCoord>& path, const RRTOption& option) const {
-    return airspace.isPathInBounds(path);
-    // return airspace.isPathInBoundsAdv(path, option);
+    return Environment::isPathInBounds(path);
 }
 
 std::shared_ptr<RRTNode> RRTTree::generateNode(std::shared_ptr<RRTNode> anchor_node,
@@ -234,21 +232,6 @@ void RRTTree::fillOptionsNodes(std::vector<std::pair<std::shared_ptr<RRTNode>, R
 }
 
 std::shared_ptr<RRTNode> RRTTree::getRoot() const { return this->root; }
-
-const XYZCoord& RRTTree::getGoal() const { return airspace.getGoal(); }
-
-const XYZCoord& RRTTree::getGoal(int index) const { return airspace.getGoal(index); }
-
-const Environment& RRTTree::getAirspace() const { return this->airspace; }
-
-RRTPoint RRTTree::getRandomPoint(double search_radius) const {
-    // gets random point if the goal is not being used
-    const XYZCoord& sample = airspace.getRandomPoint();
-
-    // // picks the nearest node to the sample, and then returns a point `search_radius` distance
-    // away
-    return RRTPoint(sample, random(0, TWO_PI));
-}
 
 /*
     TODO - investigate whether a max heap is better or worse

@@ -9,7 +9,6 @@
 #include <vector>
 
 #include "pathing/dubins.hpp"
-#include "pathing/environment.hpp"
 #include "utilities/datatypes.hpp"
 #include "utilities/obc_config.hpp"
 #include "utilities/rng.hpp"
@@ -104,7 +103,7 @@ class RRTNode {
 
 class RRTTree {
  public:
-    RRTTree(RRTPoint root_point, Environment airspace);
+    explicit RRTTree(RRTPoint root_point);
     ~RRTTree();
 
     /**
@@ -136,34 +135,6 @@ class RRTTree {
      * @return std::shared_ptr<RRTNode> pointer to root node
      */
     std::shared_ptr<RRTNode> getRoot() const;
-
-    /**
-     * Get goal point
-     *
-     * @return RRTPoint goal point
-     */
-    const XYZCoord& getGoal() const;
-
-    /**
-     * Get goal point
-     *
-     * @return RRTPoint goal point
-     */
-    const XYZCoord& getGoal(int index) const;
-
-    /**
-     * returns the Environment object
-     *
-     * @return Environment object
-     */
-    const Environment& getAirspace() const;
-
-    /**
-     * Gets a random point in the environment
-     *
-     * @return RRTPoint random point in environment
-     */
-    RRTPoint getRandomPoint(double search_radius) const;
 
     bool validatePath(const std::vector<Vector>& path, const RRTOption& options) const;
 
@@ -283,7 +254,6 @@ class RRTTree {
  private:
     std::shared_ptr<RRTNode> root;
     std::shared_ptr<RRTNode> current_head;
-    Environment airspace;
     int tree_size;
 
     /**
