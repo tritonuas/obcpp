@@ -1,8 +1,11 @@
 #include "camera/interface.hpp"
 
 #include <filesystem>
+#include <memory>
 #include <optional>
 #include <ostream>
+#include <string>
+#include <vector>
 
 #include <loguru.hpp>
 #include "nlohmann/json.hpp"

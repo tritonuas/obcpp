@@ -1,6 +1,8 @@
 #include "pathing/tree.hpp"
 
 #include <algorithm>
+#include <limits>
+#include <memory>
 #include <queue>
 #include <stack>
 #include <unordered_map>

@@ -1,6 +1,8 @@
 #include "network/udp_client.hpp"
 #include <sys/select.h>
 #include <chrono>
+#include <string>
+#include <vector>
 
 UDPClient::UDPClient(asio::io_context* io_context_, std::string ip, int port)
     : socket_(*io_context_) {

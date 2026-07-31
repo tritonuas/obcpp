@@ -1,8 +1,9 @@
-#include <memory>
-#include <thread>
 #include <chrono>
 #include <cstdint>
 #include <future>
+#include <memory>
+#include <string>
+#include <thread>
 
 #include "camera/rpi.hpp"
 #include "camera/mock.hpp"

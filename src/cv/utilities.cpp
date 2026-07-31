@@ -1,4 +1,7 @@
 #include "cv/utilities.hpp"
+
+#include <vector>
+
 #include "utilities/logging.hpp"
 
 int Bbox::width() const { return x2 - x1; }

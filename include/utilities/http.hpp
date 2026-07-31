@@ -33,8 +33,8 @@ constexpr const char* HTTP_STATUS_TO_STRING(HTTPStatus status) {
 }
 
 namespace mime {
-    const char json[] = "application/json";
-    const char plaintext[] = "text/plain";
+const char json[] = "application/json";
+const char plaintext[] = "text/plain";
 }
 
 #endif  // INCLUDE_UTILITIES_HTTP_HPP_
