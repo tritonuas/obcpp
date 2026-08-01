@@ -1,10 +1,12 @@
 #include "ticks/path_gen.hpp"
 
+#include <cassert>
 #include <chrono>
 #include <future>
 #include <memory>
 #include <vector>
 
+#include "pathing/environment.hpp"
 #include "pathing/static.hpp"
 #include "protos/obc.pb.h"
 #include "ticks/ids.hpp"
@@ -18,7 +20,16 @@ PathGenTick::PathGenTick(std::shared_ptr<MissionState> state) : Tick(state, Tick
 std::chrono::milliseconds PathGenTick::getWait() const { return PATH_GEN_TICK_WAIT; }
 
 void PathGenTick::init() {
+    // TODO: parse, don't validate LOL
     assert(this->state->getCartesianConverter().has_value());
+
+    // environment
+    assert(Environment::_valid_region.size() >= 3);
+    assert(Environment::_airdrop_zone.size() >= 3);
+    // assert(Environment::_mapping_region.size() >= 3);
+    assert(Environment::_bounds.first.first < Environment::_bounds.first.second);
+    assert(Environment::_bounds.second.first < Environment::_bounds.second.second);
+
     startPathGeneration();
 }
 

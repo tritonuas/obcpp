@@ -30,12 +30,12 @@ TEST(SimpleTreeTest, addNodeTest) {
         {XYZCoord(10, 10, 0), XYZCoord(20, 10, 0), XYZCoord(20, 20, 0), XYZCoord(10, 20, 0)}};
 
     std::vector<Polygon> obstacles = {obs1};
-    Environment env = Environment(valid_region, {}, {}, {XYZCoord(0, 0, 0)}, obstacles);
+    Environment::init(valid_region, {}, {}, obstacles);
     RRTPoint point1 = RRTPoint(XYZCoord(25, 25, 0), 0);
     RRTPoint point2 = RRTPoint(XYZCoord(50, 75, 0), 0);
     RRTOption option = Dubins::bestOption(point1, point2);
 
-    RRTTree simple_tree = RRTTree(point1, env);
+    RRTTree simple_tree = RRTTree(point1);
 
     std::shared_ptr<RRTNode> root = simple_tree.getRoot();
 
@@ -58,7 +58,7 @@ TEST(SimpleTreeTest, rewireEdgeTest) {
         {XYZCoord(10, 10, 0), XYZCoord(20, 10, 0), XYZCoord(20, 20, 0), XYZCoord(10, 20, 0)}};
 
     std::vector<Polygon> obstacles = {obs1};
-    Environment env = Environment(valid_region, {}, {}, {XYZCoord(0, 0, 0)}, obstacles);
+    Environment::init(valid_region, {}, {}, obstacles);
     RRTPoint point1 = RRTPoint(XYZCoord(25, 25, 0), 0);
     RRTPoint point2 = RRTPoint(XYZCoord(50, 75, 0), HALF_PI);
     RRTPoint point3 = RRTPoint(XYZCoord(50, 80, 1.5), HALF_PI);
@@ -69,7 +69,7 @@ TEST(SimpleTreeTest, rewireEdgeTest) {
     RRTOption option3 = Dubins::allOptions(point1, point4)[0];
     RRTOption new_option = Dubins::allOptions(point4, point3)[0];
 
-    RRTTree simple_tree = RRTTree(point1, env);
+    RRTTree simple_tree = RRTTree(point1);
 
     std::shared_ptr<RRTNode> root = simple_tree.getRoot();
 

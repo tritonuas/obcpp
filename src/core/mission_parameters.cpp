@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "pathing/cartesian.hpp"
+#include "pathing/environment.hpp"
 #include "protos/obc.pb.h"
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
@@ -103,6 +104,8 @@ std::optional<std::string> MissionParameters::setMission(
     for (const auto& airdrop : mission.airdropassignments()) {  // Use const& for efficiency
         this->_setAirdrop(airdrop);
     }
+
+    Environment::init(this->flightBoundary, this->airdropBoundary, this->airdropBoundary);
 
     return {};
 }

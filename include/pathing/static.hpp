@@ -22,10 +22,7 @@
 
 class RRT {
  public:
-    RRT(RRTPoint start, std::vector<XYZCoord> goals, double search_radius, Polygon bounds,
-        const OBCConfig &config, std::vector<Polygon> obstacles = {},
-        std::vector<double> angles = {});
-    RRT(RRTPoint start, std::vector<XYZCoord> goals, double search_radius, Environment airspace,
+    RRT(RRTPoint start, std::vector<XYZCoord> goals, double search_radius,
         const OBCConfig &config, std::vector<double> angles = {});
 
     /**
@@ -46,11 +43,10 @@ class RRT {
     std::vector<XYZCoord> getPointsToGoal() const;
 
  private:
-    // tree stores
-    // - the airspace (environment.hpp) that checks valid bounds
-    // - the dubins object that generates paths
-    // - the nodes that that form the tree
+    // tree stores the nodes that form the tree
     RRTTree tree;
+
+    const std::vector<XYZCoord> goals;  // the waypoints to path through, in order
 
     /* RRT Config Options */
     const int iterations_per_waypoint;  // number of times to run the RRT algorithm
@@ -202,9 +198,7 @@ class RRT {
  */
 class ForwardCoveragePathing {
  public:
-    ForwardCoveragePathing(const RRTPoint &start, double scan_radius, Polygon bounds,
-                           Polygon airdrop_zone, const OBCConfig &config,
-                           std::vector<Polygon> obstacles = {});
+    ForwardCoveragePathing(const RRTPoint &start, double scan_radius, const OBCConfig &config);
 
     /**
      * Generates a path of parallel lines to cover a given area
@@ -237,10 +231,9 @@ class ForwardCoveragePathing {
                                        const std::vector<RRTPoint> &waypoints) const;
 
  private:
-    const double scan_radius;    // how far each side of the plane we intend to look (half dist
-                                 // between search lines)
-    const RRTPoint start;        // start location (doesn't have to be near polygon)
-    const Environment airspace;  // information aobut the airspace
+    const double scan_radius;  // how far each side of the plane we intend to look (half dist
+                               // between search lines)
+    const RRTPoint start;      // start location (doesn't have to be near polygon)
     const AirdropCoverageConfig config;
 };
 
@@ -269,8 +262,7 @@ class HoverCoveragePathing {
 class AirdropApproachPathing {
  public:
     AirdropApproachPathing(const RRTPoint &start, const XYZCoord &goal, XYZCoord wind,
-                           Polygon bounds, const OBCConfig &config,
-                           std::vector<Polygon> obstacles = {});
+                           const OBCConfig &config);
     /**
      * Generates a path to the drop location
      *
@@ -286,7 +278,6 @@ class AirdropApproachPathing {
  private:
     const XYZCoord goal;
     const RRTPoint start;
-    const Environment airspace;
     const OBCConfig config;
 
     XYZCoord wind;
@@ -322,13 +313,9 @@ generateSearchPath(std::shared_ptr<MissionState> state, double start_angle);
 std::vector<GPSCoord>
 generateAirdropApproach(std::shared_ptr<MissionState> state, const GPSCoord &goal);
 
-std::pair<double, double> estimateAreaCoveredAndPathLength(const std::vector<XYZCoord> &goals,
-                                                           const Environment &airspace);
-
 std::vector<std::vector<XYZCoord>> generateGoalListDeviations(const std::vector<XYZCoord> &goals,
                                                               XYZCoord deviation_point);
 
-std::vector<std::vector<XYZCoord>> generateRankedNewGoalsList(const std::vector<XYZCoord> &goals,
-                                                              const Environment &airspace);
+std::vector<std::vector<XYZCoord>> generateRankedNewGoalsList(const std::vector<XYZCoord> &goals);
 
 #endif  // INCLUDE_PATHING_STATIC_HPP_

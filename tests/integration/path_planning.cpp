@@ -91,8 +91,11 @@ int main() {
     LOG_F(WARNING, "RRT Stats");
     LOG_F(INFO, "Search Radius %f", search_radius);
 
-    RRT rrt = RRT(start, goals, search_radius,  
-                  state->mission_params.getFlightBoundary(), state->config, obstacles, {});
+    Environment::init(state->mission_params.getFlightBoundary(),
+                      state->mission_params.getAirdropBoundary(),
+                      state->mission_params.getAirdropBoundary(), obstacles);
+
+    RRT rrt = RRT(start, goals, search_radius, state->config);
 
     //run the algoritm, and time it
     auto start_time = std::chrono::high_resolution_clock::now();
