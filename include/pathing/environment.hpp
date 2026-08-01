@@ -75,6 +75,31 @@ namespace Environment {
     bool isPathInBounds(const std::vector<XYZCoord>& path);
 
     /**
+     * Check whether an entire Dubins path is in bounds, analytically.
+     *
+     * ONLY HANDLES CSC PATHS [LSL, RSR, LSR, RSL]
+     *
+     * @param[in] start     ==> the start vector of the path
+     * @param[in] end       ==> the end vector of the path
+     * @param[in] option    ==> the Dubins option connecting start to end
+     * @return  ==> true if every point of the path is in bounds, false otherwise
+     */
+    bool isDubinsPathInBounds(const RRTPoint& start, const RRTPoint& end, const RRTOption& option);
+
+    /**
+     * Check whether a circular arc is in bounds
+     *
+     * Checks for containment then edge intersections.
+     *
+     * @param[in] center        ==> the center of the arc's circle
+     * @param[in] radius        ==> the radius of the arc's circle
+     * @param[in] start_angle   ==> angle from the center to the arc's first point (0 is +x, CCW positive)
+     * @param[in] sweep         ==> signed angle swept, CCW positive (i.e. a DubinsPath beta)
+     * @return  ==> whether or not the arc is in bounds
+     */
+    bool isArcInBounds(const XYZCoord& center, double radius, double start_angle, double sweep);
+
+    /**
      * Generate a random point in a valid region or mapping region
      *
      * The function uniformly selects a point in the region, but the probaiblity it actually
@@ -120,6 +145,38 @@ namespace Environment {
      */
     bool doesLineIntersectPolygon(const XYZCoord& start_point, const XYZCoord& end_point,
                                   const Polygon& polygon);
+
+    /**
+     * Determines whether a circular arc intersects any edge of the polygon
+     *
+     * @param[in] center        ==> the center of the arc's circle
+     * @param[in] radius        ==> the radius of the arc's circle
+     * @param[in] start_angle   ==> angle from the center to the arc's first
+     *                              point (0 is +x, CCW positive)
+     * @param[in] sweep         ==> signed angle swept, CCW positive
+     * @param[in] polygon       ==> polygon to check
+     * @return  ==> true if arc intersects edge
+     */
+    bool doesArcIntersectPolygon(const XYZCoord& center, double radius, double start_angle,
+                                 double sweep, const Polygon& polygon);
+
+    /**
+     * Determines whether a circular arc intersects a line segment
+     *
+     * Intersects the segment with the full circle then checks whether each hit
+     * lies within both the segment and the arc's angular range.
+     *
+     * @param[in] center        ==> the center of the arc's circle
+     * @param[in] radius        ==> the radius of the arc's circle
+     * @param[in] start_angle   ==> angle from the center to the arc's first
+     *                              point (0 is +x, CCW positive)
+     * @param[in] sweep         ==> signed angle swept, CCW positive
+     * @param[in] seg_start     ==> start point of the segment
+     * @param[in] seg_end       ==> end point of the segment
+     * @return if arc intersecs a line segement
+     */
+    bool doesArcIntersectSegment(const XYZCoord& center, double radius, double start_angle,
+                                 double sweep, const XYZCoord& seg_start, const XYZCoord& seg_end);
 
     /**
      * Given three colinear points p, q, r, the function checks if

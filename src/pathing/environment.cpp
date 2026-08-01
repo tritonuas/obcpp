@@ -76,6 +76,85 @@ bool isPathInBounds(const std::vector<XYZCoord>& path) {
     return true;
 }
 
+bool isDubinsPathInBounds(const RRTPoint& start, const RRTPoint& end, const RRTOption& option) {
+    // [LRL, RLR] are disabled in Dubins::allOptions();
+    if (!option.has_straight) {
+        return false;
+    }
+
+    // rejects the sentinel options (infinity) that lsr/rsl produce when no path exists
+    if (!std::isfinite(option.length)) {
+        return false;
+    }
+
+    const double radius = Dubins::_radius;
+    const DubinsPath& path = option.dubins_path;
+
+    if (!isPointInBounds(start.coord) || !isPointInBounds(end.coord)) {
+        return false;
+    }
+
+    // endpoints of the straight section, overwritten by the turn sections below
+    XYZCoord straight_start = start.coord;
+    XYZCoord straight_end = end.coord;
+
+    // first turn
+    if (std::abs(path.beta_0) > 0) {
+        const double turn_sign = (path.beta_0 > 0) ? 1.0 : -1.0;
+        const XYZCoord center = Dubins::findCenter(start, (turn_sign > 0) ? 'L' : 'R');
+
+        // angle from the center to the plane at the start of the turn
+        const double start_angle = start.psi - HALF_PI * turn_sign;
+        if (!isArcInBounds(center, radius, start_angle, path.beta_0)) {
+            return false;
+        }
+
+        const double exit_angle = start.psi + (std::abs(path.beta_0) - HALF_PI) * turn_sign;
+        straight_start =
+            center + radius * XYZCoord{std::cos(exit_angle), std::sin(exit_angle), 0};
+    }
+
+    // last turn (entered backwards -- the arc runs from the end of the straight
+    // section to the end vector)
+    if (std::abs(path.beta_2) > 0) {
+        const double turn_sign = (path.beta_2 > 0) ? 1.0 : -1.0;
+        const XYZCoord center = Dubins::findCenter(end, (turn_sign > 0) ? 'L' : 'R');
+
+        // angle from the center to the plane at the start of the turn
+        const double entry_angle = end.psi - (std::abs(path.beta_2) + HALF_PI) * turn_sign;
+        if (!isArcInBounds(center, radius, entry_angle, path.beta_2)) {
+            return false;
+        }
+
+        straight_end =
+            center + radius * XYZCoord{std::cos(entry_angle), std::sin(entry_angle), 0};
+    }
+
+    // straight section
+    return isLineInBounds(straight_start, straight_end);
+}
+
+bool isArcInBounds(const XYZCoord& center, double radius, double start_angle, double sweep) {
+    // an arc that starts in bounds and never crosses a boundary is entirely in bounds
+    const XYZCoord arc_start =
+        center + radius * XYZCoord{std::cos(start_angle), std::sin(start_angle), 0};
+    if (!isPointInBounds(arc_start)) {
+        return false;
+    }
+
+    if (doesArcIntersectPolygon(center, radius, start_angle, sweep, _valid_region)) {
+        return false;
+    }
+
+    for (const Polygon& obstacle : _obstacles) {
+        if (doesArcIntersectPolygon(center, radius, start_angle, sweep, obstacle)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 XYZCoord getRandomPoint(bool use_mapping_region, const XYZCoord& fallback) {
     // TODO - use some heuristic to more efficiently generate direction
     // vector (and make it toggleable)
@@ -138,6 +217,57 @@ bool doesLineIntersectPolygon(const XYZCoord& start_point, const XYZCoord& end_p
                               const Polygon& polygon) {
     for (int i = 0, j = polygon.size() - 1; i < polygon.size(); j = i++) {
         if (intersect(start_point, end_point, polygon[i], polygon[j])) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool doesArcIntersectPolygon(const XYZCoord& center, double radius, double start_angle,
+                             double sweep, const Polygon& polygon) {
+    for (int i = 0, j = polygon.size() - 1; i < polygon.size(); j = i++) {
+        if (doesArcIntersectSegment(center, radius, start_angle, sweep, polygon[i], polygon[j])) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool doesArcIntersectSegment(const XYZCoord& center, double radius, double start_angle,
+                             double sweep, const XYZCoord& seg_start, const XYZCoord& seg_end) {
+    // parameterize the segment as P(t) = seg_start + t * d, t in [0, 1], and solve
+    // |P(t) - center|^2 = radius^2, a quadratic in t
+    // @see https://stackoverflow.com/questions/1073336/circle-line-segment-collision-detection
+    const XYZCoord d = seg_end - seg_start;
+    const XYZCoord f = seg_start - center;
+
+    // 2D only -- z is ignored, matching the rest of the environment checks
+    const double a = d.x * d.x + d.y * d.y;
+    const double b = 2 * (f.x * d.x + f.y * d.y);
+    const double c = f.x * f.x + f.y * f.y - radius * radius;
+
+    const double discriminant = b * b - 4 * a * c;
+    if (a == 0 || discriminant < 0) {  // degenerate segment or no circle intersection
+        return false;
+    }
+
+    const double sqrt_discriminant = std::sqrt(discriminant);
+    for (const double t : {(-b - sqrt_discriminant) / (2 * a),
+                           (-b + sqrt_discriminant) / (2 * a)}) {
+        // hit must be within the segment
+        if (t < 0 || t > 1) {
+            continue;
+        }
+
+        // hit must be within the arc's angular range: walk from start_angle in the sweep
+        // direction and see if the hit is reached before the sweep is used up
+        const double theta =
+            std::atan2(f.y + t * d.y, f.x + t * d.x);  // angle of hit relative to center
+        const double travelled = (sweep > 0) ? mod(theta - start_angle, TWO_PI)
+                                             : mod(start_angle - theta, TWO_PI);
+        if (travelled <= std::abs(sweep)) {
             return true;
         }
     }
