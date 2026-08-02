@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
-#include <limits>
 #include <vector>
 
 #include "pathing/dubins.hpp"
@@ -361,7 +360,7 @@ TEST(RRTTest, BestConnectionStaysInsideTheAirspace) {
                                            RRTPoint(XYZCoord(460, 650, 0), 0)};
 
     for (const RRTPoint& end : targets) {
-        const Connection connection = rrt.bestConnection({end}, TOTAL_OPTIONS_FOR_GOAL_CONNECTION);
+        const Connection connection = rrt.bestConnection({end});
 
         if (connection.isValid()) {
             EXPECT_TRUE(Environment::isDubinsPathInBounds(rrt.tree.tree.points[connection.anchor],
@@ -399,7 +398,7 @@ TEST(RRTTest, BestConnectionIsTheCheapestOneThatCanBeFlown) {
     ASSERT_EQ(rrt.tree.tree.size, 3);
 
     const std::vector<RRTPoint> ends = {RRTPoint(XYZCoord(800, 800, 0), HALF_PI)};
-    const Connection connection = rrt.bestConnection(ends, TOTAL_OPTIONS_FOR_GOAL_CONNECTION);
+    const Connection connection = rrt.bestConnection(ends);
     const Connection cheapest = cheapestFlyableConnection(rrt, ends);
 
     ASSERT_TRUE(connection.isValid());
@@ -424,13 +423,11 @@ TEST(RRTTest, BestConnectionTakesTheCheapestOfTheEndpoints) {
     const RRTPoint close(XYZCoord(300, 100, 0), 0);
     const RRTPoint distant(XYZCoord(800, 700, 0), M_PI);
 
-    const Connection connection =
-        rrt.bestConnection({distant, close}, TOTAL_OPTIONS_FOR_GOAL_CONNECTION);
+    const Connection connection = rrt.bestConnection({distant, close});
 
     ASSERT_TRUE(connection.isValid());
     EXPECT_TRUE(connection.end == close);
-    EXPECT_DOUBLE_EQ(connection.cost,
-                     cheapestFlyableConnection(rrt, {distant, close}).cost);
+    EXPECT_DOUBLE_EQ(connection.cost, cheapestFlyableConnection(rrt, {distant, close}).cost);
 }
 
 /*
@@ -440,8 +437,7 @@ TEST(RRTTest, BestConnectionGivesUpOnAnUnreachablePoint) {
     initOpenField();
     RRT rrt({XYZCoord(100, 100, 0), XYZCoord(900, 900, 30)}, 0);
 
-    const Connection connection = rrt.bestConnection({RRTPoint(XYZCoord(2000, 2000, 0), 0)},
-                                                     TOTAL_OPTIONS_FOR_GOAL_CONNECTION);
+    const Connection connection = rrt.bestConnection({RRTPoint(XYZCoord(2000, 2000, 0), 0)});
 
     EXPECT_FALSE(connection.isValid());
     EXPECT_EQ(connection.anchor, INVALID_NODE);
@@ -449,21 +445,26 @@ TEST(RRTTest, BestConnectionGivesUpOnAnUnreachablePoint) {
 }
 
 /*
- *  RRT::bestConnection -- nothing on the other side of the wall is reachable, and
- *  the search does not check more paths than it is allowed to
+ *  RRT::bestConnection -- a point the wall stands in front of is given up on, while
+ *  one on the same side of it as the plane is still found
  */
-TEST(RRTTest, BestConnectionStopsOnceItHasCheckedItsBudget) {
+TEST(RRTTest, BestConnectionGivesUpOnAPointBehindAnObstacle) {
     initFieldWithWall();
     RRT rrt({XYZCoord(200, 400, 0), XYZCoord(900, 100, 30)}, 0);
 
-    // every way to the other side of the wall goes through it
+    // a single node cannot reach around the wall -- the gap is 300m above it, and
+    // every path that lands on this point comes in through the wall
     const RRTPoint across(XYZCoord(800, 400, 0), 0);
-    EXPECT_FALSE(rrt.bestConnection({across}, TOTAL_OPTIONS_FOR_GOAL_CONNECTION).isValid());
+    EXPECT_FALSE(rrt.bestConnection({across}).isValid());
 
-    // a point that is reachable is still missed if no path may be checked at all
+    // the same tree still finds a point the wall is not in front of
     const RRTPoint reachable(XYZCoord(400, 200, 0), M_PI);
-    EXPECT_TRUE(rrt.bestConnection({reachable}, TOTAL_OPTIONS_FOR_GOAL_CONNECTION).isValid());
-    EXPECT_FALSE(rrt.bestConnection({reachable}, 0).isValid());
+    EXPECT_TRUE(rrt.bestConnection({reachable}).isValid());
+
+    // and a point behind the wall does not stop the reachable one from winning
+    const Connection connection = rrt.bestConnection({across, reachable});
+    ASSERT_TRUE(connection.isValid());
+    EXPECT_TRUE(connection.end == reachable);
 }
 
 /*
@@ -667,7 +668,7 @@ TEST(RRTTest, BestConnectionMatchesAnExhaustiveSearch) {
         // a tree of random samples, grown the way an iteration would grow it
         for (int i = 0; i < 40; i++) {
             const RRTPoint sample(Environment::getRandomPoint(false, start), random(0, TWO_PI));
-            const Connection connection = rrt.bestConnection({sample}, MAX_DUBINS_OPTIONS_TO_PARSE);
+            const Connection connection = rrt.bestConnection({sample});
 
             if (connection.isValid()) {
                 rrt.tree.addSample(connection.anchor, connection.end, connection.option);
@@ -676,7 +677,7 @@ TEST(RRTTest, BestConnectionMatchesAnExhaustiveSearch) {
         ASSERT_GT(rrt.tree.tree.size, 1) << "trial " << trial << " grew nothing to search";
 
         const std::vector<RRTPoint> ends = rrt.goalEndpoints(1);
-        const Connection found = rrt.bestConnection(ends, std::numeric_limits<int>::max());
+        const Connection found = rrt.bestConnection(ends);
         const Connection exhaustive = cheapestFlyableConnection(rrt, ends);
 
         ASSERT_EQ(found.isValid(), exhaustive.isValid()) << "trial " << trial;

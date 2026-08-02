@@ -352,6 +352,7 @@ std::vector<GPSCoord> generateSearchPath(std::shared_ptr<MissionState> state, do
                 "Waypoint path is empty. Failed to generate search path");
             return {};
         }
+
         RRTPoint start(state->mission_params.getWaypoints().back(), start_angle);
 
         double scan_radius = state->config.pathing.coverage.camera_vision_m;

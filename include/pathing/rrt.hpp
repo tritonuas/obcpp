@@ -210,7 +210,7 @@ class RRT {
      * @return  ==> the connection if one was found, an invalid connection
      *              otherwise
      */
-    Connection bestConnection(const std::vector<RRTPoint> &ends, int max_paths_checked) const;
+    Connection bestConnection(const std::vector<RRTPoint> &ends) const;
 
     /**
      * The points a goal can be reached at, one for every angle it may be
