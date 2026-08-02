@@ -115,16 +115,6 @@ target_add_mavsdk(airdrop_approach)
 target_add_matplot(airdrop_approach)
 target_add_loguru(airdrop_approach)
 
-add_executable(deviation_ranking "deviation_ranking.cpp")
-target_link_libraries(deviation_ranking PRIVATE obcpp_lib)
-target_include_directories(deviation_ranking PRIVATE ${INCLUDE_DIRECTORY})
-target_add_json(deviation_ranking)
-target_add_httplib(deviation_ranking)
-target_add_mavsdk(deviation_ranking)
-target_add_matplot(deviation_ranking)
-target_add_loguru(deviation_ranking)
-
-
 add_executable(airdrop_packets "airdrop_packets.cpp")
 target_link_libraries(airdrop_packets PRIVATE obcpp_lib)
 target_include_directories(airdrop_packets PRIVATE ${INCLUDE_DIRECTORY})

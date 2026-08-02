@@ -4,6 +4,7 @@ set(FILES
     dubins.cpp
     environment.cpp
     plotting.cpp
+    rrt.cpp
     static.cpp
     tree.cpp
     mission_path.cpp

@@ -44,30 +44,9 @@ struct CVConfig {
     uint16_t not_stolen_port;
 };
 
-namespace PointFetchMethod {
-enum class Enum {
-    NONE,    // check RRT against every node (path optimal, but incredibly slow)
-    RANDOM,  // check ~k randomly sampled nodes from the tree.
-    NEAREST  // check ~$p$ nodes closest to the sampled node (best performance/time ratio from
-             // rudimentary testing)
-};
-CONFIG_VARIANT_MAPPING_T(Enum)
-MAPPINGS = {{"none", Enum::NONE}, {"random", Enum::RANDOM}, {"nearest", Enum::NEAREST}};
-};  // namespace PointFetchMethod
-
 struct DubinsConfig {
     double turning_radius;
     double point_separation;
-};
-
-struct RRTConfig {
-    int iterations_per_waypoint;  // number of iterations run between two waypoints
-    double rewire_radius;         // maximum distance from sampled point to optimize during RRT*
-    bool optimize;                // run RRT* if true
-    PointFetchMethod::Enum point_fetch_method;
-    bool allowed_to_skip_waypoints;  // if true, will skip waypoints if it can not connect after 1
-                                     // RRT iteration
-    bool generate_deviations;
 };
 
 namespace AirdropCoverageMethod {
@@ -108,7 +87,6 @@ struct PathingConfig {
     int laps;
     double upload_distance_buffer_m;
     DubinsConfig dubins;
-    RRTConfig rrt;
     AirdropCoverageConfig coverage;
     AirdropApproachConfig approach;
 };

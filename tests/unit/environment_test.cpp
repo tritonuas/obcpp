@@ -350,17 +350,39 @@ bool arcInBoundsBruteForce(const XYZCoord& center, double radius, double start_a
 
 // Reference implementation: generate the whole Dubins curve and check every point.
 // This is the check isDubinsPathInBounds replaces.
+//
+// The generated points do not describe the straightaway -- it is handed back as
+// its two endpoints so that ardupilot accelerates through it -- so the legs in
+// between are walked as well, otherwise the reference would miss anything the
+// plane flies over in a straight line.
 bool dubinsInBoundsBruteForce(const RRTPoint& start, const RRTPoint& end, const RRTOption& option) {
     if (!std::isfinite(option.length)) {
         return false;
     }
 
-    for (const XYZCoord& point :
-         Dubins::generatePoints(start, end, option.dubins_path, option.has_straight)) {
-        if (!Environment::isPointInBounds(point)) {
+    const std::vector<XYZCoord> points =
+        Dubins::generatePoints(start, end, option.dubins_path, option.has_straight);
+
+    for (std::size_t i = 0; i < points.size(); i++) {
+        if (!Environment::isPointInBounds(points[i])) {
             return false;
         }
+
+        if (i == 0) {
+            continue;
+        }
+
+        const XYZCoord& previous = points[i - 1];
+        const int steps =
+            std::ceil(previous.distanceTo(points[i]) / Dubins::_point_separation);
+        for (int step = 1; step < steps; step++) {
+            const double ratio = static_cast<double>(step) / steps;
+            if (!Environment::isPointInBounds(previous + ratio * (points[i] - previous))) {
+                return false;
+            }
+        }
     }
+
     return true;
 }
 
@@ -774,4 +796,344 @@ TEST(DubinsBoundsTest, MatchesSampledReferenceAcrossConfigurations) {
             }
         }
     }
+}
+
+/*
+ * ============================================================================
+ *  The rest of the environment: region bounds, line checks, sampling, and the
+ *  airdrop coverage helpers
+ * ============================================================================
+ */
+
+/*
+ *  Environment::findBounds -- the box a region sits in
+ */
+TEST(EnvironmentTest, FindBounds) {
+    const Polygon square = {
+        {XYZCoord(0, 0, 0), XYZCoord(100, 0, 0), XYZCoord(100, 50, 0), XYZCoord(0, 50, 0)}};
+    const auto square_bounds = Environment::findBounds(square);
+    EXPECT_DOUBLE_EQ(square_bounds.first.first, 0);    // min x
+    EXPECT_DOUBLE_EQ(square_bounds.first.second, 100);  // max x
+    EXPECT_DOUBLE_EQ(square_bounds.second.first, 0);    // min y
+    EXPECT_DOUBLE_EQ(square_bounds.second.second, 50);  // max y
+
+    // a region that reaches into the negatives, and whose extremes are on
+    // different vertices
+    const Polygon triangle = {
+        {XYZCoord(-10, -5, 0), XYZCoord(4, 20, 0), XYZCoord(-2, -30, 0)}};
+    const auto triangle_bounds = Environment::findBounds(triangle);
+    EXPECT_DOUBLE_EQ(triangle_bounds.first.first, -10);
+    EXPECT_DOUBLE_EQ(triangle_bounds.first.second, 4);
+    EXPECT_DOUBLE_EQ(triangle_bounds.second.first, -30);
+    EXPECT_DOUBLE_EQ(triangle_bounds.second.second, 20);
+
+    // a single point is its own box
+    const auto point_bounds = Environment::findBounds({XYZCoord(7, -3, 0)});
+    EXPECT_DOUBLE_EQ(point_bounds.first.first, 7);
+    EXPECT_DOUBLE_EQ(point_bounds.first.second, 7);
+    EXPECT_DOUBLE_EQ(point_bounds.second.first, -3);
+    EXPECT_DOUBLE_EQ(point_bounds.second.second, -3);
+
+    // an empty region has nothing to bound
+    const auto empty_bounds = Environment::findBounds({});
+    EXPECT_DOUBLE_EQ(empty_bounds.first.first, 0);
+    EXPECT_DOUBLE_EQ(empty_bounds.first.second, 0);
+    EXPECT_DOUBLE_EQ(empty_bounds.second.first, 0);
+    EXPECT_DOUBLE_EQ(empty_bounds.second.second, 0);
+}
+
+/*
+ *  Environment::scale -- grows or shrinks a region about the center of its box
+ */
+TEST(EnvironmentTest, ScalePolygon) {
+    // centered on (5, 5)
+    const Polygon square = {
+        {XYZCoord(0, 0, 0), XYZCoord(10, 0, 0), XYZCoord(10, 10, 0), XYZCoord(0, 10, 0)}};
+
+    const Polygon doubled = Environment::scale(2, square);
+    const Polygon expected_doubled = {
+        {XYZCoord(-5, -5, 0), XYZCoord(15, -5, 0), XYZCoord(15, 15, 0), XYZCoord(-5, 15, 0)}};
+    EXPECT_EQ(doubled, expected_doubled);
+
+    const Polygon halved = Environment::scale(0.5, square);
+    const Polygon expected_halved = {{XYZCoord(2.5, 2.5, 0), XYZCoord(7.5, 2.5, 0),
+                                      XYZCoord(7.5, 7.5, 0), XYZCoord(2.5, 7.5, 0)}};
+    EXPECT_EQ(halved, expected_halved);
+
+    // scaling by one changes nothing
+    EXPECT_EQ(Environment::scale(1, square), square);
+
+    // an off center region is scaled about its own box, so the box keeps its center
+    const Polygon triangle = {{XYZCoord(20, 40, 0), XYZCoord(60, 40, 0), XYZCoord(40, 80, 0)}};
+    const Polygon scaled_triangle = Environment::scale(3, triangle);
+    ASSERT_EQ(scaled_triangle.size(), triangle.size());
+
+    const auto before = Environment::findBounds(triangle);
+    const auto after = Environment::findBounds(scaled_triangle);
+    EXPECT_DOUBLE_EQ((after.first.first + after.first.second) / 2,
+                     (before.first.first + before.first.second) / 2);
+    EXPECT_DOUBLE_EQ((after.second.first + after.second.second) / 2,
+                     (before.second.first + before.second.second) / 2);
+    EXPECT_DOUBLE_EQ(after.first.second - after.first.first,
+                     3 * (before.first.second - before.first.first));
+}
+
+/*
+ *  Environment::doesLineIntersectPolygon -- a segment against every edge
+ */
+TEST(EnvironmentTest, DoesLineIntersectPolygon) {
+    const Polygon obstacle = {
+        {XYZCoord(40, 40, 0), XYZCoord(60, 40, 0), XYZCoord(60, 60, 0), XYZCoord(40, 60, 0)}};
+    Environment::init({}, {}, {});
+
+    // straight through
+    EXPECT_TRUE(
+        Environment::doesLineIntersectPolygon(XYZCoord(0, 50, 0), XYZCoord(100, 50, 0), obstacle));
+    // clear of it
+    EXPECT_FALSE(
+        Environment::doesLineIntersectPolygon(XYZCoord(0, 10, 0), XYZCoord(100, 10, 0), obstacle));
+    // stops short of it
+    EXPECT_FALSE(
+        Environment::doesLineIntersectPolygon(XYZCoord(0, 50, 0), XYZCoord(39, 50, 0), obstacle));
+    // a segment entirely inside crosses no edge
+    EXPECT_FALSE(
+        Environment::doesLineIntersectPolygon(XYZCoord(45, 45, 0), XYZCoord(55, 55, 0), obstacle));
+    // touching an edge counts, the checks are conservative
+    EXPECT_TRUE(
+        Environment::doesLineIntersectPolygon(XYZCoord(0, 40, 0), XYZCoord(50, 40, 0), obstacle));
+}
+
+/*
+ *  Environment::isLineInBounds -- the region and every obstacle at once
+ */
+TEST(EnvironmentTest, LineInBounds) {
+    initFieldWithObstacle();
+
+    // well clear of everything
+    EXPECT_TRUE(Environment::isLineInBounds(XYZCoord(10, 10, 0), XYZCoord(30, 30, 0)));
+    // passing under the obstacle
+    EXPECT_TRUE(Environment::isLineInBounds(XYZCoord(10, 10, 0), XYZCoord(90, 10, 0)));
+
+    // straight through the obstacle
+    EXPECT_FALSE(Environment::isLineInBounds(XYZCoord(10, 50, 0), XYZCoord(90, 50, 0)));
+    // clipping the corner of it
+    EXPECT_FALSE(Environment::isLineInBounds(XYZCoord(10, 10, 0), XYZCoord(40, 40, 0)));
+    // leaving the field
+    EXPECT_FALSE(Environment::isLineInBounds(XYZCoord(50, 10, 0), XYZCoord(150, 10, 0)));
+}
+
+/*
+ *  Environment::getRandomPoint -- samples land somewhere they can be flown
+ */
+TEST(EnvironmentTest, GetRandomPoint) {
+    initFieldWithObstacle();
+    const XYZCoord fallback(1, 1, 0);
+
+    for (int i = 0; i < 500; i++) {
+        const XYZCoord point = Environment::getRandomPoint(false, fallback);
+        EXPECT_TRUE(Environment::isPointInBounds(point))
+            << "sampled (" << point.x << ", " << point.y << ")";
+    }
+
+    // sampling the mapping region only has to land in the mapping region
+    const Polygon field = {{XYZCoord(0, 0, 0), XYZCoord(100, 0, 0), XYZCoord(100, 100, 0),
+                            XYZCoord(0, 100, 0)}};
+    const Polygon mapping_region = {{XYZCoord(10, 10, 0), XYZCoord(30, 10, 0),
+                                     XYZCoord(30, 30, 0), XYZCoord(10, 30, 0)}};
+    Environment::init(field, {}, mapping_region, {});
+
+    for (int i = 0; i < 500; i++) {
+        const XYZCoord point = Environment::getRandomPoint(true, fallback);
+        EXPECT_TRUE(Environment::isPointInPolygon(mapping_region, point))
+            << "sampled (" << point.x << ", " << point.y << ")";
+    }
+
+    // nowhere to sample from, so the caller's fallback is handed back
+    Environment::init({}, {}, {}, {});
+    EXPECT_TRUE(Environment::getRandomPoint(false, fallback) == fallback);
+    EXPECT_TRUE(Environment::getRandomPoint(true, fallback) == fallback);
+}
+
+/*
+ *  Environment::orientation and Environment::onSegment, the two helpers the
+ *  segment intersection check is built out of
+ */
+TEST(EnvironmentTest, OrientationAndOnSegment) {
+    Environment::init({}, {}, {});
+
+    // 0 colinear, 1 clockwise, 2 counterclockwise
+    EXPECT_EQ(Environment::orientation(XYZCoord(0, 0, 0), XYZCoord(1, 1, 0), XYZCoord(2, 2, 0)), 0);
+    EXPECT_EQ(Environment::orientation(XYZCoord(0, 0, 0), XYZCoord(1, 1, 0), XYZCoord(2, 0, 0)), 1);
+    EXPECT_EQ(Environment::orientation(XYZCoord(0, 0, 0), XYZCoord(1, 1, 0), XYZCoord(0, 2, 0)), 2);
+    // colinear along an axis, and with a repeated point
+    EXPECT_EQ(Environment::orientation(XYZCoord(0, 0, 0), XYZCoord(5, 0, 0), XYZCoord(9, 0, 0)), 0);
+    EXPECT_EQ(Environment::orientation(XYZCoord(0, 0, 0), XYZCoord(0, 0, 0), XYZCoord(9, 3, 0)), 0);
+
+    // onSegment(p, q, r) asks whether q is inside the box p and r span
+    EXPECT_TRUE(Environment::onSegment(XYZCoord(0, 0, 0), XYZCoord(1, 1, 0), XYZCoord(2, 2, 0)));
+    EXPECT_TRUE(Environment::onSegment(XYZCoord(0, 0, 0), XYZCoord(0, 0, 0), XYZCoord(2, 2, 0)));
+    EXPECT_TRUE(Environment::onSegment(XYZCoord(2, 2, 0), XYZCoord(1, 1, 0), XYZCoord(0, 0, 0)));
+    EXPECT_FALSE(Environment::onSegment(XYZCoord(0, 0, 0), XYZCoord(3, 3, 0), XYZCoord(2, 2, 0)));
+    EXPECT_FALSE(Environment::onSegment(XYZCoord(0, 0, 0), XYZCoord(-1, 1, 0), XYZCoord(2, 2, 0)));
+}
+
+/*
+ *  Environment::horizontalRayIntersectsEdge
+ */
+TEST(EnvironmentTest, HorizontalRayIntersectsEdge) {
+    const Polygon airdrop_zone = {
+        {XYZCoord(0, 0, 0), XYZCoord(100, 0, 0), XYZCoord(100, 100, 0), XYZCoord(50, 100, 0)}};
+    Environment::init({}, airdrop_zone, {});
+
+    const XYZCoord ray_start(-9999, 75, 0);
+    const XYZCoord ray_end(9999, 75, 0);
+    XYZCoord intersection(0, 0, 0);
+
+    // the bottom edge is nowhere near the ray
+    EXPECT_FALSE(Environment::horizontalRayIntersectsEdge(airdrop_zone[0], airdrop_zone[1],
+                                                          ray_start, ray_end, intersection));
+    // the right edge is vertical, so it is hit at its own x
+    EXPECT_TRUE(Environment::horizontalRayIntersectsEdge(airdrop_zone[1], airdrop_zone[2],
+                                                         ray_start, ray_end, intersection));
+    EXPECT_EQ(intersection, XYZCoord(100, 75, 0));
+    // the top edge sits above the ray
+    EXPECT_FALSE(Environment::horizontalRayIntersectsEdge(airdrop_zone[2], airdrop_zone[3],
+                                                          ray_start, ray_end, intersection));
+    // the slanted edge is hit part way along
+    EXPECT_TRUE(Environment::horizontalRayIntersectsEdge(airdrop_zone[3], airdrop_zone[0],
+                                                         ray_start, ray_end, intersection));
+    EXPECT_EQ(intersection, XYZCoord(37.5, 75, 0));
+}
+
+/*
+ *  Environment::findIntersections -- where a ray crosses a region, either way up
+ */
+TEST(EnvironmentTest, FindIntersections) {
+    const Polygon airdrop_zone = {
+        {XYZCoord(0, 0, 0), XYZCoord(100, 0, 0), XYZCoord(100, 100, 0), XYZCoord(50, 100, 0)}};
+    Environment::init({}, airdrop_zone, {});
+
+    const std::vector<XYZCoord> vertical = Environment::findIntersections(
+        airdrop_zone, XYZCoord(75, 9999, 0), XYZCoord(75, -9999, 0), true);
+    EXPECT_EQ(vertical, std::vector<XYZCoord>({XYZCoord(75, 0, 0), XYZCoord(75, 100, 0)}));
+
+    const std::vector<XYZCoord> horizontal = Environment::findIntersections(
+        airdrop_zone, XYZCoord(-9999, 75, 0), XYZCoord(9999, 75, 0), false);
+    EXPECT_EQ(horizontal, std::vector<XYZCoord>({XYZCoord(100, 75, 0), XYZCoord(37.5, 75, 0)}));
+
+    // a ray that misses the region entirely
+    EXPECT_TRUE(Environment::findIntersections(airdrop_zone, XYZCoord(200, 9999, 0),
+                                               XYZCoord(200, -9999, 0), true)
+                    .empty());
+}
+
+/*
+ *  Environment::getAirdropEndpoints -- the ends of the scan lines that cover the
+ *  airdrop zone, one scan_radius in from the edge and 2 * scan_radius apart
+ */
+TEST(EnvironmentTest, GetAirdropEndpoints) {
+    const Polygon airdrop_zone = {
+        {XYZCoord(0, 0, 0), XYZCoord(100, 0, 0), XYZCoord(100, 100, 0), XYZCoord(0, 100, 0)}};
+    Environment::init({}, airdrop_zone, {});
+
+    // horizontal lines, handed back top down and left right
+    const std::vector<XYZCoord> horizontal = Environment::getAirdropEndpoints(25, false);
+    EXPECT_EQ(horizontal, std::vector<XYZCoord>({XYZCoord(0, 75, 0), XYZCoord(100, 75, 0),
+                                                 XYZCoord(0, 25, 0), XYZCoord(100, 25, 0)}));
+
+    // vertical lines, handed back left right and top down
+    const std::vector<XYZCoord> vertical = Environment::getAirdropEndpoints(25, true);
+    EXPECT_EQ(vertical, std::vector<XYZCoord>({XYZCoord(25, 100, 0), XYZCoord(25, 0, 0),
+                                               XYZCoord(75, 100, 0), XYZCoord(75, 0, 0)}));
+}
+
+/*
+ *  Environment::getAirdropWaypoints -- the same lines, with the heading they are
+ *  flown at
+ */
+TEST(EnvironmentTest, GetAirdropWaypoints) {
+    const Polygon airdrop_zone = {
+        {XYZCoord(0, 0, 0), XYZCoord(100, 0, 0), XYZCoord(100, 100, 0), XYZCoord(0, 100, 0)}};
+    Environment::init({}, airdrop_zone, {});
+
+    // flying every line the same way, so the plane has to fly back between them
+    const std::vector<RRTPoint> one_way = Environment::getAirdropWaypoints(25, true, false);
+    ASSERT_EQ(one_way.size(), 4);
+    for (const RRTPoint& waypoint : one_way) {
+        EXPECT_DOUBLE_EQ(waypoint.psi, 0);
+    }
+    EXPECT_TRUE(one_way[0].coord == XYZCoord(0, 75, 0));
+    EXPECT_TRUE(one_way[1].coord == XYZCoord(100, 75, 0));
+    EXPECT_TRUE(one_way[2].coord == XYZCoord(0, 25, 0));
+    EXPECT_TRUE(one_way[3].coord == XYZCoord(100, 25, 0));
+
+    // boustrophedon: every other line is flown backwards, so the ends swap and
+    // the heading turns around with them
+    const std::vector<RRTPoint> alternating = Environment::getAirdropWaypoints(25, false, false);
+    ASSERT_EQ(alternating.size(), 4);
+    EXPECT_TRUE(alternating[0].coord == XYZCoord(0, 75, 0));
+    EXPECT_TRUE(alternating[1].coord == XYZCoord(100, 75, 0));
+    EXPECT_TRUE(alternating[2].coord == XYZCoord(100, 25, 0));
+    EXPECT_TRUE(alternating[3].coord == XYZCoord(0, 25, 0));
+    EXPECT_DOUBLE_EQ(alternating[0].psi, 0);
+    EXPECT_DOUBLE_EQ(alternating[1].psi, 0);
+    EXPECT_DOUBLE_EQ(alternating[2].psi, M_PI);
+    EXPECT_DOUBLE_EQ(alternating[3].psi, M_PI);
+
+    // scanning vertically instead, which is flown south
+    const std::vector<RRTPoint> vertical = Environment::getAirdropWaypoints(25, true, true);
+    ASSERT_EQ(vertical.size(), 4);
+    EXPECT_TRUE(vertical[0].coord == XYZCoord(25, 100, 0));
+    EXPECT_TRUE(vertical[1].coord == XYZCoord(25, 0, 0));
+    for (const RRTPoint& waypoint : vertical) {
+        EXPECT_DOUBLE_EQ(waypoint.psi, 3 * HALF_PI);
+    }
+}
+
+/*
+ *  Environment::isPolygonInPolygon -- a region is only inside another one if all
+ *  of it is
+ */
+TEST(EnvironmentTest, PolygonInPolygon) {
+    // 100 x 100 field
+    const Polygon field = {XYZCoord{0, 0, 0}, XYZCoord{100, 0, 0}, XYZCoord{100, 100, 0},
+                           XYZCoord{0, 100, 0}};
+
+    // well clear of every edge
+    const Polygon inside = {XYZCoord{10, 10, 0}, XYZCoord{40, 10, 0}, XYZCoord{40, 40, 0},
+                            XYZCoord{10, 40, 0}};
+    EXPECT_TRUE(Environment::isPolygonInPolygon(inside, field));
+
+    // hanging off of the right side
+    const Polygon overlapping = {XYZCoord{80, 10, 0}, XYZCoord{120, 10, 0}, XYZCoord{120, 40, 0},
+                                 XYZCoord{80, 40, 0}};
+    EXPECT_FALSE(Environment::isPolygonInPolygon(overlapping, field));
+
+    // nowhere near it
+    const Polygon outside = {XYZCoord{200, 200, 0}, XYZCoord{240, 200, 0}, XYZCoord{240, 240, 0},
+                             XYZCoord{200, 240, 0}};
+    EXPECT_FALSE(Environment::isPolygonInPolygon(outside, field));
+
+    // the field does not fit inside of the region it contains
+    EXPECT_FALSE(Environment::isPolygonInPolygon(field, inside));
+
+    // sharing an edge is not being inside of it, the same way a point on the edge
+    // is not in the polygon
+    const Polygon flush = {XYZCoord{0, 0, 0}, XYZCoord{50, 0, 0}, XYZCoord{50, 50, 0},
+                           XYZCoord{0, 50, 0}};
+    EXPECT_FALSE(Environment::isPolygonInPolygon(flush, field));
+
+    // every corner is inside, but the middle of the region bulges out of the notch
+    const Polygon notched = {XYZCoord{0, 0, 0},  XYZCoord{100, 0, 0},  XYZCoord{100, 100, 0},
+                             XYZCoord{60, 100, 0}, XYZCoord{60, 20, 0}, XYZCoord{40, 20, 0},
+                             XYZCoord{40, 100, 0}, XYZCoord{0, 100, 0}};
+    const Polygon spanning_the_notch = {XYZCoord{20, 50, 0}, XYZCoord{80, 50, 0},
+                                        XYZCoord{80, 80, 0}, XYZCoord{20, 80, 0}};
+    for (const XYZCoord& corner : spanning_the_notch) {
+        ASSERT_TRUE(Environment::isPointInPolygon(notched, corner));
+    }
+    EXPECT_FALSE(Environment::isPolygonInPolygon(spanning_the_notch, notched));
+
+    // a region is inside of itself only in the sense that it is not inside of it
+    EXPECT_FALSE(Environment::isPolygonInPolygon(field, field));
 }

@@ -125,6 +125,22 @@ namespace Environment {
     bool isPointInPolygon(const Polygon& polygon, const XYZCoord& point);
 
     /**
+     * Determines whether a polygon lies entirely inside another one
+     *
+     * Every corner of the inner polygon has to be inside the outer one, and no
+     * edge of it may cross the outer boundary -- corners alone are not enough,
+     * as an edge can bulge out between two corners that are both inside.
+     *
+     * Points on the edge of the outer polygon count as outside, the same way
+     * isPointInPolygon treats them.
+     *
+     * @param inner ==> the polygon that has to be contained
+     * @param outer ==> the polygon that has to contain it
+     * @return      ==> whether or not inner lies entirely inside outer
+     */
+    bool isPolygonInPolygon(const Polygon& inner, const Polygon& outer);
+
+    /**
      * Checks wheter a line segment is in bounds or not, it must NOT intersect
      * either the valid region or the obstacles
      *
@@ -285,15 +301,6 @@ namespace Environment {
     std::vector<XYZCoord> findIntersectionsWithPolygon(const Polygon& polygon,
                                                        const XYZCoord& start_point,
                                                        const XYZCoord& end_point);
-
-    /**
-     * Estimate the area and path length covered by the given goals
-     *
-     * @param goals the new goals
-     *
-     * @return a pair of the area covered and the path length
-     */
-    std::pair<double, double> estimateAreaCoveredAndPathLength(const std::vector<XYZCoord>& goals);
 
     /**
      * Returns a new polygon that is scaled by a given factor

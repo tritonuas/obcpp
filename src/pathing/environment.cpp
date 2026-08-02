@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <utility>
 #include <vector>
 
@@ -197,6 +198,24 @@ bool isPointInPolygon(const Polygon& polygon, const XYZCoord& point) {
     }
 
     return is_inside;
+}
+
+bool isPolygonInPolygon(const Polygon& inner, const Polygon& outer) {
+    for (const XYZCoord& corner : inner) {
+        if (!isPointInPolygon(outer, corner)) {
+            return false;
+        }
+    }
+
+    // an edge can bulge out between two corners that are both inside, which
+    // shows up as it crossing the outer boundary
+    for (std::size_t i = 0, j = inner.size() - 1; i < inner.size(); j = i++) {
+        if (doesLineIntersectPolygon(inner[j], inner[i], outer)) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 bool isLineInBounds(const XYZCoord& start_point, const XYZCoord& end_point) {
@@ -485,44 +504,6 @@ std::vector<XYZCoord> findIntersectionsWithPolygon(const Polygon& polygon,
     }
 
     return intersections;
-}
-
-std::pair<double, double> estimateAreaCoveredAndPathLength(const std::vector<XYZCoord>& goals) {
-    double area_covered = 0.0;
-    double path_length = 0.0;
-
-    for (int i = 0; i < goals.size(); ++i) {
-        XYZCoord start_point = goals[i];
-        XYZCoord end_point = goals[(i + 1) % goals.size()];
-        path_length += start_point.distanceTo(end_point);
-        // Calculates area covered by adding the part of the line segment that is in bounds
-        // Caulcate the intersections and whether the start and end points are in bounds in order to
-        // find the sections of the line that is in bounds
-        if (!doesLineIntersectPolygon(start_point, end_point, _mapping_region)) {
-            area_covered += start_point.distanceTo(end_point) * SEARCH_RADIUS * 2;
-        } else {
-            std::vector<XYZCoord> intersections =
-                findIntersectionsWithPolygon(_mapping_region, start_point, end_point);
-            bool start_in_bounds = isPointInPolygon(_mapping_region, start_point);
-            bool end_in_bounds = isPointInPolygon(_mapping_region, end_point);
-
-            if (start_in_bounds) {
-                area_covered += start_point.distanceTo(intersections[0]) * SEARCH_RADIUS;
-                intersections.erase(intersections.begin());
-            }
-
-            if (end_in_bounds) {
-                area_covered += end_point.distanceTo(intersections.back()) * SEARCH_RADIUS;
-                intersections.pop_back();
-            }
-
-            for (int j = 0; j < intersections.size(); j += 2) {
-                area_covered += intersections[j].distanceTo(intersections[j + 1]) * SEARCH_RADIUS;
-            }
-        }
-    }
-
-    return {area_covered, path_length};
 }
 
 Polygon scale(double scale, const Polygon& source_polygon) {

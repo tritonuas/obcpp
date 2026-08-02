@@ -15,182 +15,21 @@
 #include "pathing/environment.hpp"
 #include "pathing/mission_path.hpp"
 #include "pathing/plotting.hpp"
+#include "pathing/rrt.hpp"
 #include "pathing/tree.hpp"
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
 #include "utilities/rng.hpp"
 
-class RRT {
- public:
-    RRT(RRTPoint start, std::vector<XYZCoord> goals, double search_radius,
-        const OBCConfig &config, std::vector<double> angles = {});
-
-    /**
-     * RRT(-star) algorithm
-     *
-     * TODO - do all iterations to try to find the most efficient path?
-     *  - maybe do the tolarance as stright distance / num iterations
-     *  - not literally that function, but something that gets more leniant the
-     * more iterations there are
-     */
-    void run();
-
-    /**
-     * returns a continuous path of points to the goal
-     *
-     * @return  ==> list of 2-vectors to the goal region
-     */
-    std::vector<XYZCoord> getPointsToGoal() const;
-
- private:
-    // tree stores the nodes that form the tree
-    RRTTree tree;
-
-    const std::vector<XYZCoord> goals;  // the waypoints to path through, in order
-
-    /* RRT Config Options */
-    const int iterations_per_waypoint;  // number of times to run the RRT algorithm
-                                        // for each waypoint
-    const double search_radius;         // !!NOT USED!! max radius to move off the tree
-    const double rewire_radius;         // ONLY FOR RRT-STAR, max radius from new node to rewire
-    const RRTConfig config;             // optimization options
-    std::vector<XYZCoord> flight_path;
-
-    // the different of final approaches to the goal
-    // yes, this is the default unit circle diagram used in High-School
-    std::vector<double> angles = {
-        0,
-        M_PI / 6,
-        M_PI / 4,
-        M_PI / 3,
-        M_PI / 2,
-        2 * M_PI / 3,
-        3 * M_PI / 4,
-        5 * M_PI / 6,
-        M_PI,
-        7 * M_PI / 6,
-        5 * M_PI / 4,
-        4 * M_PI / 3,
-        3 * M_PI / 2,
-        5 * M_PI / 3,
-        7 * M_PI / 4,
-        11 * M_PI / 6,
-    };
-
-    /**
-     * Does a single iteration of the RRT(star) algoritm to connect two waypoints
-     *
-     * @param tries ==> number of points it attempts to sample
-     * @return      ==> whether or not the goal was reached
-     */
-    bool RRTIteration(int tries, int current_goal_index);
-
-    /**
-     * Evaluates a certain interval to determine if the algorithm is making
-     * meaningful progress. If it isn't, it will simply tell the RRT algoritm to
-     * stop.
-     *
-     * @param goal_node             ==> current best node reaching the goal (updated if better found)
-     * @param goal_parent           ==> parent of the goal_node (updated if better found)
-     * @param current_goal_index    ==> index of the goal that we are trying to connect to
-     * @return                      ==> true if the RRT algorithm should stop (converged or
-     *                                  adequate), false otherwise
-     */
-    bool epochEvaluation(std::shared_ptr<RRTNode> goal_node,
-                         std::shared_ptr<RRTNode> goal_parent,
-                         int current_goal_index);
-
-    /**
-     * Generates a random point in the airspace (uniformly)
-     *
-     * @return  ==> random point in the airspace
-     */
-    RRTPoint generateSamplePoint() const;
-
-    /**
-     * Gets a sorted list of options to EACH one of the possible goals, defined
-     * by the angles we want to connect to
-     *
-     * @param current_goal_index    ==> index of the goal that we are trying to
-     * connect to
-     * @param total_options         ==> number of options to try to connect to the goal
-     * @return                      ==> list of options to connect to the goal
-     *                                  <RRTPoint GOAL, {RRTNode* ANCHOR, RRTOption} >
-     */
-    std::vector<std::pair<RRTPoint, std::pair<std::shared_ptr<RRTNode>, RRTOption>>>
-        getOptionsToGoal(int current_goal_index, int total_options) const;
-
-    /**
-     * Tries to get the optimal  node to the goal, which is NOT connected into the
-     * tree
-     *
-     * @param current_goal_index    ==> index of the goal that we are trying to
-     * connect to
-     * @param total_options         ==> number of options to try to connect to the goal
-     * @param parent                ==> pointer to the parent node (output parameter)
-     * @return                      ==> pointer to the node if one was found,
-     * nullptr otherwise
-     */
-    std::shared_ptr<RRTNode> sampleToGoal(int current_goal_index,
-                                          int total_options,
-                                          std::shared_ptr<RRTNode>& parent) const;
-
-    /**
-     * Connects to the goal after RRT is finished
-     *
-     * @param current_goal_index    ==> index of the goal that we are trying to
-     * connect to
-     * @param total_options         ==> number of options to try to connect to the goal
-     * @return                      ==> pointer to the node if it was added,
-     * nullptr otherwise
-     */
-    bool connectToGoal(int current_goal_index,
-                       int total_options = TOTAL_OPTIONS_FOR_GOAL_CONNECTION);
-
-    /**
-     * Does the logistical work when found one waypoint to another
-     *  - adds the node to the tree
-     *  - finds the path
-     *      - adds altitude to the path
-     *
-     * @param goal_node  ==> node to add to the tree
-     * @param parent     ==> parent of the goal node
-     * @param current_goal_index ==> index of the goal that we are trying to
-     */
-    void addNodeToTree(std::shared_ptr<RRTNode> goal_node,
-                       std::shared_ptr<RRTNode> parent,
-                       int current_goal_index);
-
-    /**
-     * Goes through generated options to try to connect the sample to the tree
-     *
-     * @param options   ==> list of options to connect the sample to the tree
-     * @param sample    ==> sampled point
-     * @return          ==> whether or not the sample was successfully added to
-     * the tree (nullptr if not added)
-     */
-    std::shared_ptr<RRTNode> parseOptions(
-                        const std::vector<std::pair<std::shared_ptr<RRTNode>, RRTOption>> &options,
-                        const RRTPoint &sample);
-
-    /**
-     * Rewires the tree by finding paths that are more efficintly routed through
-     * the sample. Only searches for nodes a specific radius around the sample
-     * to reduce computational expense
-     *
-     * @param sample    ==> sampled point
-     */
-    void optimizeTree(std::shared_ptr<RRTNode> sample);
-};
 
 /**
  * Class that performs Coverage-Path_Planning (CPP) over a given polygon
  *
- * Basically draws vertical lines, and the connects them with Dubins paths
+ * Basically draws vertical lines, and then connects them with RRT, which keeps
+ * the legs between the lines inside the airspace
  *
  * Limitations
  * - Cannot path through non-convex shapes
- * - Does not check if path is inbounds or not
  *
  * Notes:
  * - this implementation is for fixed wing planes, which is not currently being used. However,
@@ -221,14 +60,30 @@ class ForwardCoveragePathing {
     std::vector<XYZCoord> coverageOptimal() const;
 
     /**
-     * From a list of dubins paths and waypoints, generate a path
+     * The waypoints that sweep the zone with one layout of scan lines, starting
+     * from where the plane is now
      *
-     * @param dubins_options  ==> list of dubins options to connect the waypoints
-     * @param waypoints       ==> list of waypoints to connect (always 1 more element than
-     * dubins_options)
+     * These are the mission, not the path -- each one carries the heading its
+     * line has to be flown at, and RRT is what works out how to get from one to
+     * the next.
+     *
+     * @param one_way   ==> whether every line is flown in the same direction,
+     *                      rather than alternating
+     * @param vertical  ==> whether the lines run vertically
      */
-    std::vector<XYZCoord> generatePath(const std::vector<RRTOption> &dubins_options,
-                                       const std::vector<RRTPoint> &waypoints) const;
+    std::vector<RRTPoint> scanLines(bool one_way, bool vertical) const;
+
+    /**
+     * Searches out the dubins paths that fly one layout of scan lines
+     *
+     * The points along them are not generated, so the caller may weigh the
+     * mission against another one and throw it away cheaply.
+     *
+     * @param one_way   ==> whether every line is flown in the same direction,
+     *                      rather than alternating
+     * @param vertical  ==> whether the lines run vertically
+     */
+    RRT pathScanLines(bool one_way, bool vertical) const;
 
  private:
     const double scan_radius;  // how far each side of the plane we intend to look (half dist
@@ -312,10 +167,5 @@ generateSearchPath(std::shared_ptr<MissionState> state, double start_angle);
 
 std::vector<GPSCoord>
 generateAirdropApproach(std::shared_ptr<MissionState> state, const GPSCoord &goal);
-
-std::vector<std::vector<XYZCoord>> generateGoalListDeviations(const std::vector<XYZCoord> &goals,
-                                                              XYZCoord deviation_point);
-
-std::vector<std::vector<XYZCoord>> generateRankedNewGoalsList(const std::vector<XYZCoord> &goals);
 
 #endif  // INCLUDE_PATHING_STATIC_HPP_

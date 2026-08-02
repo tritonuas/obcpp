@@ -20,17 +20,14 @@ const double TWO_PI = 2 * M_PI;
 const double HALF_PI = M_PI / 2;
 
 // RRT CONSTANTS
-const int ITERATIONS_PER_WAYPOINT = 256;  // number of times RRT is ran per waypoint
-const double SEARCH_RADIUS =
-    1000.0;  // DOES NOTHING, limits how far off the tree the new node can be
+const int TREE_CAPACITY = 512;  // number of nodes a tree between two waypoints is built out of
+// the tree holds the waypoint it is rooted at, a node for every sample RRT takes,
+// and the waypoint they end up connecting to
+const int ITERATIONS_PER_WAYPOINT = TREE_CAPACITY - 2;  // number of times RRT is ran per waypoint
 const double REWIRE_RADIUS = 200.0;  // ONLY FOR RRT-STAR, max radius from new node to rewire
 
 // RRT HELPER CONSTANTS
-const double EPOCH_TEST_MARGIN = 0.97;        // at what margin of improvement does it stop
 const int ENV_PATH_VALIDATION_STEP_SIZE = 5;  // how many points to skip when validating path
-const int NUM_EPOCHS = 5;                     // number of times to evaulate the path length
-const int K_RANDOM_NODES = 100;               // how many nodes to generate for the tree
-const int K_CLOESEST_NODES = 50;  // how many nodes to look at when finding the closest node
 const int TOTAL_OPTIONS_FOR_GOAL_CONNECTION =
     2048;  // TODO - MUST SCALE WITH ITERATIONS OR ELSE CANT FIND GOAL
 
