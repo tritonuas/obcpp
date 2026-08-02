@@ -58,42 +58,36 @@ struct Connection {
  * it are not worth flying until one of them has been picked.
  */
 struct Leg {
-    RRTPoint start;                     // the waypoint the leg is flown from
+    RRTPoint start{};                   // the waypoint the leg is flown from
+    RRTPoint end{};                     // the waypoint the leg lands on
     std::vector<PathSegment> segments;  // the dubins paths flown, in order
     double length = 0;                  // the ground the leg covers
-    int goal_idx = 0;                   // index of the goal the leg lands on
+
+    inline bool isValid() const { return !segments.empty(); }
 };
 
+/**
+ * The points a goal can be reached at, one for every angle it may be approached
+ * at -- which is a single point when the caller pinned it down
+ *
+ * @param[in] goal      ==> the waypoint being pathed to
+ * @param[in] angles    ==> the angles it may be approached at
+ * @return  ==> the goal, at each of the approach angles
+ */
+std::vector<RRTPoint> goalEndpoints(const XYZCoord &goal, const std::vector<double> &angles);
+
+/**
+ * Searches out the flying between one waypoint and the next.
+ *
+ * The tree is rooted at the waypoint the plane is flying from, and each run
+ * hands back the best leg it could find to the waypoint it was asked for, then
+ * re-roots itself there so the leg after it starts where this one landed.
+ * Stringing those legs into a mission is not its concern -- see PathGenerator.
+ */
 class RRT {
  public:
     // tree stores the nodes that form the tree
     RRTTree tree;
-
-    /*
-     * The waypoints to path through, in order, the first of which is where the
-     * plane starts out. A leg is always flown from the waypoint behind it, so
-     * the start being one of them is what keeps the first leg from being a
-     * special case.
-     */
-    const std::vector<XYZCoord> goals;
-
-    /*
-     * The final approach angles each goal may be reached at, one set per goal.
-     * The cheapest of them wins, so a caller that does not care which way a goal
-     * is approached hands over every angle, and one that does -- coverage pathing
-     * does, as a scan line only sweeps the ground it is meant to if it is flown
-     * along its own direction -- hands over the single angle it wants.
-     *
-     * The first set is the heading the plane is already flying, as the goal it is
-     * sitting on is flown from rather than reached.
-     */
-    const std::vector<std::vector<double>> goal_angles;
-
-    // the legs of the mission that have been searched out so far
-    std::vector<Leg> legs;
-
-    // the points flown along those legs, once they have been generated
-    std::vector<XYZCoord> flight_path;
 
     /*
      * Scratch space for bestConnection, which runs once for every sample RRT takes
@@ -104,74 +98,26 @@ class RRT {
     mutable std::array<NodeId, TREE_CAPACITY> frontier;  // the order the nodes are looked at in
     mutable std::vector<Connection> options;             // the paths out of the node being expanded
 
-
     /**
-     * @param[in] goals         ==> the waypoints to fly through, in order, the
-     *                              first of which is where the plane already is
-     * @param[in] start_angle   ==> the heading the plane is flying at right now
-     * @param[in] goal_angles   ==> the angles each goal may be approached at, one
-     *                              set per goal. A goal that has to be flown at
-     *                              one particular heading is a set of one. The
-     *                              set for the first goal is not read, the plane
-     *                              is already sitting on it at start_angle.
+     * @param[in] start ==> the vector the plane is flying, which the tree is
+     *                      rooted at
      */
-    RRT(std::vector<XYZCoord> goals, double start_angle,
-        std::vector<std::vector<double>> goal_angles);
+    explicit RRT(RRTPoint start);
 
     /**
-     * @param[in] goals         ==> the waypoints to fly through, in order, the
-     *                              first of which is where the plane already is
-     * @param[in] start_angle   ==> the heading the plane is flying at right now
-     * @param[in] angles        ==> the angles every goal may be approached at
-     */
-    RRT(std::vector<XYZCoord> goals, double start_angle, std::vector<double> angles = {});
-
-    /**
-     * RRT algorithm -- searches out the mission and then flies it
-     */
-    void run();
-
-    /**
-     * Searches out the dubins paths that fly the mission, and nothing more
+     * The best leg RRT could come up with between where the tree is rooted and
+     * the given goal
      *
-     * How long the mission is falls out of this, so a caller weighing one against
-     * another can stop here and only pay for the points of the one it flies.
+     * The direct flight is tried first, as nothing sampling could turn up beats
+     * it. Only when the goal cannot be reached in one path is a tree grown.
      *
-     * TODO - do all iterations to try to find the most efficient path?
-     *  - maybe do the tolarance as stright distance / num iterations
-     *  - not literally that function, but something that gets more leniant the
-     * more iterations there are
+     * @param[in] goal      ==> the waypoint to path to
+     * @param[in] angles    ==> the angles the goal may be approached at. A goal
+     *                          that has to be flown at one particular heading is
+     *                          a set of one.
+     * @return  ==> the leg flown to the goal
      */
-    void generateDubinsOptions();
-
-    /**
-     * Flies the legs, which is the only thing that generates points
-     */
-    void generateFlightPoints();
-
-    /**
-     * The ground the legs found so far cover
-     *
-     * Available as soon as the dubins paths are, the points do not have to have
-     * been generated.
-     *
-     * @return  ==> the length of every leg flown, added up
-     */
-    double pathLength() const;
-
-    /**
-     * returns a continuous path of points to the goal
-     *
-     * @return  ==> list of 2-vectors to the goal region
-     */
-    std::vector<XYZCoord> getPointsToGoal() const;
-
-    /**
-     * Does a single iteration of the RRT(star) algoritm to connect two waypoints
-     *
-     * @return  ==> whether or not the goal was reached
-     */
-    bool RRTIteration(uint8_t cur_goal_idx);
+    Leg run(const XYZCoord &goal, const std::vector<double> &angles);
 
     /**
      * The cheapest a flight through a node could possibly be
@@ -204,32 +150,30 @@ class RRT {
      * connection it already holds -- the rest of the tree cannot beat it, and
      * pathing from it would be wasted work.
      *
-     * @param[in] ends              ==> the points to path to
-     * @param[in] max_paths_checked ==> how many paths may be checked before
-     *                                  giving up
+     * @param[in] ends  ==> the points to path to
      * @return  ==> the connection if one was found, an invalid connection
      *              otherwise
      */
     Connection bestConnection(const std::vector<RRTPoint> &ends) const;
 
     /**
-     * The points a goal can be reached at, one for every angle it may be
-     * approached at -- which is a single point when the caller pinned it down
+     * Does a single iteration of the RRT(star) algoritm to connect two waypoints
      *
-     * @param[in] cur_goal_idx  ==> index of the goal that we are trying to
-     *                              connect to
-     * @return  ==> the goal, at each of the approach angles
+     * @param[in] goal  ==> the waypoint being pathed to, which the sampling is
+     *                      biased towards
+     * @param[in] ends  ==> the goal, at each angle it may be approached at
+     * @return  ==> the leg flown to the goal
      */
-    std::vector<RRTPoint> goalEndpoints(int cur_goal_idx) const;
+    Leg RRTIteration(const XYZCoord &goal, const std::vector<RRTPoint> &ends);
 
     /**
      * Connects to the goal after RRT is finished
      *
-     * @param[in] cur_goal_idx  ==> index of the goal that we are trying to
-     *                              connect to
-     * @return  ==> whether or not the goal was connected to
+     * @param[in] ends  ==> the goal, at each angle it may be approached at
+     * @return  ==> the leg flown to the goal, an invalid leg if it could not be
+     *              reached
      */
-    bool connectToGoal(int cur_goal_idx);
+    Leg connectToGoal(const std::vector<RRTPoint> &ends);
 
     /**
      * Does the logistical work when one waypoint is reached from another
@@ -238,18 +182,9 @@ class RRT {
      *  - resets the tree with the goal as its new root
      *
      * @param[in] connection    ==> the connection to the goal to commit
-     * @param[in] cur_goal_idx  ==> index of the goal that we are trying to connect to
+     * @return  ==> the leg the connection flies
      */
-    void commitConnection(const Connection &connection, int cur_goal_idx);
-
-    /**
-     * The points flown along one leg, climbing from the altitude of the waypoint
-     * behind it to the one it lands on
-     *
-     * @param[in] leg   ==> the leg to fly
-     * @return  ==> the points along the leg, at altitude
-     */
-    std::vector<XYZCoord> buildFlightPath(const Leg &leg) const;
+    Leg commitConnection(const Connection &connection);
 };
 
 #endif  // INCLUDE_PATHING_RRT_HPP_

@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <vector>
 
+#include "field.hpp"
 #include "pathing/dubins.hpp"
 #include "pathing/environment.hpp"
 #include "pathing/tree.hpp"
@@ -14,35 +15,7 @@
 #include "utilities/datatypes.hpp"
 #include "utilities/rng.hpp"
 
-// the state rand_r() is walked from, so a test that samples can be repeated
-extern unsigned int seed1;
-
 namespace {
-
-void seedRandom(unsigned int seed) { seed1 = seed; }
-
-static inline void setDubins(double r, double sep) {
-    Dubins::_radius = r;
-    Dubins::_point_separation = sep;
-}
-
-// 1000 x 1000 field, nothing in it. A 30m turning radius leaves plenty of room
-const Polygon FIELD = {{XYZCoord(0, 0, 0), XYZCoord(1000, 0, 0), XYZCoord(1000, 1000, 0),
-                        XYZCoord(0, 1000, 0)}};
-
-void initOpenField() {
-    Environment::init(FIELD, {}, {}, {});
-    setDubins(30, 10);
-}
-
-// a wall that splits the field at x in [480, 520], with a 300m gap at the top
-const Polygon WALL = {{XYZCoord(480, 0, 0), XYZCoord(520, 0, 0), XYZCoord(520, 700, 0),
-                       XYZCoord(480, 700, 0)}};
-
-void initFieldWithWall() {
-    Environment::init(FIELD, {}, {}, {WALL});
-    setDubins(30, 10);
-}
 
 // the cheapest connection from anywhere in the tree to any of the given points
 // that can actually be flown, found by brute force
@@ -67,210 +40,53 @@ Connection cheapestFlyableConnection(const RRT& rrt, const std::vector<RRTPoint>
     return best;
 }
 
-bool pathIsInBounds(const std::vector<XYZCoord>& path) {
-    for (const XYZCoord& point : path) {
-        if (!Environment::isPointInBounds(point)) {
-            return false;
-        }
-    }
-    return true;
-}
-
-// the index of the first point of the path that lands on a waypoint, searching
-// from `from` so that waypoints can be checked in the order they are flown
-std::size_t indexOfPoint(const std::vector<XYZCoord>& path, const XYZCoord& target,
-                         std::size_t from = 0) {
-    for (std::size_t i = from; i < path.size(); i++) {
-        if (std::hypot(path[i].x - target.x, path[i].y - target.y) < 1e-6) {
-            return i;
-        }
-    }
-    return path.size();
-}
-
-// the heading the path is flying as it lands on the point at `index`
-double headingAt(const std::vector<XYZCoord>& path, std::size_t index) {
-    const XYZCoord& previous = path[index - 1];
-    return std::atan2(path[index].y - previous.y, path[index].x - previous.x);
-}
-
-// how far apart two headings are, the short way around
-double angleBetween(double a, double b) {
-    return std::abs(std::remainder(a - b, TWO_PI));
+// the points a leg is flown along, which RRT hands back as dubins paths alone
+std::vector<XYZCoord> flyLeg(const Leg& leg) {
+    return Dubins::generatePath(leg.start, leg.segments);
 }
 
 }  // namespace
 
 /*
- *  A fresh RRT holds nothing but the plane's current vector, which is the first
- *  of the points it flies through
+ *  A fresh RRT holds nothing but the vector it is rooted at, which is where every
+ *  leg it finds is flown from
  */
 TEST(RRTTest, ConstructionSeedsTheTreeWithTheStart) {
     initOpenField();
-    const std::vector<XYZCoord> goals = {XYZCoord(100, 100, 0), XYZCoord(500, 500, 30)};
+    const RRTPoint start(XYZCoord(100, 100, 0), HALF_PI);
 
-    const RRT rrt(goals, HALF_PI);
+    const RRT rrt(start);
 
-    // the tree is rooted where the plane is, flying the heading it was given
-    EXPECT_TRUE(rrt.tree.getStart() == RRTPoint(goals[0], HALF_PI));
+    EXPECT_TRUE(rrt.tree.getStart() == start);
     EXPECT_EQ(rrt.tree.tree.size, 1);
-    EXPECT_TRUE(rrt.getPointsToGoal().empty());
-    EXPECT_EQ(rrt.goals, goals);
-
-    // every approach angle is tried at every goal unless the caller asks for a
-    // specific set, and the plane's own heading stands in for the goal it is on
-    ASSERT_EQ(rrt.goal_angles.size(), goals.size());
-    EXPECT_EQ(rrt.goal_angles[0], std::vector<double>({HALF_PI}));
-    EXPECT_EQ(rrt.goal_angles[1], DEFAULT_GOAL_ANGLES);
-
-    const std::vector<double> angles = {0.0, M_PI};
-    const RRT custom_angles(goals, HALF_PI, angles);
-    EXPECT_EQ(custom_angles.goal_angles[1], angles);
 }
 
 /*
- *  A caller that dictates how a goal is approached -- coverage pathing does, as a
- *  scan line has to be flown along its own direction -- leaves it a single angle
- */
-TEST(RRTTest, ConstructionPinsTheGoalsTheCallerNamedAnAngleFor) {
-    initOpenField();
-    const std::vector<XYZCoord> goals = {XYZCoord(100, 100, 0), XYZCoord(500, 500, 30),
-                                         XYZCoord(800, 200, 30)};
-    const std::vector<std::vector<double>> goal_angles = {{}, {0}, {M_PI}};
-
-    const RRT rrt(goals, HALF_PI, goal_angles);
-
-    EXPECT_TRUE(rrt.tree.getStart() == RRTPoint(goals[0], HALF_PI));
-    EXPECT_EQ(rrt.tree.tree.size, 1);
-    EXPECT_EQ(rrt.goals, goals);
-
-    // whatever the caller put down for the goal the plane is already sitting on,
-    // the heading it reached that one at is the one it is flying
-    EXPECT_EQ(rrt.goal_angles[0], std::vector<double>({HALF_PI}));
-    EXPECT_EQ(rrt.goal_angles[1], std::vector<double>({0}));
-    EXPECT_EQ(rrt.goal_angles[2], std::vector<double>({M_PI}));
-}
-
-/*
- *  RRT::goalEndpoints -- a goal left a single angle is only reachable the one way
+ *  goalEndpoints -- a goal left a single angle is only reachable the one way
  */
 TEST(RRTTest, GoalEndpointsHonorAPinnedAngle) {
-    initOpenField();
-    const std::vector<XYZCoord> goals = {XYZCoord(100, 100, 0), XYZCoord(500, 500, 30),
-                                         XYZCoord(800, 200, 30)};
-    const std::vector<std::vector<double>> goal_angles = {{}, {HALF_PI}, {M_PI}};
+    const XYZCoord goal(500, 500, 30);
 
-    const RRT rrt(goals, 0, goal_angles);
+    const std::vector<RRTPoint> ends = goalEndpoints(goal, {HALF_PI});
 
-    // the plane sits on the first of them, it is flown from and never to
-    for (std::size_t goal = 1; goal < goals.size(); goal++) {
-        const std::vector<RRTPoint> ends = rrt.goalEndpoints(goal);
-
-        ASSERT_EQ(ends.size(), 1);
-        EXPECT_TRUE(ends[0] == RRTPoint(goals[goal], goal_angles[goal][0]));
-    }
+    ASSERT_EQ(ends.size(), 1);
+    EXPECT_TRUE(ends[0] == RRTPoint(goal, HALF_PI));
 }
 
 /*
- *  RRT::run -- the way between the waypoints is up to RRT, but the heading a pinned
- *  one is reached at is not
+ *  goalEndpoints -- the goal is tried at every approach angle
  */
-TEST(RRTTest, RunReachesEveryWaypointAtItsPinnedAngle) {
-    initOpenField();
-    seedRandom(7);
+TEST(RRTTest, GoalEndpointsCoverEveryApproachAngle) {
+    const std::vector<double> angles = {0.0, HALF_PI, M_PI};
+    const XYZCoord goal(800, 200, 45);
 
-    // scan lines, the way coverage pathing lays them out: swept one way, then back
-    const std::vector<XYZCoord> goals = {XYZCoord(100, 100, 0), XYZCoord(200, 300, 30),
-                                         XYZCoord(800, 300, 30), XYZCoord(800, 400, 30),
-                                         XYZCoord(200, 400, 30)};
-    const std::vector<std::vector<double>> goal_angles = {{}, {0}, {0}, {M_PI}, {M_PI}};
+    const std::vector<RRTPoint> ends = goalEndpoints(goal, angles);
 
-    RRT rrt(goals, 0, goal_angles);
-    rrt.run();
-
-    const std::vector<XYZCoord> path = rrt.getPointsToGoal();
-    ASSERT_FALSE(path.empty());
-    EXPECT_TRUE(pathIsInBounds(path));
-
-    std::size_t index = 0;
-    for (std::size_t goal = 1; goal < goals.size(); goal++) {
-        index = indexOfPoint(path, goals[goal], index);
-        ASSERT_LT(index, path.size()) << "path never reached waypoint " << goal;
-        ASSERT_GT(index, 0);
-
-        // the points are far enough apart that the last leg of an arc only
-        // approximates the heading it lands on
-        EXPECT_LT(angleBetween(headingAt(path, index), goal_angles[goal][0]), 0.25)
-            << "waypoint " << goal << " was not flown at the angle it was pinned to";
-        EXPECT_NEAR(path[index].z, goals[goal].z, 1e-9);
+    ASSERT_EQ(ends.size(), angles.size());
+    for (std::size_t i = 0; i < ends.size(); i++) {
+        EXPECT_TRUE(ends[i].coord == goal);
+        EXPECT_DOUBLE_EQ(ends[i].psi, angles[i]);
     }
-
-    EXPECT_EQ(indexOfPoint(path, goals.back(), index), path.size() - 1);
-}
-
-/*
- *  RRT::generateDubinsOptions finds the paths and stops there -- what they cost is
- *  known without flying them, so a mission can be weighed against another one and
- *  thrown away without ever generating a point
- */
-TEST(RRTTest, DubinsOptionsAreFoundWithoutFlyingThem) {
-    initOpenField();
-    seedRandom(13);
-    const std::vector<XYZCoord> goals = {XYZCoord(100, 100, 0), XYZCoord(400, 300, 30),
-                                         XYZCoord(800, 600, 30)};
-
-    RRT rrt(goals, 0);
-    EXPECT_EQ(rrt.pathLength(), 0);
-    EXPECT_TRUE(rrt.getPointsToGoal().empty());
-
-    rrt.generateDubinsOptions();
-
-    // one leg per waypoint flown to, each landing on the goal it was found for
-    ASSERT_EQ(rrt.legs.size(), goals.size() - 1);
-    for (std::size_t i = 0; i < rrt.legs.size(); i++) {
-        EXPECT_EQ(rrt.legs[i].goal_idx, i + 1);
-        EXPECT_FALSE(rrt.legs[i].segments.empty());
-        EXPECT_TRUE(rrt.legs[i].segments.back().end.coord == goals[i + 1]);
-        EXPECT_GT(rrt.legs[i].length, 0);
-    }
-
-    // the legs start where the one behind them landed
-    EXPECT_TRUE(rrt.legs[0].start == RRTPoint(goals[0], 0));
-    EXPECT_TRUE(rrt.legs[1].start == rrt.legs[0].segments.back().end);
-
-    // how long the mission is is known, but not one point of it has been flown
-    double straight_line = 0;
-    for (std::size_t i = 1; i < goals.size(); i++) {
-        straight_line += std::hypot(goals[i].x - goals[i - 1].x, goals[i].y - goals[i - 1].y);
-    }
-    EXPECT_GE(rrt.pathLength(), straight_line);
-    EXPECT_TRUE(rrt.getPointsToGoal().empty());
-
-    rrt.generateFlightPoints();
-
-    const std::vector<XYZCoord> path = rrt.getPointsToGoal();
-    ASSERT_FALSE(path.empty());
-
-    double flown = goals[0].distanceTo(path[0]);
-    for (std::size_t i = 1; i < path.size(); i++) {
-        flown += std::hypot(path[i].x - path[i - 1].x, path[i].y - path[i - 1].y);
-    }
-
-    // the points cut the corners off the arcs, so they cover a little less ground
-    // than the legs they came from
-    EXPECT_LT(flown, rrt.pathLength());
-    EXPECT_GT(flown, rrt.pathLength() * 0.95);
-
-    // flying the legs a second time does not append the mission to itself
-    rrt.generateFlightPoints();
-    EXPECT_EQ(rrt.getPointsToGoal().size(), path.size());
-
-    // and run() is the two of them, one after the other
-    RRT ran(goals, 0);
-    seedRandom(13);
-    ran.run();
-    EXPECT_EQ(ran.legs.size(), rrt.legs.size());
-    EXPECT_EQ(ran.getPointsToGoal().size(), path.size());
 }
 
 /*
@@ -278,8 +94,7 @@ TEST(RRTTest, DubinsOptionsAreFoundWithoutFlyingThem) {
  */
 TEST(RRTTest, FillOptionsCollectsTheFlyablePathsFromANode) {
     initOpenField();
-    const RRTPoint start(XYZCoord(100, 100, 0), 0);
-    const RRT rrt({start.coord, XYZCoord(500, 500, 30)}, start.psi);
+    const RRT rrt(RRTPoint(XYZCoord(100, 100, 0), 0));
 
     const RRTPoint end(XYZCoord(500, 500, 0), HALF_PI);
     rrt.fillOptions(0, {end});
@@ -316,7 +131,7 @@ TEST(RRTTest, FillOptionsCollectsTheFlyablePathsFromANode) {
  */
 TEST(RRTTest, LowerBoundNeverExceedsWhatAFlightCosts) {
     initOpenField();
-    RRT rrt({XYZCoord(100, 100, 0), XYZCoord(900, 900, 30)}, 0);
+    RRT rrt(RRTPoint(XYZCoord(100, 100, 0), 0));
 
     // a couple of branches, so the nodes sit at different distances from the root
     const RRTPoint near_node(XYZCoord(200, 150, 0), 0);
@@ -349,8 +164,7 @@ TEST(RRTTest, LowerBoundNeverExceedsWhatAFlightCosts) {
  */
 TEST(RRTTest, BestConnectionStaysInsideTheAirspace) {
     initFieldWithWall();
-    const RRTPoint start(XYZCoord(200, 400, 0), 0);
-    RRT rrt({start.coord, XYZCoord(900, 100, 30)}, start.psi);
+    RRT rrt(RRTPoint(XYZCoord(200, 400, 0), 0));
 
     // the plane is boxed in against the wall, so the way to some of these is not
     // the shortest one
@@ -388,7 +202,7 @@ TEST(RRTTest, BestConnectionStaysInsideTheAirspace) {
  */
 TEST(RRTTest, BestConnectionIsTheCheapestOneThatCanBeFlown) {
     initOpenField();
-    RRT rrt({XYZCoord(100, 100, 0), XYZCoord(900, 900, 30)}, 0);
+    RRT rrt(RRTPoint(XYZCoord(100, 100, 0), 0));
 
     // a couple of branches, so the nodes sit at different distances from the root
     const RRTPoint near_node(XYZCoord(200, 150, 0), 0);
@@ -417,7 +231,7 @@ TEST(RRTTest, BestConnectionIsTheCheapestOneThatCanBeFlown) {
  */
 TEST(RRTTest, BestConnectionTakesTheCheapestOfTheEndpoints) {
     initOpenField();
-    RRT rrt({XYZCoord(100, 100, 0), XYZCoord(900, 900, 30)}, 0);
+    RRT rrt(RRTPoint(XYZCoord(100, 100, 0), 0));
 
     // straight ahead of the plane, and well off to the side of it
     const RRTPoint close(XYZCoord(300, 100, 0), 0);
@@ -435,7 +249,7 @@ TEST(RRTTest, BestConnectionTakesTheCheapestOfTheEndpoints) {
  */
 TEST(RRTTest, BestConnectionGivesUpOnAnUnreachablePoint) {
     initOpenField();
-    RRT rrt({XYZCoord(100, 100, 0), XYZCoord(900, 900, 30)}, 0);
+    RRT rrt(RRTPoint(XYZCoord(100, 100, 0), 0));
 
     const Connection connection = rrt.bestConnection({RRTPoint(XYZCoord(2000, 2000, 0), 0)});
 
@@ -450,7 +264,7 @@ TEST(RRTTest, BestConnectionGivesUpOnAnUnreachablePoint) {
  */
 TEST(RRTTest, BestConnectionGivesUpOnAPointBehindAnObstacle) {
     initFieldWithWall();
-    RRT rrt({XYZCoord(200, 400, 0), XYZCoord(900, 100, 30)}, 0);
+    RRT rrt(RRTPoint(XYZCoord(200, 400, 0), 0));
 
     // a single node cannot reach around the wall -- the gap is 300m above it, and
     // every path that lands on this point comes in through the wall
@@ -468,40 +282,23 @@ TEST(RRTTest, BestConnectionGivesUpOnAPointBehindAnObstacle) {
 }
 
 /*
- *  RRT::goalEndpoints -- the goal is tried at every approach angle
- */
-TEST(RRTTest, GoalEndpointsCoverEveryApproachAngle) {
-    initOpenField();
-    const std::vector<double> angles = {0.0, HALF_PI, M_PI};
-    const std::vector<XYZCoord> goals = {XYZCoord(100, 100, 0), XYZCoord(500, 500, 30),
-                                         XYZCoord(800, 200, 45)};
-    RRT rrt(goals, 0, angles);
-
-    // the plane sits on the first of them, it is flown from and never to
-    for (std::size_t goal = 1; goal < goals.size(); goal++) {
-        const std::vector<RRTPoint> ends = rrt.goalEndpoints(goal);
-
-        ASSERT_EQ(ends.size(), angles.size());
-        for (std::size_t i = 0; i < ends.size(); i++) {
-            EXPECT_TRUE(ends[i].coord == goals[goal]);
-            EXPECT_DOUBLE_EQ(ends[i].psi, angles[i]);
-        }
-    }
-}
-
-/*
- *  RRT::connectToGoal -- the flight path is extended and the tree restarts at the
+ *  RRT::connectToGoal -- the leg is handed back and the tree restarts at the
  *  waypoint that was just reached
  */
 TEST(RRTTest, ConnectToGoalCommitsThePathAndRestartsTheTree) {
     initOpenField();
+    const RRTPoint start(XYZCoord(100, 100, 0), 0);
     const XYZCoord goal(500, 500, 30);
-    RRT rrt({XYZCoord(100, 100, 0), goal}, 0);
+    RRT rrt(start);
 
-    ASSERT_TRUE(rrt.connectToGoal(1));
-    rrt.generateFlightPoints();
+    const Leg leg = rrt.connectToGoal(goalEndpoints(goal, DEFAULT_GOAL_ANGLES));
 
-    const std::vector<XYZCoord> path = rrt.getPointsToGoal();
+    ASSERT_TRUE(leg.isValid());
+    EXPECT_TRUE(leg.start == start);
+    EXPECT_TRUE(leg.end.coord == goal);
+    EXPECT_GT(leg.length, 0);
+
+    const std::vector<XYZCoord> path = flyLeg(leg);
     ASSERT_FALSE(path.empty());
     EXPECT_TRUE(pathIsInBounds(path));
     EXPECT_NEAR(path.back().x, goal.x, 1e-6);
@@ -509,10 +306,9 @@ TEST(RRTTest, ConnectToGoalCommitsThePathAndRestartsTheTree) {
 
     // the waypoint is the root of the tree the next waypoint is pathed from
     EXPECT_EQ(rrt.tree.tree.size, 1);
-    EXPECT_TRUE(rrt.tree.getStart().coord == goal);
-    EXPECT_NE(std::find(rrt.goal_angles[1].begin(), rrt.goal_angles[1].end(),
-                        rrt.tree.getStart().psi),
-              rrt.goal_angles[1].end());
+    EXPECT_TRUE(rrt.tree.getStart() == leg.end);
+    EXPECT_NE(std::find(DEFAULT_GOAL_ANGLES.begin(), DEFAULT_GOAL_ANGLES.end(), leg.end.psi),
+              DEFAULT_GOAL_ANGLES.end());
 }
 
 /*
@@ -521,57 +317,15 @@ TEST(RRTTest, ConnectToGoalCommitsThePathAndRestartsTheTree) {
 TEST(RRTTest, ConnectToGoalFailsOnAnUnreachableGoal) {
     initOpenField();
     const RRTPoint start(XYZCoord(100, 100, 0), 0);
-    RRT rrt({start.coord, XYZCoord(2000, 2000, 30)}, start.psi);
+    RRT rrt(start);
 
-    EXPECT_FALSE(rrt.connectToGoal(1));
-    EXPECT_TRUE(rrt.getPointsToGoal().empty());
+    const Leg leg = rrt.connectToGoal(goalEndpoints(XYZCoord(2000, 2000, 30), DEFAULT_GOAL_ANGLES));
+
+    EXPECT_FALSE(leg.isValid());
 
     // the tree is left as it was, still rooted at the plane
     EXPECT_EQ(rrt.tree.tree.size, 1);
     EXPECT_TRUE(rrt.tree.getStart() == start);
-}
-
-/*
- *  RRT::commitConnection -- the plane climbs at a constant rate along the ground it
- *  covers, so the altitude is interpolated over the length of the segment
- */
-TEST(RRTTest, CommitConnectionClimbsToTheWaypointAltitude) {
-    initOpenField();
-    const std::vector<XYZCoord> goals = {XYZCoord(100, 100, 0), XYZCoord(500, 500, 100),
-                                         XYZCoord(800, 200, 50)};
-    RRT rrt(goals, 0);
-
-    // first leg: climbs from the plane's altitude (0) up to 100
-    const RRTPoint first_goal(goals[1], 0);
-    rrt.commitConnection({0, first_goal, Dubins::bestOption(rrt.tree.getStart(), first_goal), 0},
-                         1);
-    rrt.generateFlightPoints();
-
-    const std::vector<XYZCoord> first_leg = rrt.getPointsToGoal();
-    ASSERT_FALSE(first_leg.empty());
-    EXPECT_NEAR(first_leg.back().z, 100, 1e-9);
-    EXPECT_GT(first_leg.front().z, 0);
-    EXPECT_LT(first_leg.front().z, 100);
-    for (std::size_t i = 1; i < first_leg.size(); i++) {
-        EXPECT_GE(first_leg[i].z, first_leg[i - 1].z);
-    }
-
-    // second leg: descends from the altitude of the waypoint behind it, not from
-    // the altitude the plane started the mission at
-    const RRTPoint second_goal(goals[2], 0);
-    rrt.commitConnection({0, second_goal, Dubins::bestOption(rrt.tree.getStart(), second_goal), 0},
-                         2);
-    rrt.generateFlightPoints();
-
-    const std::vector<XYZCoord> path = rrt.getPointsToGoal();
-    ASSERT_GT(path.size(), first_leg.size());
-    EXPECT_NEAR(path.back().z, 50, 1e-9);
-
-    for (std::size_t i = first_leg.size(); i < path.size(); i++) {
-        EXPECT_LE(path[i].z, 100);
-        EXPECT_GE(path[i].z, 50);
-        EXPECT_LE(path[i].z, path[i - 1].z);
-    }
 }
 
 /*
@@ -581,64 +335,32 @@ TEST(RRTTest, RRTIterationConnectsToAReachableGoal) {
     initOpenField();
     seedRandom(11);
     const XYZCoord goal(700, 700, 30);
-    RRT rrt({XYZCoord(100, 100, 0), goal}, 0);
+    RRT rrt(RRTPoint(XYZCoord(100, 100, 0), 0));
 
-    EXPECT_TRUE(rrt.RRTIteration(1));
-    rrt.generateFlightPoints();
+    const Leg leg = rrt.RRTIteration(goal, goalEndpoints(goal, DEFAULT_GOAL_ANGLES));
 
-    const std::vector<XYZCoord> path = rrt.getPointsToGoal();
-    ASSERT_FALSE(path.empty());
-    EXPECT_TRUE(pathIsInBounds(path));
+    ASSERT_TRUE(leg.isValid());
+    EXPECT_TRUE(pathIsInBounds(flyLeg(leg)));
     EXPECT_TRUE(rrt.tree.getStart().coord == goal);
 }
 
 /*
- *  RRT::run -- every waypoint is flown, in order
- */
-TEST(RRTTest, RunFliesEveryWaypointInOrder) {
-    initOpenField();
-    seedRandom(3);
-    const std::vector<XYZCoord> goals = {XYZCoord(100, 100, 0), XYZCoord(400, 300, 30),
-                                         XYZCoord(800, 600, 45), XYZCoord(200, 800, 60)};
-    RRT rrt(goals, 0);
-
-    rrt.run();
-
-    const std::vector<XYZCoord> path = rrt.getPointsToGoal();
-    ASSERT_FALSE(path.empty());
-    EXPECT_TRUE(pathIsInBounds(path));
-
-    // the plane is already on the first of them, the path is what it flies after
-    std::size_t index = 0;
-    for (std::size_t goal = 1; goal < goals.size(); goal++) {
-        index = indexOfPoint(path, goals[goal], index);
-        ASSERT_LT(index, path.size())
-            << "path never reached (" << goals[goal].x << ", " << goals[goal].y << ")";
-        EXPECT_NEAR(path[index].z, goals[goal].z, 1e-9);
-    }
-
-    // the path ends on the last waypoint, and so does the tree
-    EXPECT_EQ(indexOfPoint(path, goals.back(), index), path.size() - 1);
-    EXPECT_TRUE(rrt.tree.getStart().coord == goals.back());
-}
-
-/*
- *  RRT::run -- the path found around an obstacle stays in bounds the whole way
+ *  RRT::run -- the leg found around an obstacle stays in bounds the whole way
  */
 TEST(RRTTest, RunPathsAroundAnObstacle) {
     initFieldWithWall();
     seedRandom(23);
     const XYZCoord goal(800, 400, 30);
-    RRT rrt({XYZCoord(200, 400, 0), goal}, 0);
+    RRT rrt(RRTPoint(XYZCoord(200, 400, 0), 0));
 
-    rrt.run();
+    const Leg leg = rrt.run(goal, DEFAULT_GOAL_ANGLES);
 
-    const std::vector<XYZCoord> path = rrt.getPointsToGoal();
-    ASSERT_FALSE(path.empty()) << "never made it around the wall";
+    ASSERT_TRUE(leg.isValid()) << "never made it around the wall";
+    EXPECT_TRUE(leg.end.coord == goal);
+
+    const std::vector<XYZCoord> path = flyLeg(leg);
+    ASSERT_FALSE(path.empty());
     EXPECT_TRUE(pathIsInBounds(path));
-
-    // it got to the other side, and the only way across is the gap above the wall
-    EXPECT_LT(indexOfPoint(path, goal), path.size());
 
     // a straightaway is described by its two endpoints alone, so checking the
     // points is not enough -- no leg of the path may cut through the wall
@@ -646,6 +368,42 @@ TEST(RRTTest, RunPathsAroundAnObstacle) {
         EXPECT_FALSE(Environment::doesLineIntersectPolygon(path[i - 1], path[i], WALL))
             << "leg " << i << " cuts through the wall";
     }
+}
+
+/*
+ *  RRT::run -- a goal that can be flown to directly is, without ever sampling
+ */
+TEST(RRTTest, RunTakesTheDirectFlightWhenThereIsOne) {
+    initOpenField();
+    const RRTPoint start(XYZCoord(100, 100, 0), 0);
+    RRT rrt(start);
+
+    const XYZCoord goal(500, 500, 30);
+    const Leg leg = rrt.run(goal, DEFAULT_GOAL_ANGLES);
+
+    ASSERT_TRUE(leg.isValid());
+    EXPECT_TRUE(leg.start == start);
+
+    // straight off the root, so the leg is the one dubins path that got there
+    EXPECT_EQ(leg.segments.size(), 1);
+    EXPECT_DOUBLE_EQ(leg.length, leg.segments.back().option.length);
+}
+
+/*
+ *  RRT::run -- each leg is flown from where the one behind it landed
+ */
+TEST(RRTTest, RunRerootsAtTheWaypointItReached) {
+    initOpenField();
+    seedRandom(5);
+    RRT rrt(RRTPoint(XYZCoord(100, 100, 0), 0));
+
+    const Leg first = rrt.run(XYZCoord(400, 300, 30), DEFAULT_GOAL_ANGLES);
+    const Leg second = rrt.run(XYZCoord(800, 600, 45), DEFAULT_GOAL_ANGLES);
+
+    ASSERT_TRUE(first.isValid());
+    ASSERT_TRUE(second.isValid());
+    EXPECT_TRUE(second.start == first.end);
+    EXPECT_TRUE(rrt.tree.getStart() == second.end);
 }
 
 /*
@@ -663,7 +421,7 @@ TEST(RRTTest, BestConnectionMatchesAnExhaustiveSearch) {
         // the goal is on the far side of the wall half of the time, so the search
         // is made to give up as well as to succeed
         const XYZCoord goal = (trial % 2 == 0) ? XYZCoord(300, 800, 30) : XYZCoord(900, 100, 30);
-        RRT rrt({start, goal}, 0);
+        RRT rrt(RRTPoint(start, 0));
 
         // a tree of random samples, grown the way an iteration would grow it
         for (int i = 0; i < 40; i++) {
@@ -676,7 +434,7 @@ TEST(RRTTest, BestConnectionMatchesAnExhaustiveSearch) {
         }
         ASSERT_GT(rrt.tree.tree.size, 1) << "trial " << trial << " grew nothing to search";
 
-        const std::vector<RRTPoint> ends = rrt.goalEndpoints(1);
+        const std::vector<RRTPoint> ends = goalEndpoints(goal, DEFAULT_GOAL_ANGLES);
         const Connection found = rrt.bestConnection(ends);
         const Connection exhaustive = cheapestFlyableConnection(rrt, ends);
 

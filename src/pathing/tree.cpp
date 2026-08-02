@@ -49,7 +49,7 @@ std::vector<PathSegment> RRTTree::findPathToNode(NodeId target_node) const {
 
     for (NodeId node = target_node;
          node != 0 && node != INVALID_NODE;
-         node = tree.parent[node]) {
+         node               = tree.parent[node]) {
         segments.emplace_back(tree.points[node], tree.rrt_options[node]);
     }
 

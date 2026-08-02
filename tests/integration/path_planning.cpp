@@ -14,7 +14,7 @@
 #include "network/gcs_macros.hpp"
 #include "network/gcs_routes.hpp"
 #include "pathing/plotting.hpp"
-#include "pathing/rrt.hpp"
+#include "pathing/path_generator.hpp"
 #include "pathing/static.hpp"
 #include "ticks/mission_prep.hpp"
 #include "ticks/mav_upload.hpp"
@@ -91,17 +91,17 @@ int main() {
                       state->mission_params.getAirdropBoundary(),
                       state->mission_params.getAirdropBoundary(), obstacles);
 
-    RRT rrt = RRT(goals, 0);
+    PathGenerator generator(goals, 0);
 
     //run the algoritm, and time it
     auto start_time = std::chrono::high_resolution_clock::now();
-    rrt.run();
+    generator.run();
     auto end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end_time - start_time;
     LOG_F(INFO, "Time to run: %f s", elapsed.count());
 
     // get the path, put it into the file
-    std::vector<XYZCoord> path = rrt.getPointsToGoal();
+    std::vector<XYZCoord> path = generator.getPointsToGoal();
     LOG_F(INFO, "Path size: %zu", path.size());
     LOG_F(INFO, "Path length: %f", path.size() * state->config.pathing.dubins.point_separation);
 

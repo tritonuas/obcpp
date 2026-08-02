@@ -14,6 +14,7 @@
 #include "pathing/dubins.hpp"
 #include "pathing/environment.hpp"
 #include "pathing/mission_path.hpp"
+#include "pathing/path_generator.hpp"
 #include "pathing/plotting.hpp"
 #include "pathing/rrt.hpp"
 #include "pathing/tree.hpp"
@@ -83,7 +84,7 @@ class ForwardCoveragePathing {
      *                      rather than alternating
      * @param vertical  ==> whether the lines run vertically
      */
-    RRT pathScanLines(bool one_way, bool vertical) const;
+    PathGenerator pathScanLines(bool one_way, bool vertical) const;
 
  private:
     const double scan_radius;  // how far each side of the plane we intend to look (half dist

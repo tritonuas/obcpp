@@ -16,73 +16,37 @@
 #include "utilities/logging.hpp"
 #include "utilities/rng.hpp"
 
-std::vector<std::vector<double>> withStartAngle(std::vector<std::vector<double>> goal_angles,
-                                                double start_angle) {
-    if (!goal_angles.empty()) {
-        goal_angles[0] = {start_angle};
+std::vector<RRTPoint> goalEndpoints(const XYZCoord& goal, const std::vector<double>& angles) {
+    std::vector<RRTPoint> ends;
+    ends.reserve(angles.size());
+
+    for (const double angle : angles) {
+        ends.emplace_back(goal, angle);
     }
 
-    return goal_angles;
+    return ends;
 }
 
-RRT::RRT(std::vector<XYZCoord> goals, double start_angle,
-         std::vector<std::vector<double>> goal_angles)
-    : tree(RRTPoint(goals[0], start_angle)),
-      goals(std::move(goals)),
-      goal_angles(withStartAngle(std::move(goal_angles), start_angle)) {}
+RRT::RRT(RRTPoint start) : tree(start) {}
 
-RRT::RRT(std::vector<XYZCoord> goals, double start_angle, std::vector<double> angles)
-    : RRT(goals, start_angle,
-          std::vector<std::vector<double>>(goals.size(),
-                                           angles.empty() ? DEFAULT_GOAL_ANGLES : angles)) {}
+Leg RRT::run(const XYZCoord& goal, const std::vector<double>& angles) {
+    const std::vector<RRTPoint> ends = goalEndpoints(goal, angles);
 
-void RRT::run() {
-    generateDubinsOptions();
-    generateFlightPoints();
-}
+    // tries to connect directly to the goal, which nothing sampling turns up beats
+    const Leg direct = connectToGoal(ends);
 
-void RRT::generateDubinsOptions() {
-    const uint8_t total_goals = goals.size();
-
-    for (uint8_t cur_goal_idx = 1; cur_goal_idx < total_goals; cur_goal_idx++) {
-        // tries to connect directly to the goal from start
-        if (connectToGoal(cur_goal_idx)) {
-            continue;
-        }
-
-        RRTIteration(cur_goal_idx);
-    }
-}
-
-double RRT::pathLength() const {
-    double length = 0;
-
-    for (const Leg& leg : legs) {
-        length += leg.length;
+    if (direct.isValid()) {
+        return direct;
     }
 
-    return length;
+    return RRTIteration(goal, ends);
 }
 
-void RRT::generateFlightPoints() {
-    flight_path.clear();
-
-    for (const Leg& leg : legs) {
-        const std::vector<XYZCoord> points = buildFlightPath(leg);
-        flight_path.insert(flight_path.end(), points.begin(), points.end());
-    }
-}
-
-std::vector<XYZCoord> RRT::getPointsToGoal() const { return flight_path; }
-
-bool RRT::RRTIteration(uint8_t cur_goal_idx) {
+Leg RRT::RRTIteration(const XYZCoord& goal, const std::vector<RRTPoint>& ends) {
     std::vector<RRTPoint> sample(1);
 
     for (NodeId _ = 0; _ < ITERATIONS_PER_WAYPOINT; _++) {
-        sample[0] = RRTPoint(
-						Environment::getRandomPoint(false, goals[cur_goal_idx]),
-						random(0, TWO_PI)
-					);
+        sample[0] = RRTPoint(Environment::getRandomPoint(false, goal), random(0, TWO_PI));
 
         // adds the sample to the tree if there is any way to fly to it
         const Connection connection = bestConnection(sample);
@@ -92,24 +56,25 @@ bool RRT::RRTIteration(uint8_t cur_goal_idx) {
         }
     }
 
-    if (connectToGoal(cur_goal_idx)) {
-        return true;
+    const Leg leg = connectToGoal(ends);
+
+    if (leg.isValid()) {
+        return leg;
     }
 
     loguru::set_thread_name("Static Pathing");
-    LOG_F(WARNING, "Failed to connect to goal on iteration: [%s]. Trying again...",
-          std::to_string(cur_goal_idx).c_str());
+    LOG_F(WARNING, "Failed to connect to goal at (%f, %f). Trying again...", goal.x, goal.y);
 
     // throws away the tree that failed, keeping the same starting point
     tree.setCurrentHead(tree.getStart());
 
     // TODO: possiblility for infinite loop
-    return RRTIteration(cur_goal_idx);
+    return RRTIteration(goal, ends);
 }
 
 double RRT::lowerBound(NodeId node, const std::vector<RRTPoint>& ends) const {
     const XYZCoord& anchor = tree.tree.points[node].coord;
-    double closest 		   = std::numeric_limits<double>::infinity();
+    double closest         = std::numeric_limits<double>::infinity();
 
     for (const RRTPoint& end : ends) {
         closest = std::min(closest, anchor.distanceTo(end.coord));
@@ -121,7 +86,7 @@ double RRT::lowerBound(NodeId node, const std::vector<RRTPoint>& ends) const {
 void RRT::fillOptions(NodeId node, const std::vector<RRTPoint>& ends) const {
     options.clear();
     const RRTPoint& anchor = tree.tree.points[node];
-    const double flown 	   = tree.tree.length[node];
+    const double flown     = tree.tree.length[node];
 
     for (const RRTPoint& end : ends) {
         // gets all dubins curves from the given node to the end point
@@ -166,8 +131,7 @@ Connection RRT::bestConnection(const std::vector<RRTPoint>& ends) const {
                 break;
             }
 
-            if (Environment::isDubinsPathInBounds(tree.tree.points[node],
-											      option.end,
+            if (Environment::isDubinsPathInBounds(tree.tree.points[node], option.end,
                                                   option.option)) {
                 best = option;
                 break;
@@ -178,69 +142,28 @@ Connection RRT::bestConnection(const std::vector<RRTPoint>& ends) const {
     return best;
 }
 
-std::vector<RRTPoint> RRT::goalEndpoints(int cur_goal_idx) const {
-    std::vector<RRTPoint> ends;
-    ends.reserve(goal_angles[cur_goal_idx].size());
-
-    for (const double angle : goal_angles[cur_goal_idx]) {
-        ends.emplace_back(goals[cur_goal_idx], angle);
-    }
-
-    return ends;
-}
-
-bool RRT::connectToGoal(int cur_goal_idx) {
+Leg RRT::connectToGoal(const std::vector<RRTPoint>& ends) {
     // TODO : max_paths_checked should be rearchitected
-    const Connection connection = bestConnection(goalEndpoints(cur_goal_idx));
+    const Connection connection = bestConnection(ends);
 
     if (!connection.isValid()) {
-        return false;
+        return {};
     }
 
-    commitConnection(connection, cur_goal_idx);
-    return true;
+    return commitConnection(connection);
 }
 
-void RRT::commitConnection(const Connection& connection, int cur_goal_idx) {
+Leg RRT::commitConnection(const Connection& connection) {
     const NodeId goal_node = tree.tree.size;
     tree.addSample(connection.anchor, connection.end, connection.option);
 
-    legs.push_back({tree.getStart(),
-					tree.findPathToNode(goal_node),
-					connection.cost,
-					cur_goal_idx});
+    const Leg leg = {tree.getStart(),
+                     connection.end,
+                     tree.findPathToNode(goal_node),
+                     connection.cost};
 
     // the goal becomes the root of a fresh tree for the next waypoint
     tree.setCurrentHead(connection.end);
-}
 
-std::vector<XYZCoord> RRT::buildFlightPath(const Leg& leg) const {
-    std::vector<XYZCoord> path = Dubins::generatePath(leg.start, leg.segments);
-
-    if (path.empty()) {
-        return path;
-    }
-
-    // the leg is flown from the waypoint behind the one it lands on
-    const double start_height 	   = goals[leg.goal_idx - 1].z;
-    const double height_difference = goals[leg.goal_idx].z - start_height;
-
-	// since our points are not evenly spaced, we have to account for distance
-	// when doing altitude transitions. This is a misestimate
-    XYZCoord previous = leg.start.coord;
-    double total_distance = 0;
-
-    for (XYZCoord& point : path) {
-        total_distance += std::hypot(point.x - previous.x, point.y - previous.y);
-        previous 	    = point;
-        point.z 		= total_distance; // distance flown in path
-    }
-
-	// ASSUMPTION: PATH IS NOT A BUNCH OF POINTS ON TOP OF EACH OTHER
-    for (XYZCoord& point : path) {
-        const double ratio = point.z / total_distance;
-        point.z = start_height + height_difference * ratio;
-    }
-
-    return path;
+    return leg;
 }

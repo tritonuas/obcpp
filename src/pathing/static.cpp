@@ -14,6 +14,7 @@
 #include "core/mission_state.hpp"
 #include "pathing/dubins.hpp"
 #include "pathing/environment.hpp"
+#include "pathing/path_generator.hpp"
 #include "pathing/plotting.hpp"
 #include "pathing/rrt.hpp"
 #include "pathing/tree.hpp"
@@ -33,10 +34,10 @@ std::vector<XYZCoord> ForwardCoveragePathing::run() const {
 }
 
 std::vector<XYZCoord> ForwardCoveragePathing::coverageDefault() const {
-    RRT rrt = pathScanLines(config.forward.one_way, config.forward.vertical);
-    rrt.generateFlightPoints();
+    PathGenerator path = pathScanLines(config.forward.one_way, config.forward.vertical);
+    path.generateFlightPoints();
 
-    return rrt.getPointsToGoal();
+    return path.getPointsToGoal();
 }
 
 std::vector<XYZCoord> ForwardCoveragePathing::coverageOptimal() const {
@@ -57,13 +58,13 @@ std::vector<XYZCoord> ForwardCoveragePathing::coverageOptimal() const {
      * around whatever is in the way, which is not known until it has been pathed.
      * So all four are pathed, and only the one that wins is ever flown.
      */
-    std::optional<RRT> best;
+    std::optional<PathGenerator> best;
 
     for (const std::pair<bool, bool>& layout : layouts) {
-        RRT rrt = pathScanLines(layout.first, layout.second);
+        PathGenerator path = pathScanLines(layout.first, layout.second);
 
-        if (!best.has_value() || rrt.pathLength() < best->pathLength()) {
-            best.emplace(std::move(rrt));
+        if (!best.has_value() || path.pathLength() < best->pathLength()) {
+            best.emplace(std::move(path));
         }
     }
 
@@ -90,7 +91,7 @@ std::vector<RRTPoint> ForwardCoveragePathing::scanLines(bool one_way, bool verti
     return waypoints;
 }
 
-RRT ForwardCoveragePathing::pathScanLines(bool one_way, bool vertical) const {
+PathGenerator ForwardCoveragePathing::pathScanLines(bool one_way, bool vertical) const {
     const std::vector<RRTPoint> waypoints = scanLines(one_way, vertical);
 
     std::vector<XYZCoord> goals;
@@ -109,10 +110,10 @@ RRT ForwardCoveragePathing::pathScanLines(bool one_way, bool vertical) const {
         goal_angles.push_back({waypoint.psi});
     }
 
-    RRT rrt(std::move(goals), start.psi, std::move(goal_angles));
-    rrt.generateDubinsOptions();
+    PathGenerator path(std::move(goals), start.psi, std::move(goal_angles));
+    path.generateDubinsOptions();
 
-    return rrt;
+    return path;
 }
 
 HoverCoveragePathing::HoverCoveragePathing(std::shared_ptr<MissionState> state)
@@ -214,10 +215,10 @@ std::vector<XYZCoord> AirdropApproachPathing::run() const {
     // up with the target, so that is the one way the goal may be reached
     const std::vector<double> approach_angles = {drop_vector.psi};
 
-    RRT rrt({start.coord, drop_vector.coord}, start.psi, approach_angles);
-    rrt.run();
+    PathGenerator path({start.coord, drop_vector.coord}, start.psi, approach_angles);
+    path.run();
 
-    return rrt.getPointsToGoal();
+    return path.getPointsToGoal();
 }
 
 RRTPoint AirdropApproachPathing::getDropLocation() const {
@@ -292,11 +293,11 @@ std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
     // the plane flies from where it is now, so that is the first of the waypoints
     goals.insert(goals.begin(), start.coord);
 
-    RRT rrt(goals, start.psi);
+    PathGenerator generator(goals, start.psi);
 
-    rrt.run();
+    generator.run();
 
-    std::vector<XYZCoord> path = rrt.getPointsToGoal();
+    std::vector<XYZCoord> path = generator.getPointsToGoal();
 
     std::vector<GPSCoord> output_coords;
     for (const XYZCoord& waypoint : path) {
@@ -329,11 +330,11 @@ std::vector<GPSCoord> generateNextWaypointPath(std::shared_ptr<MissionState> sta
     // the plane flies from where it is now, so that is the first of the waypoints
     goals.insert(goals.begin(), start.coord);
 
-    RRT rrt(goals, start.psi);
+    PathGenerator generator(goals, start.psi);
 
-    rrt.run();
+    generator.run();
 
-    std::vector<XYZCoord> path = rrt.getPointsToGoal();
+    std::vector<XYZCoord> path = generator.getPointsToGoal();
 
     std::vector<GPSCoord> output_coords;
     for (const XYZCoord& waypoint : path) {

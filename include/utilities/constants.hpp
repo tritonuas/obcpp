@@ -20,7 +20,7 @@ const double TWO_PI = 2 * M_PI;
 const double HALF_PI = M_PI / 2;
 
 // RRT CONSTANTS
-const int TREE_CAPACITY = 512;  // number of nodes a tree between two waypoints is built out of
+const int TREE_CAPACITY = 2 << 10;  // number of nodes a tree between two waypoints is built out of
 // the tree holds the waypoint it is rooted at, a node for every sample RRT takes,
 // and the waypoint they end up connecting to
 const int ITERATIONS_PER_WAYPOINT = TREE_CAPACITY - 2;  // number of times RRT is ran per waypoint

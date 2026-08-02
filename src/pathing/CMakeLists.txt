@@ -3,6 +3,7 @@ set(LIB_NAME obcpp_pathing)
 set(FILES
     dubins.cpp
     environment.cpp
+    path_generator.cpp
     plotting.cpp
     rrt.cpp
     static.cpp
