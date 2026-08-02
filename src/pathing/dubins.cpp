@@ -111,12 +111,15 @@ std::vector<XYZCoord> Dubins::generatePointsStraight(const RRTPoint& start, cons
         final_terminal_point = XYZCoord{end.coord.x, end.coord.y, 0};
     }
 
-    double distance_straight = initial_terminal_point.distanceTo(final_terminal_point);
-
     //  generates the points for the entire curve.
     int n_points = std::max(1, static_cast<int>(std::ceil(total_distance / _point_separation)));
     std::vector<XYZCoord> points_list;
     points_list.reserve(n_points + 1);
+
+    // the straightaway is only described by the two points it runs between, so that ardupilot
+    // accelerates through it instead of slowing down for every point along the way
+    bool straight_added = false;
+
     for (double current_distance = 0; current_distance < total_distance;
          current_distance += _point_separation) {
         if (current_distance < std::abs(path.beta_0) * _radius) {  // First turn
@@ -125,19 +128,19 @@ std::vector<XYZCoord> Dubins::generatePointsStraight(const RRTPoint& start, cons
                    total_distance - std::abs(path.beta_2) * _radius) {  // Last turn
             points_list.emplace_back(
                 circleArc(end, path.beta_2, center_2, current_distance - total_distance));
-        } else {  // Straignt Section
-            // coefficient is the ratio of the straight distance that has been traversed.
-            // (current_distance_traved - (LENGTH_OF_FIRST_TURN_CURVED_PATH)) /
-            // length_of_the_straight_path
-            double coefficient =
-                (current_distance - (std::abs(path.beta_0) * _radius)) / distance_straight;
-            // convex linear combination to find the vector along the straight path between the
-            // initial and final point https://en.wikiversity.org/wiki/Convex_combination
-            points_list.emplace_back(coefficient * final_terminal_point +
-                                     (1 - coefficient) * initial_terminal_point);
+        } else if (!straight_added) {  // Straignt Section
+            points_list.emplace_back(initial_terminal_point);
+            points_list.emplace_back(final_terminal_point);
+            straight_added = true;
         }
     }
-    points_list.emplace_back(XYZCoord{end.coord.x, end.coord.y, 0});
+
+    const XYZCoord end_point{end.coord.x, end.coord.y, 0};
+
+    // the last turn may have already ended on the end point
+    if (points_list.empty() || points_list.back().distanceTo(end_point) > 0) {
+        points_list.emplace_back(end_point);
+    }
 
     return points_list;
 }
@@ -204,6 +207,27 @@ std::vector<XYZCoord> Dubins::generatePoints(const RRTPoint& start, const RRTPoi
     }
 
     return generatePointsCurve(start, end, path);
+}
+
+std::vector<XYZCoord> Dubins::generatePath(const RRTPoint& start,
+                                           const std::vector<PathSegment>& segments) {
+    std::vector<XYZCoord> path;
+    RRTPoint current = start;
+
+    for (const PathSegment& segment : segments) {
+        const std::vector<XYZCoord>& points =
+            generatePoints(current, segment.end, segment.option.dubins_path,
+                           segment.option.has_straight);
+
+        // the first point of the segment is where the previous one ended
+        if (!points.empty()) {
+            path.insert(path.end(), points.begin() + 1, points.end());
+        }
+
+        current = segment.end;
+    }
+
+    return path;
 }
 
 RRTOption Dubins::lsl(const RRTPoint& start, const RRTPoint& end, const XYZCoord& center_0,

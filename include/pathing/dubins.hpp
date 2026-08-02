@@ -9,6 +9,8 @@
 #include "utilities/datatypes.hpp"
 
 struct DubinsPath {
+    // members left indeterminate; only needed so this can live in a std::array
+    DubinsPath() = default;
     DubinsPath(double beta_0, double beta_2, double straight_dist)
         : beta_0(beta_0), beta_2(beta_2), straight_dist(straight_dist) {}
 
@@ -21,12 +23,29 @@ struct DubinsPath {
 };
 
 struct RRTOption {
+    // members left indeterminate; only needed so this can live in a std::array
+    RRTOption() = default;
     RRTOption(double length, DubinsPath dubins_path, bool has_straight)
         : length(length), dubins_path(dubins_path), has_straight(has_straight) {}
 
     double length;           // the total length of the path
     DubinsPath dubins_path;  // parameters of DubinsPath
     bool has_straight;       // if this option has a straight path or not
+};
+
+/**
+ *  One leg of a flight: a dubins path, and the vector it lands on.
+ *
+ *  Every option is generated to reach a known vector, so that vector is carried
+ *  along with it instead of being recovered from the path parameters later on.
+ */
+struct PathSegment {
+    // members left indeterminate; only needed so this can live in a std::array
+    PathSegment() = default;
+    PathSegment(const RRTPoint& end, const RRTOption& option) : end(end), option(option) {}
+
+    RRTPoint end;       // the vector the leg ends on
+    RRTOption option;   // the dubins path flown to get there
 };
 
 /**
@@ -148,6 +167,20 @@ std::vector<XYZCoord> generatePointsCurve(const RRTPoint& start, const RRTPoint&
  */
 std::vector<XYZCoord> generatePoints(const RRTPoint& start, const RRTPoint& end,
                                      const DubinsPath& path, bool has_straight);
+
+/**
+ *  Generates the points along a sequence of dubins paths
+ *
+ *  The segments are flown back to back, each one starting on the vector the
+ *  previous one ended on. The first point of every segment is dropped, as it is
+ *  either the last point of the previous segment or the point the plane is
+ *  already at.
+ *
+ *  @param start    ==> vector the path is flown from
+ *  @param segments ==> the dubins paths to fly, in order, with their end vectors
+ *  @return         ==> a list of points along the entire path
+ */
+std::vector<XYZCoord> generatePath(const RRTPoint& start, const std::vector<PathSegment>& segments);
 
 /**
  *  First, the straight distance (it turns out) is equal to the

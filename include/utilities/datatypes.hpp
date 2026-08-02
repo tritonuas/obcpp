@@ -13,6 +13,8 @@
 #include "utilities/jsonable.hpp"
 
 struct XYZCoord: jsonable{
+    // members left indeterminate; only needed so this can live in a std::array
+    XYZCoord() = default;
     XYZCoord(double x, double y, double z) : x(x), y(y), z(z) {}
 
     /**
@@ -63,6 +65,8 @@ struct XYZCoord: jsonable{
 };
 
 struct RRTPoint {
+    // members left indeterminate; only needed so this can live in a std::array
+    RRTPoint() = default;
     RRTPoint(XYZCoord point, double psi);
     /*
      *  Equality overload method for RRTPoint

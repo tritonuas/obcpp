@@ -16,6 +16,7 @@
 #include "core/mission_state.hpp"
 #include "network/gcs_macros.hpp"
 #include "network/mavlink.hpp"
+#include "pathing/environment.hpp"
 #include "pathing/mission_path.hpp"
 #include "protos/obc.pb.h"
 #include "ticks/airdrop_approach.hpp"
@@ -148,12 +149,25 @@ DEF_GCS_HANDLE(Post, targets, locations) {
         curr_alt_m = state->getMav()->altitude_msl_m();
     }
 
+    const std::optional<CartesianConverter<GPSProtoVec>>& converter =
+        state->getCartesianConverter();
+    if (!converter.has_value()) {
+        LOG_RESPONSE(ERROR, "No mission uploaded to check the drop locations against", BAD_REQUEST);
+        return;
+    }
+    const Polygon flight_boundary = state->mission_params.getFlightBoundary();
+
     nlohmann::json waypoints = nlohmann::json::parse(request.body);
     AirdropTarget airdrop_target;
 
     if (!waypoints.is_array()) {
         LOG_RESPONSE(ERROR, "Waypoints is not a vactor", BAD_REQUEST);
+        return;
     }
+
+    // nothing is sent until every target has been checked, so a bad one does not
+    // leave the plane holding half of an upload
+    std::vector<std::pair<airdrop_t, GPSCoord>> drops;
 
     for (const auto& waypoint : waypoints) {
         google::protobuf::util::JsonStringToMessage(waypoint.dump(), &airdrop_target);
@@ -168,8 +182,19 @@ DEF_GCS_HANDLE(Post, targets, locations) {
             return;
         }
 
-        float drop_lat = airdrop_target.coordinate().latitude();
-        float drop_lng = airdrop_target.coordinate().longitude();
+        // the plane cannot fly to a drop it is not allowed to fly to
+        if (!Environment::isPointInPolygon(flight_boundary,
+                                           converter->toXYZ(airdrop_target.coordinate()))) {
+            LOG_RESPONSE(ERROR, "Drop location is outside of the flight boundary", BAD_REQUEST);
+            return;
+        }
+
+        drops.push_back({airdrop, airdrop_target.coordinate()});
+    }
+
+    for (const auto& [airdrop, coordinate] : drops) {
+        float drop_lat = coordinate.latitude();
+        float drop_lng = coordinate.longitude();
         state->getAirdrop()->send(makeLatLngPacket(SEND_LATLNG, airdrop, TARGET_ACQUIRED, drop_lat,
                                                    drop_lng, curr_alt_m));
     }

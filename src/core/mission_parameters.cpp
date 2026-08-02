@@ -97,10 +97,31 @@ std::optional<std::string> MissionParameters::setMission(
         return err;
     }
 
+    const Polygon flight_boundary = cconverter.toXYZ(mission.flightboundary());
+    const Polygon airdrop_boundary = cconverter.toXYZ(mission.airdropboundary());
+    const Polyline mission_waypoints = cconverter.toXYZ(mission.waypoints());
+
+    // nothing outside of the flight boundary can be flown to, so a mission that
+    // asks for it is never going to be one the plane can fly
+    for (std::size_t i = 0; i < mission_waypoints.size(); i++) {
+        if (!Environment::isPointInPolygon(flight_boundary, mission_waypoints[i])) {
+            err += "Waypoint " + std::to_string(i + 1) + " is outside of the flight boundary. ";
+        }
+    }
+
+    // the airdrop boundary doubles as the mapping region
+    if (!Environment::isPolygonInPolygon(airdrop_boundary, flight_boundary)) {
+        err += "Airdrop boundary is not entirely inside of the flight boundary. ";
+    }
+
+    if (!err.empty()) {
+        return err;
+    }
+
     this->cached_mission = mission;
-    this->flightBoundary = cconverter.toXYZ(mission.flightboundary());
-    this->airdropBoundary = cconverter.toXYZ(mission.airdropboundary());
-    this->waypoints = cconverter.toXYZ(mission.waypoints());
+    this->flightBoundary = flight_boundary;
+    this->airdropBoundary = airdrop_boundary;
+    this->waypoints = mission_waypoints;
     for (const auto& airdrop : mission.airdropassignments()) {  // Use const& for efficiency
         this->_setAirdrop(airdrop);
     }
