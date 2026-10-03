@@ -76,8 +76,10 @@ void OBC::connectAirdrop() {
             break;
         }
 
-        LOG_F(ERROR, "Failed to establish airdrop socket: %s. Trying again in 3 seconds...",
+        LOG_F(ERROR,
+            "Failed to establish airdrop socket: %s. Retrying in 3 seconds...",
             result.data.err);
+        std::this_thread::sleep_for(std::chrono::seconds(3));
     }
 
     this->state->setAirdrop(std::make_shared<AirdropClient>(result.data.res));
