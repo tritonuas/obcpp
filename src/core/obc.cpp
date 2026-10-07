@@ -7,6 +7,7 @@
 #include "camera/rpi.hpp"
 #include "camera/mock.hpp"
 #include "core/obc.hpp"
+#include "core/airdrop_retry.hpp"
 #include "core/mission_state.hpp"
 #include "ticks/tick.hpp"
 #include "ticks/mission_prep.hpp"
@@ -67,20 +68,20 @@ void OBC::connectMavlink(std::string mavlink_url) {
 void OBC::connectAirdrop() {
     loguru::set_thread_name("airdrop connect");
 
-    ad_socket_result_t result;
-    while (true) {
-        LOG_F(INFO, "Attempting to create airdrop socket.");
-        result = make_ad_socket(UDP2_OBC_PORT, UDP2_PAYLOAD_PORT);
-        if (!result.is_err) {
-            LOG_F(INFO, "Established airdrop socket.");
-            break;
-        }
+    auto result = airdrop::createSocketWithRetry(
+        [] {
+            LOG_F(INFO, "Attempting to create airdrop socket.");
+            return make_ad_socket(UDP2_OBC_PORT, UDP2_PAYLOAD_PORT);
+        },
+        [](const char* error) {
+            LOG_F(ERROR,
+                "Failed to establish airdrop socket: %s. Retrying in 3 seconds...",
+                error);
+        },
+        [](std::chrono::seconds delay) {
+            std::this_thread::sleep_for(delay);
+        });
 
-        LOG_F(ERROR,
-            "Failed to establish airdrop socket: %s. Retrying in 3 seconds...",
-            result.data.err);
-        std::this_thread::sleep_for(std::chrono::seconds(3));
-    }
-
+    LOG_F(INFO, "Established airdrop socket.");
     this->state->setAirdrop(std::make_shared<AirdropClient>(result.data.res));
 }
