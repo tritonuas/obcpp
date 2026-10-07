@@ -7,7 +7,7 @@ extern "C" {
 #include "network/airdrop_sockets.h"
 }
 
-namespace airdrop {
+namespace airdrop_retry {
 
 inline constexpr std::chrono::seconds kSocketRetryDelay{3};
 
@@ -28,6 +28,6 @@ ad_socket_result_t createSocketWithRetry(
     }
 }
 
-}  // namespace airdrop
+}  // namespace airdrop_retry
 
 #endif  // INCLUDE_CORE_AIRDROP_RETRY_HPP_
