@@ -15,6 +15,7 @@
 #include "ticks/refueling.hpp"
 #include "ticks/wait_for_takeoff.hpp"
 
+using namespace std::chrono_literals;  // NOLINT
 
 AirdropApproachTick::AirdropApproachTick(std::shared_ptr<MissionState> state)
     : Tick(state, TickID::AirdropApproach), mission_started(false) {}
