@@ -68,7 +68,7 @@ void OBC::connectMavlink(std::string mavlink_url) {
 void OBC::connectAirdrop() {
     loguru::set_thread_name("airdrop connect");
 
-    auto result = airdrop::createSocketWithRetry(
+    auto result = airdrop_retry::createSocketWithRetry(
         [] {
             LOG_F(INFO, "Attempting to create airdrop socket.");
             return make_ad_socket(UDP2_OBC_PORT, UDP2_PAYLOAD_PORT);
