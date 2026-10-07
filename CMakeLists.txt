@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
 # Make sure that we are using the C++11 ABI, if not then there are some weird
 # inconsistencies with our precompiled headers
 add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=1)
+add_compile_options(-Wno-psabi)
 
 # Disable in-source builds to prevent source tree corruption.
 if(" ${CMAKE_SOURCE_DIR}" STREQUAL " ${CMAKE_BINARY_DIR}")

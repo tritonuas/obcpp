@@ -81,7 +81,7 @@ MavlinkClient::MavlinkClient(OBCConfig config)
             // get it wrong.
             auto result = mavsdk::Param::Result::Unknown;
             if (param == "FS_LONG_TIMEOUT" || param == "AFS_RC_FAIL_TIME" ||
-                param == "FS_SHORT_TIMEOUT") {
+                param == "FS_SHORT_TIMEOUT" || param == "AFS_TERM_ACTION") {
                 result = this->param->set_param_float(param, val);
             } else {
                 result = this->param->set_param_int(param, val);
