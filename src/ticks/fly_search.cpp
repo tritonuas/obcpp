@@ -31,7 +31,7 @@ void FlySearchTick::init() {
 
     while (!this->mission_started) {
         this->mission_started = this->state->getMav()->startMission();
-        std::this_thread::sleep_for(100ms);
+        std::this_thread::sleep_for(50ms);
     }
 
     LOG_F(INFO, "Total Waypoint #: %zu", this->state->getMav()->totalWaypoints());

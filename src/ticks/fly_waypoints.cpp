@@ -16,12 +16,13 @@
 using namespace std::chrono_literals; // NOLINT
 
 FlyWaypointsTick::FlyWaypointsTick(std::shared_ptr<MissionState> state, Tick* next_tick)
-    : Tick(state, TickID::FlyWaypoints), next_tick(next_tick) {}
+    : Tick(state, TickID::FlyWaypoints), mission_started(false), next_tick(next_tick),
+      last_photo_time(0) {}
 
 void FlyWaypointsTick::init() {
     while (!this->mission_started) {
         this->mission_started = this->state->getMav()->startMission();
-        std::this_thread::sleep_for(100ms);
+        std::this_thread::sleep_for(50ms);
     }
     state->decrementLapsRemaining();
 

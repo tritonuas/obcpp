@@ -32,7 +32,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS True)
 
 # set(CMAKE_POSITION_INDEPENDENT_CODE True)
 
-SET(GCC_COMPILE_FLAGS "")
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+SET(GCC_COMPILE_FLAGS "-O3")
 SET(GCC_LINK_FLAGS    "-lprotobuf -lopencv_core -lopencv_highgui -lopencv_features2d -lopencv_flann -lopencv_imgcodecs -lopencv_dnn -lopencv_videoio -lopencv_imgproc -lopencv_ml -lopencv_photo -lprotobuf")
 
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COMPILE_FLAGS}")
@@ -185,7 +186,7 @@ if(CPPLINT)
     # also don't check for runtime/references since Google's public style guidelines are behind https://github.com/cpplint/cpplint/issues/148
     --exclude=../include/udp_squared
     --exclude=../src/utilities/base64.cpp
-    --filter=-legal,-readability/todo,-build/c++11,-runtime/references
+    --filter=-legal,-readability/todo,-build/c++11,-build/c++17,-runtime/references
     --linelength=100
     --recursive
     ../src

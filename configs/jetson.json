@@ -23,14 +23,6 @@
             "turning_radius": 5.0,
             "point_separation": 20.0
         },
-        "rrt": {
-            "iterations_per_waypoint": 512,
-            "rewire_radius": 256.0,
-            "optimize": true,
-            "point_fetch_method": "nearest",
-            "allowed_to_skip_waypoints": false,
-            "generate_deviations": false
-        },
         "coverage": {
             "altitude_m": 30.0,
             "camera_vision_m": 6.0,

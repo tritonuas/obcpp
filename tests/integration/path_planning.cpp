@@ -14,6 +14,7 @@
 #include "network/gcs_macros.hpp"
 #include "network/gcs_routes.hpp"
 #include "pathing/plotting.hpp"
+#include "pathing/path_generator.hpp"
 #include "pathing/static.hpp"
 #include "ticks/mission_prep.hpp"
 #include "ticks/mav_upload.hpp"
@@ -73,7 +74,8 @@ int main() {
         goals.push_back(waypoint);
     }
 
-    goals.erase(goals.begin());
+    // the plane starts out on the first waypoint, 30 meters up after takeoff
+    goals[0].z = 30.0;
 
     Polygon obs1 = {XYZCoord(-200, 150, 0), XYZCoord(100, 75, 0), XYZCoord(-125, 300, 0),
                     XYZCoord(-300, 300, 0)};
@@ -83,26 +85,23 @@ int main() {
 
     std::vector<Polygon> obstacles = {obs1, obs2};
 
-    RRTPoint start = RRTPoint(state->mission_params.getWaypoints()[0], 0);
-    start.coord.z = 30.0; // 30 meters takeoff
-
-    // RRT settings (manually put in)
-    double search_radius = 9999;
     LOG_F(WARNING, "RRT Stats");
-    LOG_F(INFO, "Search Radius %f", search_radius);
 
-    RRT rrt = RRT(start, goals, search_radius,  
-                  state->mission_params.getFlightBoundary(), state->config, obstacles, {});
+    Environment::init(state->mission_params.getFlightBoundary(),
+                      state->mission_params.getAirdropBoundary(),
+                      state->mission_params.getAirdropBoundary(), obstacles);
+
+    PathGenerator generator(goals, 0);
 
     //run the algoritm, and time it
     auto start_time = std::chrono::high_resolution_clock::now();
-    rrt.run();
+    generator.run();
     auto end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end_time - start_time;
     LOG_F(INFO, "Time to run: %f s", elapsed.count());
 
     // get the path, put it into the file
-    std::vector<XYZCoord> path = rrt.getPointsToGoal();
+    std::vector<XYZCoord> path = generator.getPointsToGoal();
     LOG_F(INFO, "Path size: %zu", path.size());
     LOG_F(INFO, "Path length: %f", path.size() * state->config.pathing.dubins.point_separation);
 
