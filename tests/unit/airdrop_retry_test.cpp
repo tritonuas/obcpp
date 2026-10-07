@@ -28,7 +28,7 @@ TEST(AirdropRetryTest, WaitsThreeSecondsAfterFailureBeforeRetry) {
         return result;
     };
 
-    auto result = airdrop::createSocketWithRetry(
+    auto result = airdrop_retry::createSocketWithRetry(
         makeSocket,
         [&loggedFailures](const char*) { ++loggedFailures; },
         [](std::chrono::seconds delay) { std::this_thread::sleep_for(delay); });
@@ -43,5 +43,5 @@ TEST(AirdropRetryTest, WaitsThreeSecondsAfterFailureBeforeRetry) {
         std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
     std::cout << "[retry timing evidence] failed attempt to next attempt: "
               << elapsedMs << " ms\n";
-    EXPECT_GE(elapsed, airdrop::kSocketRetryDelay);
+    EXPECT_GE(elapsed, airdrop_retry::kSocketRetryDelay);
 }
