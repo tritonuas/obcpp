@@ -17,11 +17,15 @@
 
 
 AirdropApproachTick::AirdropApproachTick(std::shared_ptr<MissionState> state)
-    : Tick(state, TickID::AirdropApproach) {}
+    : Tick(state, TickID::AirdropApproach), mission_started(false) {}
 
 void AirdropApproachTick::init() {
     LOG_F(INFO, "start mission airdrop");
-    this->state->getMav()->startMission();
+    while (!this->mission_started) {
+        this->mission_started = this->state->getMav()->startMission();
+        std::this_thread::sleep_for(50ms);
+    }
+    LOG_F(INFO, "mission started");
 }
 
 std::chrono::milliseconds AirdropApproachTick::getWait() const {

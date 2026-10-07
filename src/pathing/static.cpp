@@ -318,13 +318,6 @@ std::vector<GPSCoord> generateNextWaypointPath(std::shared_ptr<MissionState> sta
 
     RRTPoint start(goals.back(), start_angle);
 
-    // add buffer to the start point so that we dont loopty loop
-    double buffer_m = state->config.pathing.upload_distance_buffer_m;
-    if (buffer_m > 0.0) {
-        start.coord.x += buffer_m * std::cos(start_angle);
-        start.coord.y += buffer_m * std::sin(start_angle);
-    }
-
     // the plane flies from where it is now, so that is the first of the waypoints
     goals.insert(goals.begin(), start.coord);
 
@@ -392,9 +385,6 @@ std::vector<GPSCoord> generateAirdropApproach(std::shared_ptr<MissionState> stat
 
     // try to fly to the third waypoint in the path
     // prevents the drone from passing the initial waypoint
-    // [TODO]-done out of laziness, forgot if the path includes starting location
-    xyz_path.erase(xyz_path.begin());
-    xyz_path.erase(xyz_path.begin());
 
     std::vector<GPSCoord> gps_path;
     // XYZCoord pt = state->getCartesianConverter().value().toXYZ(goal);

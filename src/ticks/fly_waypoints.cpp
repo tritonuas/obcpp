@@ -22,7 +22,7 @@ FlyWaypointsTick::FlyWaypointsTick(std::shared_ptr<MissionState> state, Tick* ne
 void FlyWaypointsTick::init() {
     while (!this->mission_started) {
         this->mission_started = this->state->getMav()->startMission();
-        std::this_thread::sleep_for(100ms);
+        std::this_thread::sleep_for(50ms);
     }
     state->decrementLapsRemaining();
 
