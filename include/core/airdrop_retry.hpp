@@ -3,7 +3,9 @@
 
 #include <chrono>
 
+extern "C" {
 #include "network/airdrop_sockets.h"
+}
 
 namespace airdrop {
 
