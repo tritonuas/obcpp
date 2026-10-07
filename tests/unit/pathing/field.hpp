@@ -35,6 +35,9 @@ inline void initFieldWithWall() {
     Dubins::_point_separation = 10;
 }
 
+inline XYZCoord flat(const XYZCoord& coord) { return XYZCoord(coord.x, coord.y, 0); }
+inline RRTPoint flat(const RRTPoint& point) { return RRTPoint(flat(point.coord), point.psi); }
+
 inline bool pathIsInBounds(const std::vector<XYZCoord>& path) {
     for (const XYZCoord& point : path) {
         if (!Environment::isPointInBounds(point)) {

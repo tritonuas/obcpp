@@ -31,7 +31,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS True)
 
 # set(CMAKE_POSITION_INDEPENDENT_CODE True)
 
-SET(GCC_COMPILE_FLAGS "")
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+SET(GCC_COMPILE_FLAGS "-O3")
 SET(GCC_LINK_FLAGS    "-lprotobuf -lopencv_core -lopencv_highgui -lopencv_features2d -lopencv_flann -lopencv_imgcodecs -lopencv_dnn -lopencv_videoio -lopencv_imgproc -lopencv_ml -lopencv_photo -lprotobuf")
 
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COMPILE_FLAGS}")

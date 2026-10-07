@@ -25,14 +25,13 @@ TEST(PathGeneratorTest, ConstructionSeedsTheTreeWithTheStart) {
 
     // the search is rooted where the plane is, flying the heading it was given
     EXPECT_TRUE(generator.rrt.tree.getStart() == RRTPoint(goals[0], HALF_PI));
-    EXPECT_EQ(generator.rrt.tree.tree.size, 1);
+    EXPECT_EQ(generator.rrt.tree.size, 1);
     EXPECT_TRUE(generator.getPointsToGoal().empty());
     EXPECT_EQ(generator.goals, goals);
 
     // every approach angle is tried at every goal unless the caller asks for a
-    // specific set, and the plane's own heading stands in for the goal it is on
+    // specific set
     ASSERT_EQ(generator.goal_angles.size(), goals.size());
-    EXPECT_EQ(generator.goal_angles[0], std::vector<double>({HALF_PI}));
     EXPECT_EQ(generator.goal_angles[1], DEFAULT_GOAL_ANGLES);
 
     const std::vector<double> angles = {0.0, M_PI};
@@ -53,12 +52,11 @@ TEST(PathGeneratorTest, ConstructionPinsTheGoalsTheCallerNamedAnAngleFor) {
     const PathGenerator generator(goals, HALF_PI, goal_angles);
 
     EXPECT_TRUE(generator.rrt.tree.getStart() == RRTPoint(goals[0], HALF_PI));
-    EXPECT_EQ(generator.rrt.tree.tree.size, 1);
+    EXPECT_EQ(generator.rrt.tree.size, 1);
     EXPECT_EQ(generator.goals, goals);
 
-    // whatever the caller put down for the goal the plane is already sitting on,
-    // the heading it reached that one at is the one it is flying
-    EXPECT_EQ(generator.goal_angles[0], std::vector<double>({HALF_PI}));
+    // the goal the plane is already sitting on is never approached, so whatever
+    // the caller put down for it is left alone and never read
     EXPECT_EQ(generator.goal_angles[1], std::vector<double>({0}));
     EXPECT_EQ(generator.goal_angles[2], std::vector<double>({M_PI}));
 }
@@ -117,18 +115,19 @@ TEST(PathGeneratorTest, DubinsOptionsAreFoundWithoutFlyingThem) {
 
     generator.generateDubinsOptions();
 
-    // one leg per waypoint flown to, each landing on the goal it was found for
+    // one leg per waypoint flown to, each landing on the goal it was found for.
+    // RRT ignores altitude, so the paths out of the tree are flat
     ASSERT_EQ(generator.legs.size(), goals.size() - 1);
     for (std::size_t i = 0; i < generator.legs.size(); i++) {
         EXPECT_TRUE(generator.legs[i].end.coord == goals[i + 1]);
         EXPECT_FALSE(generator.legs[i].segments.empty());
-        EXPECT_TRUE(generator.legs[i].segments.back().end == generator.legs[i].end);
+        EXPECT_TRUE(generator.legs[i].segments.back().end == flat(generator.legs[i].end));
         EXPECT_GT(generator.legs[i].length, 0);
     }
 
     // the legs start where the one behind them landed
     EXPECT_TRUE(generator.legs[0].start == RRTPoint(goals[0], 0));
-    EXPECT_TRUE(generator.legs[1].start == generator.legs[0].end);
+    EXPECT_TRUE(generator.legs[1].start == flat(generator.legs[0].end));
 
     // how long the mission is is known, but not one point of it has been flown
     double straight_line = 0;
@@ -178,7 +177,8 @@ TEST(PathGeneratorTest, FlightPointsClimbToTheWaypointAltitude) {
     // first leg: climbs from the plane's altitude (0) up to 100
     const RRTPoint first_goal(goals[1], 0);
     generator.legs.push_back(generator.rrt.commitConnection(
-        {0, first_goal, Dubins::bestOption(generator.rrt.tree.getStart(), first_goal), 0}));
+        0, {first_goal, Dubins::bestOption(generator.rrt.tree.getStart(), first_goal)}));
+    generator.rrt.reroot(first_goal);
     generator.generateFlightPoints();
 
     const std::vector<XYZCoord> first_leg = generator.getPointsToGoal();
@@ -194,7 +194,8 @@ TEST(PathGeneratorTest, FlightPointsClimbToTheWaypointAltitude) {
     // the altitude the plane started the mission at
     const RRTPoint second_goal(goals[2], 0);
     generator.legs.push_back(generator.rrt.commitConnection(
-        {0, second_goal, Dubins::bestOption(generator.rrt.tree.getStart(), second_goal), 0}));
+        0, {second_goal, Dubins::bestOption(generator.rrt.tree.getStart(), second_goal)}));
+    generator.rrt.reroot(second_goal);
     generator.generateFlightPoints();
 
     const std::vector<XYZCoord> path = generator.getPointsToGoal();
@@ -235,7 +236,7 @@ TEST(PathGeneratorTest, RunFliesEveryWaypointInOrder) {
 
     // the path ends on the last waypoint, and so does the search
     EXPECT_EQ(indexOfPoint(path, goals.back(), index), path.size() - 1);
-    EXPECT_TRUE(generator.rrt.tree.getStart().coord == goals.back());
+    EXPECT_TRUE(generator.rrt.tree.getStart().coord == flat(goals.back()));
 }
 
 /*

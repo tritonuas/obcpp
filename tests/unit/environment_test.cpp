@@ -355,13 +355,13 @@ bool arcInBoundsBruteForce(const XYZCoord& center, double radius, double start_a
 // its two endpoints so that ardupilot accelerates through it -- so the legs in
 // between are walked as well, otherwise the reference would miss anything the
 // plane flies over in a straight line.
-bool dubinsInBoundsBruteForce(const RRTPoint& start, const RRTPoint& end, const RRTOption& option) {
-    if (!std::isfinite(option.length)) {
+bool dubinsInBoundsBruteForce(const RRTPoint& start, const RRTPoint& end, const DubinsPath& path) {
+    if (!std::isfinite(path.length)) {
         return false;
     }
 
-    const std::vector<XYZCoord> points =
-        Dubins::generatePoints(start, end, option.dubins_path, option.has_straight);
+    // every path that reaches here came out of allOptions, which is CSC only
+    const std::vector<XYZCoord> points = Dubins::generatePoints(start, end, path, true);
 
     for (std::size_t i = 0; i < points.size(); i++) {
         if (!Environment::isPointInBounds(points[i])) {
@@ -578,12 +578,8 @@ TEST(DubinsBoundsTest, RejectsUnusableOptions) {
     const RRTPoint end(XYZCoord(70, 50, 0), 0);
 
     // lsr/rsl hand back infinity when the turning circles overlap
-    const RRTOption infinite{std::numeric_limits<double>::infinity(), DubinsPath(0, 0, 0), true};
+    const DubinsPath infinite{0, 0, 0, std::numeric_limits<double>::infinity()};
     EXPECT_FALSE(Environment::isDubinsPathInBounds(start, end, infinite));
-
-    // CCC paths [LRL, RLR] are not handled analytically and are rejected outright
-    const RRTOption curve_only{10, DubinsPath(1, 1, 1), false};
-    EXPECT_FALSE(Environment::isDubinsPathInBounds(start, end, curve_only));
 }
 
 /*
@@ -597,10 +593,10 @@ TEST(DubinsBoundsTest, RejectsOutOfBoundsEndpoints) {
     const RRTPoint inside(XYZCoord(50, 50, 0), 0);
     const RRTPoint outside(XYZCoord(150, 50, 0), 0);
 
-    for (const RRTOption& option : Dubins::allOptions(outside, inside)) {
+    for (const DubinsPath& option : Dubins::allOptions(outside, inside)) {
         EXPECT_FALSE(Environment::isDubinsPathInBounds(outside, inside, option));
     }
-    for (const RRTOption& option : Dubins::allOptions(inside, outside)) {
+    for (const DubinsPath& option : Dubins::allOptions(inside, outside)) {
         EXPECT_FALSE(Environment::isDubinsPathInBounds(inside, outside, option));
     }
 }
@@ -617,7 +613,7 @@ TEST(DubinsBoundsTest, AcceptsPathInOpenField) {
     const RRTPoint end(XYZCoord(60, 50, 0), 0);
 
     int accepted = 0;
-    for (const RRTOption& option : Dubins::allOptions(start, end)) {
+    for (const DubinsPath& option : Dubins::allOptions(start, end)) {
         if (Environment::isDubinsPathInBounds(start, end, option)) {
             accepted++;
             EXPECT_TRUE(dubinsInBoundsBruteForce(start, end, option));
@@ -648,14 +644,14 @@ TEST(DubinsBoundsTest, RejectsTurnBulgingOutOfRegion) {
 
     // turning right puts the first turn's center at (50, -10), dragging the arc
     // below the bottom edge
-    const RRTOption right = Dubins::rsr(start, end, Dubins::findCenter(start, 'R'),
+    const DubinsPath right = Dubins::rsr(start, end, Dubins::findCenter(start, 'R'),
                                         Dubins::findCenter(end, 'R'));
     EXPECT_FALSE(Environment::isDubinsPathInBounds(start, end, right));
     EXPECT_FALSE(dubinsInBoundsBruteForce(start, end, right));
 
     // reversing heading with a 20 unit radius needs ~100 units of room, so every option
     // here leaves the field somewhere -- the analytic verdict must track the sampled one
-    for (const RRTOption& option : Dubins::allOptions(start, end)) {
+    for (const DubinsPath& option : Dubins::allOptions(start, end)) {
         if (!std::isfinite(option.length)) {
             continue;
         }
@@ -665,7 +661,7 @@ TEST(DubinsBoundsTest, RejectsTurnBulgingOutOfRegion) {
 
     // the identical maneuver with a tight turning radius fits inside the field
     Dubins::_radius = 3;
-    const RRTOption tight = Dubins::rsr(start, end, Dubins::findCenter(start, 'R'),
+    const DubinsPath tight = Dubins::rsr(start, end, Dubins::findCenter(start, 'R'),
                                         Dubins::findCenter(end, 'R'));
     EXPECT_TRUE(Environment::isDubinsPathInBounds(start, end, tight));
     EXPECT_TRUE(dubinsInBoundsBruteForce(start, end, tight));
@@ -683,7 +679,7 @@ TEST(DubinsBoundsTest, RejectsPathThroughObstacle) {
     const RRTPoint start(XYZCoord(10, 50, 0), 0);
     const RRTPoint end(XYZCoord(90, 50, 0), 0);
 
-    for (const RRTOption& option : Dubins::allOptions(start, end)) {
+    for (const DubinsPath& option : Dubins::allOptions(start, end)) {
         EXPECT_FALSE(Environment::isDubinsPathInBounds(start, end, option))
             << "accepted a path straight through the obstacle";
     }
@@ -693,7 +689,7 @@ TEST(DubinsBoundsTest, RejectsPathThroughObstacle) {
     const RRTPoint clear_end(XYZCoord(90, 20, 0), 0);
 
     int accepted = 0;
-    for (const RRTOption& option : Dubins::allOptions(clear_start, clear_end)) {
+    for (const DubinsPath& option : Dubins::allOptions(clear_start, clear_end)) {
         if (Environment::isDubinsPathInBounds(clear_start, clear_end, option)) {
             accepted++;
         }
@@ -722,7 +718,7 @@ TEST(DubinsBoundsTest, MatchesSampledReference) {
         const RRTPoint start(XYZCoord(position(gen), position(gen), 0), heading(gen));
         const RRTPoint end(XYZCoord(position(gen), position(gen), 0), heading(gen));
 
-        for (const RRTOption& option : Dubins::allOptions(start, end)) {
+        for (const DubinsPath& option : Dubins::allOptions(start, end)) {
             if (!std::isfinite(option.length)) {
                 continue;
             }
@@ -780,7 +776,7 @@ TEST(DubinsBoundsTest, MatchesSampledReferenceAcrossConfigurations) {
                 const RRTPoint start(XYZCoord(position(gen), position(gen), 0), heading(gen));
                 const RRTPoint end(XYZCoord(position(gen), position(gen), 0), heading(gen));
 
-                for (const RRTOption& option : Dubins::allOptions(start, end)) {
+                for (const DubinsPath& option : Dubins::allOptions(start, end)) {
                     if (!std::isfinite(option.length)) {
                         continue;
                     }

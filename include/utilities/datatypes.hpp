@@ -3,6 +3,7 @@
 
 #include <matplot/matplot.h>
 
+#include <cmath>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -12,7 +13,7 @@
 #include "utilities/constants.hpp"
 #include "utilities/jsonable.hpp"
 
-struct XYZCoord: jsonable{
+struct XYZCoord: jsonable {
     // members left indeterminate; only needed so this can live in a std::array
     XYZCoord() = default;
     XYZCoord(double x, double y, double z) : x(x), y(y), z(z) {}
@@ -26,10 +27,24 @@ struct XYZCoord: jsonable{
      *  Performes vector addition
      *  @see https://mathworld.wolfram.com/VectorAddition.html
      */
-    XYZCoord &operator+=(const XYZCoord &other_point);
-    friend XYZCoord operator+(const XYZCoord &lhs, const XYZCoord &rhs);
-    XYZCoord &operator-=(const XYZCoord &other_point);
-    friend XYZCoord operator-(const XYZCoord &lhs, const XYZCoord &rhs);
+    XYZCoord &operator+=(const XYZCoord &other_point) {
+        this->x += other_point.x;
+        this->y += other_point.y;
+        this->z += other_point.z;
+        return *this;
+    }
+    friend XYZCoord operator+(const XYZCoord &lhs, const XYZCoord &rhs) {
+        return {lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z};
+    }
+    XYZCoord &operator-=(const XYZCoord &other_point) {
+        this->x -= other_point.x;
+        this->y -= other_point.y;
+        this->z -= other_point.z;
+        return *this;
+    }
+    friend XYZCoord operator-(const XYZCoord &lhs, const XYZCoord &rhs) {
+        return {lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z};
+    }
 
     /**
      * Performs scalar multiplication
@@ -37,25 +52,53 @@ struct XYZCoord: jsonable{
      *
      * > the scalar being allowed on the right may be unsafe
      */
-    friend XYZCoord operator*(double scalar, const XYZCoord &vector);
-    friend XYZCoord operator*(const XYZCoord &vector, double scalar);
+    friend XYZCoord operator*(double scalar, const XYZCoord &vector) {
+        return {vector.x * scalar, vector.y * scalar, vector.z * scalar};
+    }
+    friend XYZCoord operator*(const XYZCoord &vector, double scalar) {
+        return scalar * vector;
+    }
 
     /**
      * Distance to another XYZCoord
      *
      * @param other point to calculate distance to
      */
-    double distanceTo(const XYZCoord &other) const;
-    double distanceToSquared(const XYZCoord &other) const;
+    double distanceTo(const XYZCoord &other) const { return (*this - other).norm(); }
+    double distanceToSquared(const XYZCoord &other) const {
+        return (*this - other).normSquared();
+    }
+
+    /**
+     * Distance to another XYZCoord in the xy plane
+     *
+     * Everything pathing measures is flown at a heading, so altitude is not part
+     * of the distance it cares about -- a dubins path is a 2D curve.
+     *
+     * @param other point to calculate distance to
+     */
+    double distanceTo2D(const XYZCoord &other) const {
+        return std::hypot(this->x - other.x, this->y - other.y);
+    }
 
     /**
      * @returns the magnitude of a vector
      * @see https://mathworld.wolfram.com/VectorNorm.html
      */
-    double norm() const;
-    double normSquared() const;
+    double norm() const { return std::sqrt(this->normSquared()); }
+    double normSquared() const {
+        return this->x * this->x + this->y * this->y + this->z * this->z;
+    }
 
-    XYZCoord normalized() const;
+    XYZCoord normalized() const {
+        const double magnitude = this->norm();
+
+        if (magnitude == 0) {
+            return *this;
+        }
+
+        return (1 / magnitude) * (*this);
+    }
 
     nlohmann::json to_json();
 
@@ -78,16 +121,6 @@ struct RRTPoint {
 
     XYZCoord coord;
     double psi;
-};
-
-// Hash functions for the tree's member variables
-class PointHashFunction {
- public:
-    /*
-     *  Hashes RRTPoint using the Cantor Pairing Function.
-     *  Used to add elements to unordered_map nodeMap in RRTTree.
-     */
-    std::size_t operator()(const RRTPoint &point) const;
 };
 
 // Because this is a protos class, mildly inconvenient to construct it

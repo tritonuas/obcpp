@@ -20,19 +20,14 @@ const double TWO_PI = 2 * M_PI;
 const double HALF_PI = M_PI / 2;
 
 // RRT CONSTANTS
-const int TREE_CAPACITY = 2 << 10;  // number of nodes a tree between two waypoints is built out of
-// the tree holds the waypoint it is rooted at, a node for every sample RRT takes,
-// and the waypoint they end up connecting to
-const int ITERATIONS_PER_WAYPOINT = TREE_CAPACITY - 2;  // number of times RRT is ran per waypoint
-const double REWIRE_RADIUS = 200.0;  // ONLY FOR RRT-STAR, max radius from new node to rewire
+const int TREE_CAPACITY = 512;
+const int ITERATIONS_PER_WAYPOINT = TREE_CAPACITY - 2;
+
 
 // RRT HELPER CONSTANTS
 const int ENV_PATH_VALIDATION_STEP_SIZE = 5;  // how many points to skip when validating path
-const int TOTAL_OPTIONS_FOR_GOAL_CONNECTION =
-    2048;  // TODO - MUST SCALE WITH ITERATIONS OR ELSE CANT FIND GOAL
 
 const int TRIES_FOR_RANDOM_POINT = 64;       // for generating random points
-const int MAX_DUBINS_OPTIONS_TO_PARSE = 16;  // how many routes to check when connecting two nodes
 
 // AIRDROP PATHING
 const double WIND_CONST_PER_ALTITUDE = 0.3;  // if I recall correctly, this is 75ft drop stationary

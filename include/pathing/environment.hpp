@@ -22,13 +22,87 @@
  *      - add dynamic obstacles
  */
 namespace Environment {
+/**
+ * A polygon flattened out for the tests pathing runs tens of millions of
+ * times a run.
+ *
+ * The edges are held as four flat runs of doubles rather than as a vector of
+ * XYZCoord, so a test walks the numbers it actually uses instead of striding
+ * over a 24-byte point to read two fields of it. The bounding box in front
+ * of them answers most tests outright -- an obstacle is a small thing in a
+ * large field, and almost nothing asked about comes near it.
+ */
+struct EdgeSet {
+    // edge i runs from (start_x[i], start_y[i]) to (end_x[i], end_y[i])
+    std::vector<double> start_x;
+    std::vector<double> start_y;
+    std::vector<double> end_x;
+    std::vector<double> end_y;
+
+    // the box the whole polygon sits in
+    double min_x = 0;
+    double max_x = 0;
+    double min_y = 0;
+    double max_y = 0;
+
+    std::size_t size() const { return start_x.size(); }
+};
+
     inline Polygon _valid_region;    // boundary of the valid map
     inline Polygon _airdrop_zone;    // boundary of the airdrop zone (subset of valid_region)
     inline Polygon _mapping_region;  // boundary of the mapping region (subset of valid_region)
     inline std::vector<Polygon> _obstacles;  // obstacles in the map
 
+    // the same regions, flattened by init() for the bounds checks to run against
+    inline EdgeSet _valid_edges;
+    inline std::vector<EdgeSet> _obstacle_edges;
+
     // bounds of the valid region, first pair is (min x, max x), second is (min y, max y)
     inline std::pair<std::pair<double, double>, std::pair<double, double>> _bounds;
+
+    /**
+     * Flattens a polygon into the form the bounds checks run against
+     *
+     * @param polygon   ==> the polygon to flatten
+     * @return          ==> its edges and bounding box
+     */
+    EdgeSet buildEdgeSet(const Polygon& polygon);
+
+    /**
+     * Whether a point lies inside a flattened polygon
+     *
+     * Same raycast as isPointInPolygon, with the bounding box checked first.
+     * Points on the edge count as outside.
+     *
+     * @param[in] edges ==> the flattened polygon
+     * @param[in] x     ==> x of the point
+     * @param[in] y     ==> y of the point
+     * @return  ==> whether the point is inside
+     */
+    bool isPointInEdgeSet(const EdgeSet& edges, double x, double y);
+
+    /**
+     * Whether a line segment crosses any edge of a flattened polygon
+     *
+     * @param[in] edges ==> the flattened polygon
+     * @param[in] start ==> start point of the segment
+     * @param[in] end   ==> end point of the segment
+     * @return  ==> whether the segment crosses the boundary
+     */
+    bool doesLineIntersectEdgeSet(const EdgeSet& edges, const XYZCoord& start, const XYZCoord& end);
+
+    /**
+     * Whether a circular arc crosses any edge of a flattened polygon
+     *
+     * @param[in] edges         ==> the flattened polygon
+     * @param[in] center        ==> the center of the arc's circle
+     * @param[in] radius        ==> the radius of the arc's circle
+     * @param[in] start_angle   ==> angle from the center to the arc's first point
+     * @param[in] sweep         ==> signed angle swept, CCW positive
+     * @return  ==> whether the arc crosses the boundary
+     */
+    bool doesArcIntersectEdgeSet(const EdgeSet& edges, const XYZCoord& center, double radius,
+                                 double start_angle, double sweep);
 
     /**
      * Find the bounds of a region (i.e. the max/min x and y values).
@@ -81,10 +155,10 @@ namespace Environment {
      *
      * @param[in] start     ==> the start vector of the path
      * @param[in] end       ==> the end vector of the path
-     * @param[in] option    ==> the Dubins option connecting start to end
+     * @param[in] path      ==> the Dubins path connecting start to end
      * @return  ==> true if every point of the path is in bounds, false otherwise
      */
-    bool isDubinsPathInBounds(const RRTPoint& start, const RRTPoint& end, const RRTOption& option);
+    bool isDubinsPathInBounds(const RRTPoint& start, const RRTPoint& end, const DubinsPath& path);
 
     /**
      * Check whether a circular arc is in bounds
@@ -202,7 +276,7 @@ namespace Environment {
      * @param q ==> first point on line
      * @param r ==> second point on line
      */
-    bool onSegment(XYZCoord p, XYZCoord q, XYZCoord r);
+    bool onSegment(const XYZCoord& p, const XYZCoord& q, const XYZCoord& r);
 
     /**
      *  Find the orintation of the ordered triplet (p, q, r)
@@ -211,7 +285,7 @@ namespace Environment {
      * @param q ==> point 2
      * @param r ==> point 3
      */
-    int orientation(XYZCoord p, XYZCoord q, XYZCoord r);
+    int orientation(const XYZCoord& p, const XYZCoord& q, const XYZCoord& r);
 
     /**
      * The main function that returns true if the line segment 'p1q1' and 'p2q2' intersect.
@@ -221,7 +295,8 @@ namespace Environment {
      * @param p2 ==> start point of line segment 2
      * @param q2 ==> end point of line segment 2
      */
-    bool intersect(XYZCoord p1, XYZCoord q1, XYZCoord p2, XYZCoord q2);
+    bool intersect(const XYZCoord& p1, const XYZCoord& q1, const XYZCoord& p2,
+                   const XYZCoord& q2);
 
     /**
      * Returns endpoints on airdrop_zone for coverage pathing

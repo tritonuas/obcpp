@@ -275,8 +275,6 @@ double calculateFinalAngle(
 }
 
 std::vector<GPSCoord> generateInitialPath(std::shared_ptr<MissionState> state) {
-    // first waypoint is start
-
     // the other waypoitns is the goals
     if (state->mission_params.getWaypoints().size() < 1) {
         loguru::set_thread_name("Static Pathing");

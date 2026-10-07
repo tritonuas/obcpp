@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <limits>
+#include <utility>
 #include <vector>
 
 #include "field.hpp"
@@ -18,26 +20,35 @@
 namespace {
 
 // the cheapest connection from anywhere in the tree to any of the given points
-// that can actually be flown, found by brute force
-Connection cheapestFlyableConnection(const RRT& rrt, const std::vector<RRTPoint>& ends) {
-    Connection best;
+// that can actually be flown, found by brute force -- the node it hangs off of and
+// what the flight costs, INVALID_NODE if none of them can be reached
+std::pair<NodeId, double> cheapestFlyableConnection(const RRT& rrt,
+                                                    const std::vector<RRTPoint>& ends) {
+    NodeId best_anchor = INVALID_NODE;
+    double best_cost = std::numeric_limits<double>::infinity();
 
-    for (NodeId node = 0; node < rrt.tree.tree.size; node++) {
-        const RRTPoint& anchor = rrt.tree.tree.points[node];
+    for (NodeId node = 0; node < rrt.tree.size; node++) {
+        const RRTPoint anchor = rrt.tree.point(node);
 
         for (const RRTPoint& end : ends) {
-            for (const RRTOption& option : Dubins::allOptions(anchor, end)) {
-                const double cost = rrt.tree.tree.length[node] + option.length;
+            for (const DubinsPath& path : Dubins::allOptions(anchor, end)) {
+                const double cost = rrt.tree.length[node] + path.length;
 
-                if (std::isfinite(cost) && cost < best.cost &&
-                    Environment::isDubinsPathInBounds(anchor, end, option)) {
-                    best = {node, end, option, cost};
+                if (std::isfinite(cost) && cost < best_cost &&
+                    Environment::isDubinsPathInBounds(anchor, end, path)) {
+                    best_anchor = node;
+                    best_cost = cost;
                 }
             }
         }
     }
 
-    return best;
+    return {best_anchor, best_cost};
+}
+
+// what a connection off the given node costs, measured from the root of the tree
+double costOf(const RRT& rrt, NodeId anchor, const PathSegment& segment) {
+    return rrt.tree.length[anchor] + segment.path.length;
 }
 
 // the points a leg is flown along, which RRT hands back as dubins paths alone
@@ -58,7 +69,7 @@ TEST(RRTTest, ConstructionSeedsTheTreeWithTheStart) {
     const RRT rrt(start);
 
     EXPECT_TRUE(rrt.tree.getStart() == start);
-    EXPECT_EQ(rrt.tree.tree.size, 1);
+    EXPECT_EQ(rrt.tree.size, 1);
 }
 
 /*
@@ -101,13 +112,9 @@ TEST(RRTTest, FillOptionsCollectsTheFlyablePathsFromANode) {
 
     // all four of the CSC paths exist between two vectors this far apart
     EXPECT_EQ(rrt.options.size(), 4);
-    for (const Connection& option : rrt.options) {
-        EXPECT_EQ(option.anchor, 0);
+    for (const PathSegment& option : rrt.options) {
         EXPECT_TRUE(option.end == end);
-        EXPECT_TRUE(std::isfinite(option.option.length));
-
-        // the root has nothing behind it, so the flight is the path itself
-        EXPECT_DOUBLE_EQ(option.cost, option.option.length);
+        EXPECT_TRUE(std::isfinite(option.path.length));
     }
 
     // the scratch space is written over, not appended to
@@ -126,39 +133,6 @@ TEST(RRTTest, FillOptionsCollectsTheFlyablePathsFromANode) {
 }
 
 /*
- *  RRT::lowerBound -- a flight through a node never costs less than the ground it
- *  has to cover, which is what lets the search skip nodes it has not pathed from
- */
-TEST(RRTTest, LowerBoundNeverExceedsWhatAFlightCosts) {
-    initOpenField();
-    RRT rrt(RRTPoint(XYZCoord(100, 100, 0), 0));
-
-    // a couple of branches, so the nodes sit at different distances from the root
-    const RRTPoint near_node(XYZCoord(200, 150, 0), 0);
-    const RRTPoint far_node(XYZCoord(700, 200, 0), HALF_PI);
-    rrt.tree.addSample(0, near_node, Dubins::bestOption(rrt.tree.getStart(), near_node));
-    rrt.tree.addSample(1, far_node, Dubins::bestOption(near_node, far_node));
-    ASSERT_EQ(rrt.tree.tree.size, 3);
-
-    const std::vector<RRTPoint> ends = {RRTPoint(XYZCoord(800, 800, 0), HALF_PI),
-                                        RRTPoint(XYZCoord(300, 900, 0), 0)};
-
-    for (NodeId node = 0; node < rrt.tree.tree.size; node++) {
-        const double bound = rrt.lowerBound(node, ends);
-
-        // the flight to the node itself is already paid for
-        EXPECT_GE(bound, rrt.tree.tree.length[node]);
-
-        rrt.fillOptions(node, ends);
-        ASSERT_FALSE(rrt.options.empty());
-
-        for (const Connection& option : rrt.options) {
-            EXPECT_LE(bound, option.cost);
-        }
-    }
-}
-
-/*
  *  RRT::bestConnection -- a path that leaves the airspace is not one that can be
  *  taken, no matter how cheap it is
  */
@@ -174,22 +148,25 @@ TEST(RRTTest, BestConnectionStaysInsideTheAirspace) {
                                            RRTPoint(XYZCoord(460, 650, 0), 0)};
 
     for (const RRTPoint& end : targets) {
-        const Connection connection = rrt.bestConnection({end});
+        const auto [anchor, segment] = rrt.bestConnection({end});
+        const double cost = (anchor == INVALID_NODE) ? std::numeric_limits<double>::infinity()
+                                                     : costOf(rrt, anchor, segment);
 
-        if (connection.isValid()) {
-            EXPECT_TRUE(Environment::isDubinsPathInBounds(rrt.tree.tree.points[connection.anchor],
-                                                          connection.end, connection.option));
+        if (anchor != INVALID_NODE) {
+            EXPECT_TRUE(Environment::isDubinsPathInBounds(rrt.tree.point(anchor), segment.end,
+                                                          segment.path));
         }
 
         // everything cheaper than what it settled on cuts through the wall or the
-        // edge of the field
+        // edge of the field. These options come off the root, which the tree
+        // starts at, so the path length is the whole cost of the flight
         rrt.fillOptions(0, {end});
         ASSERT_FALSE(rrt.options.empty());
 
-        for (const Connection& option : rrt.options) {
-            if (option.cost < connection.cost) {
-                EXPECT_FALSE(Environment::isDubinsPathInBounds(
-                    rrt.tree.tree.points[option.anchor], option.end, option.option))
+        for (const PathSegment& option : rrt.options) {
+            if (option.path.length < cost) {
+                EXPECT_FALSE(Environment::isDubinsPathInBounds(rrt.tree.point(0), option.end,
+                                                               option.path))
                     << "passed up a cheaper path to (" << end.coord.x << ", " << end.coord.y << ")";
             }
         }
@@ -207,23 +184,21 @@ TEST(RRTTest, BestConnectionIsTheCheapestOneThatCanBeFlown) {
     // a couple of branches, so the nodes sit at different distances from the root
     const RRTPoint near_node(XYZCoord(200, 150, 0), 0);
     const RRTPoint far_node(XYZCoord(700, 200, 0), HALF_PI);
-    rrt.tree.addSample(0, near_node, Dubins::bestOption(rrt.tree.getStart(), near_node));
-    rrt.tree.addSample(1, far_node, Dubins::bestOption(near_node, far_node));
-    ASSERT_EQ(rrt.tree.tree.size, 3);
+    rrt.tree.addSample(0, {near_node, Dubins::bestOption(rrt.tree.getStart(), near_node)});
+    rrt.tree.addSample(1, {far_node, Dubins::bestOption(near_node, far_node)});
+    ASSERT_EQ(rrt.tree.size, 3);
 
     const std::vector<RRTPoint> ends = {RRTPoint(XYZCoord(800, 800, 0), HALF_PI)};
-    const Connection connection = rrt.bestConnection(ends);
-    const Connection cheapest = cheapestFlyableConnection(rrt, ends);
+    const auto [anchor, segment] = rrt.bestConnection(ends);
+    const auto [cheapest_anchor, cheapest_cost] = cheapestFlyableConnection(rrt, ends);
 
-    ASSERT_TRUE(connection.isValid());
-    EXPECT_EQ(connection.anchor, cheapest.anchor);
-    EXPECT_DOUBLE_EQ(connection.cost, cheapest.cost);
-    EXPECT_TRUE(connection.end == ends[0]);
-    EXPECT_DOUBLE_EQ(connection.cost,
-                     rrt.tree.tree.length[connection.anchor] + connection.option.length);
+    ASSERT_NE(anchor, INVALID_NODE);
+    EXPECT_EQ(anchor, cheapest_anchor);
+    EXPECT_DOUBLE_EQ(costOf(rrt, anchor, segment), cheapest_cost);
+    EXPECT_TRUE(segment.end == ends[0]);
 
     // the tree is left alone -- the caller decides whether to commit
-    EXPECT_EQ(rrt.tree.tree.size, 3);
+    EXPECT_EQ(rrt.tree.size, 3);
 }
 
 /*
@@ -237,11 +212,12 @@ TEST(RRTTest, BestConnectionTakesTheCheapestOfTheEndpoints) {
     const RRTPoint close(XYZCoord(300, 100, 0), 0);
     const RRTPoint distant(XYZCoord(800, 700, 0), M_PI);
 
-    const Connection connection = rrt.bestConnection({distant, close});
+    const auto [anchor, segment] = rrt.bestConnection({distant, close});
 
-    ASSERT_TRUE(connection.isValid());
-    EXPECT_TRUE(connection.end == close);
-    EXPECT_DOUBLE_EQ(connection.cost, cheapestFlyableConnection(rrt, {distant, close}).cost);
+    ASSERT_NE(anchor, INVALID_NODE);
+    EXPECT_TRUE(segment.end == close);
+    EXPECT_DOUBLE_EQ(costOf(rrt, anchor, segment),
+                     cheapestFlyableConnection(rrt, {distant, close}).second);
 }
 
 /*
@@ -251,11 +227,7 @@ TEST(RRTTest, BestConnectionGivesUpOnAnUnreachablePoint) {
     initOpenField();
     RRT rrt(RRTPoint(XYZCoord(100, 100, 0), 0));
 
-    const Connection connection = rrt.bestConnection({RRTPoint(XYZCoord(2000, 2000, 0), 0)});
-
-    EXPECT_FALSE(connection.isValid());
-    EXPECT_EQ(connection.anchor, INVALID_NODE);
-    EXPECT_FALSE(std::isfinite(connection.cost));
+    EXPECT_EQ(rrt.bestConnection({RRTPoint(XYZCoord(2000, 2000, 0), 0)}).first, INVALID_NODE);
 }
 
 /*
@@ -269,23 +241,23 @@ TEST(RRTTest, BestConnectionGivesUpOnAPointBehindAnObstacle) {
     // a single node cannot reach around the wall -- the gap is 300m above it, and
     // every path that lands on this point comes in through the wall
     const RRTPoint across(XYZCoord(800, 400, 0), 0);
-    EXPECT_FALSE(rrt.bestConnection({across}).isValid());
+    EXPECT_EQ(rrt.bestConnection({across}).first, INVALID_NODE);
 
     // the same tree still finds a point the wall is not in front of
     const RRTPoint reachable(XYZCoord(400, 200, 0), M_PI);
-    EXPECT_TRUE(rrt.bestConnection({reachable}).isValid());
+    EXPECT_NE(rrt.bestConnection({reachable}).first, INVALID_NODE);
 
     // and a point behind the wall does not stop the reachable one from winning
-    const Connection connection = rrt.bestConnection({across, reachable});
-    ASSERT_TRUE(connection.isValid());
-    EXPECT_TRUE(connection.end == reachable);
+    const auto [anchor, segment] = rrt.bestConnection({across, reachable});
+    ASSERT_NE(anchor, INVALID_NODE);
+    EXPECT_TRUE(segment.end == reachable);
 }
 
 /*
- *  RRT::connectToGoal -- the leg is handed back and the tree restarts at the
- *  waypoint that was just reached
+ *  RRT::connectToGoal -- the leg is handed back, and where the tree is rooted is
+ *  left for the caller to decide
  */
-TEST(RRTTest, ConnectToGoalCommitsThePathAndRestartsTheTree) {
+TEST(RRTTest, ConnectToGoalCommitsThePathWithoutMovingTheRoot) {
     initOpenField();
     const RRTPoint start(XYZCoord(100, 100, 0), 0);
     const XYZCoord goal(500, 500, 30);
@@ -304,11 +276,18 @@ TEST(RRTTest, ConnectToGoalCommitsThePathAndRestartsTheTree) {
     EXPECT_NEAR(path.back().x, goal.x, 1e-6);
     EXPECT_NEAR(path.back().y, goal.y, 1e-6);
 
-    // the waypoint is the root of the tree the next waypoint is pathed from
-    EXPECT_EQ(rrt.tree.tree.size, 1);
-    EXPECT_TRUE(rrt.tree.getStart() == leg.end);
     EXPECT_NE(std::find(DEFAULT_GOAL_ANGLES.begin(), DEFAULT_GOAL_ANGLES.end(), leg.end.psi),
               DEFAULT_GOAL_ANGLES.end());
+
+    // the goal was hung off the tree, but the tree is still rooted where the
+    // plane is -- the leg has been priced, not taken
+    EXPECT_TRUE(rrt.tree.getStart() == start);
+    EXPECT_EQ(rrt.tree.size, 2);
+
+    // taking it is what makes the waypoint the root the next leg is flown from
+    rrt.reroot(leg.end);
+    EXPECT_EQ(rrt.tree.size, 1);
+    EXPECT_TRUE(rrt.tree.getStart() == flat(leg.end));
 }
 
 /*
@@ -324,7 +303,7 @@ TEST(RRTTest, ConnectToGoalFailsOnAnUnreachableGoal) {
     EXPECT_FALSE(leg.isValid());
 
     // the tree is left as it was, still rooted at the plane
-    EXPECT_EQ(rrt.tree.tree.size, 1);
+    EXPECT_EQ(rrt.tree.size, 1);
     EXPECT_TRUE(rrt.tree.getStart() == start);
 }
 
@@ -340,8 +319,12 @@ TEST(RRTTest, RRTIterationConnectsToAReachableGoal) {
     const Leg leg = rrt.RRTIteration(goal, goalEndpoints(goal, DEFAULT_GOAL_ANGLES));
 
     ASSERT_TRUE(leg.isValid());
+    EXPECT_TRUE(leg.end.coord == goal);
     EXPECT_TRUE(pathIsInBounds(flyLeg(leg)));
-    EXPECT_TRUE(rrt.tree.getStart().coord == goal);
+
+    // sampling grew the tree, but the leg is still flown from where the plane is
+    EXPECT_TRUE(leg.start == rrt.tree.getStart());
+    EXPECT_TRUE(rrt.tree.getStart().coord == XYZCoord(100, 100, 0));
 }
 
 /*
@@ -386,24 +369,36 @@ TEST(RRTTest, RunTakesTheDirectFlightWhenThereIsOne) {
 
     // straight off the root, so the leg is the one dubins path that got there
     EXPECT_EQ(leg.segments.size(), 1);
-    EXPECT_DOUBLE_EQ(leg.length, leg.segments.back().option.length);
+    EXPECT_DOUBLE_EQ(leg.length, leg.segments.back().path.length);
 }
 
 /*
- *  RRT::run -- each leg is flown from where the one behind it landed
+ *  RRT::run -- a run prices a leg without taking it, so two goals can be weighed
+ *  from the same place. Rerooting is what flies one of them.
  */
-TEST(RRTTest, RunRerootsAtTheWaypointItReached) {
+TEST(RRTTest, RunLeavesTheRootForTheCallerToMove) {
     initOpenField();
     seedRandom(5);
-    RRT rrt(RRTPoint(XYZCoord(100, 100, 0), 0));
+    const RRTPoint start(XYZCoord(100, 100, 0), 0);
+    RRT rrt(start);
 
+    // both legs are flown from where the plane is, not from each other
     const Leg first = rrt.run(XYZCoord(400, 300, 30), DEFAULT_GOAL_ANGLES);
-    const Leg second = rrt.run(XYZCoord(800, 600, 45), DEFAULT_GOAL_ANGLES);
+    const Leg alternative = rrt.run(XYZCoord(800, 600, 45), DEFAULT_GOAL_ANGLES);
 
     ASSERT_TRUE(first.isValid());
+    ASSERT_TRUE(alternative.isValid());
+    EXPECT_TRUE(first.start == start);
+    EXPECT_TRUE(alternative.start == start);
+    EXPECT_TRUE(rrt.tree.getStart() == start);
+
+    // taking one of them is what moves the plane on
+    rrt.reroot(first.end);
+    const Leg second = rrt.run(XYZCoord(800, 600, 45), DEFAULT_GOAL_ANGLES);
+
     ASSERT_TRUE(second.isValid());
-    EXPECT_TRUE(second.start == first.end);
-    EXPECT_TRUE(rrt.tree.getStart() == second.end);
+    EXPECT_TRUE(second.start == flat(first.end));
+    EXPECT_TRUE(rrt.tree.getStart() == flat(first.end));
 }
 
 /*
@@ -426,23 +421,24 @@ TEST(RRTTest, BestConnectionMatchesAnExhaustiveSearch) {
         // a tree of random samples, grown the way an iteration would grow it
         for (int i = 0; i < 40; i++) {
             const RRTPoint sample(Environment::getRandomPoint(false, start), random(0, TWO_PI));
-            const Connection connection = rrt.bestConnection({sample});
+            const auto [anchor, segment] = rrt.bestConnection({sample});
 
-            if (connection.isValid()) {
-                rrt.tree.addSample(connection.anchor, connection.end, connection.option);
+            if (anchor != INVALID_NODE) {
+                rrt.tree.addSample(anchor, segment);
             }
         }
-        ASSERT_GT(rrt.tree.tree.size, 1) << "trial " << trial << " grew nothing to search";
+        ASSERT_GT(rrt.tree.size, 1) << "trial " << trial << " grew nothing to search";
 
         const std::vector<RRTPoint> ends = goalEndpoints(goal, DEFAULT_GOAL_ANGLES);
-        const Connection found = rrt.bestConnection(ends);
-        const Connection exhaustive = cheapestFlyableConnection(rrt, ends);
+        const auto [found, found_segment] = rrt.bestConnection(ends);
+        const auto [exhaustive, exhaustive_cost] = cheapestFlyableConnection(rrt, ends);
 
-        ASSERT_EQ(found.isValid(), exhaustive.isValid()) << "trial " << trial;
+        ASSERT_EQ(found == INVALID_NODE, exhaustive == INVALID_NODE) << "trial " << trial;
 
-        if (found.isValid()) {
-            EXPECT_DOUBLE_EQ(found.cost, exhaustive.cost) << "trial " << trial;
-            EXPECT_EQ(found.anchor, exhaustive.anchor) << "trial " << trial;
+        if (found != INVALID_NODE) {
+            EXPECT_DOUBLE_EQ(costOf(rrt, found, found_segment), exhaustive_cost)
+                << "trial " << trial;
+            EXPECT_EQ(found, exhaustive) << "trial " << trial;
         }
     }
 }

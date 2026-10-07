@@ -20,15 +20,121 @@ void init(const Polygon& valid_region, const Polygon& airdrop_zone, const Polygo
     _mapping_region = mapping_region;
     _obstacles = obstacles;
     _bounds = findBounds(valid_region);
+
+    // the regions never move once they are set, so the form the bounds checks
+    // want them in is worth building once here rather than deriving per check
+    _valid_edges = buildEdgeSet(valid_region);
+    _obstacle_edges.clear();
+    _obstacle_edges.reserve(obstacles.size());
+    for (const Polygon& obstacle : obstacles) {
+        _obstacle_edges.push_back(buildEdgeSet(obstacle));
+    }
 }
 
-bool isPointInBounds(const XYZCoord& point) {
-    if (!isPointInPolygon(_valid_region, point)) {
+EdgeSet buildEdgeSet(const Polygon& polygon) {
+    EdgeSet edges;
+
+    const std::size_t corners = polygon.size();
+    if (corners == 0) {
+        return edges;
+    }
+
+    edges.start_x.reserve(corners);
+    edges.start_y.reserve(corners);
+    edges.end_x.reserve(corners);
+    edges.end_y.reserve(corners);
+
+    edges.min_x = edges.max_x = polygon[0].x;
+    edges.min_y = edges.max_y = polygon[0].y;
+
+    for (std::size_t i = 0; i < corners; i++) {
+        const XYZCoord& start = polygon[i];
+        const XYZCoord& end = polygon[(i + 1) % corners];
+
+        edges.start_x.push_back(start.x);
+        edges.start_y.push_back(start.y);
+        edges.end_x.push_back(end.x);
+        edges.end_y.push_back(end.y);
+
+        edges.min_x = std::min(edges.min_x, start.x);
+        edges.max_x = std::max(edges.max_x, start.x);
+        edges.min_y = std::min(edges.min_y, start.y);
+        edges.max_y = std::max(edges.max_y, start.y);
+    }
+
+    return edges;
+}
+
+bool isPointInEdgeSet(const EdgeSet& edges, double x, double y) {
+    // a point outside the box is outside the polygon, and this is the answer
+    // almost every time an obstacle is asked about
+    if (x < edges.min_x || x > edges.max_x || y < edges.min_y || y > edges.max_y) {
         return false;
     }
 
-    for (const Polygon& obstacle : _obstacles) {
-        if (isPointInPolygon(obstacle, point)) {
+    bool is_inside = false;
+
+    for (std::size_t i = 0; i < edges.size(); i++) {
+        const double y0 = edges.start_y[i];
+        const double y1 = edges.end_y[i];
+
+        if ((y0 > y) != (y1 > y)) {
+            const double x0 = edges.start_x[i];
+            const double crossing = (edges.end_x[i] - x0) * (y - y0) / (y1 - y0) + x0;
+
+            if (x < crossing) {
+                is_inside = !is_inside;
+            }
+        }
+    }
+
+    return is_inside;
+}
+
+bool doesLineIntersectEdgeSet(const EdgeSet& edges, const XYZCoord& start, const XYZCoord& end) {
+    // the segment cannot reach an edge it does not share any ground with
+    if (std::max(start.x, end.x) < edges.min_x || std::min(start.x, end.x) > edges.max_x ||
+        std::max(start.y, end.y) < edges.min_y || std::min(start.y, end.y) > edges.max_y) {
+        return false;
+    }
+
+    for (std::size_t i = 0; i < edges.size(); i++) {
+        if (intersect(start, end, XYZCoord{edges.start_x[i], edges.start_y[i], 0},
+                      XYZCoord{edges.end_x[i], edges.end_y[i], 0})) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool doesArcIntersectEdgeSet(const EdgeSet& edges, const XYZCoord& center, double radius,
+                             double start_angle, double sweep) {
+    // the arc lies inside its circle, so the circle's box standing clear of the
+    // polygon's is enough to rule it out
+    if (center.x + radius < edges.min_x || center.x - radius > edges.max_x ||
+        center.y + radius < edges.min_y || center.y - radius > edges.max_y) {
+        return false;
+    }
+
+    for (std::size_t i = 0; i < edges.size(); i++) {
+        if (doesArcIntersectSegment(center, radius, start_angle, sweep,
+                                    XYZCoord{edges.start_x[i], edges.start_y[i], 0},
+                                    XYZCoord{edges.end_x[i], edges.end_y[i], 0})) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool isPointInBounds(const XYZCoord& point) {
+    if (!isPointInEdgeSet(_valid_edges, point.x, point.y)) {
+        return false;
+    }
+
+    for (const EdgeSet& obstacle : _obstacle_edges) {
+        if (isPointInEdgeSet(obstacle, point.x, point.y)) {
             return false;
         }
     }
@@ -77,19 +183,13 @@ bool isPathInBounds(const std::vector<XYZCoord>& path) {
     return true;
 }
 
-bool isDubinsPathInBounds(const RRTPoint& start, const RRTPoint& end, const RRTOption& option) {
-    // [LRL, RLR] are disabled in Dubins::allOptions();
-    if (!option.has_straight) {
-        return false;
-    }
-
-    // rejects the sentinel options (infinity) that lsr/rsl produce when no path exists
-    if (!std::isfinite(option.length)) {
+bool isDubinsPathInBounds(const RRTPoint& start, const RRTPoint& end, const DubinsPath& path) {
+    // rejects the sentinel paths (infinity) that lsr/rsl produce when no path exists
+    if (!std::isfinite(path.length)) {
         return false;
     }
 
     const double radius = Dubins::_radius;
-    const DubinsPath& path = option.dubins_path;
 
     if (!isPointInBounds(start.coord) || !isPointInBounds(end.coord)) {
         return false;
@@ -99,40 +199,57 @@ bool isDubinsPathInBounds(const RRTPoint& start, const RRTPoint& end, const RRTO
     XYZCoord straight_start = start.coord;
     XYZCoord straight_end = end.coord;
 
-    // first turn
-    if (std::abs(path.beta_0) > 0) {
+    const bool turns_first = std::abs(path.beta_0) > 0;
+    const bool turns_last = std::abs(path.beta_2) > 0;
+
+    // where the turns hand over to the straightaway, which is geometry and does
+    // not depend on any of the three sections being in bounds
+    double first_start_angle = 0;
+    double last_entry_angle = 0;
+    XYZCoord first_center{0, 0, 0};
+    XYZCoord last_center{0, 0, 0};
+
+    if (turns_first) {
         const double turn_sign = (path.beta_0 > 0) ? 1.0 : -1.0;
-        const XYZCoord center = Dubins::findCenter(start, (turn_sign > 0) ? 'L' : 'R');
+        first_center = Dubins::findCenter(start, (turn_sign > 0) ? 'L' : 'R');
 
         // angle from the center to the plane at the start of the turn
-        const double start_angle = start.psi - HALF_PI * turn_sign;
-        if (!isArcInBounds(center, radius, start_angle, path.beta_0)) {
-            return false;
-        }
+        first_start_angle = start.psi - HALF_PI * turn_sign;
 
         const double exit_angle = start.psi + (std::abs(path.beta_0) - HALF_PI) * turn_sign;
         straight_start =
-            center + radius * XYZCoord{std::cos(exit_angle), std::sin(exit_angle), 0};
+            first_center + radius * XYZCoord{std::cos(exit_angle), std::sin(exit_angle), 0};
     }
 
     // last turn (entered backwards -- the arc runs from the end of the straight
     // section to the end vector)
-    if (std::abs(path.beta_2) > 0) {
+    if (turns_last) {
         const double turn_sign = (path.beta_2 > 0) ? 1.0 : -1.0;
-        const XYZCoord center = Dubins::findCenter(end, (turn_sign > 0) ? 'L' : 'R');
+        last_center = Dubins::findCenter(end, (turn_sign > 0) ? 'L' : 'R');
 
         // angle from the center to the plane at the start of the turn
-        const double entry_angle = end.psi - (std::abs(path.beta_2) + HALF_PI) * turn_sign;
-        if (!isArcInBounds(center, radius, entry_angle, path.beta_2)) {
-            return false;
-        }
+        last_entry_angle = end.psi - (std::abs(path.beta_2) + HALF_PI) * turn_sign;
 
         straight_end =
-            center + radius * XYZCoord{std::cos(entry_angle), std::sin(entry_angle), 0};
+            last_center + radius * XYZCoord{std::cos(last_entry_angle),
+                                            std::sin(last_entry_angle), 0};
     }
 
-    // straight section
-    return isLineInBounds(straight_start, straight_end);
+    // The three sections all have to be in bounds and none of the checks can
+    // affect another, so they are run cheapest-and-likeliest-to-fail first. The
+    // straightaway covers most of the ground a path does, and the turns are a
+    // radius wide around a point already known to be in bounds, so it is what
+    // usually leaves the airspace -- and one segment against the boundary is
+    // less work than an arc against it.
+    if (!isLineInBounds(straight_start, straight_end)) {
+        return false;
+    }
+
+    if (turns_first && !isArcInBounds(first_center, radius, first_start_angle, path.beta_0)) {
+        return false;
+    }
+
+    return !turns_last || isArcInBounds(last_center, radius, last_entry_angle, path.beta_2);
 }
 
 bool isArcInBounds(const XYZCoord& center, double radius, double start_angle, double sweep) {
@@ -143,12 +260,12 @@ bool isArcInBounds(const XYZCoord& center, double radius, double start_angle, do
         return false;
     }
 
-    if (doesArcIntersectPolygon(center, radius, start_angle, sweep, _valid_region)) {
+    if (doesArcIntersectEdgeSet(_valid_edges, center, radius, start_angle, sweep)) {
         return false;
     }
 
-    for (const Polygon& obstacle : _obstacles) {
-        if (doesArcIntersectPolygon(center, radius, start_angle, sweep, obstacle)) {
+    for (const EdgeSet& obstacle : _obstacle_edges) {
+        if (doesArcIntersectEdgeSet(obstacle, center, radius, start_angle, sweep)) {
             return false;
         }
     }
@@ -219,12 +336,12 @@ bool isPolygonInPolygon(const Polygon& inner, const Polygon& outer) {
 }
 
 bool isLineInBounds(const XYZCoord& start_point, const XYZCoord& end_point) {
-    if (doesLineIntersectPolygon(start_point, end_point, _valid_region)) {
+    if (doesLineIntersectEdgeSet(_valid_edges, start_point, end_point)) {
         return false;
     }
 
-    for (const Polygon& obstacle : _obstacles) {
-        if (doesLineIntersectPolygon(start_point, end_point, obstacle)) {
+    for (const EdgeSet& obstacle : _obstacle_edges) {
+        if (doesLineIntersectEdgeSet(obstacle, start_point, end_point)) {
             return false;
         }
     }
@@ -296,7 +413,7 @@ bool doesArcIntersectSegment(const XYZCoord& center, double radius, double start
 
 // Given three colinear points p, q, r, the function checks if
 // point q lies on line segment 'pr'
-bool onSegment(XYZCoord p, XYZCoord q, XYZCoord r) {
+bool onSegment(const XYZCoord& p, const XYZCoord& q, const XYZCoord& r) {
     if (q.x <= std::max(p.x, r.x) && q.x >= std::min(p.x, r.x) && q.y <= std::max(p.y, r.y) &&
         q.y >= std::min(p.y, r.y))
         return true;
@@ -308,14 +425,17 @@ bool onSegment(XYZCoord p, XYZCoord q, XYZCoord r) {
 // 0 : Colinear points
 // 1 : Clockwise points
 // 2 : Counterclockwise points
-int orientation(XYZCoord p, XYZCoord q, XYZCoord r) {
-    int val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
+int orientation(const XYZCoord& p, const XYZCoord& q, const XYZCoord& r) {
+    // the cross product is kept a double -- coordinates are metres over a field
+    // kilometres across, so truncating it to an int both loses every turn
+    // shallower than one square metre and overflows on a large enough field
+    const double val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
     if (val == 0) return 0;    // colinear
     return (val > 0) ? 1 : 2;  // clock or counterclock wise
 }
 
 // Function to check if segments intersect
-bool intersect(XYZCoord p1, XYZCoord q1, XYZCoord p2, XYZCoord q2) {
+bool intersect(const XYZCoord& p1, const XYZCoord& q1, const XYZCoord& p2, const XYZCoord& q2) {
     // Find the four orientations needed for general and
     // special cases
     int o1 = orientation(p1, q1, p2);

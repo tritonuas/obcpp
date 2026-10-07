@@ -108,18 +108,18 @@ TEST(DubinsUtilTest, Modulo) {
  *   Tests dubins ==> compareRRTLength()
  */
 TEST(DubinsUtilTest, CompareRRT) {
-    RRTOption infinite_length =
-        RRTOption{std::numeric_limits<double>::infinity(), DubinsPath{0, 0, 0}, true};
-    RRTOption long_length = RRTOption{99999, DubinsPath{0, 0, 0}, true};
-    RRTOption short_length = RRTOption{10, DubinsPath{0, 0, 9999}, false};
+    DubinsPath infinite_length =
+        DubinsPath{0, 0, 0, std::numeric_limits<double>::infinity()};
+    DubinsPath long_length = DubinsPath{0, 0, 0, 99999};
+    DubinsPath short_length = DubinsPath{0, 0, 9999, 10};
 
-    EXPECT_EQ(compareRRTOptionLength(infinite_length, long_length), false);
-    EXPECT_EQ(compareRRTOptionLength(short_length, long_length), true);
-    EXPECT_EQ(compareRRTOptionLength(long_length, short_length), false);
+    EXPECT_EQ(compareDubinsPathLength(infinite_length, long_length), false);
+    EXPECT_EQ(compareDubinsPathLength(short_length, long_length), true);
+    EXPECT_EQ(compareDubinsPathLength(long_length, short_length), false);
 
     // not needed for the behavior of the function, but testing predictable implementation
-    EXPECT_EQ(compareRRTOptionLength(short_length, short_length), false);
-    EXPECT_EQ(compareRRTOptionLength(infinite_length, infinite_length), false);
+    EXPECT_EQ(compareDubinsPathLength(short_length, short_length), false);
+    EXPECT_EQ(compareDubinsPathLength(infinite_length, infinite_length), false);
 }
 
 /*
@@ -284,17 +284,17 @@ TEST(DubinsTest, GenPointsStraight) {
     RRTPoint arbitrary_position1{Vector{9, 6, 0}, 4.00};
 
     // lsl  origin_x ==> arbitrary_position
-    DubinsPath lsl{6.107586558274035, 4.175598748905551, 12.983673916464376};
+    DubinsPath lsl{6.107586558274035, 4.175598748905551, 12.983673916464376, 0};
     expectStraightPathPoints(origin_x, arbitrary_position1, lsl,
                              Dubins::generatePointsStraight(origin_x, arbitrary_position1, lsl));
 
     // rsr  origin_x ==> arbitrary_position, the same two vectors turning the other way
-    DubinsPath rsr{-5.062863952455051, -3.5035066619041215, 15.191727147276039};
+    DubinsPath rsr{-5.062863952455051, -3.5035066619041215, 15.191727147276039, 0};
     expectStraightPathPoints(origin_x, arbitrary_position1, rsr,
                              Dubins::generatePointsStraight(origin_x, arbitrary_position1, rsr));
 
     // rsl  origin_x ==> arbitrary_position, one turn each way
-    DubinsPath rsl{-0.18936765807467593, 4.189367658074676, 11.100064246783269};
+    DubinsPath rsl{-0.18936765807467593, 4.189367658074676, 11.100064246783269, 0};
     expectStraightPathPoints(origin_x, arbitrary_position1, rsl,
                              Dubins::generatePointsStraight(origin_x, arbitrary_position1, rsl));
 
@@ -302,7 +302,7 @@ TEST(DubinsTest, GenPointsStraight) {
     // by its two endpoints
     RRTPoint straight_end{Vector{20, 0, 0}, 0};
     std::vector<Vector> straight =
-        Dubins::generatePointsStraight(origin_x, straight_end, DubinsPath(0, 0, 20));
+        Dubins::generatePointsStraight(origin_x, straight_end, DubinsPath(0, 0, 20, 20));
 
     ASSERT_EQ(straight.size(), 2);
     expectPointNear(straight[0], origin_x.coord, 1e-6);
@@ -319,7 +319,7 @@ TEST(DubinsTest, GenPointsCurve) {
     RRTPoint arbitrary_position1{Vector{9, 6, 0}, 4.00};
 
     // lrl  origin_x ==> arbitrary_position
-    DubinsPath path{2.25948315258286, 0.3274953432143759, 4.870163802976823};
+    DubinsPath path{2.25948315258286, 0.3274953432143759, 4.870163802976823, 0};
 
     std::vector<Vector> result1 = Dubins::generatePointsCurve(origin_x, arbitrary_position1, path);
     std::vector<Vector> expected_result1 = {Vector{6.123233995736766e-16, 0.0, 0},
@@ -383,29 +383,27 @@ TEST(DubinsTest, GenPoints) {
     RRTPoint arbitrary_position1{Vector{9, 6, 0}, 4.00};
 
     // straight path
-    RRTOption lsl{64.39960045236231,
-                  DubinsPath{6.107586558274035, 4.175598748905551, 12.983673916464376}, true};
+    DubinsPath lsl{6.107586558274035, 4.175598748905551, 12.983673916464376, 64.39960045236231};
     // curve only path
-    RRTOption lrl{37.28571149387029,
-                  DubinsPath{2.25948315258286, 0.3274953432143759, -4.870163802976823}, false};
+    DubinsPath lrl{2.25948315258286, 0.3274953432143759, -4.870163802976823, 37.28571149387029};
 
     const std::vector<Vector> straight = Dubins::generatePoints(
-        origin_x, arbitrary_position1, lsl.dubins_path, lsl.has_straight);
+        origin_x, arbitrary_position1, lsl, true);
     const std::vector<Vector> expected_straight =
-        Dubins::generatePointsStraight(origin_x, arbitrary_position1, lsl.dubins_path);
+        Dubins::generatePointsStraight(origin_x, arbitrary_position1, lsl);
 
     ASSERT_EQ(straight.size(), expected_straight.size());
     for (std::size_t i = 0; i < straight.size(); i++) {
         expectPointNear(straight[i], expected_straight[i], 1e-9);
     }
-    expectStraightPathPoints(origin_x, arbitrary_position1, lsl.dubins_path, straight);
+    expectStraightPathPoints(origin_x, arbitrary_position1, lsl, straight);
 
     const std::vector<Vector> curve = Dubins::generatePoints(
-        origin_x, arbitrary_position1, lrl.dubins_path, lrl.has_straight);
+        origin_x, arbitrary_position1, lrl, false);
     // generatePointsCurve reads the middle turn out of straight_dist, and wants it
     // as a magnitude
     const std::vector<Vector> expected_curve = Dubins::generatePointsCurve(
-        origin_x, arbitrary_position1, lrl.dubins_path);
+        origin_x, arbitrary_position1, lrl);
 
     ASSERT_EQ(curve.size(), expected_curve.size());
     for (std::size_t i = 0; i < curve.size(); i++) {
@@ -433,38 +431,34 @@ TEST(DubinsTest, LSL) {
     RRTPoint plus_x100{Vector{100, 0, 0}, 0};
     RRTPoint arbitrary_position2{Vector{5, 100, 0}, M_PI / 2};
 
-    RRTOption result1 =
+    DubinsPath result1 =
         Dubins::lsl(origin_x, arbitrary_position1, Dubins::findCenter(origin_x, 'L'),
                     Dubins::findCenter(arbitrary_position1, 'L'));
-    RRTOption expected_result1{103.46948015930067,
-                               DubinsPath{0.40295754, 3.5970424510, 83.46948015930067}, true};
+    DubinsPath expected_result1{0.40295754, 3.5970424510, 83.46948015930067, 103.46948015930067};
 
     EXPECT_NEAR(result1.length, expected_result1.length, 0.01);
-    EXPECT_NEAR(result1.dubins_path.beta_0, expected_result1.dubins_path.beta_0, 0.01);
-    EXPECT_NEAR(result1.dubins_path.beta_2, expected_result1.dubins_path.beta_2, 0.01);
-    EXPECT_NEAR(result1.dubins_path.straight_dist, result1.dubins_path.straight_dist, 0.01);
-    EXPECT_EQ(result1.has_straight, expected_result1.has_straight);
+    EXPECT_NEAR(result1.beta_0, expected_result1.beta_0, 0.01);
+    EXPECT_NEAR(result1.beta_2, expected_result1.beta_2, 0.01);
+    EXPECT_NEAR(result1.straight_dist, result1.straight_dist, 0.01);
 
-    RRTOption result2 = Dubins::lsl(origin_x, plus_x100, Dubins::findCenter(origin_x, 'L'),
+    DubinsPath result2 = Dubins::lsl(origin_x, plus_x100, Dubins::findCenter(origin_x, 'L'),
                                     Dubins::findCenter(plus_x100, 'L'));
-    RRTOption expected_result2{100, DubinsPath{0, 0, 100}, true};
+    DubinsPath expected_result2{0, 0, 100, 100};
 
     EXPECT_NEAR(result2.length, expected_result2.length, 0.01);
-    EXPECT_NEAR(result2.dubins_path.beta_0, expected_result2.dubins_path.beta_0, 0.01);
-    EXPECT_NEAR(result2.dubins_path.beta_2, expected_result2.dubins_path.beta_2, 0.01);
-    EXPECT_NEAR(result2.dubins_path.straight_dist, result2.dubins_path.straight_dist, 0.01);
-    EXPECT_EQ(result2.has_straight, expected_result2.has_straight);
+    EXPECT_NEAR(result2.beta_0, expected_result2.beta_0, 0.01);
+    EXPECT_NEAR(result2.beta_2, expected_result2.beta_2, 0.01);
+    EXPECT_NEAR(result2.straight_dist, result2.straight_dist, 0.01);
 
-    RRTOption result3 =
+    DubinsPath result3 =
         Dubins::lsl(origin_x, arbitrary_position2, Dubins::findCenter(origin_x, 'L'),
                     Dubins::findCenter(arbitrary_position2, 'L'));
-    RRTOption expected_result3{102.85398163397448, DubinsPath{M_PI / 2, 0, 95}, true};
+    DubinsPath expected_result3{M_PI / 2, 0, 95, 102.85398163397448};
 
     EXPECT_NEAR(result3.length, expected_result3.length, 0.01);
-    EXPECT_NEAR(result3.dubins_path.beta_0, expected_result3.dubins_path.beta_0, 0.01);
-    EXPECT_NEAR(result3.dubins_path.beta_2, expected_result3.dubins_path.beta_2, 0.01);
-    EXPECT_NEAR(result3.dubins_path.straight_dist, result3.dubins_path.straight_dist, 0.01);
-    EXPECT_EQ(result3.has_straight, expected_result3.has_straight);
+    EXPECT_NEAR(result3.beta_0, expected_result3.beta_0, 0.01);
+    EXPECT_NEAR(result3.beta_2, expected_result3.beta_2, 0.01);
+    EXPECT_NEAR(result3.straight_dist, result3.straight_dist, 0.01);
 }
 
 /*
@@ -478,38 +472,34 @@ TEST(DubinsTest, RSR) {
     RRTPoint plus_x100{Vector{100, 0, 0}, 0};
     RRTPoint arbitrary_position2{Vector{5, -100, 0}, -M_PI / 2};
 
-    RRTOption result1 =
+    DubinsPath result1 =
         Dubins::rsr(origin_x, arbitrary_position1, Dubins::findCenter(origin_x, 'R'),
                     Dubins::findCenter(arbitrary_position1, 'R'));
-    RRTOption expected_result1(
-        127.792, DubinsPath(-5.664581035483313, -2.9017895788758596, 84.96005087111514), true);
+    DubinsPath expected_result1(-5.664581035483313, -2.9017895788758596, 84.96005087111514, 127.792);
 
     EXPECT_NEAR(result1.length, expected_result1.length, 0.01);
-    EXPECT_NEAR(result1.dubins_path.beta_0, expected_result1.dubins_path.beta_0, 0.01);
-    EXPECT_NEAR(result1.dubins_path.beta_2, expected_result1.dubins_path.beta_2, 0.01);
-    EXPECT_NEAR(result1.dubins_path.straight_dist, result1.dubins_path.straight_dist, 0.01);
-    EXPECT_EQ(result1.has_straight, expected_result1.has_straight);
+    EXPECT_NEAR(result1.beta_0, expected_result1.beta_0, 0.01);
+    EXPECT_NEAR(result1.beta_2, expected_result1.beta_2, 0.01);
+    EXPECT_NEAR(result1.straight_dist, result1.straight_dist, 0.01);
 
-    RRTOption result2 = Dubins::rsr(origin_x, plus_x100, Dubins::findCenter(origin_x, 'R'),
+    DubinsPath result2 = Dubins::rsr(origin_x, plus_x100, Dubins::findCenter(origin_x, 'R'),
                                     Dubins::findCenter(plus_x100, 'R'));
-    RRTOption expected_result2(100, DubinsPath(0, 0, 100), true);
+    DubinsPath expected_result2(0, 0, 100, 100);
 
     EXPECT_NEAR(result2.length, expected_result2.length, 0.01);
-    EXPECT_NEAR(result2.dubins_path.beta_0, expected_result2.dubins_path.beta_0, 0.01);
-    EXPECT_NEAR(result2.dubins_path.beta_2, expected_result2.dubins_path.beta_2, 0.01);
-    EXPECT_NEAR(result2.dubins_path.straight_dist, result2.dubins_path.straight_dist, 0.01);
-    EXPECT_EQ(result2.has_straight, expected_result2.has_straight);
+    EXPECT_NEAR(result2.beta_0, expected_result2.beta_0, 0.01);
+    EXPECT_NEAR(result2.beta_2, expected_result2.beta_2, 0.01);
+    EXPECT_NEAR(result2.straight_dist, result2.straight_dist, 0.01);
 
-    RRTOption result3 =
+    DubinsPath result3 =
         Dubins::rsr(origin_x, arbitrary_position2, Dubins::findCenter(origin_x, 'R'),
                     Dubins::findCenter(arbitrary_position2, 'R'));
-    RRTOption expected_result3(102.85398163397448, DubinsPath(-M_PI / 2, 0, 95), true);
+    DubinsPath expected_result3(-M_PI / 2, 0, 95, 102.85398163397448);
 
     EXPECT_NEAR(result3.length, expected_result3.length, 0.01);
-    EXPECT_NEAR(result3.dubins_path.beta_0, expected_result3.dubins_path.beta_0, 0.01);
-    EXPECT_NEAR(result3.dubins_path.beta_2, expected_result3.dubins_path.beta_2, 0.01);
-    EXPECT_NEAR(result3.dubins_path.straight_dist, result3.dubins_path.straight_dist, 0.01);
-    EXPECT_EQ(result3.has_straight, expected_result3.has_straight);
+    EXPECT_NEAR(result3.beta_0, expected_result3.beta_0, 0.01);
+    EXPECT_NEAR(result3.beta_2, expected_result3.beta_2, 0.01);
+    EXPECT_NEAR(result3.straight_dist, result3.straight_dist, 0.01);
 }
 
 /*
@@ -523,39 +513,34 @@ TEST(DubinsTest, RSL) {
     RRTPoint plus_x100{Vector{100, 0, 0}, 0};
     RRTPoint arbitrary_position2{Vector{10, -100, 0}, 0};
 
-    RRTOption result1 =
+    DubinsPath result1 =
         Dubins::rsl(origin_x, arbitrary_position1, Dubins::findCenter(origin_x, 'R'),
                     Dubins::findCenter(arbitrary_position1, 'L'));
-    RRTOption expected_result1(
-        134.78090998278276, DubinsPath(-5.8893974274779834, 3.606212120298397, 87.30286224390085),
-        true);
+    DubinsPath expected_result1(-5.8893974274779834, 3.606212120298397, 87.30286224390085, 134.78090998278276);
 
     EXPECT_NEAR(result1.length, expected_result1.length, 0.01);
-    EXPECT_NEAR(result1.dubins_path.beta_0, expected_result1.dubins_path.beta_0, 0.01);
-    EXPECT_NEAR(result1.dubins_path.beta_2, expected_result1.dubins_path.beta_2, 0.01);
-    EXPECT_NEAR(result1.dubins_path.straight_dist, result1.dubins_path.straight_dist, 0.01);
-    EXPECT_EQ(result1.has_straight, expected_result1.has_straight);
+    EXPECT_NEAR(result1.beta_0, expected_result1.beta_0, 0.01);
+    EXPECT_NEAR(result1.beta_2, expected_result1.beta_2, 0.01);
+    EXPECT_NEAR(result1.straight_dist, result1.straight_dist, 0.01);
 
-    RRTOption result2 = Dubins::rsl(origin_x, plus_x100, Dubins::findCenter(origin_x, 'R'),
+    DubinsPath result2 = Dubins::rsl(origin_x, plus_x100, Dubins::findCenter(origin_x, 'R'),
                                     Dubins::findCenter(plus_x100, 'L'));
-    RRTOption expected_result2(100, DubinsPath(0, 0, 100), true);
+    DubinsPath expected_result2(0, 0, 100, 100);
 
     EXPECT_NEAR(result2.length, expected_result2.length, 0.01);
-    EXPECT_NEAR(result2.dubins_path.beta_0, expected_result2.dubins_path.beta_0, 0.01);
-    EXPECT_NEAR(result2.dubins_path.beta_2, expected_result2.dubins_path.beta_2, 0.01);
-    EXPECT_NEAR(result2.dubins_path.straight_dist, result2.dubins_path.straight_dist, 0.01);
-    EXPECT_EQ(result2.has_straight, expected_result2.has_straight);
+    EXPECT_NEAR(result2.beta_0, expected_result2.beta_0, 0.01);
+    EXPECT_NEAR(result2.beta_2, expected_result2.beta_2, 0.01);
+    EXPECT_NEAR(result2.straight_dist, result2.straight_dist, 0.01);
 
-    RRTOption result3 =
+    DubinsPath result3 =
         Dubins::rsl(origin_x, arbitrary_position2, Dubins::findCenter(origin_x, 'R'),
                     Dubins::findCenter(arbitrary_position2, 'L'));
-    RRTOption expected_result3(105.70796326794898, DubinsPath(-M_PI / 2, M_PI / 2, 90), true);
+    DubinsPath expected_result3(-M_PI / 2, M_PI / 2, 90, 105.70796326794898);
 
     EXPECT_NEAR(result3.length, expected_result3.length, 0.01);
-    EXPECT_NEAR(result3.dubins_path.beta_0, expected_result3.dubins_path.beta_0, 0.01);
-    EXPECT_NEAR(result3.dubins_path.beta_2, expected_result3.dubins_path.beta_2, 0.01);
-    EXPECT_NEAR(result3.dubins_path.straight_dist, result3.dubins_path.straight_dist, 0.01);
-    EXPECT_EQ(result3.has_straight, expected_result3.has_straight);
+    EXPECT_NEAR(result3.beta_0, expected_result3.beta_0, 0.01);
+    EXPECT_NEAR(result3.beta_2, expected_result3.beta_2, 0.01);
+    EXPECT_NEAR(result3.straight_dist, result3.straight_dist, 0.01);
 }
 
 /*
@@ -569,38 +554,33 @@ TEST(DubinsTest, LSR) {
     RRTPoint plus_x100{Vector{100, 0, 0}, 0};
     RRTPoint arbitrary_position2{Vector{10, 100, 0}, 0};
 
-    RRTOption result1 =
+    DubinsPath result1 =
         Dubins::lsr(origin_x, arbitrary_position1, Dubins::findCenter(origin_x, 'L'),
                     Dubins::findCenter(arbitrary_position1, 'R'));
-    RRTOption expected_result1(
-        96.78474229907584, DubinsPath(0.6420440973470476, -2.925229404526634, 78.94837478970744),
-        true);
+    DubinsPath expected_result1(0.6420440973470476, -2.925229404526634, 78.94837478970744, 96.78474229907584);
 
     EXPECT_NEAR(result1.length, expected_result1.length, 0.01);
-    EXPECT_NEAR(result1.dubins_path.beta_0, expected_result1.dubins_path.beta_0, 0.01);
-    EXPECT_NEAR(result1.dubins_path.beta_2, expected_result1.dubins_path.beta_2, 0.01);
-    EXPECT_NEAR(result1.dubins_path.straight_dist, result1.dubins_path.straight_dist, 0.01);
-    EXPECT_EQ(result1.has_straight, expected_result1.has_straight);
+    EXPECT_NEAR(result1.beta_0, expected_result1.beta_0, 0.01);
+    EXPECT_NEAR(result1.beta_2, expected_result1.beta_2, 0.01);
+    EXPECT_NEAR(result1.straight_dist, result1.straight_dist, 0.01);
 
-    RRTOption result2 = Dubins::lsr(origin_x, plus_x100, Dubins::findCenter(origin_x, 'L'),
+    DubinsPath result2 = Dubins::lsr(origin_x, plus_x100, Dubins::findCenter(origin_x, 'L'),
                                     Dubins::findCenter(plus_x100, 'R'));
-    RRTOption expected_result2(100, DubinsPath(0, 0, 100), true);
+    DubinsPath expected_result2(0, 0, 100, 100);
 
     EXPECT_NEAR(result2.length, expected_result2.length, 0.01);
-    EXPECT_NEAR(result2.dubins_path.beta_0, expected_result2.dubins_path.beta_0, 0.01);
-    EXPECT_NEAR(result2.dubins_path.beta_2, expected_result2.dubins_path.beta_2, 0.01);
-    EXPECT_NEAR(result2.dubins_path.straight_dist, result2.dubins_path.straight_dist, 0.01);
-    EXPECT_EQ(result2.has_straight, expected_result2.has_straight);
+    EXPECT_NEAR(result2.beta_0, expected_result2.beta_0, 0.01);
+    EXPECT_NEAR(result2.beta_2, expected_result2.beta_2, 0.01);
+    EXPECT_NEAR(result2.straight_dist, result2.straight_dist, 0.01);
 
-    RRTOption result3 =
+    DubinsPath result3 =
         Dubins::lsr(origin_x, arbitrary_position2, Dubins::findCenter(origin_x, 'L'),
                     Dubins::findCenter(arbitrary_position2, 'R'));
-    RRTOption expected_result3(105.70796326794898, DubinsPath(M_PI / 2, -M_PI / 2, 90), true);
+    DubinsPath expected_result3(M_PI / 2, -M_PI / 2, 90, 105.70796326794898);
     EXPECT_NEAR(result3.length, expected_result3.length, 0.01);
-    EXPECT_NEAR(result3.dubins_path.beta_0, expected_result3.dubins_path.beta_0, 0.01);
-    EXPECT_NEAR(result3.dubins_path.beta_2, expected_result3.dubins_path.beta_2, 0.01);
-    EXPECT_NEAR(result3.dubins_path.straight_dist, result3.dubins_path.straight_dist, 0.01);
-    EXPECT_EQ(result3.has_straight, expected_result3.has_straight);
+    EXPECT_NEAR(result3.beta_0, expected_result3.beta_0, 0.01);
+    EXPECT_NEAR(result3.beta_2, expected_result3.beta_2, 0.01);
+    EXPECT_NEAR(result3.straight_dist, result3.straight_dist, 0.01);
 }
 
 /*
@@ -612,18 +592,15 @@ TEST(DubinsTest, LRL) {
     RRTPoint origin_x{Vector{0, 0, 0}, 0};
     RRTPoint arbitrary_position1{Vector{9, 6, 0}, 4.00};
 
-    RRTOption result1 =
+    DubinsPath result1 =
         Dubins::lrl(origin_x, arbitrary_position1, Dubins::findCenter(origin_x, 'L'),
                     Dubins::findCenter(arbitrary_position1, 'L'));
-    RRTOption expected_result1(37.28571149387029,
-                               DubinsPath(2.25948315258286, 0.3274953432143759, 4.870163802976823),
-                               false);
+    DubinsPath expected_result1(2.25948315258286, 0.3274953432143759, 4.870163802976823, 37.28571149387029);
 
     EXPECT_NEAR(result1.length, expected_result1.length, 0.01);
-    EXPECT_NEAR(result1.dubins_path.beta_0, expected_result1.dubins_path.beta_0, 0.01);
-    EXPECT_NEAR(result1.dubins_path.beta_2, expected_result1.dubins_path.beta_2, 0.01);
-    EXPECT_NEAR(result1.dubins_path.straight_dist, result1.dubins_path.straight_dist, 0.01);
-    EXPECT_EQ(result1.has_straight, expected_result1.has_straight);
+    EXPECT_NEAR(result1.beta_0, expected_result1.beta_0, 0.01);
+    EXPECT_NEAR(result1.beta_2, expected_result1.beta_2, 0.01);
+    EXPECT_NEAR(result1.straight_dist, result1.straight_dist, 0.01);
 }
 
 /*
@@ -635,18 +612,15 @@ TEST(DubinsTest, RLR) {
     RRTPoint origin_x{Vector{0, 0, 0}, 0};
     RRTPoint arbitrary_position1{Vector{9, 6, 0}, 4.00};
 
-    RRTOption result1 =
+    DubinsPath result1 =
         Dubins::rlr(origin_x, arbitrary_position1, Dubins::findCenter(origin_x, 'R'),
                     Dubins::findCenter(arbitrary_position1, 'R'));
-    RRTOption expected_result1(
-        56.99424154724155, DubinsPath(-1.0585943958426456, -5.782422412471302, 4.557831501134362),
-        false);
+    DubinsPath expected_result1(-1.0585943958426456, -5.782422412471302, 4.557831501134362, 56.99424154724155);
 
     EXPECT_NEAR(result1.length, expected_result1.length, 0.01);
-    EXPECT_NEAR(result1.dubins_path.beta_0, expected_result1.dubins_path.beta_0, 0.01);
-    EXPECT_NEAR(result1.dubins_path.beta_2, expected_result1.dubins_path.beta_2, 0.01);
-    EXPECT_NEAR(result1.dubins_path.straight_dist, result1.dubins_path.straight_dist, 0.01);
-    EXPECT_EQ(result1.has_straight, expected_result1.has_straight);
+    EXPECT_NEAR(result1.beta_0, expected_result1.beta_0, 0.01);
+    EXPECT_NEAR(result1.beta_2, expected_result1.beta_2, 0.01);
+    EXPECT_NEAR(result1.straight_dist, result1.straight_dist, 0.01);
 }
 
 /*
@@ -659,34 +633,24 @@ TEST(DubinsTest, AllOptions) {
     RRTPoint arbitrary_position1{Vector{9, 6, 0}, 4.00};
     RRTPoint arbitrary_position2{Vector{3, -1, 0}, 2.36};
 
-    std::vector<RRTOption> result1 = Dubins::allOptions(origin_x, arbitrary_position1);
-    std::vector<RRTOption> expected_result1 = {
-        RRTOption(64.39960045236231,
-                  DubinsPath(6.107586558274035, 4.175598748905551, 12.983673916464376), true),
-        RRTOption(58.0235802190719,
-                  DubinsPath(-5.062863952455051, -3.5035066619041215, 15.191727147276039), true),
-        RRTOption(32.99374082753003,
-                  DubinsPath(-0.18936765807467593, 4.189367658074676, 11.100064246783269), true),
-        RRTOption(std::numeric_limits<double>::infinity(), DubinsPath(0, 0, 0), true),
-        RRTOption(56.99424154724155,
-                  DubinsPath(-1.0585943958426456, -5.782422412471302, 4.557831501134362), false),
-        RRTOption(37.28571149387029,
-                  DubinsPath(2.25948315258286, 0.3274953432143759, -4.870163802976823), false),
+    const auto result1 = Dubins::allOptions(origin_x, arbitrary_position1);
+    std::vector<DubinsPath> expected_result1 = {
+        DubinsPath(6.107586558274035, 4.175598748905551, 12.983673916464376, 64.39960045236231),
+        DubinsPath(-5.062863952455051, -3.5035066619041215, 15.191727147276039, 58.0235802190719),
+        DubinsPath(-0.18936765807467593, 4.189367658074676, 11.100064246783269, 32.99374082753003),
+        DubinsPath(0, 0, 0, std::numeric_limits<double>::infinity()),
+        DubinsPath(-1.0585943958426456, -5.782422412471302, 4.557831501134362, 56.99424154724155),
+        DubinsPath(2.25948315258286, 0.3274953432143759, -4.870163802976823, 37.28571149387029),
     };
 
-    std::vector<RRTOption> result2 = Dubins::allOptions(arbitrary_position1, arbitrary_position2);
-    std::vector<RRTOption> expected_result2 = {
-        RRTOption(69.79960318782443,
-                  DubinsPath(5.92544955425334, 5.000921060105833, 15.167750116028579), true),
-        RRTOption(46.460939412666036,
-                  DubinsPath(-5.378813639968769, -2.544371667210817, 6.84501287676811), true),
-        RRTOption(38.47693182697205,
-                  DubinsPath(-0.4132680790016785, 5.056453386181265, 11.128324501057335), true),
-        RRTOption(std::numeric_limits<double>::infinity(), DubinsPath(0, 0, 0), true),
-        RRTOption(64.04562997430888,
-                  DubinsPath(-1.8879098315046257, -5.336653165926261, 5.584562997430888), false),
-        RRTOption(37.41514012689866,
-                  DubinsPath(1.9230212534186863, 0.9984927592711799, -4.561514012689866), false)};
+    const auto result2 = Dubins::allOptions(arbitrary_position1, arbitrary_position2);
+    std::vector<DubinsPath> expected_result2 = {
+        DubinsPath(5.92544955425334, 5.000921060105833, 15.167750116028579, 69.79960318782443),
+        DubinsPath(-5.378813639968769, -2.544371667210817, 6.84501287676811, 46.460939412666036),
+        DubinsPath(-0.4132680790016785, 5.056453386181265, 11.128324501057335, 38.47693182697205),
+        DubinsPath(0, 0, 0, std::numeric_limits<double>::infinity()),
+        DubinsPath(-1.8879098315046257, -5.336653165926261, 5.584562997430888, 64.04562997430888),
+        DubinsPath(1.9230212534186863, 0.9984927592711799, -4.561514012689866, 37.41514012689866)};
 
     for (int i = 0; i < result1.size(); i++) {
         // if the path is impossible or provablly non-competitive (length == inf),
@@ -696,15 +660,14 @@ TEST(DubinsTest, AllOptions) {
             EXPECT_EQ(std::isinf(result1[i].length), std::isinf(expected_result1[i].length));
         } else {
             EXPECT_NEAR(result1[i].length, expected_result1[i].length, 0.01);
-            EXPECT_NEAR(result1[i].dubins_path.beta_0, expected_result1[i].dubins_path.beta_0,
+            EXPECT_NEAR(result1[i].beta_0, expected_result1[i].beta_0,
                         0.01);
-            EXPECT_NEAR(result1[i].dubins_path.beta_2, expected_result1[i].dubins_path.beta_2,
+            EXPECT_NEAR(result1[i].beta_2, expected_result1[i].beta_2,
                         0.01);
-            EXPECT_NEAR(result1[i].dubins_path.straight_dist,
-                        expected_result1[i].dubins_path.straight_dist, 0.01);
+            EXPECT_NEAR(result1[i].straight_dist,
+                        expected_result1[i].straight_dist, 0.01);
         }
 
-        EXPECT_EQ(result1[i].has_straight, expected_result1[i].has_straight);
     }
 
     for (int i = 0; i < result2.size(); i++) {
@@ -715,15 +678,14 @@ TEST(DubinsTest, AllOptions) {
             EXPECT_EQ(std::isinf(result2[i].length), std::isinf(expected_result2[i].length));
         } else {
             EXPECT_NEAR(result2[i].length, expected_result2[i].length, 0.01);
-            EXPECT_NEAR(result2[i].dubins_path.beta_0, expected_result2[i].dubins_path.beta_0,
+            EXPECT_NEAR(result2[i].beta_0, expected_result2[i].beta_0,
                         0.01);
-            EXPECT_NEAR(result2[i].dubins_path.beta_2, expected_result2[i].dubins_path.beta_2,
+            EXPECT_NEAR(result2[i].beta_2, expected_result2[i].beta_2,
                         0.01);
-            EXPECT_NEAR(result2[i].dubins_path.straight_dist,
-                        expected_result2[i].dubins_path.straight_dist, 0.01);
+            EXPECT_NEAR(result2[i].straight_dist,
+                        expected_result2[i].straight_dist, 0.01);
         }
 
-        EXPECT_EQ(result2[i].has_straight, expected_result2[i].has_straight);
     }
 }
 
@@ -737,22 +699,21 @@ TEST(DubinsTest, DubinsPath) {
     RRTPoint arbitrary_position1{Vector{9, 6, 0}, 4.00};
 
     // the path flown is the shortest option there is
-    const RRTOption best = Dubins::bestOption(origin_x, arbitrary_position1);
-    for (const RRTOption& option : Dubins::allOptions(origin_x, arbitrary_position1)) {
+    const DubinsPath best = Dubins::bestOption(origin_x, arbitrary_position1);
+    for (const DubinsPath& option : Dubins::allOptions(origin_x, arbitrary_position1)) {
         EXPECT_LE(best.length, option.length);
     }
 
     const std::vector<Vector> result = Dubins::dubinsPath(origin_x, arbitrary_position1);
     const std::vector<Vector> expected = Dubins::generatePoints(
-        origin_x, arbitrary_position1, best.dubins_path, best.has_straight);
+        origin_x, arbitrary_position1, best, true);
 
     ASSERT_EQ(result.size(), expected.size());
     for (std::size_t i = 0; i < result.size(); i++) {
         expectPointNear(result[i], expected[i], 1e-9);
     }
 
-    ASSERT_TRUE(best.has_straight);
-    expectStraightPathPoints(origin_x, arbitrary_position1, best.dubins_path, result);
+    expectStraightPathPoints(origin_x, arbitrary_position1, best, result);
 }
 
 /*
@@ -782,10 +743,10 @@ TEST(DubinsTest, GeneratePathWithOneSegment) {
 
     const RRTPoint start{Vector{0, 0, 0}, 0};
     const RRTPoint end{Vector{9, 6, 0}, 4.00};
-    const RRTOption option = Dubins::bestOption(start, end);
+    const DubinsPath option = Dubins::bestOption(start, end);
 
     const std::vector<Vector> expected =
-        Dubins::generatePoints(start, end, option.dubins_path, option.has_straight);
+        Dubins::generatePoints(start, end, option, true);
     const std::vector<Vector> path = Dubins::generatePath(start, {PathSegment(end, option)});
 
     ASSERT_EQ(path.size(), expected.size() - 1);
@@ -848,8 +809,7 @@ TEST(DubinsTest, GeneratePathChainsSegments) {
     std::size_t expected_size = 0;
     current = start;
     for (const PathSegment& segment : segments) {
-        expected_size += Dubins::generatePoints(current, segment.end, segment.option.dubins_path,
-                                                segment.option.has_straight)
+        expected_size += Dubins::generatePoints(current, segment.end, segment.path, true)
                              .size() -
                          1;
         current = segment.end;
