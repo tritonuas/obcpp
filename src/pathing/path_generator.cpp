@@ -38,7 +38,7 @@ void PathGenerator::generateDubinsOptions() {
     for (std::size_t cur_goal_idx = 1; cur_goal_idx < total_goals; cur_goal_idx++) {
         const Leg leg = rrt.run(goals[cur_goal_idx], goal_angles[cur_goal_idx]);
         legs.push_back(leg);
-        rrt.reroot(leg.end); // effectively new RRT instance
+        rrt.reroot(leg.end);  // effectively new RRT instance
     }
 }
 
