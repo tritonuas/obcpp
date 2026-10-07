@@ -21,15 +21,7 @@
         "upload_distance_buffer_m": 50.0,
         "dubins": {
             "turning_radius": 30.0,
-            "point_separation": 20.0
-        },
-        "rrt": {
-            "iterations_per_waypoint": 512,
-            "rewire_radius": 256.0,
-            "optimize": true,
-            "point_fetch_method": "nearest",
-            "allowed_to_skip_waypoints": false,
-            "generate_deviations": false
+            "point_separation": 10.0
         },
         "coverage": {
             "altitude_m": 30.0,
