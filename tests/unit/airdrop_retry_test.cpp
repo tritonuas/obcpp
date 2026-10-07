@@ -20,6 +20,10 @@ TEST(AirdropRetryTest, WaitsThreeSecondsAfterFailureBeforeRetry) {
         if (attempts++ == 0) {
             result.is_err = 1;
             result.data.err = "simulated bind failure";
+        } else {
+            result.data.res.send_port = 0;
+            result.data.res.recv_port = 0;
+            result.data.res.fd = -1;
         }
         return result;
     };
