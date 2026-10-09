@@ -2,6 +2,8 @@
 
 #include <memory>
 #include <mutex>
+#include <string>
+#include <unordered_set>
 #include <nlohmann/json.hpp>
 
 #include "camera/interface.hpp"
@@ -82,6 +84,16 @@ void MissionState::setInitPath(const MissionPath& init_path) {
 MissionPath MissionState::getInitPath() {
     Lock lock(this->init_path_mut);
     return this->init_path;
+}
+
+void MissionState::setNextWaypointPath(const MissionPath& next_waypoint_path) {
+    Lock lock(this->next_waypoint_path_mut);
+    this->next_waypoint_path = next_waypoint_path;
+}
+
+MissionPath MissionState::getNextWaypointPath() {
+    Lock lock(this->next_waypoint_path_mut);
+    return this->next_waypoint_path;
 }
 
 void MissionState::setCoveragePath(const MissionPath& coverage_path) {
@@ -201,6 +213,16 @@ std::shared_ptr<CVAggregator> MissionState::getCV() { return this->cv; }
 
 void MissionState::setCV(std::shared_ptr<CVAggregator> cv) { this->cv = cv; }
 
+MissionState::CVStatus MissionState::getCVStatus() {
+    Lock lock(this->cv_status_mut);
+    return this->cv_status;
+}
+
+void MissionState::setCVStatus(CVStatus status) {
+    Lock lock(this->cv_status_mut);
+    this->cv_status = status;
+}
+
 std::shared_ptr<CameraInterface> MissionState::getCamera() { return this->camera; }
 
 void MissionState::setCamera(std::shared_ptr<CameraInterface> camera) { this->camera = camera; }
@@ -209,4 +231,17 @@ bool MissionState::getMappingIsDone() { return this->mappingIsDone; }
 
 void MissionState::setMappingIsDone(bool isDone) { this->mappingIsDone = isDone; }
 
+int MissionState::getLapsRemaining() {
+    Lock lock(this->laps_remaining_mut);
+    return this->laps_remaining;
+}
 
+void MissionState::setLapsRemaining(int laps) {
+    Lock lock(this->laps_remaining_mut);
+    this->laps_remaining = laps;
+}
+
+void MissionState::decrementLapsRemaining() {
+    Lock lock(this->laps_remaining_mut);
+    this->laps_remaining--;
+}

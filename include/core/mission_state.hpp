@@ -11,6 +11,7 @@
 #include <queue>
 #include <unordered_set>
 #include <vector>
+#include <boost/asio.hpp>
 
 #include "camera/interface.hpp"
 #include "core/mission_parameters.hpp"
@@ -46,6 +47,9 @@ class MissionState {
 
     void setInitPath(const MissionPath& init_path);
     MissionPath getInitPath();
+
+    void setNextWaypointPath(const MissionPath& next_waypoint_path);
+    MissionPath getNextWaypointPath();
 
     void setCoveragePath(const MissionPath& coverage_path);
     MissionPath getCoveragePath();
@@ -103,6 +107,15 @@ class MissionState {
     std::shared_ptr<CVAggregator> getCV();
     void setCV(std::shared_ptr<CVAggregator> cv);
 
+    enum class CVStatus {
+        None = 0,
+        Validated = 1,
+        Rejected = 2,
+    };
+
+    CVStatus getCVStatus();
+    void setCVStatus(CVStatus status);
+
     /*
      * Gets a shared_ptr to the camera client, which lets you
      * take photos of ground targets.
@@ -114,14 +127,30 @@ class MissionState {
     bool getMappingIsDone();
     void setMappingIsDone(bool isDone);
 
+    int MissionState::getLapsRemaining() {
+        Lock lock(this->laps_remaining_mut);
+        return this->laps_remaining;
+    }
+
+    void MissionState::setLapsRemaining(int laps) {
+        Lock lock(this->laps_remaining_mut);
+        this->laps_remaining = laps;
+    }
+
+    void MissionState::decrementLapsRemaining() {
+        Lock lock(this->laps_remaining_mut);
+        this->laps_remaining--;
+    }
+
 
 
 
     MissionParameters mission_params;  // has its own mutex
 
-    OBCConfig config;
+    const OBCConfig config;
 
     std::optional<airdrop_t> next_airdrop_to_drop;
+    boost::asio::io_context raspy_io;
 
  private:
     std::mutex converter_mut;
@@ -132,6 +161,8 @@ class MissionState {
 
     std::mutex init_path_mut;  // for reading/writing the initial path
     MissionPath init_path;
+    std::mutex next_waypoint_path_mut;  // for reading/writing the next waypoint path
+    MissionPath next_waypoint_path;
     std::mutex coverage_path_mut;  // for reading/writing the coverage path
     MissionPath coverage_path;
     std::mutex airdrop_path_mut;
@@ -140,9 +171,16 @@ class MissionState {
     std::mutex dropped_airdrops_mut;
     std::unordered_set<AirdropType> dropped_airdrops;
 
+    std::mutex laps_remaining_mut;
+    int laps_remaining;
+
     std::shared_ptr<MavlinkClient> mav;
     std::shared_ptr<AirdropClient> airdrop;
     std::shared_ptr<CVAggregator> cv;
+
+    std::mutex cv_status_mut;
+    CVStatus cv_status = CVStatus::None;
+
     std::shared_ptr<CameraInterface> camera;
 
     std::thread captureThread;
@@ -151,6 +189,7 @@ class MissionState {
     std::mutex cv_mut;
     // Represents a single detected target used in pipeline
     std::vector<DetectedTarget> cv_detected_targets;
+
     // Gives an index into cv_detected_targets, and specifies that that bottle is matched
     // with the detected_target specified by the index
     std::array<size_t, NUM_AIRDROPS> cv_matches;

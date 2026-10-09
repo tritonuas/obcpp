@@ -27,7 +27,6 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
                            vim \
                            curl \
                            unzip \
-                           protobuf-compiler \
                            libopencv-dev \
                            # Need these to install Python 3.11 from pyenv
                            python3-pip \
@@ -50,15 +49,16 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
                            # needed for pytorch 
                            libopenblas-dev \
                            ninja-build \
-                           libnuma-dev
+                           libnuma-dev \
+                           protobuf-compiler \
+                           libprotobuf-dev
 
 RUN apt-add-repository universe
 RUN apt-get install -y cpplint
 # Update Python to 3.11 so that libtorch can be properly built from source
 ENV PYENV_ROOT="/.pyenv"
+ENV PATH="$PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH"
 RUN curl https://pyenv.run | bash
-ENV PATH="${PATH}:${PYENV_ROOT}/bin"
-RUN eval "$(pyenv init -)"
 RUN pyenv install 3.11
 RUN pyenv global 3.11
 RUN pip3 install typing-extensions PyYAML cpplint numpy
@@ -79,8 +79,17 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
       && rm /tmp/cmake-install.sh \
       && ln -s /opt/cmake-3.24.1/bin/* /usr/local/bin
 
+# Download and install Boost 1.87.0
+RUN wget https://github.com/boostorg/boost/releases/download/boost-1.87.0/boost-1.87.0-b2-nodocs.tar.gz \
+    && tar -xzf boost-1.87.0-b2-nodocs.tar.gz \
+    && cd boost-1.87.0 \
+    && ./bootstrap.sh \
+    && ./b2 install \
+    && cd .. \
+    && rm -rf boost-1.87.0 boost-1.87.0-b2-nodocs.tar.gz
+
 # install MAVSDK from source
-RUN git clone --depth 1 https://github.com/mavlink/MAVSDK.git --branch v2.9.1 --single-branch \
+RUN git clone --depth 1 https://github.com/mavlink/MAVSDK.git --branch v3.15.0 --single-branch \
     && cd MAVSDK \
     && git submodule update --init --recursive \
     && cmake -DCMAKE_BUILD_TYPE=Release -Bbuild/default -H. \
@@ -91,13 +100,15 @@ RUN git clone --depth 1 https://github.com/mavlink/MAVSDK.git --branch v2.9.1 --
 # cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev
 # python-dev python-numpy libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libjasper-dev libdc1394-22-dev
 
-ARG LIBTORCH_VERSION=2.1.0
+# Make sure to install the same version of torchvision as the version of
+# libtorch we built in the Jetson
+ARG LIBTORCH_VERSION=2.3.1
 ARG LIBTORCH_INSTALL_DIR=/libtorch-tmp
 WORKDIR ${LIBTORCH_INSTALL_DIR}
-RUN git clone -b main --recurse-submodule https://github.com/pytorch/pytorch.git
+RUN git clone --recursive --branch v${LIBTORCH_VERSION} https://github.com/pytorch/pytorch.git
 RUN mkdir pytorch-build
-RUN cd pytorch-build
-RUN USE_CUDA=0 \
+RUN cd pytorch-build && \
+    USE_CUDA=0 \
     USE_CUDNN=0 \
     USE_NCCL=0 \
     BUILD_TORCH=ON \
@@ -124,10 +135,12 @@ RUN USE_CUDA=0 \
     -D_GLIBCXX_USE_CXX11_ABI=1 \
     -DBUILD_SHARED_LIBS:BOOL=ON \
     -DCMAKE_BUILD_TYPE:STRING=Release \
-    -DPYTHON_EXECUTABLE:PATH=`which python3` \
-    -DCMAKE_PREFIX_PATH=../pytorch-install \
-    ${LIBTORCH_INSTALL_DIR}/pytorch
-RUN USE_CUDA=0 \
+    -DPYTHON_EXECUTABLE:PATH=$(which python3) \
+    -DCMAKE_INSTALL_PREFIX=${LIBTORCH_INSTALL_DIR}/libtorch \
+    -DBUILD_CUSTOM_PROTOBUF=OFF \
+    ../pytorch
+RUN cd pytorch-build && \
+    USE_CUDA=0 \
     USE_CUDNN=0 \
     USE_NCCL=0 \
     BUILD_TORCH=ON \
@@ -137,13 +150,15 @@ RUN USE_CUDA=0 \
     USE_NNPACK=1 \
     BUILD_CAFFE2_OPS=0 \
     BUILD_CAFFE2=0 \
-    cmake --build . -j4 --target install
+    cmake --build . -j4 --target install \
+    && rm -f ${LIBTORCH_INSTALL_DIR}/libtorch/bin/protoc \
+    && rm -rf ${LIBTORCH_INSTALL_DIR}/libtorch/lib/libprotobuf* \
+    && rm -rf ${LIBTORCH_INSTALL_DIR}/libtorch/lib/libprotoc* \
+    && rm -rf ${LIBTORCH_INSTALL_DIR}/libtorch/include/google/protobuf
 
 ENV CMAKE_PREFIX_PATH="${LIBTORCH_INSTALL_DIR}/libtorch"
 
-# pull and build torchvision
-# refer to this page for version compatibilty with pytorch (libtorch) https://github.com/pytorch/pytorch/wiki/PyTorch-Versions
-ARG TORCHVISION_VERSION=0.16.0
+ARG TORCHVISION_VERSION=0.18.1
 ARG TORCHVISION_INSTALL_DIR=/torchvision-tmp
 WORKDIR ${TORCHVISION_INSTALL_DIR} 
 RUN wget "https://github.com/pytorch/vision/archive/refs/tags/v${TORCHVISION_VERSION}.zip" \
@@ -155,10 +170,9 @@ RUN wget "https://github.com/pytorch/vision/archive/refs/tags/v${TORCHVISION_VER
     && make install
 
 RUN pip3 install gdown
-ENV PATH="${PATH}:${HOME}/.local/bin"
+ENV PATH="${PATH}:/root/.local/bin"
 
 # login as non-root user
 USER $USERNAME
 
-RUN pip3 install gdown
-ENV PATH="${PATH}:${HOME}/.local/bin"
+ENV PATH="${PATH}:/home/${USERNAME}/.local/bin"

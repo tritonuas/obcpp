@@ -1,6 +1,7 @@
 #include "network/airdrop_client.hpp"
 
 #include <future>
+#include <list>
 
 extern "C" {
 #include "network/airdrop_sockets.h"

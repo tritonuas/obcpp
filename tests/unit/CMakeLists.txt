@@ -12,7 +12,7 @@ target_include_directories(${BINARY} PRIVATE ${INCLUDE_DIRECTORY} ${GEN_PROTOS_D
 target_link_libraries(${BINARY} PUBLIC gtest_main)
 target_add_protobuf(${BINARY})
 target_add_torch(${BINARY}) 
-target_add_torchvision(${PROJECT_NAME})
+target_add_torchvision(${BINARY})
 target_add_matplot(${BINARY})
 target_add_httplib(${BINARY})
 target_add_json(${BINARY})

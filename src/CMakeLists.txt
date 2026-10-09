@@ -1,6 +1,7 @@
 add_library(obcpp_protos STATIC 
     ${PROJECT_SOURCE_DIR}/build/gen_protos/protos/obc.pb.cc 
 )
+target_add_protobuf(obcpp_protos)
 
 add_library(obcpp_udp2 STATIC
     ${PROJECT_SOURCE_DIR}/include/udp_squared/internal/helper.c
@@ -43,7 +44,9 @@ target_link_libraries(obcpp_lib_mock INTERFACE
 
 add_executable(${PROJECT_NAME} main.cpp)
 target_include_directories(${PROJECT_NAME} PRIVATE ${INCLUDE_DIRECTORY} ${GEN_PROTOS_DIRECTORY})
-target_link_libraries(${PROJECT_NAME} PRIVATE obcpp_lib)
+target_link_libraries(${PROJECT_NAME} PRIVATE 
+    obcpp_lib
+)
 target_add_protobuf(${PROJECT_NAME})
 target_add_torch(${PROJECT_NAME})
 target_add_torchvision(${PROJECT_NAME})

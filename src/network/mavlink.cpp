@@ -16,6 +16,7 @@
 #include <optional>
 #include <string>
 #include <thread>
+#include <utility>
 
 #include "core/mission_state.hpp"
 #include "pathing/mission_path.hpp"
@@ -26,7 +27,7 @@
 using namespace std::chrono_literals;  // NOLINT
 
 MavlinkClient::MavlinkClient(OBCConfig config)
-    : mavsdk(mavsdk::Mavsdk::Configuration(mavsdk::Mavsdk::ComponentType::CompanionComputer)) {
+    : mavsdk(mavsdk::Mavsdk::Configuration(mavsdk::ComponentType::CompanionComputer)) {
     std::string link = config.network.mavlink.connect;
 
     LOG_F(INFO, "Connecting to Mav at %s", link.c_str());
@@ -81,7 +82,7 @@ MavlinkClient::MavlinkClient(OBCConfig config)
             // get it wrong.
             auto result = mavsdk::Param::Result::Unknown;
             if (param == "FS_LONG_TIMEOUT" || param == "AFS_RC_FAIL_TIME" ||
-                param == "FS_SHORT_TIMEOUT") {
+                param == "FS_SHORT_TIMEOUT" || param == "AFS_TERM_ACTION") {
                 result = this->param->set_param_float(param, val);
             } else {
                 result = this->param->set_param_int(param, val);
@@ -173,27 +174,35 @@ MavlinkClient::MavlinkClient(OBCConfig config)
         this->data.armed = armed;
     });
 
-    this->passthrough->subscribe_message(WIND_COV, [this](const mavlink_message_t& message) {
-        // LOG_F(INFO, "UNIX TIME: %lu", message.payload64[0]);
+    this->telemetry->subscribe_wind([this](mavsdk::Telemetry::Wind wind) {
+        VLOG_F(DEBUG, "Wind - North: %f, East: %f, Down: %f",
+               wind.wind_x_ned_m_s,
+               wind.wind_y_ned_m_s,
+               wind.wind_z_ned_m_s);
 
-        /*
-            NOT TESTED - don't actually know where the data is in thie uint64_t[]
-            TODO - test on actual pixhawk to make sure that the data makes sense
-        */
-        this->data.wind.x = (message.payload64[1] >> 56) & 0xFF;
-        this->data.wind.y = (message.payload64[1] >> 48) & 0xFF;
-        this->data.wind.z = (message.payload64[1] >> 40) & 0xFF;
+        Lock lock(this->data_mut);
+        this->data.wind.x = wind.wind_x_ned_m_s;
+        this->data.wind.y = wind.wind_y_ned_m_s;
+        this->data.wind.z = wind.wind_z_ned_m_s;
     });
-    // this->telemetry->subscribe_attitude_euler(
-    //     [this](mavsdk::Telemetry::EulerAngle attitude) {
-    //         VLOG_F(DEBUG, "Yaw: %f, Pitch: %f, Roll: %f)",
-    //             attitude.yaw_deg, attitude.pitch_deg, attitude.roll_deg);
 
-    //         Lock lock(this->data_mut);
-    //         this->data.yaw_deg = attitude.yaw_deg;
-    //         this->data.pitch_deg = attitude.pitch_deg;
-    //         this->data.roll_deg = attitude.roll_deg;
-    //     });
+    this->telemetry->subscribe_heading([this](mavsdk::Telemetry::Heading heading) {
+        VLOG_F(DEBUG, "Heading: %f deg", heading.heading_deg);
+        Lock lock(this->data_mut);
+        this->data.heading_deg = heading.heading_deg;
+    });
+
+
+    this->telemetry->subscribe_attitude_euler(
+        [this](mavsdk::Telemetry::EulerAngle attitude) {
+        VLOG_F(DEBUG, "Yaw: %f, Pitch: %f, Roll: %f)",
+            attitude.yaw_deg, attitude.pitch_deg, attitude.roll_deg);
+
+        Lock lock(this->data_mut);
+        this->data.yaw_deg = attitude.yaw_deg;
+        this->data.pitch_deg = attitude.pitch_deg;
+        this->data.roll_deg = attitude.roll_deg;
+    });
 }
 
 // Implement the triggerRelay method
@@ -503,12 +512,27 @@ bool MavlinkClient::startMission() {
     return true;
 }
 
+/**
+ * Clears the existng mission
+ */
+bool MavlinkClient::clearMission() {
+    LOG_F(INFO, "Sending clear mission command");
+    auto start_result = this->mission->clear_mission();
+    if (start_result != mavsdk::MissionRaw::Result::Success) {
+        LOG_S(ERROR) << "FAIL: Mission could not be cleared " << start_result;
+        return false;
+    }
+
+    LOG_F(INFO, "Mission Cleared!");
+    return true;
+}
+
 void MavlinkClient::KILL_THE_PLANE_DO_NOT_CALL_THIS_ACCIDENTALLY() {
     LOG_F(ERROR, "KILLING THE PLANE: SETTING AFS_TERMINATE TO 1");
     auto result = this->param->set_param_int("AFS_TERMINATE", 1);
     LOG_S(ERROR) << "KILL RESULT: " << result;
 }
 
-void MavlinkClient::rtl() {
+void MavlinkClient::returnToLaunch() {
     this->action->return_to_launch();
 }

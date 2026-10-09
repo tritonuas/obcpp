@@ -1,6 +1,9 @@
 #include "cv/pipeline.hpp"
 
 #include <atomic>
+#include <memory>
+#include <string>
+#include <vector>
 
 #include "protos/obc.pb.h"
 #include "utilities/logging.hpp"

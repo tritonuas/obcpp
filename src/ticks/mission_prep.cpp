@@ -4,6 +4,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "core/mission_state.hpp"
 #include "ticks/ids.hpp"

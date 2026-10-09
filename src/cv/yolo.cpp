@@ -2,7 +2,10 @@
 
 #include <algorithm>
 #include <atomic>
+#include <iostream>
+#include <string>
 #include <unordered_map>
+#include <vector>
 
 // For simplicity, we are not doing advanced error handling
 // Make sure to catch and handle exceptions in production code

@@ -42,6 +42,9 @@ int main(int argc, char *argv[]) {
         LOG_S(INFO) << "LatLng: " << mav.latlng_deg().first << 
             ", " << mav.latlng_deg().second;
         LOG_S(INFO) << "Heading: " << mav.heading_deg();
+        LOG_S(INFO) << "Yaw: " << mav.heading_deg();
+        LOG_S(INFO) << "Pitch: " << mav.pitch_deg();
+        LOG_S(INFO) << "Roll: " << mav.roll_deg();
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 

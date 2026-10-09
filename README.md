@@ -123,6 +123,47 @@ The airdrop payloads are currently programmed to connect to a WIFI network with
 this information on boot. To make sure that it is broadcasting correctly, you
 can try and connect to it via your phone or other device.
 
+## Jetson Setup (PiCamera)
+> How to setup networking for a new Jetsoj
+
+### 1. Clean Up Old Connections
+Remove any previous attempts to avoid conflicts.
+```bash
+sudo nmcli con delete "pi-link" 2>/dev/null
+sudo nmcli con delete "Wired connection 1" 2>/dev/null
+sudo nmcli con delete "Wired connection 2" 2>/dev/null
+```
+
+### 2. Create the "MAC-Locked" Connection
+We configure the Jetson to listen for the specific MAC address we set on the Pi (`00:dc:c8:f7:75:14`). This ensures the connection works even if the Jetson names the interface `usb0`, `usb2`, or `eth1`.
+
+```bash
+# Create connection binding to the specific MAC address
+# IP: 192.168.77.1
+sudo nmcli con add type ethernet con-name "pi-static" ifname "*" mac "00:dc:c8:f7:75:14" ip4 192.168.77.1/24
+
+# Set to manual (Static IP)
+sudo nmcli con modify "pi-static" ipv4.method manual
+
+# Bring it up
+sudo nmcli con up "pi-static"
+```
+
+### 3. Verify the Connection
+```bash
+ip addr show pi-static
+```
+
+### 4. Test the Connection
+```bash
+ping 192.168.77.2
+```
+> This should return packets if the connection is set up correctly.
+
+### Pi-Connection Config:
+**Jetson (Server/Receiver):** `192.168.77.1`
+**Raspberry Pi (Client/Sender):** `192.168.77.2`
+
 ## Setup
 
 Now that everything is installed, here is the process to build and run the
@@ -289,6 +330,33 @@ When testing the pipeline, you will likely want to also use the `mock` camera.
         ...
 ```
 which will use `not-stolen-israeli-code` as the mock camera.
+ 
+---
+
+#### PiCamera
+
+Alternatively, you can use the `PiCamera` camera, which will use the PiCamera
+on the Jetson to capture images. This must done alongside [camera-things](https://github.com/tritonuas/camera-things/).
+
+```json
+    "camera": {
+        ...
+        "type": "PiCamera",
+        ...
+```
+Verify that the camera network is set up correctly by running:
+
+```bash
+ip addr show pi-static
+```
+> should list pi-static as active, if not run `sudo nmcli con up pi-static`
+
+Test the connection by running:
+```bash
+ping 192.168.77.2
+```
+> Make sure the raspy server is running on the pi!
+
 
 ### SITL
 

@@ -83,6 +83,7 @@ class MavlinkClient {
     mavsdk::Telemetry::RcStatus get_conn_status();
     bool armAndHover(std::shared_ptr<MissionState> state);
     bool startMission();
+    bool clearMission();
 
     /*
      * Triggers a relay on the ArduPilot
@@ -92,10 +93,9 @@ class MavlinkClient {
      */
     bool triggerRelay(int relay_number, bool state);
 
+    // Safety Functions
     void KILL_THE_PLANE_DO_NOT_CALL_THIS_ACCIDENTALLY();
-
-    // rtl
-    void rtl();
+    void returnToLaunch();
 
  private:
     mavsdk::Mavsdk mavsdk;

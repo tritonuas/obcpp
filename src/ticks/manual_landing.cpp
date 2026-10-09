@@ -1,6 +1,7 @@
 #include "ticks/manual_landing.hpp"
 
 #include <memory>
+#include <string>
 
 #include "cv/mapping.hpp"
 #include "ticks/ids.hpp"

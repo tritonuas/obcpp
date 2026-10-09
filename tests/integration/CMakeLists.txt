@@ -115,16 +115,6 @@ target_add_mavsdk(airdrop_approach)
 target_add_matplot(airdrop_approach)
 target_add_loguru(airdrop_approach)
 
-add_executable(deviation_ranking "deviation_ranking.cpp")
-target_link_libraries(deviation_ranking PRIVATE obcpp_lib)
-target_include_directories(deviation_ranking PRIVATE ${INCLUDE_DIRECTORY})
-target_add_json(deviation_ranking)
-target_add_httplib(deviation_ranking)
-target_add_mavsdk(deviation_ranking)
-target_add_matplot(deviation_ranking)
-target_add_loguru(deviation_ranking)
-
-
 add_executable(airdrop_packets "airdrop_packets.cpp")
 target_link_libraries(airdrop_packets PRIVATE obcpp_lib)
 target_include_directories(airdrop_packets PRIVATE ${INCLUDE_DIRECTORY})
@@ -136,9 +126,32 @@ target_add_loguru(airdrop_packets)
 # add_executable(airdrop_sockets src/network/airdrop_sockets.c tests/integration/airdrop_sockets.c)
 # target_include_directories(airdrop_sockets PRIVATE ${INCLUDE_DIRECTORY})
 
-# cuda_check
-add_executable(cuda_check ${SOURCES} cuda_check.cpp)
-target_add_torch(cuda_check)
+# add_executable(camera_playground camera_playground.cpp)
+# target_include_directories(camera_playground PRIVATE ${INCLUDE_DIRECTORY})
+# add_custom_target(
+#     run_camera_playground
+#     ${CMAKE_COMMAND}
+#     -E env LD_LIBRARY_s/target_siamese_1.pt
+# )
+
+
+
+add_executable(udp_server_mock "udp_server_mock.cpp")
+target_link_libraries(udp_server_mock PRIVATE 
+    obcpp_lib
+)
+target_include_directories(udp_server_mock PRIVATE ${INCLUDE_DIRECTORY})
+target_add_protobuf(udp_server_mock)
+target_add_torch(udp_server_mock)
+target_add_torchvision(udp_server_mock)
+target_add_json(udp_server_mock)
+target_add_opencv(udp_server_mock)
+target_add_httplib(udp_server_mock)
+target_add_mavsdk(udp_server_mock)
+target_add_matplot(udp_server_mock)
+target_add_loguru(udp_server_mock)
+target_include_directories(udp_server_mock PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(udp_server_mock PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
 
 add_executable(drop_it_like_its_hot "drop_it_like_its_hot.cpp")
 target_link_libraries(drop_it_like_its_hot PRIVATE obcpp_lib)
@@ -148,16 +161,19 @@ target_add_mavsdk(drop_it_like_its_hot)
 target_add_matplot(drop_it_like_its_hot)
 target_add_loguru(drop_it_like_its_hot)
 
-add_executable(picamera "picamera.cpp")
-target_link_libraries(picamera PRIVATE obcpp_lib obcpp_camera obcpp_network)
-target_include_directories(picamera PRIVATE ${INCLUDE_DIRECTORY})
-target_add_json(picamera)
-target_add_mavsdk(picamera)
-target_add_matplot(picamera)
-target_add_loguru(picamera)
-
 add_executable(clustering "clustering.cpp")
 target_link_libraries(clustering PRIVATE obcpp_lib obcpp_camera)
 target_add_matplot(clustering) 
 target_add_json(clustering)
 target_add_protobuf(clustering)
+
+add_executable(camera_integration_test "camera_integration_test.cpp")
+target_link_libraries(camera_integration_test PRIVATE obcpp_lib)
+target_include_directories(camera_integration_test PRIVATE ${INCLUDE_DIRECTORY})
+target_add_loguru(camera_integration_test)
+target_add_opencv(camera_integration_test)
+target_add_mavsdk(camera_integration_test)
+target_add_matplot(camera_integration_test)
+target_add_json(camera_integration_test)
+target_include_directories(camera_integration_test PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(camera_integration_test PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})

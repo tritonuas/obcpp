@@ -18,22 +18,15 @@
     },
     "pathing": {
         "laps": 2,
+        "upload_distance_buffer_m": 50.0,
         "dubins": {
             "turning_radius": 30.0,
-            "point_separation": 20.0
-        },
-        "rrt": {
-            "iterations_per_waypoint": 512,
-            "rewire_radius": 256.0,
-            "optimize": true,
-            "point_fetch_method": "nearest",
-            "allowed_to_skip_waypoints": false,
-            "generate_deviations": false
+            "point_separation": 10.0
         },
         "coverage": {
             "altitude_m": 30.0,
             "camera_vision_m": 20.0,
-            "method": "hover",
+            "method": "forward",
             "hover": {
                 "pictures_per_stop": 1,
                 "hover_time_s": 1
@@ -70,30 +63,6 @@
             "runway": "right",
             "num_targets": 2,
             "connection_timeout": 10
-        },
-        "lucid": {
-            "sensor_shutter_mode": "Rolling",
-
-            "acquisition_frame_rate_enable": true,
-            "target_brightness": 20,
-            "exposure_auto": "Continuous",
-            "exposure_time": 3000,
-            "exposure_auto_damping": 1,
-            "exposure_auto_algorithm": "Median",
-            "exposure_auto_upper_limit": 500,
-            "exposure_auto_lower_limit": 360,
-
-            "stream_auto_negotiate_packet_size": true,
-            "stream_packet_resend_enable": true,
-
-            "device_link_throughput_limit_mode": "On",
-            "device_link_throughput_limit": 125000000,
-
-            "gamma_enable": true,
-            "gamma": 0.5,
-            "gain_auto": "Continuous",
-            "gain_auto_upper_limit": 10,
-            "gain_auto_lower_limit": 1
         }
     },
     "mavlink": {

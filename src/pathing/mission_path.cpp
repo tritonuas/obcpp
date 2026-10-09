@@ -45,8 +45,8 @@ void MissionPath::generateForwardCommands() {
     first_item.param2 = 1.0;  // Accept Radius 7.0m close to 25ft
     first_item.param3 = 1.0;  // Pass Radius
     first_item.param4 = NAN;  // Yaw
-    first_item.x = int32_t(std::round(this->path.at(0).latitude() * 1e7));
-    first_item.y = int32_t(std::round(this->path.at(0).longitude() * 1e7));
+    first_item.x = static_cast<int32_t>(std::round(this->path.at(0).latitude() * 1e7));
+    first_item.y = static_cast<int32_t>(std::round(this->path.at(0).longitude() * 1e7));
     first_item.z = this->path.at(0).altitude();
     first_item.mission_type = MAV_MISSION_TYPE_MISSION;
     this->path_mav.push_back(first_item);
@@ -65,8 +65,8 @@ void MissionPath::generateForwardCommands() {
         item.param2 = 7.0;  // Accept Radius 7.0m close to 25ft
         item.param3 = 0.0;  // Pass Radius
         item.param4 = NAN;  // Yaw
-        item.x = int32_t(std::round(coord.latitude() * 1e7));
-        item.y = int32_t(std::round(coord.longitude() * 1e7));
+        item.x = static_cast<int32_t>(std::round(coord.latitude() * 1e7));
+        item.y = static_cast<int32_t>(std::round(coord.longitude() * 1e7));
         item.z = coord.altitude();
         item.mission_type = MAV_MISSION_TYPE_MISSION;
         this->path_mav.push_back(item);
@@ -110,8 +110,8 @@ void MissionPath::generateHoverCommands() {
         item.param2 = 0.0f;  // 0 => dont need to point heading at next waypoint
         item.param3 = 0.0f;  // loiter radius, which shouldn't matter for hover quadplane
         item.param4 = 0.0f;  // xtrack, something for forward flight planes which we arent here
-        item.x = int32_t(std::round(coord.latitude() * 1e7));
-        item.y = int32_t(std::round(coord.longitude() * 1e7));
+        item.x = static_cast<int32_t>(std::round(coord.latitude() * 1e7));
+        item.y = static_cast<int32_t>(std::round(coord.longitude() * 1e7));
         item.z = coord.altitude();
         item.mission_type = MAV_MISSION_TYPE_MISSION;
         this->path_mav.push_back(item);
@@ -141,8 +141,8 @@ void MissionPath::generateHoverAtFinalCommands() {
         item.param2 = 7.0;  // Accept Radius 7.0m close to 25ft
         item.param3 = 0.0;  // Pass Radius
         item.param4 = NAN;  // Yaw
-        item.x = int32_t(std::round(coord.latitude() * 1e7));
-        item.y = int32_t(std::round(coord.longitude() * 1e7));
+        item.x = static_cast<int32_t>(std::round(coord.latitude() * 1e7));
+        item.y = static_cast<int32_t>(std::round(coord.longitude() * 1e7));
         item.z = coord.altitude();
         item.mission_type = MAV_MISSION_TYPE_MISSION;
         this->path_mav.push_back(item);
@@ -160,8 +160,8 @@ void MissionPath::generateHoverAtFinalCommands() {
     item.param2 = 0.0f;  // 0 => dont need to point heading at next waypoint
     item.param3 = 0.0f;  // loiter radius, which shouldn't matter for hover quadplane
     item.param4 = 0.0f;  // xtrack, something for forward flight planes which we arent here
-    item.x = int32_t(std::round(coord.latitude() * 1e7));
-    item.y = int32_t(std::round(coord.longitude() * 1e7));
+    item.x = static_cast<int32_t>(std::round(coord.latitude() * 1e7));
+    item.y = static_cast<int32_t>(std::round(coord.longitude() * 1e7));
     item.z = coord.altitude();
     item.mission_type = MAV_MISSION_TYPE_MISSION;
     this->path_mav.push_back(item);

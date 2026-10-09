@@ -1,22 +1,25 @@
 #include <google/protobuf/util/json_util.h>
 #include <httplib.h>
 
+#include <deque>
 #include <filesystem>
+#include <list>
+#include <map>
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
-
 
 #include <nlohmann/json.hpp>
 
 #include "core/mission_state.hpp"
 #include "network/gcs_macros.hpp"
 #include "network/mavlink.hpp"
+#include "pathing/environment.hpp"
 #include "pathing/mission_path.hpp"
 #include "protos/obc.pb.h"
 #include "ticks/airdrop_approach.hpp"
-#include "ticks/cv_loiter.hpp"
 #include "ticks/path_gen.hpp"
 #include "ticks/path_validate.hpp"
 #include "ticks/tick.hpp"
@@ -146,12 +149,25 @@ DEF_GCS_HANDLE(Post, targets, locations) {
         curr_alt_m = state->getMav()->altitude_msl_m();
     }
 
+    const std::optional<CartesianConverter<GPSProtoVec>>& converter =
+        state->getCartesianConverter();
+    if (!converter.has_value()) {
+        LOG_RESPONSE(ERROR, "No mission uploaded to check the drop locations against", BAD_REQUEST);
+        return;
+    }
+    const Polygon flight_boundary = state->mission_params.getFlightBoundary();
+
     nlohmann::json waypoints = nlohmann::json::parse(request.body);
     AirdropTarget airdrop_target;
 
     if (!waypoints.is_array()) {
         LOG_RESPONSE(ERROR, "Waypoints is not a vactor", BAD_REQUEST);
+        return;
     }
+
+    // nothing is sent until every target has been checked, so a bad one does not
+    // leave the plane holding half of an upload
+    std::vector<std::pair<airdrop_t, GPSCoord>> drops;
 
     for (const auto& waypoint : waypoints) {
         google::protobuf::util::JsonStringToMessage(waypoint.dump(), &airdrop_target);
@@ -166,8 +182,19 @@ DEF_GCS_HANDLE(Post, targets, locations) {
             return;
         }
 
-        float drop_lat = airdrop_target.coordinate().latitude();
-        float drop_lng = airdrop_target.coordinate().longitude();
+        // the plane cannot fly to a drop it is not allowed to fly to
+        if (!Environment::isPointInPolygon(flight_boundary,
+                                           converter->toXYZ(airdrop_target.coordinate()))) {
+            LOG_RESPONSE(ERROR, "Drop location is outside of the flight boundary", BAD_REQUEST);
+            return;
+        }
+
+        drops.push_back({airdrop, airdrop_target.coordinate()});
+    }
+
+    for (const auto& [airdrop, coordinate] : drops) {
+        float drop_lat = coordinate.latitude();
+        float drop_lng = coordinate.longitude();
         state->getAirdrop()->send(makeLatLngPacket(SEND_LATLNG, airdrop, TARGET_ACQUIRED, drop_lat,
                                                    drop_lng, curr_alt_m));
     }
@@ -273,7 +300,7 @@ DEF_GCS_HANDLE(Get, camera, capture) {
     std::string output;
     google::protobuf::util::MessageToJsonString(manual_image, &output);
 
-    LOG_RESPONSE(INFO, "Successfully captured image", OK, output.c_str(), mime::json);
+    LOG_RESPONSE_HD(INFO, "Successfully captured image", OK, output.c_str(), mime::json);
 }
 
 DEF_GCS_HANDLE(Post, dodropnow) {
@@ -363,7 +390,7 @@ DEF_GCS_HANDLE(Get, targets, all) {
         // logic)
         if (run.coords.size() != run.bboxes.size()) {
             LOG_F(ERROR,
-                  "Mismatch between coordinates (%ld) and bboxes (%ld) count in run_id %d. "
+                  "Mismatch between coordinates (%zu) and bboxes (%zu) count in run_id %d. "
                   "Skipping this run.",
                   run.coords.size(), run.bboxes.size(), run.run_id);
             continue;  // Skip this problematic run
@@ -414,29 +441,29 @@ DEF_GCS_HANDLE(Post, targets, matched) {
 
     LOG_S(INFO) << j_root;
 
-    LockPtr<MatchedResults> matched_results = state->getCV()->getMatchedResults();
+    state->getCV()->terminate();
 
-    if (matched_results.data == nullptr) {
-        LOG_S(ERROR) << "lockptr is null";
+    {
+        LockPtr<MatchedResults> matched_results = state->getCV()->getMatchedResults();
+
+        if (matched_results.data == nullptr) {
+            LOG_S(ERROR) << "lockptr is null";
+            return;
+        }
+
+        AirdropTarget returned_matched_result;
+
+        for (const auto& instance : j_root) {
+            LOG_S(INFO) << returned_matched_result.index();
+            google::protobuf::util::JsonStringToMessage(instance.dump(), &returned_matched_result);
+            LOG_S(WARNING) << returned_matched_result.index();
+            matched_results.data->matched_airdrop[returned_matched_result.index()] =
+                returned_matched_result;
+            LOG_S(ERROR) << returned_matched_result.index();
+        }
     }
 
-    AirdropTarget returned_matched_result;
-
-    for (const auto& instance : j_root) {
-        LOG_S(INFO) << returned_matched_result.index();
-        google::protobuf::util::JsonStringToMessage(instance.dump(), &returned_matched_result);
-        LOG_S(WARNING) << returned_matched_result.index();
-        matched_results.data->matched_airdrop[returned_matched_result.index()] =
-            returned_matched_result;
-        LOG_S(ERROR) << returned_matched_result.index();
-    }
-
-    auto lock_ptr = state->getTickLockPtr<CVLoiterTick>();
-    if (!lock_ptr.has_value()) {
-        LOG_RESPONSE(WARNING, "Not currently in Loiter Tick", BAD_REQUEST);
-        return;
-    }
-    lock_ptr->data->setStatus(CVLoiterTick::Status::Validated);
+    state->setCVStatus(MissionState::CVStatus::Validated);
 
     LOG_RESPONSE(INFO, "Finished setting targets (and thus loitering)", OK);
 }
@@ -515,15 +542,17 @@ DEF_GCS_HANDLE(Post, camera, endstream) {
     LOG_RESPONSE(INFO, "Ended Camera Stream", OK);
 }
 
-DEF_GCS_HANDLE(Get, tickstate) {
+DEF_GCS_HANDLE(Get, obcstate) {
     // Not using the macros here so that it doesn't scream at you every 1 second
-    // LOG_REQUEST("GET", "/tickstate");
+    // LOG_REQUEST("GET", "/obcstate");
 
     TickID tickID = state->getTickID();
     std::string tick_state = TICK_ID_TO_STR(tickID);
+    auto num_current_lap = state->config.pathing.laps - state->getLapsRemaining();
 
     // LOG_RESPONSE(INFO, "Returning tick state", OK, tick_state, mime::plaintext);
-    response.set_content(tick_state, mime::plaintext);
+    response.set_content(tick_state + "," + std::to_string(num_current_lap)
+        + "/" + std::to_string(state->config.pathing.laps), mime::plaintext);
     response.status = OK;
 }
 
@@ -571,7 +600,7 @@ DEF_GCS_HANDLE(Post, camera, runpipeline) {
 
 DEF_GCS_HANDLE(Post, rtl) {
     LOG_REQUEST("POST", "/rtl");
-    state->getMav()->rtl();
+    state->getMav()->returnToLaunch();
     LOG_RESPONSE(INFO, "RTL activated", OK);
 }
 

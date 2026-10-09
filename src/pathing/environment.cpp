@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <utility>
 #include <vector>
 
@@ -10,24 +11,130 @@
 #include "utilities/datatypes.hpp"
 #include "utilities/rng.hpp"
 
-Environment::Environment(const Polygon& valid_region, const Polygon& airdrop_zone,
-                         const Polygon& mapping_region, const std::vector<XYZCoord>& goals,
-                         const std::vector<Polygon>& obstacles)
-    : valid_region(valid_region),
-      airdrop_zone(airdrop_zone),
-      mapping_region(mapping_region),
-      goals(goals),
-      goals_found(0),
-      bounds(findBounds(valid_region)),
-      obstacles(obstacles) {}
+namespace Environment {
 
-bool Environment::isPointInBounds(const XYZCoord& point) const {
-    if (!isPointInPolygon(valid_region, point)) {
+void init(const Polygon& valid_region, const Polygon& airdrop_zone, const Polygon& mapping_region,
+          const std::vector<Polygon>& obstacles) {
+    _valid_region = valid_region;
+    _airdrop_zone = airdrop_zone;
+    _mapping_region = mapping_region;
+    _obstacles = obstacles;
+    _bounds = findBounds(valid_region);
+
+    // the regions never move once they are set, so the form the bounds checks
+    // want them in is worth building once here rather than deriving per check
+    _valid_edges = buildEdgeSet(valid_region);
+    _obstacle_edges.clear();
+    _obstacle_edges.reserve(obstacles.size());
+    for (const Polygon& obstacle : obstacles) {
+        _obstacle_edges.push_back(buildEdgeSet(obstacle));
+    }
+}
+
+EdgeSet buildEdgeSet(const Polygon& polygon) {
+    EdgeSet edges;
+
+    const std::size_t corners = polygon.size();
+    if (corners == 0) {
+        return edges;
+    }
+
+    edges.start_x.reserve(corners);
+    edges.start_y.reserve(corners);
+    edges.end_x.reserve(corners);
+    edges.end_y.reserve(corners);
+
+    edges.min_x = edges.max_x = polygon[0].x;
+    edges.min_y = edges.max_y = polygon[0].y;
+
+    for (std::size_t i = 0; i < corners; i++) {
+        const XYZCoord& start = polygon[i];
+        const XYZCoord& end = polygon[(i + 1) % corners];
+
+        edges.start_x.push_back(start.x);
+        edges.start_y.push_back(start.y);
+        edges.end_x.push_back(end.x);
+        edges.end_y.push_back(end.y);
+
+        edges.min_x = std::min(edges.min_x, start.x);
+        edges.max_x = std::max(edges.max_x, start.x);
+        edges.min_y = std::min(edges.min_y, start.y);
+        edges.max_y = std::max(edges.max_y, start.y);
+    }
+
+    return edges;
+}
+
+bool isPointInEdgeSet(const EdgeSet& edges, double x, double y) {
+    // a point outside the box is outside the polygon, and this is the answer
+    // almost every time an obstacle is asked about
+    if (x < edges.min_x || x > edges.max_x || y < edges.min_y || y > edges.max_y) {
         return false;
     }
 
-    for (const Polygon& obstacle : obstacles) {
-        if (isPointInPolygon(obstacle, point)) {
+    bool is_inside = false;
+
+    for (std::size_t i = 0; i < edges.size(); i++) {
+        const double y0 = edges.start_y[i];
+        const double y1 = edges.end_y[i];
+
+        if ((y0 > y) != (y1 > y)) {
+            const double x0 = edges.start_x[i];
+            const double crossing = (edges.end_x[i] - x0) * (y - y0) / (y1 - y0) + x0;
+
+            if (x < crossing) {
+                is_inside = !is_inside;
+            }
+        }
+    }
+
+    return is_inside;
+}
+
+bool doesLineIntersectEdgeSet(const EdgeSet& edges, const XYZCoord& start, const XYZCoord& end) {
+    // the segment cannot reach an edge it does not share any ground with
+    if (std::max(start.x, end.x) < edges.min_x || std::min(start.x, end.x) > edges.max_x ||
+        std::max(start.y, end.y) < edges.min_y || std::min(start.y, end.y) > edges.max_y) {
+        return false;
+    }
+
+    for (std::size_t i = 0; i < edges.size(); i++) {
+        if (intersect(start, end, XYZCoord{edges.start_x[i], edges.start_y[i], 0},
+                      XYZCoord{edges.end_x[i], edges.end_y[i], 0})) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool doesArcIntersectEdgeSet(const EdgeSet& edges, const XYZCoord& center, double radius,
+                             double start_angle, double sweep) {
+    // the arc lies inside its circle, so the circle's box standing clear of the
+    // polygon's is enough to rule it out
+    if (center.x + radius < edges.min_x || center.x - radius > edges.max_x ||
+        center.y + radius < edges.min_y || center.y - radius > edges.max_y) {
+        return false;
+    }
+
+    for (std::size_t i = 0; i < edges.size(); i++) {
+        if (doesArcIntersectSegment(center, radius, start_angle, sweep,
+                                    XYZCoord{edges.start_x[i], edges.start_y[i], 0},
+                                    XYZCoord{edges.end_x[i], edges.end_y[i], 0})) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool isPointInBounds(const XYZCoord& point) {
+    if (!isPointInEdgeSet(_valid_edges, point.x, point.y)) {
+        return false;
+    }
+
+    for (const EdgeSet& obstacle : _obstacle_edges) {
+        if (isPointInEdgeSet(obstacle, point.x, point.y)) {
             return false;
         }
     }
@@ -35,7 +142,7 @@ bool Environment::isPointInBounds(const XYZCoord& point) const {
     return true;
 }
 
-bool Environment::isPathInBounds(const std::vector<XYZCoord>& path) const {
+bool isPathInBounds(const std::vector<XYZCoord>& path) {
     /*
      *   starts from the center, and walks in botht directions in intervals, this
      * is motivated by the idea that if an endpoint is in bounds, then the path
@@ -76,54 +183,102 @@ bool Environment::isPathInBounds(const std::vector<XYZCoord>& path) const {
     return true;
 }
 
-// bool Environment::isPathInBoundsAdv(const std::vector<XYZCoord>& path,
-//                                     const RRTOption& option) const {
-//     if (!option.has_straight) {
-//         return isPathInBounds(path);
-//     }
+bool isDubinsPathInBounds(const RRTPoint& start, const RRTPoint& end, const DubinsPath& path) {
+    // rejects the sentinel paths (infinity) that lsr/rsl produce when no path exists
+    if (!std::isfinite(path.length)) {
+        return false;
+    }
 
-//     // finds the last point on the first curve, and the first point on the second curve
-//     // does this using the option, using arclength and the point separation
-//     const int first_curve_end =
-//         std::abs(option.dubins_path.beta_0) * TURNING_RADIUS / POINT_SEPARATION + 1;
-//     const int second_curve_start =
-//         path.size() - std::abs(option.dubins_path.beta_2) * TURNING_RADIUS / POINT_SEPARATION;
+    const double radius = Dubins::_radius;
 
-//     // sanity check
-//     if (first_curve_end >= second_curve_start) {
-//         return isPathInBounds(path);
-//     }
+    if (!isPointInBounds(start.coord) || !isPointInBounds(end.coord)) {
+        return false;
+    }
 
-//     if (!isLineInBounds(path[first_curve_end], path[second_curve_start])) {
-//         return false;
-//     }
+    // endpoints of the straight section, overwritten by the turn sections below
+    XYZCoord straight_start = start.coord;
+    XYZCoord straight_end = end.coord;
 
-//     // checks the points manually in the curve
-//     for (int i = 0; i <= first_curve_end; i++) {
-//         if (!isPointInBounds(path[i])) {
-//             return false;
-//         }
-//     }
+    const bool turns_first = std::abs(path.beta_0) > 0;
+    const bool turns_last = std::abs(path.beta_2) > 0;
 
-//     for (int i = second_curve_start; i < path.size(); i++) {
-//         if (!isPointInBounds(path[i])) {
-//             return false;
-//         }
-//     }
+    // where the turns hand over to the straightaway, which is geometry and does
+    // not depend on any of the three sections being in bounds
+    double first_start_angle = 0;
+    double last_entry_angle = 0;
+    XYZCoord first_center{0, 0, 0};
+    XYZCoord last_center{0, 0, 0};
 
-//     return true;
-// }
+    if (turns_first) {
+        const double turn_sign = (path.beta_0 > 0) ? 1.0 : -1.0;
+        first_center = Dubins::findCenter(start, (turn_sign > 0) ? 'L' : 'R');
 
-const XYZCoord& Environment::getGoal() const { return goals[goals_found]; }
+        // angle from the center to the plane at the start of the turn
+        first_start_angle = start.psi - HALF_PI * turn_sign;
 
-const XYZCoord& Environment::getGoal(int index) const { return goals[index]; }
+        const double exit_angle = start.psi + (std::abs(path.beta_0) - HALF_PI) * turn_sign;
+        straight_start =
+            first_center + radius * XYZCoord{std::cos(exit_angle), std::sin(exit_angle), 0};
+    }
 
-XYZCoord Environment::getRandomPoint(bool use_mapping_region = false) const {
+    // last turn (entered backwards -- the arc runs from the end of the straight
+    // section to the end vector)
+    if (turns_last) {
+        const double turn_sign = (path.beta_2 > 0) ? 1.0 : -1.0;
+        last_center = Dubins::findCenter(end, (turn_sign > 0) ? 'L' : 'R');
+
+        // angle from the center to the plane at the start of the turn
+        last_entry_angle = end.psi - (std::abs(path.beta_2) + HALF_PI) * turn_sign;
+
+        straight_end =
+            last_center + radius * XYZCoord{std::cos(last_entry_angle),
+                                            std::sin(last_entry_angle), 0};
+    }
+
+    // The three sections all have to be in bounds and none of the checks can
+    // affect another, so they are run cheapest-and-likeliest-to-fail first. The
+    // straightaway covers most of the ground a path does, and the turns are a
+    // radius wide around a point already known to be in bounds, so it is what
+    // usually leaves the airspace -- and one segment against the boundary is
+    // less work than an arc against it.
+    if (!isLineInBounds(straight_start, straight_end)) {
+        return false;
+    }
+
+    if (turns_first && !isArcInBounds(first_center, radius, first_start_angle, path.beta_0)) {
+        return false;
+    }
+
+    return !turns_last || isArcInBounds(last_center, radius, last_entry_angle, path.beta_2);
+}
+
+bool isArcInBounds(const XYZCoord& center, double radius, double start_angle, double sweep) {
+    // an arc that starts in bounds and never crosses a boundary is entirely in bounds
+    const XYZCoord arc_start =
+        center + radius * XYZCoord{std::cos(start_angle), std::sin(start_angle), 0};
+    if (!isPointInBounds(arc_start)) {
+        return false;
+    }
+
+    if (doesArcIntersectEdgeSet(_valid_edges, center, radius, start_angle, sweep)) {
+        return false;
+    }
+
+    for (const EdgeSet& obstacle : _obstacle_edges) {
+        if (doesArcIntersectEdgeSet(obstacle, center, radius, start_angle, sweep)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+XYZCoord getRandomPoint(bool use_mapping_region, const XYZCoord& fallback) {
     // TODO - use some heuristic to more efficiently generate direction
     // vector (and make it toggleable)
-    std::pair<std::pair<double, double>, std::pair<double, double>> polygon_bounds = bounds;
+    std::pair<std::pair<double, double>, std::pair<double, double>> polygon_bounds = _bounds;
     if (use_mapping_region) {
-        polygon_bounds = findBounds(mapping_region);
+        polygon_bounds = findBounds(_mapping_region);
     }
 
     for (int i = 0; i < TRIES_FOR_RANDOM_POINT; i++) {
@@ -133,7 +288,7 @@ XYZCoord Environment::getRandomPoint(bool use_mapping_region = false) const {
             random(polygon_bounds.second.first, polygon_bounds.second.second), 0};
 
         if (use_mapping_region) {
-            if (isPointInPolygon(mapping_region, generated_point)) {
+            if (isPointInPolygon(_mapping_region, generated_point)) {
                 return generated_point;
             }
         } else {
@@ -143,12 +298,10 @@ XYZCoord Environment::getRandomPoint(bool use_mapping_region = false) const {
         }
     }
 
-    return goals[goals_found];
+    return fallback;
 }
 
-int Environment::getNumGoals() const { return goals.size(); }
-
-bool Environment::isPointInPolygon(const Polygon& polygon, const XYZCoord& point) {
+bool isPointInPolygon(const Polygon& polygon, const XYZCoord& point) {
     bool is_inside = false;
 
     // point in polygon
@@ -164,13 +317,17 @@ bool Environment::isPointInPolygon(const Polygon& polygon, const XYZCoord& point
     return is_inside;
 }
 
-bool Environment::isLineInBounds(const XYZCoord& start_point, const XYZCoord& end_point) const {
-    if (doesLineIntersectPolygon(start_point, end_point, valid_region)) {
-        return false;
+bool isPolygonInPolygon(const Polygon& inner, const Polygon& outer) {
+    for (const XYZCoord& corner : inner) {
+        if (!isPointInPolygon(outer, corner)) {
+            return false;
+        }
     }
 
-    for (const Polygon& obstacle : obstacles) {
-        if (doesLineIntersectPolygon(start_point, end_point, obstacle)) {
+    // an edge can bulge out between two corners that are both inside, which
+    // shows up as it crossing the outer boundary
+    for (std::size_t i = 0, j = inner.size() - 1; i < inner.size(); j = i++) {
+        if (doesLineIntersectPolygon(inner[j], inner[i], outer)) {
             return false;
         }
     }
@@ -178,8 +335,22 @@ bool Environment::isLineInBounds(const XYZCoord& start_point, const XYZCoord& en
     return true;
 }
 
-bool Environment::doesLineIntersectPolygon(const XYZCoord& start_point, const XYZCoord& end_point,
-                                           const Polygon& polygon) const {
+bool isLineInBounds(const XYZCoord& start_point, const XYZCoord& end_point) {
+    if (doesLineIntersectEdgeSet(_valid_edges, start_point, end_point)) {
+        return false;
+    }
+
+    for (const EdgeSet& obstacle : _obstacle_edges) {
+        if (doesLineIntersectEdgeSet(obstacle, start_point, end_point)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool doesLineIntersectPolygon(const XYZCoord& start_point, const XYZCoord& end_point,
+                              const Polygon& polygon) {
     for (int i = 0, j = polygon.size() - 1; i < polygon.size(); j = i++) {
         if (intersect(start_point, end_point, polygon[i], polygon[j])) {
             return true;
@@ -189,9 +360,60 @@ bool Environment::doesLineIntersectPolygon(const XYZCoord& start_point, const XY
     return false;
 }
 
+bool doesArcIntersectPolygon(const XYZCoord& center, double radius, double start_angle,
+                             double sweep, const Polygon& polygon) {
+    for (int i = 0, j = polygon.size() - 1; i < polygon.size(); j = i++) {
+        if (doesArcIntersectSegment(center, radius, start_angle, sweep, polygon[i], polygon[j])) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool doesArcIntersectSegment(const XYZCoord& center, double radius, double start_angle,
+                             double sweep, const XYZCoord& seg_start, const XYZCoord& seg_end) {
+    // parameterize the segment as P(t) = seg_start + t * d, t in [0, 1], and solve
+    // |P(t) - center|^2 = radius^2, a quadratic in t
+    // @see https://stackoverflow.com/questions/1073336/circle-line-segment-collision-detection
+    const XYZCoord d = seg_end - seg_start;
+    const XYZCoord f = seg_start - center;
+
+    // 2D only -- z is ignored, matching the rest of the environment checks
+    const double a = d.x * d.x + d.y * d.y;
+    const double b = 2 * (f.x * d.x + f.y * d.y);
+    const double c = f.x * f.x + f.y * f.y - radius * radius;
+
+    const double discriminant = b * b - 4 * a * c;
+    if (a == 0 || discriminant < 0) {  // degenerate segment or no circle intersection
+        return false;
+    }
+
+    const double sqrt_discriminant = std::sqrt(discriminant);
+    for (const double t : {(-b - sqrt_discriminant) / (2 * a),
+                           (-b + sqrt_discriminant) / (2 * a)}) {
+        // hit must be within the segment
+        if (t < 0 || t > 1) {
+            continue;
+        }
+
+        // hit must be within the arc's angular range: walk from start_angle in the sweep
+        // direction and see if the hit is reached before the sweep is used up
+        const double theta =
+            std::atan2(f.y + t * d.y, f.x + t * d.x);  // angle of hit relative to center
+        const double travelled = (sweep > 0) ? mod(theta - start_angle, TWO_PI)
+                                             : mod(start_angle - theta, TWO_PI);
+        if (travelled <= std::abs(sweep)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 // Given three colinear points p, q, r, the function checks if
 // point q lies on line segment 'pr'
-bool Environment::onSegment(XYZCoord p, XYZCoord q, XYZCoord r) const {
+bool onSegment(const XYZCoord& p, const XYZCoord& q, const XYZCoord& r) {
     if (q.x <= std::max(p.x, r.x) && q.x >= std::min(p.x, r.x) && q.y <= std::max(p.y, r.y) &&
         q.y >= std::min(p.y, r.y))
         return true;
@@ -203,14 +425,17 @@ bool Environment::onSegment(XYZCoord p, XYZCoord q, XYZCoord r) const {
 // 0 : Colinear points
 // 1 : Clockwise points
 // 2 : Counterclockwise points
-int Environment::orientation(XYZCoord p, XYZCoord q, XYZCoord r) const {
-    int val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
+int orientation(const XYZCoord& p, const XYZCoord& q, const XYZCoord& r) {
+    // the cross product is kept a double -- coordinates are metres over a field
+    // kilometres across, so truncating it to an int both loses every turn
+    // shallower than one square metre and overflows on a large enough field
+    const double val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
     if (val == 0) return 0;    // colinear
     return (val > 0) ? 1 : 2;  // clock or counterclock wise
 }
 
 // Function to check if segments intersect
-bool Environment::intersect(XYZCoord p1, XYZCoord q1, XYZCoord p2, XYZCoord q2) const {
+bool intersect(const XYZCoord& p1, const XYZCoord& q1, const XYZCoord& p2, const XYZCoord& q2) {
     // Find the four orientations needed for general and
     // special cases
     int o1 = orientation(p1, q1, p2);
@@ -237,13 +462,12 @@ bool Environment::intersect(XYZCoord p1, XYZCoord q1, XYZCoord p2, XYZCoord q2) 
     return false;  // Doesn't fall in any of the above cases
 }
 
-std::vector<XYZCoord> Environment::getAirdropEndpoints(int scan_radius, bool vertical) const {
-    auto bounds = findBounds(airdrop_zone);
-    auto [x_min, x_max] = bounds.first;
-    auto [y_min, y_max] = bounds.second;
+std::vector<XYZCoord> getAirdropEndpoints(int scan_radius, bool vertical) {
+    auto zone_bounds = findBounds(_airdrop_zone);
+    auto [x_min, x_max] = zone_bounds.first;
+    auto [y_min, y_max] = zone_bounds.second;
 
     std::vector<XYZCoord> endpoints;
-    bool fly_down = true;
     double start = vertical ? x_min + scan_radius : -1 * (y_max - scan_radius);
     double end = vertical ? x_max - scan_radius : -1 * (y_min + scan_radius);
     double iteration = scan_radius * 2;
@@ -261,7 +485,7 @@ std::vector<XYZCoord> Environment::getAirdropEndpoints(int scan_radius, bool ver
         }
 
         std::vector<XYZCoord> intersections =
-            findIntersections(airdrop_zone, top, bottom, vertical);
+            findIntersections(_airdrop_zone, top, bottom, vertical);
 
         if (vertical) {
             if (intersections[0].y < intersections[1].y) {
@@ -287,8 +511,7 @@ std::vector<XYZCoord> Environment::getAirdropEndpoints(int scan_radius, bool ver
     return endpoints;
 }
 
-std::vector<RRTPoint> Environment::getAirdropWaypoints(int scan_radius, bool one_way,
-                                                       bool vertical) const {
+std::vector<RRTPoint> getAirdropWaypoints(int scan_radius, bool one_way, bool vertical) {
     std::vector<RRTPoint> waypoints;
     std::vector<XYZCoord> endpoints = getAirdropEndpoints(scan_radius, vertical);
     double angle = vertical ? 3.0 / 2.0 * M_PI : 0;
@@ -316,9 +539,8 @@ std::vector<RRTPoint> Environment::getAirdropWaypoints(int scan_radius, bool one
     return waypoints;
 }
 
-bool Environment::verticalRayIntersectsEdge(const XYZCoord& p1, const XYZCoord& p2,
-                                            const XYZCoord& rayStart, const XYZCoord& rayEnd,
-                                            XYZCoord& intersection) const {
+bool verticalRayIntersectsEdge(const XYZCoord& p1, const XYZCoord& p2, const XYZCoord& rayStart,
+                               const XYZCoord& rayEnd, XYZCoord& intersection) {
     // if the x coordinate lines between the edge
     if ((p2.x <= rayStart.x && p1.x >= rayStart.x) || (p1.x <= rayStart.x && p2.x >= rayStart.x)) {
         double slope = (p2.y - p1.y) / (p2.x - p1.x);
@@ -329,9 +551,8 @@ bool Environment::verticalRayIntersectsEdge(const XYZCoord& p1, const XYZCoord& 
     return false;
 }
 
-bool Environment::horizontalRayIntersectsEdge(const XYZCoord& p1, const XYZCoord& p2,
-                                              const XYZCoord& rayStart, const XYZCoord& rayEnd,
-                                              XYZCoord& intersection) const {
+bool horizontalRayIntersectsEdge(const XYZCoord& p1, const XYZCoord& p2, const XYZCoord& rayStart,
+                                 const XYZCoord& rayEnd, XYZCoord& intersection) {
     // if the x coordinate lines between the edge
     if ((p2.y <= rayStart.y && p1.y >= rayStart.y) || (p1.y <= rayStart.y && p2.y >= rayStart.y)) {
         double inverse_slope = (p2.x - p1.x) / (p2.y - p1.y);
@@ -342,9 +563,8 @@ bool Environment::horizontalRayIntersectsEdge(const XYZCoord& p1, const XYZCoord
     return false;
 }
 
-std::vector<XYZCoord> Environment::findIntersections(const Polygon& polygon,
-                                                     const XYZCoord& rayStart,
-                                                     const XYZCoord& rayEnd, bool vertical) const {
+std::vector<XYZCoord> findIntersections(const Polygon& polygon, const XYZCoord& rayStart,
+                                        const XYZCoord& rayEnd, bool vertical) {
     // array to be filled
     std::vector<XYZCoord> intersections;
     int n = polygon.size();
@@ -366,9 +586,9 @@ std::vector<XYZCoord> Environment::findIntersections(const Polygon& polygon,
     return intersections;
 }
 
-std::vector<XYZCoord> Environment::findIntersectionsWithPolygon(const Polygon& polygon,
-                                                                const XYZCoord& start_point,
-                                                                const XYZCoord& end_point) const {
+std::vector<XYZCoord> findIntersectionsWithPolygon(const Polygon& polygon,
+                                                   const XYZCoord& start_point,
+                                                   const XYZCoord& end_point) {
     // for loop through each edge of the polygon
     // for each edge, find the intersection point with the line segment
     // if an intersection point is found, add it to the list of intersection
@@ -406,52 +626,13 @@ std::vector<XYZCoord> Environment::findIntersectionsWithPolygon(const Polygon& p
     return intersections;
 }
 
-std::pair<double, double> Environment::estimateAreaCoveredAndPathLength(
-    const std::vector<XYZCoord>& new_goals) const {
-    double area_covered = 0.0;
-    double path_length = 0.0;
-
-    for (int i = 0; i < new_goals.size(); ++i) {
-        XYZCoord start_point = new_goals[i];
-        XYZCoord end_point = new_goals[(i + 1) % new_goals.size()];
-        path_length += start_point.distanceTo(end_point);
-        // Calculates area covered by adding the part of the line segment that is in bounds
-        // Caulcate the intersections and whether the start and end points are in bounds in order to
-        // find the sections of the line that is in bounds
-        if (!doesLineIntersectPolygon(start_point, end_point, mapping_region)) {
-            area_covered += start_point.distanceTo(end_point) * SEARCH_RADIUS * 2;
-        } else {
-            std::vector<XYZCoord> intersections =
-                findIntersectionsWithPolygon(mapping_region, start_point, end_point);
-            bool start_in_bounds = isPointInPolygon(mapping_region, start_point);
-            bool end_in_bounds = isPointInPolygon(mapping_region, end_point);
-
-            if (start_in_bounds) {
-                area_covered += start_point.distanceTo(intersections[0]) * SEARCH_RADIUS;
-                intersections.erase(intersections.begin());
-            }
-
-            if (end_in_bounds) {
-                area_covered += end_point.distanceTo(intersections.back()) * SEARCH_RADIUS;
-                intersections.pop_back();
-            }
-
-            for (int i = 0; i < intersections.size(); i += 2) {
-                area_covered += intersections[i].distanceTo(intersections[i + 1]) * SEARCH_RADIUS;
-            }
-        }
-    }
-
-    return {area_covered, path_length};
-}
-
-Polygon Environment::scale(double scale, const Polygon& source_polygon) const {
+Polygon scale(double scale, const Polygon& source_polygon) {
     Polygon scaled_polygon;
 
     // square bounds of the polygon
-    auto bounds = findBounds(source_polygon);
-    auto [x_min, x_max] = bounds.first;
-    auto [y_min, y_max] = bounds.second;
+    auto polygon_bounds = findBounds(source_polygon);
+    auto [x_min, x_max] = polygon_bounds.first;
+    auto [y_min, y_max] = polygon_bounds.second;
 
     // finds the center of the polygon
     double x_center = (x_max + x_min) / 2;
@@ -470,8 +651,7 @@ Polygon Environment::scale(double scale, const Polygon& source_polygon) const {
     return scaled_polygon;
 }
 
-std::pair<std::pair<double, double>, std::pair<double, double>> Environment::findBounds(
-    const Polygon& region) const {
+std::pair<std::pair<double, double>, std::pair<double, double>> findBounds(const Polygon& region) {
     if (region.empty()) {
         return std::make_pair(std::make_pair(0, 0), std::make_pair(0, 0));
     }
@@ -492,3 +672,5 @@ std::pair<std::pair<double, double>, std::pair<double, double>> Environment::fin
 
     return {{min_x, max_x}, {min_y, max_y}};
 }
+
+}  // namespace Environment

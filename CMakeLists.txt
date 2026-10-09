@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
 # Make sure that we are using the C++11 ABI, if not then there are some weird
 # inconsistencies with our precompiled headers
 add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=1)
+add_compile_options(-Wno-psabi)
 
 # Disable in-source builds to prevent source tree corruption.
 if(" ${CMAKE_SOURCE_DIR}" STREQUAL " ${CMAKE_BINARY_DIR}")
@@ -31,7 +32,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS True)
 
 # set(CMAKE_POSITION_INDEPENDENT_CODE True)
 
-SET(GCC_COMPILE_FLAGS "")
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+SET(GCC_COMPILE_FLAGS "-O3")
 SET(GCC_LINK_FLAGS    "-lprotobuf -lopencv_core -lopencv_highgui -lopencv_features2d -lopencv_flann -lopencv_imgcodecs -lopencv_dnn -lopencv_videoio -lopencv_imgproc -lopencv_ml -lopencv_photo -lprotobuf")
 
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COMPILE_FLAGS}")
@@ -184,7 +186,7 @@ if(CPPLINT)
     # also don't check for runtime/references since Google's public style guidelines are behind https://github.com/cpplint/cpplint/issues/148
     --exclude=../include/udp_squared
     --exclude=../src/utilities/base64.cpp
-    --filter=-legal,-readability/todo,-build/c++11,-runtime/references
+    --filter=-legal,-readability/todo,-build/c++11,-build/c++17,-runtime/references
     --linelength=100
     --recursive
     ../src

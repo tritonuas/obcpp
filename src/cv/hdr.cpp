@@ -1,5 +1,8 @@
 #include "cv/hdr.hpp"
 
+#include <string>
+#include <vector>
+
 std::vector<cv::Mat> generate_test_images() {
     std::vector<cv::Mat> img_list;
     std::vector<cv::Scalar> colors = {

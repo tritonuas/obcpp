@@ -3,10 +3,13 @@
 #include <httplib.h>
 
 #include <chrono>
-#include <thread>
-#include <optional>
 #include <deque>
 #include <filesystem>
+#include <iostream>
+#include <memory>
+#include <optional>
+#include <thread>
+#include <vector>
 
 #include <loguru.hpp>
 #include "nlohmann/json.hpp"

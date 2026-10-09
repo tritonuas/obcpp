@@ -1,6 +1,7 @@
 #ifndef INCLUDE_PATHING_DUBINS_HPP_
 #define INCLUDE_PATHING_DUBINS_HPP_
 
+#include <array>
 #include <cassert>
 #include <cmath>
 #include <limits>
@@ -8,9 +9,17 @@
 
 #include "utilities/datatypes.hpp"
 
+/**
+ *  A dubins path, and how far the plane flies along it.
+ * 
+ * NOTE: no has_straight exists right now since we don't use it at the moment.
+ *       IF we ever do use LRL or RLR, then we would need the information again
+ */
 struct DubinsPath {
-    DubinsPath(double beta_0, double beta_2, double straight_dist)
-        : beta_0(beta_0), beta_2(beta_2), straight_dist(straight_dist) {}
+    // members left indeterminate; only needed so this can live in a std::array
+    DubinsPath() = default;
+    DubinsPath(double beta_0, double beta_2, double straight_dist, double length)
+        : beta_0(beta_0), beta_2(beta_2), straight_dist(straight_dist), length(length) {}
 
     double beta_0;         // total angle turned in first_turn     radians
     double beta_2;         // total angle turned in last_turn    radians
@@ -18,15 +27,22 @@ struct DubinsPath {
                            // IF [LRL, RLR], beta_1 ==> angle for middle_turn
                            // !!! beta_1 only used for total_distance,
                            // see Dubins::lrl() or Dubins::rlr()
+    double length;       // the squared length of the path
 };
 
-struct RRTOption {
-    RRTOption(double length, DubinsPath dubins_path, bool has_straight)
-        : length(length), dubins_path(dubins_path), has_straight(has_straight) {}
+/**
+ *  One leg of a flight: a dubins path, and the vector it lands on.
+ *
+ *  Every path is generated to reach a known vector, so that vector is carried
+ *  along with it instead of being recovered from the path parameters later on.
+ */
+struct PathSegment {
+    // members left indeterminate; only needed so this can live in a std::array
+    PathSegment() = default;
+    PathSegment(const RRTPoint& end, const DubinsPath& path) : end(end), path(path) {}
 
-    double length;           // the total length of the path
-    DubinsPath dubins_path;  // parameters of DubinsPath
-    bool has_straight;       // if this option has a straight path or not
+    RRTPoint end;     // the vector the leg ends on
+    DubinsPath path;  // the dubins path flown to get there
 };
 
 /**
@@ -40,11 +56,16 @@ struct RRTOption {
  *                       0 IF number == 0
  */
 template <typename T>
-int sign(T number);
+inline int sign(T number) {
+    return (T(0) < number) - (number < T(0));
+}
 
 /** ((a % n) + n) % n
  *  a + n * [a / n] where [] is the floor function (i.e. integer division)
  *  Mimics mod operator as used in python
+ *
+ *  Defined here because the arc/edge intersection test calls it per edge, on
+ *  every path pathing considers
  *
  * @param dividend    ==> the dividend
  * @param divisor    ==> the divisor
@@ -52,7 +73,9 @@ int sign(T number);
  * @see / from ==>
  * https://stackoverflow.com/questions/1907565/c-and-python-different-behaviour-of-the-modulo-operation
  */
-double mod(double dividend, double divisor);
+inline double mod(double dividend, double divisor) {
+    return std::fmod(std::fmod(dividend, divisor) + divisor, divisor);
+}
 
 /**
  *  For sorting function, a min sort bsed on path length
@@ -62,7 +85,7 @@ double mod(double dividend, double divisor);
  *  @param second   ==> second option
  *  @return         ==> true if @param first has a smaller length
  */
-bool compareRRTOptionLength(const RRTOption &first, const RRTOption &second);
+bool compareDubinsPathLength(const DubinsPath& first, const DubinsPath& second);
 
 /**
  *  Finds a orthogonal 2-vector to the 2-vector inputted
@@ -72,7 +95,7 @@ bool compareRRTOptionLength(const RRTOption &first, const RRTOption &second);
  * counter-clockwise)
  *  @see    https://mathworld.wolfram.com/PerpendicularVector.html
  */
-XYZCoord findOrthogonalVector2D(const XYZCoord &vector);
+XYZCoord findOrthogonalVector2D(const XYZCoord& vector);
 
 /**
  *  returns half of the displacement vector from v2 to v1
@@ -83,233 +106,235 @@ XYZCoord findOrthogonalVector2D(const XYZCoord &vector);
  *                      @param vector1 that terminates half way
  *                      (i.e. half the magnitude)
  */
-XYZCoord halfDisplacement(const XYZCoord &vector1, const XYZCoord &vector2);
+XYZCoord halfDisplacement(const XYZCoord& vector1, const XYZCoord& vector2);
 
-class Dubins {
- public:
-    Dubins(double radius, double point_separation);
+namespace Dubins {
+inline double _radius;
+inline double _point_separation;
 
-    /**
-     *   Finds the center of a given turn orignating at a vector turning left or right
-     *   Assumes the path may be done perfectly circularly
-     *
-     *   @param  point   ==> current position of the plane (vector) with psi in radians
-     *   @param  side    ==> whether the plane is planning to turn left (L) or right (R)
-     *   @return         ==> center of a turning circle
-     */
-    XYZCoord findCenter(const RRTPoint &point, char side) const;
+/**
+ *   Finds the center of a given turn orignating at a vector turning left or right
+ *   Assumes the path may be done perfectly circularly
+ *
+ *   @param  point   ==> current position of the plane (vector) with psi in radians
+ *   @param  side    ==> whether the plane is planning to turn left (L) or right (R)
+ *   @return         ==> center of a turning circle
+ */
+XYZCoord findCenter(const RRTPoint& point, char side);
 
-    /**
-     *   Finds a point (vector) along a curved path given a distance
-     *      already traveled
-     *
-     *   @param starting_point   ==> position vector of the plane (only psi is
-     *                                  used to ascertain direction)
-     *   @param beta             ==> angle of the turn (positive is left/ccw)
-     *   @param center           ==> center of the circle
-     *   @param path_length      ==> the arc-length along the circle
-     *   @returns                ==> point along circle path
-     */
-    XYZCoord circleArc(const RRTPoint &starting_point, double beta, const XYZCoord &center,
-                     double path_length) const;
-    /**
-     *  Generates points for the paths that contain a straight section
-     *  [LSL, LSR, RSR, RSL]
-     *
-     *  @param start    ==> current "vector" of the plane
-     *  @param end      ==> final/desired "vector" of the path
-     *  @param path     ==> Some given dubins's path parameters
-     *  @return         ==> a list of vectors along the entire path
-     */
-    std::vector<XYZCoord> generatePointsStraight(const RRTPoint &start, const RRTPoint &end,
-                                               const DubinsPath &path) const;
+/**
+ *   Finds a point (vector) along a curved path given a distance
+ *      already traveled
+ *
+ *   @param starting_point   ==> position vector of the plane (only psi is
+ *                                  used to ascertain direction)
+ *   @param beta             ==> angle of the turn (positive is left/ccw)
+ *   @param center           ==> center of the circle
+ *   @param path_length      ==> the arc-length along the circle
+ *   @returns                ==> point along circle path
+ */
+XYZCoord circleArc(const RRTPoint& starting_point, double beta, const XYZCoord& center,
+                   double path_length);
+/**
+ *  Generates points for the paths that contain a straight section
+ *  [LSL, LSR, RSR, RSL]
+ *
+ *  @param start    ==> current "vector" of the plane
+ *  @param end      ==> final/desired "vector" of the path
+ *  @param path     ==> Some given dubins's path parameters
+ *  @return         ==> a list of vectors along the entire path
+ */
+std::vector<XYZCoord> generatePointsStraight(const RRTPoint& start, const RRTPoint& end,
+                                             const DubinsPath& path);
 
-    /**
-     *  Generates points for the paths that only contain curved sections
-     *  [RLR, LRL]
-     *
-     *  @param start    ==> current "vector" of the plane
-     *  @param end      ==> final/desired "vector" of the path
-     *  @param path     ==> Some given dubins's path parameters
-     *  @return         ==> a list of vectors along the entire path
-     */
-    std::vector<XYZCoord> generatePointsCurve(const RRTPoint &start, const RRTPoint &end,
-                                            const DubinsPath &path) const;
+/**
+ *  Generates points for the paths that only contain curved sections
+ *  [RLR, LRL]
+ *
+ *  @param start    ==> current "vector" of the plane
+ *  @param end      ==> final/desired "vector" of the path
+ *  @param path     ==> Some given dubins's path parameters
+ *  @return         ==> a list of vectors along the entire path
+ */
+std::vector<XYZCoord> generatePointsCurve(const RRTPoint& start, const RRTPoint& end,
+                                          const DubinsPath& path);
 
-    /**
-     *  Abstraction for generating points (curved/straight)
-     *
-     *  @param start        ==> vector at start position
-     *  @param end          ==> vector at end position
-     *  @param path         ==> DubinsPath encoding turning and straight information
-     *  @param has_straigt  ==> whether the given DubinsPath has a straight section or not
-     *  @return             ==> a list of points that represent the shortest
-     *                          dubin's path from start to end
-     */
-    std::vector<XYZCoord> generatePoints(const RRTPoint &start, const RRTPoint &end,
-                                       const DubinsPath &path, bool has_straight) const;
+/**
+ *  Abstraction for generating points (curved/straight)
+ *
+ *  @param start        ==> vector at start position
+ *  @param end          ==> vector at end position
+ *  @param path         ==> DubinsPath encoding turning and straight information
+ *  @param has_straigt  ==> whether the given DubinsPath has a straight section or not
+ *  @return             ==> a list of points that represent the shortest
+ *                          dubin's path from start to end
+ */
+std::vector<XYZCoord> generatePoints(const RRTPoint& start, const RRTPoint& end,
+                                     const DubinsPath& path, bool has_straight);
 
-    /**
-     *  First, the straight distance (it turns out) is equal to the
-     *  distance between the two centers
-     *  Next it calculates the turning angle (positive [CCW] turn from start to
-     *  end vector)
-     *
-     *  @param start    ==> vector at start position
-     *  @param end      ==> vector at end position
-     *  @param center_0 ==> the center of the first turn
-     *  @param center_2 ==> the center of the last turn
-     *  @return             RRTOption detailing the parameters of the path
-     *                      - total distance
-     *                      - DubinsPath
-     *                          - turning angle 1
-     *                          - turning angle 2
-     *                          - straight_distance
-     *                      - if the path has a straight section
-     */
-    RRTOption lsl(const RRTPoint &start, const RRTPoint &end, const XYZCoord &center_0,
-                  const XYZCoord &center_2) const;
+/**
+ *  Generates the points along a sequence of dubins paths
+ *
+ *  The segments are flown back to back, each one starting on the vector the
+ *  previous one ended on. The first point of every segment is dropped, as it is
+ *  either the last point of the previous segment or the point the plane is
+ *  already at.
+ *
+ *  @param start    ==> vector the path is flown from
+ *  @param segments ==> the dubins paths to fly, in order, with their end vectors
+ *  @return         ==> a list of points along the entire path
+ */
+std::vector<XYZCoord> generatePath(const RRTPoint& start, const std::vector<PathSegment>& segments);
 
-    /**
-     *  First, the straight distance (it turns out) is equal to the
-     *  distance between the two centers
-     *  Next it calculates the turning angle (negative [CW] turn from start to end vector)
-     *
-     *  @param start    ==> vector at start position
-     *  @param end      ==> vector at end position
-     *  @param center_0 ==> the center of the first turn
-     *  @param center_2 ==> the center of the last turn
-     *  @return             RRTOption detailing the parameters of the path
-     *                      - total distance
-     *                      - DubinsPath
-     *                          - turning angle 1
-     *                          - turning angle 2
-     *                          - straight_distance
-     *                      - if the path has a straight section
-     */
-    RRTOption rsr(const RRTPoint &start, const RRTPoint &end, const XYZCoord &center_0,
-                  const XYZCoord &center_2) const;
+/**
+ *  First, the straight distance (it turns out) is equal to the
+ *  distance between the two centers
+ *  Next it calculates the turning angle (positive [CCW] turn from start to
+ *  end vector)
+ *
+ *  @param start    ==> vector at start position
+ *  @param end      ==> vector at end position
+ *  @param center_0 ==> the center of the first turn
+ *  @param center_2 ==> the center of the last turn
+ *  @return             DubinsPath detailing the parameters of the path
+ *                      - turning angle 1
+ *                      - turning angle 2
+ *                      - straight_distance
+ *                      - total distance
+ */
+DubinsPath lsl(const RRTPoint& start, const RRTPoint& end, const XYZCoord& center_0,
+              const XYZCoord& center_2);
 
-    /**
-     *  Because of the change in turn direction, it is a little more complex to
-     *  compute than in the RSR or LSL cases.
-     *
-     *  The tangent line between both turns turns out to bisect the intercenter.
-     *  With that knowledge, it is possible to compute both the length and the angle of the
-     *  tangent line ==> then allowing the calculation for the proper turning angles.
-     *
-     *  @param start    ==> vector at start position
-     *  @param end      ==> vector at end position
-     *  @param center_0 ==> the center of the first turn
-     *  @param center_2 ==> the center of the last turn
-     *  @return             RRTOption detailing the parameters of the path
-     *                      - total distance
-     *                      - DubinsPath
-     *                          - turning angle 1
-     *                          - turning angle 2
-     *                          - straight_distance
-     *                      - if the path has a straight section
-     */
-    RRTOption lsr(const RRTPoint &start, const RRTPoint &end, const XYZCoord &center_0,
-                  const XYZCoord &center_2) const;
+/**
+ *  First, the straight distance (it turns out) is equal to the
+ *  distance between the two centers
+ *  Next it calculates the turning angle (negative [CW] turn from start to end vector)
+ *
+ *  @param start    ==> vector at start position
+ *  @param end      ==> vector at end position
+ *  @param center_0 ==> the center of the first turn
+ *  @param center_2 ==> the center of the last turn
+ *  @return             DubinsPath detailing the parameters of the path
+ *                      - turning angle 1
+ *                      - turning angle 2
+ *                      - straight_distance
+ *                      - total distance
+ */
+DubinsPath rsr(const RRTPoint& start, const RRTPoint& end, const XYZCoord& center_0,
+              const XYZCoord& center_2);
 
-    /**
-     *  Because of the change in turn direction, it is a little more complex to
-     *  compute than in the RSR or LSL cases.
-     *
-     *  The tangent line between both turns turns out to bisect the intercenter.
-     *  With that knowledge, it is possible to compute both the length and the angle of the
-     *  tangent line ==> then allowing the calculation for the proper turning angles.
-     *
-     *  @param start    ==> vector at start position
-     *  @param end      ==> vector at end position
-     *  @param center_0 ==> the center of the first turn
-     *  @param center_2 ==> the center of the last turn
-     *  @return             RRTOption detailing the parameters of the path
-     *                      - total distance
-     *                      - DubinsPath
-     *                          - turning angle 1
-     *                          - turning angle 2
-     *                          - straight_distance
-     *                      - if the path has a straight section
-     */
-    RRTOption rsl(const RRTPoint &start, const RRTPoint &end, const XYZCoord &center_0,
-                  const XYZCoord &center_2) const;
+/**
+ *  Because of the change in turn direction, it is a little more complex to
+ *  compute than in the RSR or LSL cases.
+ *
+ *  The tangent line between both turns turns out to bisect the intercenter.
+ *  With that knowledge, it is possible to compute both the length and the angle of the
+ *  tangent line ==> then allowing the calculation for the proper turning angles.
+ *
+ *  @param start    ==> vector at start position
+ *  @param end      ==> vector at end position
+ *  @param center_0 ==> the center of the first turn
+ *  @param center_2 ==> the center of the last turn
+ *  @return             DubinsPath detailing the parameters of the path
+ *                      - turning angle 1
+ *                      - turning angle 2
+ *                      - straight_distance
+ *                      - total distance
+ */
+DubinsPath lsr(const RRTPoint& start, const RRTPoint& end, const XYZCoord& center_0,
+              const XYZCoord& center_2);
 
-    /**
-     *  Using the isoceles triangle made by the centers of the three circles,
-     *  computes the required angles.
-     *
-     *  @param start    ==> vector at start position
-     *  @param end      ==> vector at end position
-     *  @param center_0 ==> the center of the first turn
-     *  @param center_2 ==> the center of the last turn
-     *  @return             RRTOption detailing the parameters of the path
-     *                      - total distance
-     *                      - DubinsPath
-     *                          - turning angle 1
-     *                          - turning angle 2
-     *                          - straight_distance
-     *                      - if the path has a straight section
-     */
-    RRTOption lrl(const RRTPoint &start, const RRTPoint &end, const XYZCoord &center_0,
-                  const XYZCoord &center_2) const;
+/**
+ *  Because of the change in turn direction, it is a little more complex to
+ *  compute than in the RSR or LSL cases.
+ *
+ *  The tangent line between both turns turns out to bisect the intercenter.
+ *  With that knowledge, it is possible to compute both the length and the angle of the
+ *  tangent line ==> then allowing the calculation for the proper turning angles.
+ *
+ *  @param start    ==> vector at start position
+ *  @param end      ==> vector at end position
+ *  @param center_0 ==> the center of the first turn
+ *  @param center_2 ==> the center of the last turn
+ *  @return             DubinsPath detailing the parameters of the path
+ *                      - turning angle 1
+ *                      - turning angle 2
+ *                      - straight_distance
+ *                      - total distance
+ */
+DubinsPath rsl(const RRTPoint& start, const RRTPoint& end, const XYZCoord& center_0,
+              const XYZCoord& center_2);
 
-    /**
-     *  Using the isoceles triangle made by the centers of the three circles,
-     *  computes the required angles.
-     *
-     *  @param start    ==> vector at start position
-     *  @param end      ==> vector at end position
-     *  @param center_0 ==> the center of the first turn
-     *  @param center_2 ==> the center of the last turn
-     *  @return             RRTOption detailing the parameters of the path
-     *                      - total distance
-     *                      - DubinsPath
-     *                          - turning angle 1
-     *                          - turning angle 2
-     *                          - straight_distance
-     *                      - if the path has a straight section
-     */
-    RRTOption rlr(const RRTPoint &start, const RRTPoint &end, const XYZCoord &center_0,
-                  const XYZCoord &center_2) const;
+/**
+ *  Using the isoceles triangle made by the centers of the three circles,
+ *  computes the required angles.
+ *
+ *  @param start    ==> vector at start position
+ *  @param end      ==> vector at end position
+ *  @param center_0 ==> the center of the first turn
+ *  @param center_2 ==> the center of the last turn
+ *  @return             DubinsPath detailing the parameters of the path
+ *                      - turning angle 1
+ *                      - turning angle 2
+ *                      - straight_distance
+ *                      - total distance
+ */
+DubinsPath lrl(const RRTPoint& start, const RRTPoint& end, const XYZCoord& center_0,
+              const XYZCoord& center_2);
 
-    /**
-     * Compute all the possible Dubin's path and returns a list
-     *  containing RRTOption(s) with path data.
-     *
-     *  @param start    ==> vector at start position
-     *  @param end      ==> vector at end position
-     *  @param sort     ==> whether the method sorts the resulting vector
-     *                      DEFALT-->FALSE (searching is faster)
-     *  @return         ==> list containing all the RRTOptions from the path
-     *                      generation
-     */
-    std::vector<RRTOption> allOptions(const RRTPoint &start, const RRTPoint &end,
-                                      bool sort = false) const;
+/**
+ *  Using the isoceles triangle made by the centers of the three circles,
+ *  computes the required angles.
+ *
+ *  @param start    ==> vector at start position
+ *  @param end      ==> vector at end position
+ *  @param center_0 ==> the center of the first turn
+ *  @param center_2 ==> the center of the last turn
+ *  @return             DubinsPath detailing the parameters of the path
+ *                      - turning angle 1
+ *                      - turning angle 2
+ *                      - straight_distance
+ *                      - total distance
+ */
+DubinsPath rlr(const RRTPoint& start, const RRTPoint& end, const XYZCoord& center_0,
+              const XYZCoord& center_2);
 
-    /**
-     * Compute all the possible Dubin's path(s) and
-     * Returns sequence of points representing the shortest option.
-     *
-     *  @param start    ==> vector at start position
-     *  @param end      ==> vector at end position
-     *  @return         ==> the points for the most optimal path from @param start to @param end
-     */
-    std::vector<XYZCoord> dubinsPath(const RRTPoint &start, const RRTPoint &end) const;
+// [LSL, RSR, RSL, LSR] -- the curve-straight-curve paths, which is every path
+// allOptions hands back. [LRL, RLR] are not generated.
+constexpr std::size_t DUBINS_OPTIONS = 4;
 
-    /**
-     * Returns the optimal RRTOption from the list of options
-     *
-     * @param start     ==> vector at start position
-     * @param end       ==> vector at end position
-     * @return          ==> the optimal RRTOption from the list of options
-     */
-    RRTOption bestOption(const RRTPoint &start, const RRTPoint &end) const;
+/**
+ * Compute all the possible Dubin's path and returns a list
+ *  containing DubinsPath(s) with path data.
+ *
+ *  Fixed size and returned by value -- this sits in the innermost loop of RRT,
+ *  where a vector would be a heap allocation per node visited.
+ *
+ *  @param start    ==> vector at start position
+ *  @param end      ==> vector at end position
+ *  @return         ==> all the DubinsPaths from the path generation
+ */
+std::array<DubinsPath, DUBINS_OPTIONS> allOptions(const RRTPoint& start, const RRTPoint& end);
 
- private:
-    const double _radius;
-    const double _point_separation;
-};
+/**
+ * Compute all the possible Dubin's path(s) and
+ * Returns sequence of points representing the shortest option.
+ *
+ *  @param start    ==> vector at start position
+ *  @param end      ==> vector at end position
+ *  @return         ==> the points for the most optimal path from @param start to @param end
+ */
+std::vector<XYZCoord> dubinsPath(const RRTPoint& start, const RRTPoint& end);
+
+/**
+ * Returns the optimal DubinsPath from the list of options
+ *
+ * @param start     ==> vector at start position
+ * @param end       ==> vector at end position
+ * @return          ==> the optimal DubinsPath from the list of options
+ */
+DubinsPath bestOption(const RRTPoint& start, const RRTPoint& end);
+
+};  // namespace Dubins
 
 #endif  // INCLUDE_PATHING_DUBINS_HPP_

@@ -6,6 +6,7 @@
 #include <string>
 
 #include "nlohmann/json.hpp"
+#include "pathing/dubins.hpp"
 #include "udp_squared/internal/enum.h"
 #include "utilities/constants.hpp"
 #include "utilities/datatypes.hpp"
@@ -59,14 +60,7 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
     SET_CONFIG_OPT(network, gcs, port);
 
     SET_CONFIG_OPT(pathing, laps);
-    SET_CONFIG_OPT(pathing, rrt, iterations_per_waypoint);
-    SET_CONFIG_OPT(pathing, rrt, rewire_radius);
-    SET_CONFIG_OPT(pathing, rrt, optimize);
-    SET_CONFIG_OPT(pathing, rrt, generate_deviations);
-
-    SET_CONFIG_OPT_VARIANT(PointFetchMethod, pathing, rrt, point_fetch_method);
-
-    SET_CONFIG_OPT(pathing, rrt, allowed_to_skip_waypoints);
+    SET_CONFIG_OPT(pathing, upload_distance_buffer_m);
 
     SET_CONFIG_OPT_VARIANT(AirdropCoverageMethod, pathing, coverage, method);
 
@@ -127,4 +121,7 @@ OBCConfig::OBCConfig(int argc, char* argv[]) {
         // were previously set in the common file
         this->mavlink_parameters.param_map[param] = val;
     }
+
+    Dubins::_radius = this->pathing.dubins.turning_radius;
+    Dubins::_point_separation = this->pathing.dubins.point_separation;
 }

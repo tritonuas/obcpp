@@ -68,8 +68,7 @@ int main() {
     XYZCoord target = XYZCoord(313.131212, -187.781235, 0);
     XYZCoord wind = XYZCoord(0, 0, 0);
 
-    AirdropApproachPathing approach(start, target, wind,
-                             state->mission_params.getFlightBoundary(), state->config);
+    AirdropApproachPathing approach(start, target, wind, state->config);
 
     LOG_F(WARNING, "Running Approach");
     std::vector<XYZCoord> path = approach.run();

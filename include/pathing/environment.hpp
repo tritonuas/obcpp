@@ -15,15 +15,114 @@
  *  Abstraction of the environment, which is a polygon
  *  that defines the boundary of the map.
  *
+ *  All state is set once by init() and read-only afterwards.
+ *
  *  [FUTURE]
  *      - add dynamic shrinking and enlarging of the boundary
  *      - add dynamic obstacles
  */
-class Environment {
- public:
-    Environment(const Polygon& valid_region, const Polygon& airdrop_zone,
-                const Polygon& mapping_region, const std::vector<XYZCoord>& goals,
-                const std::vector<Polygon>& obstacles);
+namespace Environment {
+/**
+ * A polygon flattened out for the tests pathing runs tens of millions of
+ * times a run.
+ *
+ * The edges are held as four flat runs of doubles rather than as a vector of
+ * XYZCoord, so a test walks the numbers it actually uses instead of striding
+ * over a 24-byte point to read two fields of it. The bounding box in front
+ * of them answers most tests outright -- an obstacle is a small thing in a
+ * large field, and almost nothing asked about comes near it.
+ */
+struct EdgeSet {
+    // edge i runs from (start_x[i], start_y[i]) to (end_x[i], end_y[i])
+    std::vector<double> start_x;
+    std::vector<double> start_y;
+    std::vector<double> end_x;
+    std::vector<double> end_y;
+
+    // the box the whole polygon sits in
+    double min_x = 0;
+    double max_x = 0;
+    double min_y = 0;
+    double max_y = 0;
+
+    std::size_t size() const { return start_x.size(); }
+};
+
+    inline Polygon _valid_region;    // boundary of the valid map
+    inline Polygon _airdrop_zone;    // boundary of the airdrop zone (subset of valid_region)
+    inline Polygon _mapping_region;  // boundary of the mapping region (subset of valid_region)
+    inline std::vector<Polygon> _obstacles;  // obstacles in the map
+
+    // the same regions, flattened by init() for the bounds checks to run against
+    inline EdgeSet _valid_edges;
+    inline std::vector<EdgeSet> _obstacle_edges;
+
+    // bounds of the valid region, first pair is (min x, max x), second is (min y, max y)
+    inline std::pair<std::pair<double, double>, std::pair<double, double>> _bounds;
+
+    /**
+     * Flattens a polygon into the form the bounds checks run against
+     *
+     * @param polygon   ==> the polygon to flatten
+     * @return          ==> its edges and bounding box
+     */
+    EdgeSet buildEdgeSet(const Polygon& polygon);
+
+    /**
+     * Whether a point lies inside a flattened polygon
+     *
+     * Same raycast as isPointInPolygon, with the bounding box checked first.
+     * Points on the edge count as outside.
+     *
+     * @param[in] edges ==> the flattened polygon
+     * @param[in] x     ==> x of the point
+     * @param[in] y     ==> y of the point
+     * @return  ==> whether the point is inside
+     */
+    bool isPointInEdgeSet(const EdgeSet& edges, double x, double y);
+
+    /**
+     * Whether a line segment crosses any edge of a flattened polygon
+     *
+     * @param[in] edges ==> the flattened polygon
+     * @param[in] start ==> start point of the segment
+     * @param[in] end   ==> end point of the segment
+     * @return  ==> whether the segment crosses the boundary
+     */
+    bool doesLineIntersectEdgeSet(const EdgeSet& edges, const XYZCoord& start, const XYZCoord& end);
+
+    /**
+     * Whether a circular arc crosses any edge of a flattened polygon
+     *
+     * @param[in] edges         ==> the flattened polygon
+     * @param[in] center        ==> the center of the arc's circle
+     * @param[in] radius        ==> the radius of the arc's circle
+     * @param[in] start_angle   ==> angle from the center to the arc's first point
+     * @param[in] sweep         ==> signed angle swept, CCW positive
+     * @return  ==> whether the arc crosses the boundary
+     */
+    bool doesArcIntersectEdgeSet(const EdgeSet& edges, const XYZCoord& center, double radius,
+                                 double start_angle, double sweep);
+
+    /**
+     * Find the bounds of a region (i.e. the max/min x and y values).
+     *
+     * @return a pair of pairs, where the first pair is min/max x values and the second is the
+     * min/max y values
+     */
+    std::pair<std::pair<double, double>, std::pair<double, double>> findBounds(
+        const Polygon& region);
+
+    /**
+     * Sets the environment. Must be called before any other function here.
+     *
+     * @param valid_region      the boundary of the valid map
+     * @param airdrop_zone      the boundary of the airdrop zone
+     * @param mapping_region    the boundary of the mapping region
+     * @param obstacles         obstacles inside the valid region
+     */
+    void init(const Polygon& valid_region, const Polygon& airdrop_zone,
+              const Polygon& mapping_region, const std::vector<Polygon>& obstacles = {});
 
     /**
      * Check if a point is in the valid region
@@ -35,7 +134,7 @@ class Environment {
      * @param point the point to check
      * @return true if the point is in the valid region, false otherwise
      */
-    bool isPointInBounds(const XYZCoord& point) const;
+    bool isPointInBounds(const XYZCoord& point);
 
     /**
      * Check if an entire flight path is in bounds
@@ -47,36 +146,32 @@ class Environment {
      * @param path the path to check
      * @return true if the path is in bounds, false otherwise
      */
-    bool isPathInBounds(const std::vector<XYZCoord>& path) const;
+    bool isPathInBounds(const std::vector<XYZCoord>& path);
 
     /**
+     * Check whether an entire Dubins path is in bounds, analytically.
      *
-     * Check if an entire flight path is in bounds
+     * ONLY HANDLES CSC PATHS [LSL, RSR, LSR, RSL]
      *
-     * Attemps to skip a straight section by checking line segments instead of
-     * points, this doesn't actually end up making a large differernce with small
-     * path length?
-     *
-     * @param path the path to check
-     * @param option the RRT option associated with the path
-     * @return true if the path is in bounds, false otherwise
+     * @param[in] start     ==> the start vector of the path
+     * @param[in] end       ==> the end vector of the path
+     * @param[in] path      ==> the Dubins path connecting start to end
+     * @return  ==> true if every point of the path is in bounds, false otherwise
      */
-    bool isPathInBoundsAdv(const std::vector<XYZCoord>& path, const RRTOption& option) const;
+    bool isDubinsPathInBounds(const RRTPoint& start, const RRTPoint& end, const DubinsPath& path);
 
     /**
-     * Get the goal point
-     * can be unsafe if goals_found is not in bounds
+     * Check whether a circular arc is in bounds
      *
-     * @return the goal point
-     */
-    const XYZCoord& getGoal() const;
-
-    /**
-     * Get the goal point from given index
+     * Checks for containment then edge intersections.
      *
-     * @return the goal point
+     * @param[in] center        ==> the center of the arc's circle
+     * @param[in] radius        ==> the radius of the arc's circle
+     * @param[in] start_angle   ==> angle from the center to the arc's first point (0 is +x, CCW positive)
+     * @param[in] sweep         ==> signed angle swept, CCW positive (i.e. a DubinsPath beta)
+     * @return  ==> whether or not the arc is in bounds
      */
-    const XYZCoord& getGoal(int index) const;
+    bool isArcInBounds(const XYZCoord& center, double radius, double start_angle, double sweep);
 
     /**
      * Generate a random point in a valid region or mapping region
@@ -84,31 +179,16 @@ class Environment {
      * The function uniformly selects a point in the region, but the probaiblity it actually
      * selects a point depends on how large it is compared to the region.
      *
-     * @param start_point the startpoint used to generate a random point
-     * @param search_radius the radius of the search region
      * @param use_mapping_region whether or not to use the mapping region
+     * @param fallback the point to return if no valid point was found in time
      * @return a random XYZCoord in the valid region
      */
-    XYZCoord getRandomPoint(bool use_mapping_region) const;
-
-    /**
-     * Get number of Goals
-     *
-     * @return number of goals
-     */
-    int getNumGoals() const;
+    XYZCoord getRandomPoint(bool use_mapping_region, const XYZCoord& fallback);
 
     /**
      * Determines whether a point ia in this polygon via raycasting. Points
      * on the edge are counted as outside the polygon (to be more
      * conservative)
-     *
-     * Public ONLY for the sake of testing     <-- no (read below)
-     *
-     * Making this static so that other parts of the code can access it
-     * but really this should just be a detacted helper function, should
-     * refactor this eventually, but for rn static is the easy thing to do
-     * - tyler
      *
      * @param point ==> given point
      * @return      ==> whether or not the point is in this polygon object
@@ -116,7 +196,23 @@ class Environment {
      *  [TODO] make a method to augment the polygon to get similar polygons
      *  [TODO] something that increases cost based on time in the edge
      */
-    static bool isPointInPolygon(const Polygon& polygon, const XYZCoord& point);
+    bool isPointInPolygon(const Polygon& polygon, const XYZCoord& point);
+
+    /**
+     * Determines whether a polygon lies entirely inside another one
+     *
+     * Every corner of the inner polygon has to be inside the outer one, and no
+     * edge of it may cross the outer boundary -- corners alone are not enough,
+     * as an edge can bulge out between two corners that are both inside.
+     *
+     * Points on the edge of the outer polygon count as outside, the same way
+     * isPointInPolygon treats them.
+     *
+     * @param inner ==> the polygon that has to be contained
+     * @param outer ==> the polygon that has to contain it
+     * @return      ==> whether or not inner lies entirely inside outer
+     */
+    bool isPolygonInPolygon(const Polygon& inner, const Polygon& outer);
 
     /**
      * Checks wheter a line segment is in bounds or not, it must NOT intersect
@@ -128,7 +224,7 @@ class Environment {
      * @param end_point   ==> end point of the line segment
      * @return            ==> whether or not the line segment is in bounds
      */
-    bool isLineInBounds(const XYZCoord& start_point, const XYZCoord& end_point) const;
+    bool isLineInBounds(const XYZCoord& start_point, const XYZCoord& end_point);
 
     /**
      * Determines whether a line segment intersects the polygon
@@ -138,7 +234,39 @@ class Environment {
      *   @param polygon     ==> polygon to check
      */
     bool doesLineIntersectPolygon(const XYZCoord& start_point, const XYZCoord& end_point,
-                                  const Polygon& polygon) const;
+                                  const Polygon& polygon);
+
+    /**
+     * Determines whether a circular arc intersects any edge of the polygon
+     *
+     * @param[in] center        ==> the center of the arc's circle
+     * @param[in] radius        ==> the radius of the arc's circle
+     * @param[in] start_angle   ==> angle from the center to the arc's first
+     *                              point (0 is +x, CCW positive)
+     * @param[in] sweep         ==> signed angle swept, CCW positive
+     * @param[in] polygon       ==> polygon to check
+     * @return  ==> true if arc intersects edge
+     */
+    bool doesArcIntersectPolygon(const XYZCoord& center, double radius, double start_angle,
+                                 double sweep, const Polygon& polygon);
+
+    /**
+     * Determines whether a circular arc intersects a line segment
+     *
+     * Intersects the segment with the full circle then checks whether each hit
+     * lies within both the segment and the arc's angular range.
+     *
+     * @param[in] center        ==> the center of the arc's circle
+     * @param[in] radius        ==> the radius of the arc's circle
+     * @param[in] start_angle   ==> angle from the center to the arc's first
+     *                              point (0 is +x, CCW positive)
+     * @param[in] sweep         ==> signed angle swept, CCW positive
+     * @param[in] seg_start     ==> start point of the segment
+     * @param[in] seg_end       ==> end point of the segment
+     * @return if arc intersecs a line segement
+     */
+    bool doesArcIntersectSegment(const XYZCoord& center, double radius, double start_angle,
+                                 double sweep, const XYZCoord& seg_start, const XYZCoord& seg_end);
 
     /**
      * Given three colinear points p, q, r, the function checks if
@@ -148,7 +276,7 @@ class Environment {
      * @param q ==> first point on line
      * @param r ==> second point on line
      */
-    bool onSegment(XYZCoord p, XYZCoord q, XYZCoord r) const;
+    bool onSegment(const XYZCoord& p, const XYZCoord& q, const XYZCoord& r);
 
     /**
      *  Find the orintation of the ordered triplet (p, q, r)
@@ -157,7 +285,7 @@ class Environment {
      * @param q ==> point 2
      * @param r ==> point 3
      */
-    int orientation(XYZCoord p, XYZCoord q, XYZCoord r) const;
+    int orientation(const XYZCoord& p, const XYZCoord& q, const XYZCoord& r);
 
     /**
      * The main function that returns true if the line segment 'p1q1' and 'p2q2' intersect.
@@ -167,7 +295,8 @@ class Environment {
      * @param p2 ==> start point of line segment 2
      * @param q2 ==> end point of line segment 2
      */
-    bool intersect(XYZCoord p1, XYZCoord q1, XYZCoord p2, XYZCoord q2) const;
+    bool intersect(const XYZCoord& p1, const XYZCoord& q1, const XYZCoord& p2,
+                   const XYZCoord& q2);
 
     /**
      * Returns endpoints on airdrop_zone for coverage pathing
@@ -179,7 +308,7 @@ class Environment {
      * @param vertical whether or not to scan vertically
      * @return the endpoints on the airdrop zone
      */
-    std::vector<XYZCoord> getAirdropEndpoints(int scan_radius, bool vertical) const;
+    std::vector<XYZCoord> getAirdropEndpoints(int scan_radius, bool vertical);
 
     /**
      * Returns waypoints for airdrop coverage pathing
@@ -193,7 +322,7 @@ class Environment {
      * @return the waypoints on the airdrop zone
      */
     std::vector<RRTPoint> getAirdropWaypoints(int scan_radius, bool one_way = false,
-                                              bool vertical = false) const;
+                                              bool vertical = false);
 
     /**
      * Fills an intersection if one exists between an edge of the polygon and the VERTICAL ray
@@ -206,7 +335,7 @@ class Environment {
      * @return true if an intersection exists, false otherwise
      */
     bool verticalRayIntersectsEdge(const XYZCoord& p1, const XYZCoord& p2, const XYZCoord& rayStart,
-                                   const XYZCoord& rayEnd, XYZCoord& intersection) const;
+                                   const XYZCoord& rayEnd, XYZCoord& intersection);
 
     /**
      * Fills an intersection if one exists between an edge of the polygon and the HORIZONTAL ray
@@ -220,7 +349,7 @@ class Environment {
      */
     bool horizontalRayIntersectsEdge(const XYZCoord& p1, const XYZCoord& p2,
                                      const XYZCoord& rayStart, const XYZCoord& rayEnd,
-                                     XYZCoord& intersection) const;
+                                     XYZCoord& intersection);
 
     /**
      * Finds all intersections between a VERTICAL ray and a polygon, and returns them as a lit
@@ -233,7 +362,7 @@ class Environment {
      * @return a list of intersections
      */
     std::vector<XYZCoord> findIntersections(const Polygon& polygon, const XYZCoord& rayStart,
-                                            const XYZCoord& rayEnd, bool vertical) const;
+                                            const XYZCoord& rayEnd, bool vertical);
 
     /**
      * Finds all intersections between a line segment and a polygon, and returns them as a list
@@ -246,17 +375,7 @@ class Environment {
      */
     std::vector<XYZCoord> findIntersectionsWithPolygon(const Polygon& polygon,
                                                        const XYZCoord& start_point,
-                                                       const XYZCoord& end_point) const;
-
-    /**
-     * Estimate the area and path length covered by the given new goals
-     *
-     * @param goals the new goals
-     *
-     * @return a pair of the area covered and the path length
-     */
-    std::pair<double, double> estimateAreaCoveredAndPathLength(
-        const std::vector<XYZCoord>& goals) const;
+                                                       const XYZCoord& end_point);
 
     /**
      * Returns a new polygon that is scaled by a given factor
@@ -265,35 +384,7 @@ class Environment {
      * @param source_polygon the polygon to scale
      * @return the scaled polygon
      */
-    Polygon scale(double scale, const Polygon& source_polygon) const;
-
- private:
-    const Polygon valid_region;         // boundary of the valid map
-    const Polygon airdrop_zone;         // boundary of the airdrop zone (subset of valid_region)
-    const Polygon mapping_region;       // boundary of the mapping region (subset of valid_region)
-    const std::vector<XYZCoord> goals;  // goal point
-    const std::vector<Polygon> obstacles;  // obstacles in the map
-
-    int goals_found;  // whether or not the goal has been found, once it becomes ture, it will never
-                      // be false again
-
-    const std::pair<std::pair<double, double>, std::pair<double, double>>
-        bounds;  // bounds of the valid
-                 // region, first pair
-                 // is (min x, max x),
-                 // second pair is
-                 // (min y, max y)
-
-    /**
-     * Find the bounds of the valid region (i.e. the max/min x and y values).
-     *
-     * ASSUMES valid_region has already been created
-     *
-     * @return a pair of pairs, where the first pair is min/max x values and the second is the
-     * min/max y values
-     */
-    std::pair<std::pair<double, double>, std::pair<double, double>> findBounds(
-        const Polygon& bounds) const;
-};
+    Polygon scale(double scale, const Polygon& source_polygon);
+}  // namespace Environment
 
 #endif  // INCLUDE_PATHING_ENVIRONMENT_HPP_
