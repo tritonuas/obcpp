@@ -120,38 +120,44 @@ void MissionState::zoneHandler(const std::chrono::milliseconds& interval,
             std::this_thread::sleep_for(interval);
             continue;
         }
-        auto curr_waypoint = this->getMav()->curr_waypoint();
-        if (this->curr_mission_item != curr_waypoint) {
-            LOG_F(INFO, "FlySearch Area reached (%zu, %d)",
-                this->curr_mission_item, curr_waypoint);
-            for (int i = 0; i < this->config.pathing.coverage.hover.pictures_per_stop; i++) {
-                auto photo = this->getCamera()->takePicture(500ms, this->getMav());
-                if (this->config.camera.save_images_to_file) {
-                    photo->saveToFile(this->config.camera.save_dir);
-                }
+        bool isHover = this->config.pathing.coverage.method == AirdropCoverageMethod::Enum::HOVER;
+        bool isForward = this->config.pathing.coverage.method == AirdropCoverageMethod::Enum::FORWARD;
+        if (isHover) {
+            auto curr_waypoint = this->getMav()->curr_waypoint();
+            if (this->curr_mission_item != curr_waypoint) {
+                LOG_F(INFO, "FlySearch Area reached (%zu, %d)",
+                    this->curr_mission_item, curr_waypoint);
+                for (int i = 0; i < this->config.pathing.coverage.hover.pictures_per_stop; i++) {
+                    auto photo = this->getCamera()->takePicture(500ms, this->getMav());
+                    if (this->config.camera.save_images_to_file) {
+                        photo->saveToFile(this->config.camera.save_dir);
+                    }
 
-                if (photo.has_value()) {
-                    last_photo_time = getUnixTime_ms();
-                    this->getCV()->runPipeline(photo.value());
+                    if (photo.has_value()) {
+                        last_photo_time = getUnixTime_ms();
+                        this->getCV()->runPipeline(photo.value());
+                    }
                 }
+                this->curr_mission_item = curr_waypoint;
             }
-            this->curr_mission_item = curr_waypoint;
-        }
-        auto now = getUnixTime_ms();
-        if ((now - last_photo_time) < std::chrono::milliseconds(this->config.camera.photo_delay)) {
-            std::this_thread::sleep_for(interval);
-            continue;
-        }
-        auto photo = this->getCamera()->takePicture(100ms, this->getMav());
-        if (this->config.camera.save_images_to_file) {
-            photo->saveToFile(this->config.camera.save_dir);
-        }
+        } else if(isForward) {
+            auto now = getUnixTime_ms();
+            if ((now - last_photo_time) <
+                std::chrono::milliseconds(this->config.camera.photo_delay)) {
+                std::this_thread::sleep_for(interval);
+                continue;
+            }
+            auto photo = this->getCamera()->takePicture(100ms, this->getMav());
+            if (this->config.camera.save_images_to_file) {
+                photo->saveToFile(this->config.camera.save_dir);
+            }
 
-        if (photo.has_value()&&((this->getTickID() == TickID::FlySearch)||
-            (this->getTickID() == TickID::CVLoiter))) {
-            this->getCV()->runPipeline(photo.value());
+            if (photo.has_value()&&((this->getTickID() == TickID::FlySearch)||
+                (this->getTickID() == TickID::CVLoiter))) {
+                this->getCV()->runPipeline(photo.value());
+            }
+            last_photo_time = getUnixTime_ms();
         }
-        last_photo_time = getUnixTime_ms();
         std::this_thread::sleep_for(interval);
     }
 }
