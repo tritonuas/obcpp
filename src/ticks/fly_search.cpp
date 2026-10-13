@@ -25,7 +25,6 @@ std::chrono::milliseconds FlySearchTick::getWait() const {
 }
 
 void FlySearchTick::init() {
-    this->state->getCamera()->startStreaming();
     this->airdrop_boundary = this->state->mission_params.getAirdropBoundary();
     this->last_photo_time = getUnixTime_ms();
 

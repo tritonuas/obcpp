@@ -19,6 +19,7 @@ std::chrono::milliseconds ActiveTakeoffTick::getWait() const {
 }
 
 void ActiveTakeoffTick::init() {
+    this->state->getCamera()->startStreaming();
     this->armAndHover();
 }
 
