@@ -127,20 +127,11 @@ class MissionState {
     bool getMappingIsDone();
     void setMappingIsDone(bool isDone);
 
-    int MissionState::getLapsRemaining() {
-        Lock lock(this->laps_remaining_mut);
-        return this->laps_remaining;
-    }
+    // Getter and Setter for laps
+    int getLapsRemaining();
+    void setLapsRemaining(int laps);
+    void decrementLapsRemaining();
 
-    void MissionState::setLapsRemaining(int laps) {
-        Lock lock(this->laps_remaining_mut);
-        this->laps_remaining = laps;
-    }
-
-    void MissionState::decrementLapsRemaining() {
-        Lock lock(this->laps_remaining_mut);
-        this->laps_remaining--;
-    }
 
 
 
