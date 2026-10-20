@@ -14,6 +14,7 @@
 #include <loguru.hpp>
 #include "nlohmann/json.hpp"
 
+#include "cv/localization.hpp"
 #include "network/mavlink.hpp"
 #include "utilities/locks.hpp"
 #include "utilities/rng.hpp"
@@ -116,12 +117,14 @@ std::optional<ImageData> MockCamera::takePicture(const std::chrono::milliseconds
 
     ImageTelemetry telemetry = telemetryOpt.value();
 
-    httplib::Result res = cli.Get("/stream/frame?session_id=" + this->session_id +
-                                  "&lat=" + std::to_string(telemetry.latitude_deg) +
-                                  "&lon=" + std::to_string(telemetry.longitude_deg) +
-                                  "&alt_ft=" + std::to_string(static_cast<int>((telemetry.altitude_agl_m * 3.281))) + //NOLINT
-                                  "&heading=" + std::to_string(telemetry.heading_deg) +
-                                  "&format=png");
+    const double hfov_deg = 2.0 * std::atan(ANGLE_OF_VIEW_RATIO / 2.0) * 180.0 / M_PI;
+    httplib::Result res =
+        cli.Get("/stream/frame?session_id=" + this->session_id +
+                "&lat=" + std::to_string(telemetry.latitude_deg) +
+                "&lon=" + std::to_string(telemetry.longitude_deg) +
+                "&alt_ft=" + std::to_string(std::lround(telemetry.altitude_agl_m * METER_TO_FT)) +
+                "&heading=" + std::to_string(telemetry.heading_deg) +
+                "&fov=" + std::to_string(hfov_deg) + "&halfsize=true&format=png");
 
     if (!res || res->status != 200) {
         LOG_F(ERROR, "Failed to query server for images");
