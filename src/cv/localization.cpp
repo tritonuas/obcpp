@@ -136,10 +136,6 @@ GPSCoord GSDLocalization::localize(const ImageTelemetry& telemetry, const Bbox& 
     double GSD = (ANGLE_OF_VIEW_RATIO * (telemetry.altitude_agl_m * 1000)
                  /IMG_WIDTH_PX);
 
-    // Midpoints of the image
-    double img_mid_x = IMG_WIDTH_PX / 2;
-    double img_mid_y = IMG_HEIGHT_PX / 2;
-
     // midpoints of bounding box around the target
     double target_x = (targetBbox.x1 + targetBbox.x2)/2;
     double target_y = (targetBbox.y1 + targetBbox.y2)/2;
@@ -151,7 +147,6 @@ GPSCoord GSDLocalization::localize(const ImageTelemetry& telemetry, const Bbox& 
     // Convert to polar coordinates
     double target_camera_cord_r = sqrt((target_camera_cord_y * target_camera_cord_y)
     + (target_camera_cord_x * target_camera_cord_x));
-    double target_camera_cord_theta;
 
     double target_camera_cord_theta = atan2(target_camera_cord_y, target_camera_cord_x);
 
@@ -259,27 +254,8 @@ GSDLocalization::debug(const ImageTelemetry& telemetry, const Bbox& targetBbox) 
     double target_camera_cord_r =
     sqrt((target_camera_cord_y * target_camera_cord_y)
     + (target_camera_cord_x * target_camera_cord_x));
-    double target_camera_cord_theta;
 
-    // Check if xy coord is in quadrant 2 or 3,
-    // f so need to add pi (atan returns a value in the range -π/2 to π/2 radians)
-    // also check for if x coord == 0,
-    // if so just set theta to pi or -pi to avoid divison by 0 in the atan function
-    if (target_camera_cord_x < 0 && target_camera_cord_y < 0) {
-        target_camera_cord_theta = atan(target_camera_cord_y/target_camera_cord_x) + M_PI;
-
-    } else if (target_camera_cord_x < 0 && target_camera_cord_y > 0) {
-        target_camera_cord_theta = atan(target_camera_cord_y/target_camera_cord_x) + M_PI;
-
-    } else if (target_camera_cord_x == 0) {
-        if (target_camera_cord_y > 1) {
-            target_camera_cord_theta == M_PI;
-        } else {
-            target_camera_cord_theta == -M_PI;
-        }
-    } else {
-        target_camera_cord_theta = atan(target_camera_cord_y/target_camera_cord_x);
-    }
+    double target_camera_cord_theta = atan2(target_camera_cord_y, target_camera_cord_x);
 
     // Transfrom the coordinate to real-world orientation by subtracting heading angle
     double hdg_radians = (telemetry.heading_deg) * M_PI / 180;

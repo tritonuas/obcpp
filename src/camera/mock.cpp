@@ -3,6 +3,7 @@
 #include <httplib.h>
 
 #include <chrono>
+#include <cmath>
 #include <deque>
 #include <filesystem>
 #include <iostream>
