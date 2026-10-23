@@ -16,6 +16,7 @@ std::chrono::milliseconds ManualLandingTick::getWait() const { return MANUAL_LAN
 
 Tick* ManualLandingTick::tick() {
     if (state->getDroppedAirdrops().size() >= NUM_AIRDROPS) {
+        state->stopCameraThread();
         if (state->getMappingIsDone() == false) {
             // Currently does a two pass at the end
             // Probably should update for next year to optimize it.

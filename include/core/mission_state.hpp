@@ -60,6 +60,12 @@ class MissionState {
     void markAirdropAsDropped(AirdropType airdrop);
     std::unordered_set<AirdropType> getDroppedAirdrops();
 
+    void zoneHandler(const std::chrono::milliseconds& interval,
+                        std::shared_ptr<MavlinkClient> mavlinkClient);
+    void initCameraThread(const std::chrono::milliseconds& interval,
+                        std::shared_ptr<MavlinkClient> mavlinkClient);
+    void stopCameraThread();
+
     /*
      * Gets a locking reference to the underlying tick for the given tick subclass T.
      *
@@ -121,10 +127,23 @@ class MissionState {
     bool getMappingIsDone();
     void setMappingIsDone(bool isDone);
 
-    // Getter and Setter for laps
-    int getLapsRemaining();
-    void setLapsRemaining(int laps);
-    void decrementLapsRemaining();
+    int MissionState::getLapsRemaining() {
+        Lock lock(this->laps_remaining_mut);
+        return this->laps_remaining;
+    }
+
+    void MissionState::setLapsRemaining(int laps) {
+        Lock lock(this->laps_remaining_mut);
+        this->laps_remaining = laps;
+    }
+
+    void MissionState::decrementLapsRemaining() {
+        Lock lock(this->laps_remaining_mut);
+        this->laps_remaining--;
+    }
+
+
+
 
     MissionParameters mission_params;  // has its own mutex
 
@@ -164,6 +183,9 @@ class MissionState {
 
     std::shared_ptr<CameraInterface> camera;
 
+    std::thread captureThread;
+    std::size_t curr_mission_item;
+
     std::mutex cv_mut;
     // Represents a single detected target used in pipeline
     std::vector<DetectedTarget> cv_detected_targets;
@@ -171,6 +193,9 @@ class MissionState {
     // Gives an index into cv_detected_targets, and specifies that that bottle is matched
     // with the detected_target specified by the index
     std::array<size_t, NUM_AIRDROPS> cv_matches;
+
+    bool cameraThreadActive = true;
+
 
     bool mappingIsDone;
 
