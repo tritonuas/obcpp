@@ -127,12 +127,12 @@ PipelineResults Pipeline::run(const ImageData& imageData) {
         }
     }
 
-    LOG_F(INFO, "Finished Pipeline on an image");
-
-    // Wrap up the final annotated image to return
+    // Wrap up the final annotated image to compress and return
     ImageData processedData = imageData;
-    processedData.DATA = processedImage;
+    std::optional<cv::Mat> compressed = compressImg(processedImage);
+    processedData.DATA = compressed.value_or(processedImage);;
 
+    LOG_F(INFO, "Finished Pipeline on an image");
     // Return a PipelineResults that includes:
     //  1) The final big image with bounding boxes drawn
     //  2) The bounding boxes + localized GPS coords
