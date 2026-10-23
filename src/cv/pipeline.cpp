@@ -130,7 +130,6 @@ PipelineResults Pipeline::run(const ImageData& imageData) {
     // Wrap up the final annotated image to compress and return
     ImageData processedData = imageData;
     std::optional<cv::Mat> compressed = compressImg(processedImage);
-      
     processedData.DATA = compressed.value_or(processedImage);;
 
     LOG_F(INFO, "Finished Pipeline on an image");
