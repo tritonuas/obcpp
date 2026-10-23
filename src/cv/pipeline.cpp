@@ -126,9 +126,10 @@ PipelineResults Pipeline::run(const ImageData& imageData) {
             LOG_F(INFO, "Output image saved to %s", uniqueOutputPath.c_str());
         }
     }
-
+    std::optional<cv::Mat> compressed = compressImg(imageData.DATA);
+    compressImg(compressed.value_or(imageData.DATA)); 
+    
     LOG_F(INFO, "Finished Pipeline on an image");
-
     // Wrap up the final annotated image to return
     ImageData processedData = imageData;
     processedData.DATA = processedImage;

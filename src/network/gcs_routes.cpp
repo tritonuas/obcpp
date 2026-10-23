@@ -380,10 +380,8 @@ DEF_GCS_HANDLE(Get, targets, all) {
         // Set the run ID
         target.set_run_id(run.run_id);
 
-        std::optional<cv::Mat> optCompressedImg = compressImg(run.annotatedImage);
-        cv::Mat compressed_image = optCompressedImg.has_value() ?
-        optCompressedImg->clone() : run.annotatedImage;
-        std::string b64 = cvMatToBase64(compressed_image);
+
+        std::string b64 = cvMatToBase64(run.annotatedImage);
         target.set_picture(b64);
 
         // Ensure coords and bboxes vectors are the same size (should be guaranteed by Aggregator
