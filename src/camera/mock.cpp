@@ -35,8 +35,8 @@ void MockCamera::connect() { return; }
 
 bool MockCamera::isConnected() {
     cli.set_read_timeout(2);
-    httplib::Result res = cli.Get("/");
-    return res && (res->status == 200 || res->status == 404);
+    httplib::Result res = cli.Get("/health");
+    return res && res->status == 200;
 }
 
 void MockCamera::startTakingPictures(const std::chrono::milliseconds& interval,
