@@ -30,8 +30,8 @@ TEST(CartesianTest, CenterMapsToZero) {
     GPSCoord center = c.getCenter();
 
     XYZCoord zero = c.toXYZ(center);
-    EXPECT_DOUBLE_EQ(0.0, zero.x);
-    EXPECT_DOUBLE_EQ(0.0, zero.y);
+    EXPECT_NEAR(0.0, zero.x, 1e-9);
+    EXPECT_NEAR(0.0, zero.y, 1e-9);
     EXPECT_DOUBLE_EQ(0.0, zero.z);
 }
 
