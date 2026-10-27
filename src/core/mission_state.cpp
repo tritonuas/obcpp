@@ -132,8 +132,10 @@ void MissionState::zoneHandler(const std::chrono::milliseconds& interval,
             std::this_thread::sleep_for(interval);
             continue;
         }
-        bool isHover = this->config.pathing.coverage.method == AirdropCoverageMethod::Enum::HOVER;
-        bool isForward = this->config.pathing.coverage.method == AirdropCoverageMethod::Enum::FORWARD;
+        bool isHover = this->config.pathing.coverage.method == 
+            AirdropCoverageMethod::Enum::HOVER;
+        bool isForward = this->config.pathing.coverage.method == 
+            AirdropCoverageMethod::Enum::FORWARD;
         if (isHover) {
             auto curr_waypoint = this->getMav()->curr_waypoint();
             if (this->curr_mission_item != curr_waypoint) {
