@@ -132,9 +132,9 @@ void MissionState::zoneHandler(const std::chrono::milliseconds& interval,
             std::this_thread::sleep_for(interval);
             continue;
         }
-        bool isHover = this->config.pathing.coverage.method == 
+        bool isHover = this->config.pathing.coverage.method ==
             AirdropCoverageMethod::Enum::HOVER;
-        bool isForward = this->config.pathing.coverage.method == 
+        bool isForward = this->config.pathing.coverage.method ==
             AirdropCoverageMethod::Enum::FORWARD;
         if (isHover) {
             auto curr_waypoint = this->getMav()->curr_waypoint();
@@ -154,7 +154,7 @@ void MissionState::zoneHandler(const std::chrono::milliseconds& interval,
                 }
                 this->curr_mission_item = curr_waypoint;
             }
-        } else if(isForward) {
+        } else if (isForward) {
             auto now = getUnixTime_ms();
             if ((now - last_photo_time) <
                 std::chrono::milliseconds(this->config.camera.photo_delay)) {
