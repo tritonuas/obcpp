@@ -13,5 +13,6 @@ std::chrono::milliseconds AutoLandingTick::getWait() const {
 }
 
 Tick* AutoLandingTick::tick() {
+    this->state->stopCameraThread();
     return nullptr;
 }

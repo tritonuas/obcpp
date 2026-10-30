@@ -96,6 +96,10 @@ struct CameraConfig {
     std::string type;
     // directory to save images to
     std::string save_dir;
+    // time to wait before taking another picture
+    std::chrono::milliseconds photo_delay;
+    // timeout for photo taking
+    std::chrono::milliseconds timeout;
     // whether or not to save to save_dir
     bool save_images_to_file;
     struct {
