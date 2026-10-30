@@ -9,7 +9,7 @@
 #include "ticks/fly_search.hpp"
 
 
-using namespace std::chrono_literals;
+using namespace std::chrono_literals; //NOLINT
 
 TakeoffTick::TakeoffTick(std::shared_ptr<MissionState> state)
     :Tick(state, TickID::Takeoff) {}

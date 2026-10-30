@@ -21,7 +21,7 @@
 #include "utilities/common.hpp"
 #include "ticks/ids.hpp"
 
-using namespace std::chrono_literals;
+using namespace std::chrono_literals; //NOLINT
 
 MissionState::MissionState(OBCConfig config) : config(config) {}
 
