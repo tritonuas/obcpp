@@ -22,7 +22,7 @@
 
 
 MockCamera::MockCamera(CameraConfig config)
-    : CameraInterface(config), cli("localhost", config.mock.not_stolen_port) {}
+    : CameraInterface(config), cli(config.mock.not_stolen_address, config.mock.not_stolen_port) {}
 
 MockCamera::~MockCamera() {
     cli.stop();

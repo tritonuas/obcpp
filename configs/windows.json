@@ -17,7 +17,7 @@
         "payload_size": 2
     },
     "pathing": {
-        "laps": 0,
+        "laps": 2,
         "upload_distance_buffer_m": 50.0,
         "dubins": {
             "turning_radius": 30.0,
@@ -57,6 +57,7 @@
         "save_dir": "/workspaces/obcpp/images/mock",
         "save_images_to_file": true,
         "mock": {
+            "not_stolen_address": "host.docker.internal",
             "not_stolen_port": 6060,
             "runway": "right",
             "num_targets": 2,
