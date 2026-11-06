@@ -177,3 +177,8 @@ target_add_matplot(camera_integration_test)
 target_add_json(camera_integration_test)
 target_include_directories(camera_integration_test PRIVATE ${ImageMagick_INCLUDE_DIRS})
 target_link_libraries(camera_integration_test PRIVATE -Wl,--copy-dt-needed-entries ${ImageMagick_LIBRARIES})
+
+add_executable(compress_img_benchmark "compress_img_benchmark.cpp")
+target_link_libraries(compress_img_benchmark PRIVATE obcpp_lib)
+target_add_opencv(compress_img_benchmark)
+target_add_matplot(compress_img_benchmark)
