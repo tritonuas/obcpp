@@ -1,0 +1,70 @@
+{
+    "logging": {
+        "dir": "/workspaces/obcpp/logs"
+    },
+    "network": {
+        "mavlink": {
+            "connect": "tcp://mavproxy:14552",
+            "log_params": false,
+            "telem_poll_rate": 2.0
+        },
+        "gcs": {
+            "port": 5010
+        }
+    },
+    "takeoff": {
+        "altitude_m": 30.0,
+        "payload_size": 2
+    },
+    "pathing": {
+        "laps": 2,
+        "upload_distance_buffer_m": 50.0,
+        "dubins": {
+            "turning_radius": 30.0,
+            "point_separation": 10.0
+        },
+        "coverage": {
+            "altitude_m": 30.0,
+            "camera_vision_m": 20.0,
+            "method": "forward",
+            "hover": {
+                "pictures_per_stop": 1,
+                "hover_time_s": 1
+            },
+            "forward": {
+                "optimize": true,
+                "vertical": false,
+                "one_way": false
+            }
+        },
+        "approach": {
+            "drop_method": "unguided",
+            "drop_angle_rad": 2.52134317,
+            "drop_altitude_m": 35.0,
+            "guided_drop_distance_m": 50.0,
+            "unguided_drop_distance_m": 50.0
+        }
+    },
+    "cv": {
+        "yolo_model_dir": "/workspaces/obcpp/models/yolo-wittner-v2.onnx",
+        "detection_threshold": 0.35,
+        "input_width": 1024,
+        "input_height": 1024
+    },
+    "camera": {
+        "_comment": "See CameraConfig struct in datatypes.hpp for detailed explanations",
+        "type": "mock",
+        "save_dir": "/workspaces/obcpp/images/mock",
+        "save_images_to_file": true,
+        "mock": {
+            "not_stolen_address": "host.docker.internal",
+            "not_stolen_port": 6060,
+            "runway": "right",
+            "num_targets": 2,
+            "connection_timeout": 10
+        }
+    },
+    "mavlink": {
+        "log_params": false
+    }
+}

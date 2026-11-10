@@ -101,6 +101,7 @@ struct CameraConfig {
     struct {
         // port to query images from for the mock camera
         int not_stolen_port;
+        std::string not_stolen_address;
         // left | right
         std::string runway;
         int num_targets;
