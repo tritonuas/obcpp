@@ -51,7 +51,7 @@ obcpp [config_directory] [config_type] [plane] [flight_type]
 - `config_file`: name of the config file (without the `.json` file extension) to
   use
     - Currently this should either be `dev` for local development from inside
-      the dev container, or `jetson` if you are running it on the Jetson
+      the dev container on linux, `windows` if you are on windows or mac, or `jetson` if you are running it on the Jetson
 - `plane`: name of the plane the obcpp is running on.
     - This is used to determine what mavlink parameters should be uploaded to
       the plane. The only currently valid input is `stickbug`
@@ -60,12 +60,16 @@ obcpp [config_directory] [config_type] [plane] [flight_type]
       to the plane. Current valid values are `sitl`, `test-flight`, or
       `competition`.
 
-An example, running the program from the `build` directory on the sitl.
+An example, running the program from the `build` directory on the sitl for linux.
 
 ```
 ./bin/obcpp ../configs dev stickbug sitl
 ```
 
+On windows, use the windows config:
+```
+./bin/obcpp ../configs windows stickbug sitl
+```
 ## Config Files
 
 The repo currently has the following file structure for configuration files.
@@ -76,6 +80,7 @@ config files, which are kept under the `params` directory as shown below.
 ```
 configs |>
     - dev.json
+    - windows.json
     - jetson.json
     params |>
         stickbug |>
@@ -360,13 +365,20 @@ ping 192.168.77.2
 
 ### SITL
 
-In order to fully test `obcpp` with the SITL, you must be on a Linux machine
-(so that you can use Docker host networking). If this is the case, then you can
+In order to fully test `obcpp` with the SITL, the corresponding [GCS containers](https://github.com/tritonuas/gcs) must be running.
 do the following steps to test the obcpp with the simulated plane.
 
+#### Linux 
 1. Set up the [gcs](www.github.com/tritonuas/gcs) repo.
 2. Run `make run-compose` inside of the `gcs` repo.
-3. Run `./bin/obcpp ../configs dev stickbug sitl` inside of `build`
+3. Make sure you are in a devcontainer with linux in the name 
+4. Run `./bin/obcpp ../configs dev stickbug sitl` inside of `build`
+
+#### Windows, Mac 
+1. Set up the [gcs](www.github.com/tritonuas/gcs) repo.
+2. Run `make run-compose-windows` inside of the `gcs` repo.
+3. Make sure you are in a devcontainer with windows in the name 
+4. Run `./bin/obcpp ../configs windows stickbug sitl` inside of `build`
 
 If everything works correctly, you should get output similar to this
 
