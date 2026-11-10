@@ -15,6 +15,7 @@
         // "--device=/dev/ttyACM0"
 	],
 
+	 "initializeCommand": "docker rm -f obcpp || true",
 	"extensions.verifySignature": false,
 
 	"customizations": {
