@@ -18,11 +18,10 @@ cv::Mat crop(const cv::Mat& original, const Bbox& bbox) {
 std::optional<cv::Mat> compressImg(const cv::Mat& img, int quality) {
     std::vector<int> compressionParams {cv::IMWRITE_JPEG_QUALITY, quality};
     std::vector<uchar> buffer;
-    cv::Mat denoisedImg;
+    cv::Mat resizedImg;
+    cv::resize(img, resizedImg, cv::Size(), 0.75, 0.75);
 
-    cv::fastNlMeansDenoisingColored(img, denoisedImg);
-
-    if (!cv::imencode(".jpg", denoisedImg, buffer, compressionParams)) {
+    if (!cv::imencode(".jpg", resizedImg, buffer, compressionParams)) {
         LOG_F(WARNING, "Unable to encode the image into a buffer. Using the orignal instead");
         return std::nullopt;
     }

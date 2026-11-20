@@ -30,7 +30,7 @@ struct DetectedTarget {
 cv::Mat crop(const cv::Mat& original, const Bbox& bbox);
 
 /**
- * Denoises and compresses a JPEG image to a desired quality.
+ * Resizes an image to 75% of its dimensions and compresses it as JPEG.
  * 
  * @param img       : a const reference to the image you want to compress
  * @param quality   : the quality you want to compress to. A quality of about 60
